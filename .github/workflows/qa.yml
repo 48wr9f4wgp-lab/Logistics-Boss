@@ -25,6 +25,7 @@ jobs:
           test -f docs/index.html
           test -f docs/styles.css
           test -f docs/focus.css
+          test -f docs/readability.css
           test -f docs/health.html
           test -f docs/.nojekyll
           test -f docs/src/main.js
@@ -62,6 +63,7 @@ jobs:
           set -euo pipefail
           grep -q './styles.css' docs/index.html
           grep -q './focus.css' docs/index.html
+          grep -q './readability.css' docs/index.html
           grep -q 'id="observeBtn"' docs/index.html
           grep -q 'id="focusExit"' docs/index.html
           grep -q './src/main.js' docs/index.html
