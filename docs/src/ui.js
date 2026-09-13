@@ -24,6 +24,8 @@ export function bindUi(sim, sceneView) {
     reset: document.getElementById('resetBtn'),
     camera: document.getElementById('cameraBtn'),
     flow: document.getElementById('flowBtn'),
+    observe: document.getElementById('observeBtn'),
+    focusExit: document.getElementById('focusExit'),
     dock: document.getElementById('commandDock'),
     dockToggle: document.getElementById('dockToggle'),
     quickSpeed: document.getElementById('quickSpeedBtn'),
@@ -52,6 +54,7 @@ export function bindUi(sim, sceneView) {
   let insightCompact = false;
   let flowEnabled = false;
   let dockCompact = true;
+  let focusMode = false;
 
   function toast(text, tone = 'normal') {
     clearTimeout(toastTimer);
@@ -86,6 +89,20 @@ export function bindUi(sim, sceneView) {
     el.dockToggle.textContent = dockCompact ? '管理' : '閉じる';
     el.dockToggle.setAttribute('aria-expanded', String(!dockCompact));
     el.dockToggle.setAttribute('aria-label', dockCompact ? '管理パネルを開く' : '管理パネルを閉じる');
+  }
+
+  function setFocusMode(enabled) {
+    focusMode = Boolean(enabled);
+    document.getElementById('app')?.classList.toggle('focusMode', focusMode);
+    el.focusExit.hidden = !focusMode;
+    el.observe.classList.toggle('active', focusMode);
+    el.observe.setAttribute('aria-pressed', String(focusMode));
+    if (focusMode) {
+      setInsightCompact(true);
+      setDockCompact(true);
+      sceneView.resetCamera();
+      toast('観察モード');
+    }
   }
 
   function nextQuickSpeed() {
@@ -149,6 +166,11 @@ export function bindUi(sim, sceneView) {
   });
 
   el.insightToggle.addEventListener('click', () => setInsightCompact(!insightCompact));
+  el.observe.addEventListener('click', () => setFocusMode(true));
+  el.focusExit.addEventListener('click', () => setFocusMode(false));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && focusMode) setFocusMode(false);
+  });
   el.dockToggle.addEventListener('click', () => setDockCompact(!dockCompact));
   el.quickSpeed.addEventListener('click', nextQuickSpeed);
   el.flow.addEventListener('click', () => {
@@ -163,6 +185,7 @@ export function bindUi(sim, sceneView) {
     if (!confirm('進行・強化・研究を初期状態へ戻しますか？')) return;
     localStorage.removeItem('logistics_boss_save');
     sim.resetProgress();
+    setFocusMode(false);
     setInsightCompact(false);
     setDockCompact(true);
     toast('初期状態へ戻した', 'warn');
@@ -236,7 +259,12 @@ export function bindUi(sim, sceneView) {
     el.throughput.textContent = `${s.metrics.perMinute}/分`;
     el.workers.textContent = `${s.workers.length}人`;
     el.status.textContent = s.status;
-    el.status.dataset.alert = s.status.startsWith('⚠') ? 'true' : 'false';
+    const isAlert = s.status.startsWith('⚠');
+    el.status.dataset.alert = isAlert ? 'true' : 'false';
+    if (focusMode) {
+      el.focusExit.textContent = d.severity >= 2 ? `管理へ戻る・${d.label}` : '管理へ戻る';
+      el.focusExit.dataset.alert = d.severity >= 2 ? 'true' : 'false';
+    }
 
     el.directorLabel.textContent = d.label;
     el.directorDetail.textContent = d.detail;

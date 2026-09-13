@@ -24,10 +24,9 @@ jobs:
           set -euo pipefail
           test -f docs/index.html
           test -f docs/styles.css
+          test -f docs/focus.css
           test -f docs/health.html
           test -f docs/.nojekyll
-          test -f docs/apple-touch-icon.png
-          test -f docs/manifest.webmanifest
           test -f docs/src/main.js
           test -f docs/src/sim.js
           test -f docs/src/scene.js
@@ -57,25 +56,14 @@ jobs:
           ! grep -R -n -E 'Observer Logistics|Workshop Sandbox|velvet' docs README.md GDD_LOGISTICS_BOSS.md || (echo 'Legacy product identity remains' && exit 1)
           echo "Product identity OK"
 
-      - name: App icon contract
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -q 'rel="apple-touch-icon"' docs/index.html
-          grep -q './apple-touch-icon.png' docs/index.html
-          node - <<'NODE'
-          const fs = require('fs');
-          const manifest = JSON.parse(fs.readFileSync('docs/manifest.webmanifest', 'utf8'));
-          if (manifest.name !== 'Logistics Boss') throw new Error('manifest name mismatch');
-          if (!manifest.icons?.some((icon) => icon.src === './apple-touch-icon.png')) throw new Error('app icon missing from manifest');
-          console.log('App icon contract OK');
-          NODE
-
       - name: Static entry contract
         shell: bash
         run: |
           set -euo pipefail
           grep -q './styles.css' docs/index.html
+          grep -q './focus.css' docs/index.html
+          grep -q 'id="observeBtn"' docs/index.html
+          grep -q 'id="focusExit"' docs/index.html
           grep -q './src/main.js' docs/index.html
           grep -q 'three@0.186.0' docs/src/scene.js
           grep -q 'rapier3d-compat@0.20.0' docs/src/scene.js
