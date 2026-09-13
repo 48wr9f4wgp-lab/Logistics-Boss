@@ -1,0 +1,66 @@
+name: Logistics Boss static QA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Required files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f docs/index.html
+          test -f docs/styles.css
+          test -f docs/health.html
+          test -f docs/.nojekyll
+          test -f docs/src/main.js
+          test -f docs/src/sim.js
+          test -f docs/src/scene.js
+          test -f docs/src/ui.js
+          test -f GDD_LOGISTICS_BOSS.md
+          test -f BENCHMARK_LOGISTICS_BOSS_2026-09-13.md
+          echo "Required files OK"
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in docs/src/*.js; do
+            node --check "$file"
+          done
+          echo "JavaScript syntax OK"
+
+      - name: Product identity contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '<title>Logistics Boss</title>' docs/index.html
+          grep -q "const SAVE_KEY = 'logistics_boss_save'" docs/src/main.js
+          grep -q "localStorage.removeItem('logistics_boss_save')" docs/src/ui.js
+          grep -q "from './scene.js'" docs/src/main.js
+          grep -q "from './ui.js'" docs/src/main.js
+          ! grep -R -n -E 'Observer Logistics|Workshop Sandbox|velvet' docs README.md GDD_LOGISTICS_BOSS.md || (echo 'Legacy product identity remains' && exit 1)
+          echo "Product identity OK"
+
+      - name: Static entry contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q './styles.css' docs/index.html
+          grep -q './src/main.js' docs/index.html
+          grep -q 'three@0.186.0' docs/src/scene.js
+          grep -q 'rapier3d-compat@0.20.0' docs/src/scene.js
+          echo "Static entry contract OK"
