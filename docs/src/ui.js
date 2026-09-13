@@ -51,7 +51,7 @@ export function bindUi(sim, sceneView) {
   let toastTimer = 0;
   let celebrationTimer = 0;
   let lastOfferSignature = '';
-  let insightCompact = false;
+  let insightCompact = true;
   let flowEnabled = false;
   let dockCompact = true;
   let focusMode = false;
@@ -186,7 +186,7 @@ export function bindUi(sim, sceneView) {
     localStorage.removeItem('logistics_boss_save');
     sim.resetProgress();
     setFocusMode(false);
-    setInsightCompact(false);
+    setInsightCompact(true);
     setDockCompact(true);
     toast('初期状態へ戻した', 'warn');
     render();
@@ -200,7 +200,7 @@ export function bindUi(sim, sceneView) {
       toast(event.text, 'good');
       const reward = event.reward ? `${yen(event.reward.cash)}  +${event.reward.research} RP` : event.text;
       celebrate('CONTRACT COMPLETE', reward);
-      setInsightCompact(false);
+      setInsightCompact(true);
     } else if (event.type === 'milestone') {
       toast(event.text, 'good');
       celebrate('MILESTONE', event.text);
@@ -221,10 +221,9 @@ export function bindUi(sim, sceneView) {
 
     const offers = sim.state.contractOffers || [];
     const signature = offers.map((item) => item.id).join(',');
-    el.contractTitle.textContent = offers.length ? '契約を1つ選択' : '次の契約を準備中';
-    el.contractBody.innerHTML = offers.length ? '<div class="contractDesc">短い目標を選び、施設の方針を切り替えて達成する。</div>' : '';
+    el.contractTitle.textContent = offers.length ? `契約 ${offers.length}件` : '次の契約を準備中';
+    el.contractBody.innerHTML = offers.length ? '<div class="contractDesc">＋を押して契約を選択</div>' : '';
     if (signature === lastOfferSignature) return;
-    if (offers.length) setInsightCompact(false);
     lastOfferSignature = signature;
     el.contractChoices.innerHTML = '';
     for (const offer of offers) {
@@ -313,6 +312,7 @@ export function bindUi(sim, sceneView) {
     renderContracts();
   }
 
+  setInsightCompact(true);
   setDockCompact(true);
   render();
   return { render, toast };
