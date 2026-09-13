@@ -91,11 +91,12 @@ jobs:
               cameraState.target.set(0, 0.52, -0.55 - growth * 1.15);
             }''',
              'reset camera'),
-            ('''      cameraState.targetDistance = Math.max(cameraState.targetDistance, 16.2 + growth * 2.3);
-              cameraState.target.z = -growth * 1.25;''',
-             '''      cameraState.targetDistance = Math.max(cameraState.targetDistance, 15.4 + growth * 2.2);
-              cameraState.target.z = -0.55 - growth * 1.15;''',
-             'growth camera'),
+            ("cameraState.targetDistance = Math.max(cameraState.targetDistance, 16.2 + growth * 2.3);",
+             "cameraState.targetDistance = Math.max(cameraState.targetDistance, 15.4 + growth * 2.2);",
+             'growth camera distance'),
+            ("cameraState.target.z = -growth * 1.25;",
+             "cameraState.target.z = -0.55 - growth * 1.15;",
+             'growth camera target'),
             ('''  function syncWorkers(dt) {
               const live = new Set();
               let stableLines = 0;''',
