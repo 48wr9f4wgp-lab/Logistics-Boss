@@ -71,18 +71,17 @@ jobs:
           grep -q 'rapier3d-compat@0.20.0' docs/src/scene.js
           echo "Static entry contract OK"
 
-      - name: Readability pass 3 contract
+      - name: Readability pass 4 contract
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'group.userData.readabilityPass = 3' docs/src/scene.js
-          grep -q 'group.userData.flowFloorGuide = true' docs/src/scene.js
-          grep -q 'pitch: 0.61' docs/src/scene.js
-          grep -q 'distance: 13.8' docs/src/scene.js
-          grep -q 'visibleLines < 2' docs/src/scene.js
-          grep -q 'opacity: 0.32, depthTest: false' docs/src/scene.js
-          grep -q 'flowFloorGuide.visible = flowMode' docs/src/scene.js
-          grep -q 'Readability Pass 3' docs/readability.css
-          ! test -f .github/workflows/readability-pass2-apply.yml
-          ! test -f .github/workflows/readability-pass2-apply-v2.yml
-          echo "Readability pass 3 contract OK"
+          grep -Fq 'group.userData.readabilityPass = 4' docs/src/scene.js
+          grep -Fq 'group.userData.flowArrows = []' docs/src/scene.js
+          grep -Fq 'flowGuideClock' docs/src/scene.js
+          grep -Fq 'updateFlowFloorGuide(dt)' docs/src/scene.js
+          grep -Fq 'dataset.stable' docs/src/ui.js
+          grep -Fq '安定稼働 · 契約' docs/src/ui.js
+          grep -Fq '#topHud .metric:nth-child(n+5)' docs/readability.css
+          ! test -f .github/workflows/readability-pass4-apply.yml
+          ! test -f .github/readability-pass4-trigger.txt
+          echo "Readability pass 4 contract OK"
