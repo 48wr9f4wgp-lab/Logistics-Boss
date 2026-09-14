@@ -11,7 +11,7 @@ function loadSnapshot() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return parsed?.schema_version === 1 ? parsed : null;
+    return [1, 2].includes(parsed?.schema_version) ? parsed : null;
   } catch {
     return null;
   }

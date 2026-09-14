@@ -94,8 +94,20 @@
           <span class="cameraHelp">1本指: 回転 / 2本指: ズーム</span>
         </div>
 
-        <div class="sectionLabel">設備</div>
-        <div class="upgradeStrip" aria-label="設備強化">
+        <div class="sectionLabel">施設成長</div>
+<div id="facilityProgress" class="facilityProgress" aria-label="施設ランク進行">
+  <div class="facilityProgressHead"><strong id="facilityRank">RANK 1 · Small Depot</strong><span id="logisticsRating">物流評価 0 / 8</span></div>
+  <div class="facilityProgressBar"><i id="facilityProgressBar"></i></div>
+</div>
+<div class="facilityStrip" aria-label="施設開発">
+  <button class="facilityChoice" type="button" data-facility="secondInbound"><strong>第2搬入口</strong><span>受入容量を拡張</span><small data-facility-cost>¥2,400</small></button>
+  <button class="facilityChoice" type="button" data-facility="fastPickRack"><strong>高速ピックラック</strong><span>高速回転型</span><small data-facility-cost>¥2,800</small></button>
+  <button class="facilityChoice" type="button" data-facility="highDensityRack"><strong>高密度ラック</strong><span>大量保管型</span><small data-facility-cost>¥2,800</small></button>
+  <button class="facilityChoice" type="button" data-facility="secondPack"><strong>第2梱包ライン</strong><span>同時梱包を2箱へ</span><small data-facility-cost>¥3,200</small></button>
+</div>
+
+<div class="sectionLabel">設備</div>
+<div class="upgradeStrip" aria-label="設備強化">
           <button class="upgrade" type="button" data-upgrade="worker"><span class="upgradeName">スタッフ追加</span><span data-level>Lv.0/5</span><strong data-cost>¥0</strong></button>
           <button class="upgrade" type="button" data-upgrade="speed"><span class="upgradeName">歩行速度</span><span data-level>Lv.0/5</span><strong data-cost>¥0</strong></button>
           <button class="upgrade" type="button" data-upgrade="rack"><span class="upgradeName">棚拡張</span><span data-level>Lv.0/4</span><strong data-cost>¥0</strong></button>

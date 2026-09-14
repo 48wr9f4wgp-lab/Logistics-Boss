@@ -13,6 +13,9 @@ export function bindUi(sim, sceneView) {
   const el = {
     money: document.getElementById('money'),
     research: document.getElementById('research'),
+    facilityRank: document.getElementById('facilityRank'),
+    logisticsRating: document.getElementById('logisticsRating'),
+    facilityProgressBar: document.getElementById('facilityProgressBar'),
     shipped: document.getElementById('shipped'),
     orders: document.getElementById('orders'),
     inbound: document.getElementById('inbound'),
@@ -47,6 +50,7 @@ export function bindUi(sim, sceneView) {
   const speedButtons = [...document.querySelectorAll('[data-speed]')];
   const upgradeButtons = [...document.querySelectorAll('[data-upgrade]')];
   const perkButtons = [...document.querySelectorAll('[data-perk]')];
+  const facilityButtons = [...document.querySelectorAll('[data-facility]')];
   const priorityButtons = [...document.querySelectorAll('[data-priority-kind]')];
   let toastTimer = 0;
   let celebrationTimer = 0;
@@ -152,7 +156,20 @@ export function bindUi(sim, sceneView) {
     });
   });
 
-  perkButtons.forEach((button) => {
+  facilityButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    const result = sim.purchaseFacility(button.dataset.facility);
+    if (!result.ok) toast(result.reason, 'warn');
+    else {
+      toast(`施設建設 -${yen(result.cost)}`, 'good');
+      try { navigator.vibrate?.([18, 25, 24]); } catch {}
+      setDockCompact(true);
+    }
+    render();
+  });
+});
+
+perkButtons.forEach((button) => {
     button.addEventListener('click', () => {
       const type = button.dataset.perk;
       const result = sim.purchasePerk(type);
@@ -199,9 +216,15 @@ export function bindUi(sim, sceneView) {
     else if (event.type === 'upgrade' || event.type === 'perk') toast(event.text, 'good');
     else if (event.type === 'contract_complete') {
       toast(event.text, 'good');
-      const reward = event.reward ? `${yen(event.reward.cash)}  +${event.reward.research} RP` : event.text;
+      const reward = event.reward ? `${yen(event.reward.cash)}  +${event.reward.research} RP  +${event.reward.rating || 2}評価` : event.text;
       celebrate('CONTRACT COMPLETE', reward);
       setInsightCompact(true);
+    } else if (event.type === 'rank_up') {
+      toast(event.text, 'good');
+      celebrate('FACILITY RANK UP', event.name);
+      setDockCompact(false);
+    } else if (event.type === 'facility_built') {
+      toast(event.text, 'good');
     } else if (event.type === 'milestone') {
       toast(event.text, 'good');
       celebrate('MILESTONE', event.text);
@@ -215,7 +238,7 @@ export function bindUi(sim, sceneView) {
       lastOfferSignature = '';
       el.contractTitle.textContent = active.title;
       const percent = Math.min(100, Math.round((active.progress / Math.max(1, active.target)) * 100));
-      el.contractBody.innerHTML = `<div class="contractDesc">${active.desc}</div><div class="contractProgress"><i style="width:${percent}%"></i></div><div class="contractMeta"><span>${contractProgressText(active)}</span><span>残り ${Math.ceil(active.remaining)}秒</span><span>報酬 ${yen(active.reward.cash)} + ${active.reward.research}RP</span></div>`;
+      el.contractBody.innerHTML = `<div class="contractDesc">${active.desc}</div><div class="contractProgress"><i style="width:${percent}%"></i></div><div class="contractMeta"><span>${contractProgressText(active)}</span><span>残り ${Math.ceil(active.remaining)}秒</span><span>報酬 ${yen(active.reward.cash)} + ${active.reward.research}RP + ${active.reward.rating || 2}評価</span></div>`;
       el.contractChoices.innerHTML = '';
       return;
     }
@@ -231,7 +254,7 @@ export function bindUi(sim, sceneView) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'contractChoice';
-      button.innerHTML = `<strong>${offer.title}</strong><span>${offer.desc}</span><small>${yen(offer.reward.cash)} + ${offer.reward.research}RP</small>`;
+      button.innerHTML = `<strong>${offer.title}</strong><span>${offer.desc}</span><small>${yen(offer.reward.cash)} + ${offer.reward.research}RP + ${offer.reward.rating || 2}評価</small>`;
       button.addEventListener('click', () => {
         const result = sim.chooseContract(offer.id);
         if (!result.ok) toast(result.reason, 'warn');
@@ -258,7 +281,11 @@ export function bindUi(sim, sceneView) {
     el.insightPanel.dataset.stable = d.severity === 0 ? 'true' : 'false';
     el.money.textContent = yen(s.money);
     el.research.textContent = `${s.research} RP`;
-    el.shipped.textContent = s.shipped.toLocaleString('ja-JP');
+  const nextTarget = sim.nextRankTarget();
+  el.facilityRank.textContent = `RANK ${s.facilityRank} · ${sim.facilityRankName()}`;
+  el.logisticsRating.textContent = nextTarget == null ? `物流評価 ${s.logisticsRating} · MAX` : `物流評価 ${s.logisticsRating} / ${nextTarget}`;
+  el.facilityProgressBar.style.width = `${nextTarget == null ? 100 : Math.min(100, (s.logisticsRating / nextTarget) * 100)}%`;
+  el.shipped.textContent = s.shipped.toLocaleString('ja-JP');
     el.orders.textContent = s.ordersOpen.toLocaleString('ja-JP');
     el.inbound.textContent = c.inbound.toLocaleString('ja-JP');
     el.rack.textContent = `${c.rack} / ${sim.rackCapacity()}`;
@@ -291,7 +318,21 @@ export function bindUi(sim, sceneView) {
       row.dataset.level = String(s.priorities[key]);
     });
 
-    upgradeButtons.forEach((button) => {
+    facilityButtons.forEach((button) => {
+    const type = button.dataset.facility;
+    const def = sim.facilityInfo[type];
+    const built = Boolean(s.facilities[type]);
+    const locked = s.facilityRank < def.rank;
+    const conflicting = def.group === 'rackStrategy' && !built && (s.facilities.fastPickRack || s.facilities.highDensityRack);
+    const costNode = button.querySelector('[data-facility-cost]');
+    button.classList.toggle('built', built);
+    button.classList.toggle('locked', locked);
+    button.disabled = built || locked || conflicting || (!built && s.money < def.cost);
+    if (costNode) costNode.textContent = built ? '建設済み' : locked ? `RANK ${def.rank}` : conflicting ? '方針選択済み' : yen(def.cost);
+    button.title = def.desc;
+  });
+
+  upgradeButtons.forEach((button) => {
       const type = button.dataset.upgrade;
       const def = sim.upgradeInfo[type];
       const level = s.upgrades[type];

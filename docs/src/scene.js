@@ -558,7 +558,24 @@ export async function createSceneView(canvas, sim) {
   outbound.scale.setScalar(1.08);
   scene.add(inbound, pack, outbound);
 
-  const rackBanks = [rackBank(-2.15, -1.65)];
+const secondInboundFacility = loadingDock({ x: -4.25, z: 4.25 });
+secondInboundFacility.scale.setScalar(0.82);
+secondInboundFacility.visible = false;
+scene.add(secondInboundFacility);
+const secondPackFacility = packStation({ x: 4.15, z: 1.45 });
+secondPackFacility.scale.setScalar(0.82);
+secondPackFacility.visible = false;
+scene.add(secondPackFacility);
+const fastPickRackFacility = rackBank(-2.15, -0.35, 0x65d8b4);
+fastPickRackFacility.scale.setScalar(0.9);
+fastPickRackFacility.visible = false;
+scene.add(fastPickRackFacility);
+const highDensityRackFacility = rackBank(-2.15, -3.7, 0xc783d9);
+highDensityRackFacility.scale.setScalar(0.96);
+highDensityRackFacility.visible = false;
+scene.add(highDensityRackFacility);
+
+const rackBanks = [rackBank(-2.15, -1.65)];
   rackBanks[0].scale.setScalar(1.06);
   scene.add(rackBanks[0]);
   for (let i = 0; i < 4; i += 1) {
@@ -723,8 +740,13 @@ export async function createSceneView(canvas, sim) {
   }
 
   function updateGrowth(dt) {
-    const u = sim.state.upgrades;
-    rackBanks.forEach((b, i) => { b.visible = i === 0 || i <= u.rack; });
+  const u = sim.state.upgrades;
+  const facilities = sim.state.facilities || {};
+  secondInboundFacility.visible = Boolean(facilities.secondInbound);
+  secondPackFacility.visible = Boolean(facilities.secondPack);
+  fastPickRackFacility.visible = Boolean(facilities.fastPickRack);
+  highDensityRackFacility.visible = Boolean(facilities.highDensityRack);
+  rackBanks.forEach((b, i) => { b.visible = i === 0 || i <= u.rack; });
     packModules.forEach((m, i) => { m.visible = i < u.pack; });
     conveyors.forEach((c, i) => { c.visible = i < u.conveyor; });
     lanes.forEach((l, i) => { l.visible = i < u.speed; });

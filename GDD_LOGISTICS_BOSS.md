@@ -105,3 +105,16 @@ Rapier is limited to visible overflow parcels / incidental physical chaos when i
 
 ## 7. Next Gate
 Do not expand content broadly until the slice proves: directive -> autonomous response -> bottleneck visibility -> upgrade -> measurable throughput improvement -> visible facility growth.
+
+
+## Progression Spine v1 — Phase 1 LOCK
+
+Core meta loop: **contract → cash/RP/logistics rating → facility rank → structural investment → new bottleneck → new directive**.
+
+- Cash builds structural facilities and secondary numeric upgrades.
+- RP buys research/perks.
+- Logistics Rating is non-spend progression from contracts.
+- Rank 1 Small Depot → Rank 2 Warehouse at Logistics Rating 8.
+- Rank 2: Second Inbound ¥2,400; one rack strategy (Fast Pick or High Density) ¥2,800; Second Pack Line ¥3,200.
+- Every structural investment changes both simulation behavior and visible 3D geometry.
+- Free-placement building remains out of scope.

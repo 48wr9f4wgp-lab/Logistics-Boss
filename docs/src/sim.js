@@ -32,6 +32,16 @@ const PERK_INFO = {
   contractBonus: { label: '高単価契約', cost: 3, max: 2, desc: '契約報酬 +25%' },
 };
 
+const FACILITY_INFO = {
+  secondInbound: { label: '第2搬入口', cost: 2400, rank: 2, desc: '受入容量+6 / 入荷間隔を22%短縮' },
+  fastPickRack: { label: '高速ピックラック', cost: 2800, rank: 2, group: 'rackStrategy', desc: '棚容量+4 / ピッキング移動+25%' },
+  highDensityRack: { label: '高密度ラック', cost: 2800, rank: 2, group: 'rackStrategy', desc: '棚容量+12 / ピッキング移動-14%' },
+  secondPack: { label: '第2梱包ライン', cost: 3200, rank: 2, desc: '同時梱包数 1→2' },
+};
+const FACILITY_RANKS = {
+  1: { name: 'Small Depot', rating: 0 },
+  2: { name: 'Warehouse', rating: 8 },
+};
 const CONTRACT_KINDS = ['ship', 'inbound', 'throughput'];
 
 function clamp(value, min, max) {
@@ -100,9 +110,12 @@ export function createSimulation(saved = null) {
   const shipmentTimes = [];
 
   const state = {
-    schema_version: 1,
+    schema_version: 2,
     money: 650,
     research: 0,
+    logisticsRating: 0,
+    facilityRank: 1,
+    facilities: { secondInbound: false, fastPickRack: false, highDensityRack: false, secondPack: false },
     shipped: 0,
     ordersOpen: 2,
     policy: 'balanced',
@@ -135,14 +148,35 @@ export function createSimulation(saved = null) {
   }
 
   function workerSpeed() {
-    return BASE.workerSpeed * (1 + state.upgrades.speed * 0.16);
-  }
+  return BASE.workerSpeed * (1 + state.upgrades.speed * 0.16);
+}
 
-  function rackCapacity() {
-    return BASE.rackCapacity + state.upgrades.rack * 4;
-  }
+function facilityRankName(rank = state.facilityRank) {
+  return FACILITY_RANKS[rank]?.name || `Rank ${rank}`;
+}
 
-  function packTime() {
+function nextRankTarget() {
+  return state.facilityRank < 2 ? FACILITY_RANKS[2].rating : null;
+}
+
+function inboundMax() {
+  return BASE.inboundMax + (state.facilities.secondInbound ? 6 : 0);
+}
+
+function inboundInterval() {
+  return BASE.inboundInterval * (state.facilities.secondInbound ? 0.78 : 1);
+}
+
+function packCapacity() {
+  return 1 + (state.facilities.secondPack ? 1 : 0);
+}
+
+function rackCapacity() {
+  const strategyBonus = state.facilities.highDensityRack ? 12 : state.facilities.fastPickRack ? 4 : 0;
+  return BASE.rackCapacity + state.upgrades.rack * 4 + strategyBonus;
+}
+
+function packTime() {
     const upgradeFactor = Math.pow(0.82, state.upgrades.pack);
     const perkFactor = Math.pow(0.85, state.perks.bulkPack);
     return BASE.packTime * upgradeFactor * perkFactor;
@@ -188,7 +222,7 @@ export function createSimulation(saved = null) {
 
   function spawnInbound() {
     const current = counts().inbound;
-    if (current >= BASE.inboundMax) {
+    if (current >= inboundMax()) {
       if (overflowCooldown <= 0) {
         overflowCooldown = 2.2;
         emit('overflow', { text: '搬入口があふれた' });
@@ -212,7 +246,7 @@ export function createSimulation(saved = null) {
     for (const box of state.boxes) {
       if (box.phase === 'inbound' || box.phase === 'carried_store') inbound += 1;
       else if (box.phase === 'rack') rack += 1;
-      else if (box.phase === 'packing' || box.phase === 'carried_pick') packing += 1;
+      else if (box.phase === 'waiting_pack' || box.phase === 'packing' || box.phase === 'carried_pick') packing += 1;
       else if (box.phase === 'packed' || box.phase === 'carried_ship') packed += 1;
     }
     return { inbound, rack, packing, packed };
@@ -221,7 +255,7 @@ export function createSimulation(saved = null) {
   function inProcessOrders() {
     let total = 0;
     for (const box of state.boxes) {
-      if (['carried_pick', 'packing', 'packed', 'carried_ship'].includes(box.phase)) total += 1;
+      if (['carried_pick', 'waiting_pack', 'packing', 'packed', 'carried_ship'].includes(box.phase)) total += 1;
     }
     return total;
   }
@@ -352,10 +386,10 @@ export function createSimulation(saved = null) {
       box.rackSlot = worker.task.rackSlot;
       Object.assign(box, rackPosition(box.rackSlot));
     } else if (kind === 'pick') {
-      box.phase = 'packing';
+      box.phase = 'waiting_pack';
       box.reservedBy = null;
       box.carrierId = null;
-      box.packRemaining = packTime();
+      box.packRemaining = 0;
       box.x = POS.pack.x;
       box.y = 0.35;
       box.z = POS.pack.z;
@@ -376,13 +410,13 @@ export function createSimulation(saved = null) {
   }
 
   function updateWorkers(dt) {
-    const speed = workerSpeed();
+    const baseSpeed = workerSpeed();
     for (const worker of state.workers) {
       if (!worker.task) assignTask(worker);
       const task = worker.task;
       if (!task) {
         const home = { x: POS.center.x + ((worker.id % 3) - 1) * 0.75, z: POS.center.z + (worker.id % 2) * 0.45 };
-        moveToward(worker, home, speed * 0.35 * dt);
+        moveToward(worker, home, baseSpeed * 0.35 * dt);
         continue;
       }
       const box = boxById(task.boxId);
@@ -393,9 +427,12 @@ export function createSimulation(saved = null) {
       }
 
       const target = task.stage === 'pickup' ? { x: box.x, z: box.z } : dropPosition(task);
+      let taskSpeed = baseSpeed;
+      if (task.kind === 'pick' && state.facilities.fastPickRack) taskSpeed *= 1.25;
+      if (task.kind === 'pick' && state.facilities.highDensityRack) taskSpeed *= 0.86;
       const oldX = worker.x;
       const oldZ = worker.z;
-      const arrived = moveToward(worker, target, speed * dt);
+      const arrived = moveToward(worker, target, taskSpeed * dt);
       if (Math.abs(worker.x - oldX) + Math.abs(worker.z - oldZ) > 0.0001) {
         worker.facing = Math.atan2(worker.x - oldX, worker.z - oldZ);
       }
@@ -413,19 +450,30 @@ export function createSimulation(saved = null) {
   }
 
   function updatePacking(dt) {
+  let active = state.boxes.filter((box) => box.phase === 'packing').length;
+  if (active < packCapacity()) {
     for (const box of state.boxes) {
-      if (box.phase !== 'packing') continue;
-      box.packRemaining -= dt;
-      if (box.packRemaining <= 0) {
-        box.phase = 'packed';
-        box.packRemaining = 0;
-        emit('packed', { boxId: box.id, text: '梱包完了' });
-      }
+      if (box.phase !== 'waiting_pack') continue;
+      box.phase = 'packing';
+      box.packRemaining = packTime();
+      active += 1;
+      emit('packing_start', { boxId: box.id });
+      if (active >= packCapacity()) break;
     }
-    normalizePackedPositions();
   }
+  for (const box of state.boxes) {
+    if (box.phase !== 'packing') continue;
+    box.packRemaining -= dt;
+    if (box.packRemaining <= 0) {
+      box.phase = 'packed';
+      box.packRemaining = 0;
+      emit('packed', { boxId: box.id, text: '梱包完了' });
+    }
+  }
+  normalizePackedPositions();
+}
 
-  function runConveyor(dt) {
+function runConveyor(dt) {
     if (!state.upgrades.conveyor) return;
     conveyorTimer -= dt;
     if (conveyorTimer > 0) return;
@@ -449,7 +497,7 @@ export function createSimulation(saved = null) {
     orderTimer -= dt;
     overflowCooldown -= dt;
     if (inboundTimer <= 0) {
-      inboundTimer += BASE.inboundInterval;
+      inboundTimer += inboundInterval();
       spawnInbound();
     }
     if (orderTimer <= 0) {
@@ -462,7 +510,7 @@ export function createSimulation(saved = null) {
 
   function contractReward(baseCash, baseResearch = 1) {
     const mult = 1 + state.perks.contractBonus * 0.25;
-    return { cash: Math.round(baseCash * mult), research: baseResearch };
+    return { cash: Math.round(baseCash * mult), research: baseResearch, rating: 2 };
   }
 
   function makeContract(kind) {
@@ -511,15 +559,25 @@ export function createSimulation(saved = null) {
     return { ok: true };
   }
 
-  function finishContract(success) {
+  function updateFacilityRank() {
+  if (state.facilityRank < 2 && state.logisticsRating >= FACILITY_RANKS[2].rating) {
+    state.facilityRank = 2;
+    emit('rank_up', { rank: 2, name: facilityRankName(2), text: '施設ランクUP: Warehouse' });
+    markDirty();
+  }
+}
+
+function finishContract(success) {
     const contract = state.activeContract;
     if (!contract) return;
     if (success) {
       state.money += contract.reward.cash;
       state.research += contract.reward.research;
+      state.logisticsRating += contract.reward.rating || 2;
       state.completedContracts += 1;
+      updateFacilityRank();
       emit('contract_complete', {
-        text: `契約達成 +¥${contract.reward.cash} / 研究+${contract.reward.research}`,
+        text: `契約達成 +¥${contract.reward.cash} / 研究+${contract.reward.research} / 評価+${contract.reward.rating || 2}`,
         reward: contract.reward,
       });
     } else {
@@ -559,7 +617,7 @@ export function createSimulation(saved = null) {
     state.metrics.perMinute = shipmentTimes.length;
     const c = counts();
     const ratios = {
-      inbound: c.inbound / BASE.inboundMax,
+      inbound: c.inbound / inboundMax(),
       rack: c.rack / Math.max(1, rackCapacity()),
       orders: state.ordersOpen / Math.max(4, state.workers.length + 1),
       packed: c.packed / 4,
@@ -568,7 +626,7 @@ export function createSimulation(saved = null) {
     const [key, ratio] = entries[0] || ['stable', 0];
     const severity = ratio >= 1 ? 3 : ratio >= 0.78 ? 2 : ratio >= 0.58 ? 1 : 0;
     const table = {
-      inbound: ['搬入口', '未処理の荷物が増えています', '入庫優先・スタッフ追加・自動搬送が有効'],
+      inbound: ['搬入口', '未処理の荷物が増えています', '入庫優先・スタッフ追加・第2搬入口が有効'],
       rack: ['棚容量', '棚の空きが少なく流れが止まりやすい', '棚拡張か出庫優先で在庫を減らす'],
       orders: ['注文滞留', '注文に対して処理が追いついていません', '出庫優先・梱包設備・スタッフ強化が有効'],
       packed: ['出荷待ち', '梱包済み荷物が出口で滞留', '出荷優先を上げる'],
@@ -576,7 +634,7 @@ export function createSimulation(saved = null) {
     if (severity === 0) {
       state.director = {
         key: 'stable', label: '安定稼働', severity: 0,
-        detail: '大きな詰まりはありません', recommendation: '次の契約と強化に備える', ratios,
+        detail: '大きな詰まりはありません', recommendation: state.facilityRank < 2 ? '契約で物流評価を上げWarehouseを解禁する' : '設備投資で物流構造を進化させる', ratios,
       };
       state.status = '安定稼働';
     } else {
@@ -641,7 +699,29 @@ export function createSimulation(saved = null) {
     return { ok: true, cost, level: state.upgrades[type] };
   }
 
-  function purchasePerk(type) {
+  function facilityCost(type) {
+  return FACILITY_INFO[type]?.cost ?? Infinity;
+}
+
+function purchaseFacility(type) {
+  const def = FACILITY_INFO[type];
+  if (!def) return { ok: false, reason: '不明な施設' };
+  if (state.facilityRank < def.rank) return { ok: false, reason: `Rank ${def.rank}で解禁` };
+  if (state.facilities[type]) return { ok: false, reason: '建設済み' };
+  if (def.group === 'rackStrategy') {
+    const other = type === 'fastPickRack' ? 'highDensityRack' : 'fastPickRack';
+    if (state.facilities[other]) return { ok: false, reason: 'ラック方針は選択済み' };
+  }
+  const cost = facilityCost(type);
+  if (state.money < cost) return { ok: false, reason: '資金不足' };
+  state.money -= cost;
+  state.facilities[type] = true;
+  emit('facility_built', { type, text: `${def.label} 建設完了`, cost });
+  markDirty();
+  return { ok: true, cost, type };
+}
+
+function purchasePerk(type) {
     const def = PERK_INFO[type];
     if (!def) return { ok: false, reason: '不明な研究' };
     const level = state.perks[type] ?? 0;
@@ -656,13 +736,23 @@ export function createSimulation(saved = null) {
   }
 
   function hydrate(snapshot) {
-    if (!snapshot || snapshot.schema_version !== 1) return;
+    if (!snapshot || ![1, 2].includes(snapshot.schema_version)) return;
     if (Number.isFinite(snapshot.money)) state.money = Math.max(0, snapshot.money);
     if (Number.isFinite(snapshot.research)) state.research = Math.max(0, Math.floor(snapshot.research));
     if (Number.isFinite(snapshot.shipped)) state.shipped = Math.max(0, snapshot.shipped);
     if (Number.isFinite(snapshot.completedContracts)) state.completedContracts = Math.max(0, Math.floor(snapshot.completedContracts));
     if (Number.isFinite(snapshot.milestoneAwarded)) state.milestoneAwarded = Math.max(0, Math.floor(snapshot.milestoneAwarded));
-    if (['balanced', 'inbound', 'ship'].includes(snapshot.policy)) state.policy = snapshot.policy;
+  if (snapshot.schema_version === 2) {
+    if (Number.isFinite(snapshot.logisticsRating)) state.logisticsRating = Math.max(0, Math.floor(snapshot.logisticsRating));
+    if (Number.isFinite(snapshot.facilityRank)) state.facilityRank = clamp(Math.floor(snapshot.facilityRank), 1, 2);
+    if (snapshot.facilities && typeof snapshot.facilities === 'object') {
+      for (const key of Object.keys(FACILITY_INFO)) state.facilities[key] = Boolean(snapshot.facilities[key]);
+    }
+  } else {
+    state.logisticsRating = Math.max(0, state.completedContracts * 2 + Math.floor(state.shipped / 100));
+    state.facilityRank = state.logisticsRating >= FACILITY_RANKS[2].rating ? 2 : 1;
+  }
+  if (['balanced', 'inbound', 'ship'].includes(snapshot.policy)) state.policy = snapshot.policy;
     if (snapshot.priorities && typeof snapshot.priorities === 'object') {
       for (const key of ['store', 'pick', 'ship']) state.priorities[key] = clamp(Math.round(Number(snapshot.priorities[key] ?? state.priorities[key])), 1, 5);
     }
@@ -682,10 +772,13 @@ export function createSimulation(saved = null) {
 
   function serialize() {
     return {
-      schema_version: 1,
-      money: state.money,
-      research: state.research,
-      shipped: state.shipped,
+      schema_version: 2,
+    money: state.money,
+    research: state.research,
+    logisticsRating: state.logisticsRating,
+    facilityRank: state.facilityRank,
+    facilities: { ...state.facilities },
+    shipped: state.shipped,
       completedContracts: state.completedContracts,
       milestoneAwarded: state.milestoneAwarded,
       policy: state.policy,
@@ -703,8 +796,11 @@ export function createSimulation(saved = null) {
 
   function resetProgress() {
     state.money = 650;
-    state.research = 0;
-    state.shipped = 0;
+  state.research = 0;
+  state.logisticsRating = 0;
+  state.facilityRank = 1;
+  state.facilities = { secondInbound: false, fastPickRack: false, highDensityRack: false, secondPack: false };
+  state.shipped = 0;
     state.completedContracts = 0;
     state.milestoneAwarded = 0;
     state.policy = 'balanced';
@@ -743,15 +839,22 @@ export function createSimulation(saved = null) {
     rackCapacity,
     workerSpeed,
     packTime,
+    packCapacity,
+    inboundMax,
     conveyorInterval,
+    facilityRankName,
+    nextRankTarget,
+    facilityCost,
     upgradeCost,
     perkCost,
+    facilityInfo: FACILITY_INFO,
     upgradeInfo: UPGRADE_INFO,
     perkInfo: PERK_INFO,
     setPolicy,
     setPriority,
     setTimeScale,
     purchaseUpgrade,
+    purchaseFacility,
     purchasePerk,
     chooseContract,
     serialize,
