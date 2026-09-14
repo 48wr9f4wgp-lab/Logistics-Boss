@@ -32,6 +32,7 @@ jobs:
           test -f docs/src/sim.js
           test -f docs/src/scene.js
           test -f docs/src/ui.js
+          test -f docs/tests/progression-smoke.mjs
           test -f GDD_LOGISTICS_BOSS.md
           test -f BENCHMARK_LOGISTICS_BOSS_2026-09-13.md
           echo "Required files OK"
@@ -43,6 +44,7 @@ jobs:
           for file in docs/src/*.js; do
             node --check "$file"
           done
+          node --check docs/tests/progression-smoke.mjs
           echo "JavaScript syntax OK"
 
       - name: Product identity contract
@@ -85,3 +87,23 @@ jobs:
           ! test -f .github/workflows/readability-pass4-apply.yml
           ! test -f .github/readability-pass4-trigger.txt
           echo "Readability pass 4 contract OK"
+
+      - name: Progression Spine phase 1 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'schema_version: 2' docs/src/sim.js
+          grep -q 'logisticsRating' docs/src/sim.js
+          grep -q 'purchaseFacility' docs/src/sim.js
+          grep -q 'packCapacity' docs/src/sim.js
+          grep -q 'data-facility="secondInbound"' docs/index.html
+          grep -q 'data-facility="secondPack"' docs/index.html
+          grep -q 'secondInboundFacility.visible' docs/src/scene.js
+          grep -q 'facilityProgressBar' docs/src/ui.js
+          grep -q 'Progression Spine v1 — Phase 1 LOCK' GDD_LOGISTICS_BOSS.md
+          ! test -f .github/workflows/progression-spine-phase1-apply.yml
+          ! test -f .github/workflows/progression-spine-phase1-apply-v2.yml
+          ! test -f .github/progression-spine-phase1-trigger.txt
+          ! test -f .github/progression-spine-phase1-v2-trigger.txt
+          node docs/tests/progression-smoke.mjs
+          echo "Progression Spine Phase 1 contract OK"
