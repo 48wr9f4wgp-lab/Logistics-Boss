@@ -42,6 +42,7 @@ jobs:
           test -f docs/tests/ergonomics-smoke.mjs
           test -f docs/tests/hud-metric-stability-smoke.mjs
           test -f docs/tests/capital-v2-smoke.mjs
+          test -f docs/tests/capital-v3-smoke.mjs
           test -f GDD_LOGISTICS_BOSS.md
           test -f CAPITAL_EXPANSION_V1.md
           test -f CAPITAL_EXPANSION_V2.md
@@ -61,6 +62,7 @@ jobs:
           node --check docs/tests/ergonomics-smoke.mjs
           node --check docs/tests/hud-metric-stability-smoke.mjs
           node --check docs/tests/capital-v2-smoke.mjs
+          node --check docs/tests/capital-v3-smoke.mjs
           echo "JavaScript syntax OK"
 
       - name: Product identity contract
@@ -196,10 +198,10 @@ jobs:
           grep -Fq 'Rank 2 Systems Pass — Phase 2 LOCK' GDD_LOGISTICS_BOSS.md
           node docs/tests/progression-smoke.mjs
           ! test -f .github/workflows/rank2-systems-pass2-apply.yml
-          ! test -f .github/rank2-systems-pass2-trigger.txt
-          ! test -f .github/rank2-systems-pass2-trigger-v2.txt
-          ! test -f .github/rank2-systems-pass2-trigger-v3.txt
-          ! test -f .github/rank2-systems-pass2-trigger-v4.txt
+          ! test -f .github/workflows/rank2-systems-pass2-trigger.txt
+          ! test -f .github/workflows/rank2-systems-pass2-trigger-v2.txt
+          ! test -f .github/workflows/rank2-systems-pass2-trigger-v3.txt
+          ! test -f .github/workflows/rank2-systems-pass2-trigger-v4.txt
           ! test -f tools/rank2_systems_pass2_patch.py
           echo "Rank 2 Systems Pass 2 contract OK"
 
@@ -227,3 +229,18 @@ jobs:
           ! grep -Fq 'sim.state.money -= cost' docs/src/capital.js
           node docs/tests/capital-v2-smoke.mjs
           echo "Capital Expansion v2 contract OK"
+
+      - name: Truck Dock / Waves Phase 3 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'truckDock:' docs/src/capital-model.js
+          grep -Fq "truckDock: { label: 'トラックドック'" docs/src/sim.js
+          grep -Fq 'function startTruckWave()' docs/src/sim.js
+          grep -Fq 'function updateTruckWave(dt)' docs/src/sim.js
+          grep -Fq "event.type === 'truck_arrive'" docs/src/scene.js
+          grep -Fq 'function truckUnit()' docs/src/scene.js
+          grep -Fq 'function truckDockBay(index)' docs/src/scene.js
+          grep -Fq '現在 ${currentEffect} → 次 ${nextEffect}' docs/src/capital.js
+          node docs/tests/capital-v3-smoke.mjs
+          echo "Truck Dock / Waves Phase 3 contract OK"
