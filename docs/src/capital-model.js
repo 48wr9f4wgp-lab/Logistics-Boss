@@ -99,6 +99,16 @@ export const CAPITAL_INVESTMENTS = {
     effect: '連続入荷をトラック波動へ変更 / ドック・トラックを3D表示',
     emphasis: 'まとまった荷量を受け、ドック能力と倉庫内処理の差を経営する',
   },
+  asrs: {
+    key: 'asrs',
+    upgrade: 'asrs',
+    label: 'AS/RS自動倉庫',
+    short: '自動保管',
+    costs: [1800000, 14000000, 90000000],
+    unlockAssets: 1000000,
+    effect: '高密度保管 +16箱/段階 / 入庫・出庫をスタッカークレーンで自動処理',
+    emphasis: '棚工程の人手を減らし、高密度保管と自動入出庫を両立する',
+  },
 };
 
 export const COMMERCIAL_TIERS = [
@@ -201,6 +211,15 @@ export function truckUnloadIntervalForLevel(level) {
   return [Infinity, 0.75, 0.55, 0.4][Math.min(3, Math.max(1, Math.floor(level)))] || 0.75;
 }
 
+export function asrsIntervalForLevel(level) {
+  if (!level) return Infinity;
+  return [Infinity, 5.4, 3.9, 2.8][Math.min(3, Math.max(1, Math.floor(level)))] || 5.4;
+}
+
+export function asrsCapacityForLevel(level) {
+  return Math.max(0, Math.min(3, Math.floor(Number(level) || 0))) * 16;
+}
+
 export function formatInvestmentEffect(key, nextLevel) {
   const level = Math.max(1, Number(nextLevel) || 1);
   if (key === 'rack') return `棚容量 +${level * 4}箱`;
@@ -213,5 +232,6 @@ export function formatInvestmentEffect(key, nextLevel) {
   if (key === 'sorter') return `自動出荷 1箱 / 約${sorterIntervalForLevel(level).toFixed(1)}秒`;
   if (key === 'hall') return `ホール +${level}棟 / 保管 +${level * 8}箱 / 入荷上限 +${level * 4}箱`;
   if (key === 'truckDock') return `${truckWaveSizeForLevel(level)}箱/便 · 約${truckWaveIntervalForLevel(level)}秒周期 · 荷下ろし${truckUnloadIntervalForLevel(level).toFixed(2)}秒/箱`;
+  if (key === 'asrs') return `保管 +${asrsCapacityForLevel(level)}箱 / 自動入出庫 約${asrsIntervalForLevel(level).toFixed(1)}秒/サイクル`;
   return '';
 }
