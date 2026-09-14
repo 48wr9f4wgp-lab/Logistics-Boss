@@ -17,27 +17,36 @@ const baseFacilities = {
 const scenarios = [
   {
     name: '8k_band',
+    minAssets: 8000,
     nextTarget: 40000,
+    minBridgeMinutes: 5,
     maxBridgeMinutes: 15,
     upgrades: { worker: 0, speed: 1, rack: 1, pack: 1, conveyor: 1, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
   },
   {
     name: '40k_band',
+    minAssets: 40000,
     nextTarget: 200000,
+    minBridgeMinutes: 5,
     maxBridgeMinutes: 15,
     upgrades: { worker: 1, speed: 1, rack: 1, pack: 1, conveyor: 2, forklift: 1, agv: 0, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
   },
   {
     name: '200k_band',
+    minAssets: 200000,
     nextTarget: 500000,
+    minBridgeMinutes: 5,
     maxBridgeMinutes: 15,
     upgrades: { worker: 2, speed: 3, rack: 2, pack: 3, conveyor: 2, forklift: 1, agv: 1, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
   },
   {
     name: '500k_band',
+    minAssets: 500000,
     nextTarget: 1000000,
+    minBridgeMinutes: 5,
     maxBridgeMinutes: 15,
-    upgrades: { worker: 2, speed: 3, rack: 3, pack: 3, conveyor: 3, forklift: 2, agv: 1, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
+    // Worker Lv.3 makes this a genuine post-¥500k state (¥569,600), rather than the old ¥499,600 boundary miss.
+    upgrades: { worker: 3, speed: 3, rack: 3, pack: 3, conveyor: 3, forklift: 2, agv: 1, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
   },
 ];
 
@@ -78,9 +87,11 @@ function runScenario(def) {
   const remaining = Math.max(0, def.nextTarget - invested);
   const bridgeMinutes = revenuePerMinute > 0 ? remaining / revenuePerMinute : Infinity;
 
-  assert(invested > 0, `${def.name}: invested capital must be positive`);
+  assert(invested >= def.minAssets, `${def.name}: scenario must actually start inside its named capital band`);
+  assert(invested < def.nextTarget, `${def.name}: scenario must remain below its next milestone`);
   assert(sample.length > 0, `${def.name}: healthy operation must ship during the sample window`);
   assert(revenuePerMinute > 0, `${def.name}: revenue rate must be positive`);
+  assert(bridgeMinutes >= def.minBridgeMinutes, `${def.name}: capital bridge is too short and risks trivializing investment decisions, measured ${bridgeMinutes.toFixed(1)} minutes`);
   assert(bridgeMinutes <= def.maxBridgeMinutes, `${def.name}: healthy capital bridge must stay within ${def.maxBridgeMinutes} minutes, measured ${bridgeMinutes.toFixed(1)}`);
 
   return {
@@ -93,7 +104,7 @@ function runScenario(def) {
     nextTarget: def.nextTarget,
     remaining,
     bridgeMinutes: Math.round(bridgeMinutes * 10) / 10,
-    maxBridgeMinutes: def.maxBridgeMinutes,
+    targetWindow: `${def.minBridgeMinutes}-${def.maxBridgeMinutes}`,
   };
 }
 
