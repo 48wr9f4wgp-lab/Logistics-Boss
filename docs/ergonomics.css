@@ -32,9 +32,9 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #commandDock.compact .opsMiniSummary{display:none!important}
 
 /* Management behaves like a bottom sheet. Keep world context visible and keep the close controls pinned. */
-#commandDock:not(.compact){max-height:min(62dvh,570px);padding-top:8px;background:rgba(7,13,18,.91);scroll-padding-top:72px}
+#commandDock:not(.compact){max-height:min(62dvh,570px);padding-top:8px;background:rgba(7,13,18,.91);scroll-padding-top:86px}
 #commandDock:not(.compact) .sheetHandle{display:flex}
-#commandDock:not(.compact) .dockMini{position:sticky;top:0;z-index:8;margin:-1px -1px 0;padding:5px 2px 7px;background:linear-gradient(180deg,rgba(7,13,18,.99) 72%,rgba(7,13,18,.74));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#commandDock:not(.compact) .dockMini{position:sticky;top:24px;z-index:8;margin:-1px -1px 0;padding:5px 2px 7px;background:linear-gradient(180deg,rgba(7,13,18,.99) 72%,rgba(7,13,18,.74));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 #commandDock:not(.compact) .dockMini::before{content:"管理・設備投資";flex:1;align-self:center;color:#dff6ff;font-size:13px;font-weight:900;letter-spacing:.01em;padding-left:4px}
 #commandDock:not(.compact) .miniPolicies,
 #commandDock:not(.compact) .quickSpeed,
@@ -42,7 +42,7 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #commandDock:not(.compact) .opsMiniSummary{display:none!important}
 #commandDock:not(.compact) #observeBtn,#commandDock:not(.compact) #dockToggle{display:inline-flex;align-items:center;justify-content:center;min-width:72px}
 #dockExpanded{margin-top:4px;padding-top:6px}
-.sheetHandle{display:none;position:sticky;top:0;z-index:9;align-items:center;justify-content:center;height:24px;margin:-7px -7px 0;cursor:pointer;touch-action:pan-y}
+.sheetHandle{display:none;position:sticky;top:0;z-index:9;align-items:center;justify-content:center;height:24px;margin:-7px -7px 0;cursor:pointer;touch-action:pan-y;background:rgba(7,13,18,.96)}
 .sheetHandle::after{content:"";width:42px;height:4px;border-radius:999px;background:rgba(210,227,237,.28)}
 
 /* Capital is the primary management decision surface. */
