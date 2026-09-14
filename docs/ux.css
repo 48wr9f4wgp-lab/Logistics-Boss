@@ -13,3 +13,15 @@
 #celebration{top:30%;width:min(72vw,340px);padding:12px 16px;border-radius:17px}
 #celebration strong{font-size:18px}#celebration span{font-size:12px}
 @media (max-width:500px){.metric span{font-size:8px}.metric strong{font-size:13px}}
+
+
+/* Rank 2 Systems Pass */
+#app.rank2 .miniPolicies{display:none}
+#app.rank2 .dockMini{justify-content:flex-end}
+.staffingPanel{margin-top:8px;padding:8px;border-radius:12px;border:1px solid rgba(101,211,255,.14);background:rgba(43,83,105,.08)}
+.staffingHead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.staffingHead small{display:block;color:#82919c;font-size:8px;letter-spacing:.12em}.staffingHead strong{display:block;margin-top:2px;font-size:11px}.staffingHead>span{font-size:9px;color:#93a6b4}
+.staffingCounts{display:flex;gap:6px;margin-top:7px}.staffingCounts span{flex:1;padding:5px 6px;border-radius:8px;background:rgba(255,255,255,.04);color:#9cabb5;font-size:9px}.staffingCounts b{float:right;color:#f3f7fa;font-size:11px}
+.staffingChoices{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px}.staffingChoices button{min-height:48px;padding:6px;border:1px solid rgba(255,255,255,.11);border-radius:10px;background:rgba(255,255,255,.045);color:#eaf0f4;text-align:left}.staffingChoices button strong{display:block;font-size:9px}.staffingChoices button small{display:block;margin-top:3px;color:#8fa0ac;font-size:8px;line-height:1.2}.staffingChoices button.active{border-color:rgba(101,211,255,.5);background:rgba(65,164,211,.17)}.staffingChoices button:disabled{opacity:.38}
+.facilityZones{display:grid;gap:7px;margin-top:7px}.facilityZone{padding:7px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025)}.zoneHead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}.zoneHead strong{font-size:10px}.zoneHead span{font-size:8px;color:#8798a4}.zoneChoices{display:grid;grid-template-columns:1fr 1fr;gap:6px}.zoneChoices .facilityChoice{min-height:82px;min-width:0;display:block}.facilityChoice.chosenOther{opacity:.34;filter:saturate(.5)}
+.legacyNotice{margin:8px 0;padding:7px 8px;border-radius:9px;background:rgba(255,255,255,.035);color:#8fa0aa;font-size:9px;line-height:1.35}
+#app.rank2 #directorActionRow #directorAction{display:none}

@@ -46,6 +46,10 @@ export function bindUi(sim, sceneView) {
     celebration: document.getElementById('celebration'),
     celebrationTitle: document.getElementById('celebrationTitle'),
     celebrationReward: document.getElementById('celebrationReward'),
+    staffingLock: document.getElementById('staffingLock'),
+    crewStore: document.getElementById('crewStore'),
+    crewPick: document.getElementById('crewPick'),
+    crewShip: document.getElementById('crewShip'),
   };
 
   const policyButtons = [...document.querySelectorAll('[data-policy]')];
@@ -53,7 +57,7 @@ export function bindUi(sim, sceneView) {
   const upgradeButtons = [...document.querySelectorAll('[data-upgrade]')];
   const perkButtons = [...document.querySelectorAll('[data-perk]')];
   const facilityButtons = [...document.querySelectorAll('[data-facility]')];
-  const priorityButtons = [...document.querySelectorAll('[data-priority-kind]')];
+  const staffingPlanButtons = [...document.querySelectorAll('[data-staffing-plan]')];
   let toastTimer = 0;
   let celebrationTimer = 0;
   let lastOfferSignature = '';
@@ -133,11 +137,11 @@ export function bindUi(sim, sceneView) {
     });
   });
 
-  priorityButtons.forEach((button) => {
+  staffingPlanButtons.forEach((button) => {
     button.addEventListener('click', () => {
-      const kind = button.dataset.priorityKind;
-      const delta = Number(button.dataset.delta || 0);
-      sim.setPriority(kind, (sim.state.priorities[kind] || 3) + delta);
+      const result = sim.setStaffingPlan(button.dataset.staffingPlan);
+      if (!result.ok) toast(result.reason, 'warn');
+      else { toast('人員配置を変更。しばらく観察しよう', 'good'); try { navigator.vibrate?.(14); } catch {} }
       render();
     });
   });
@@ -190,6 +194,7 @@ perkButtons.forEach((button) => {
   el.insightToggle.addEventListener('click', () => { setInsightCompact(!insightCompact); render(); });
   el.directorAction.addEventListener('click', () => {
     const action = el.directorAction.dataset.action || '';
+    if (sim.state.facilityRank >= 2) return;
     if (action === 'contract') setInsightCompact(false);
     else if (action === 'management') setDockCompact(false);
     else if (action.startsWith('policy:')) { sim.setPolicy(action.slice(7)); try { navigator.vibrate?.(10); } catch {} }
@@ -293,8 +298,11 @@ perkButtons.forEach((button) => {
     el.research.textContent = `${s.research} RP`;
   const nextTarget = sim.nextRankTarget();
   el.facilityRank.textContent = `RANK ${s.facilityRank} · ${sim.facilityRankName()}`;
-  el.logisticsRating.textContent = nextTarget == null ? `物流評価 ${s.logisticsRating} · MAX` : `物流評価 ${s.logisticsRating} / ${nextTarget}`;
-  el.facilityProgressBar.style.width = `${nextTarget == null ? 100 : Math.min(100, (s.logisticsRating / nextTarget) * 100)}%`;
+  const zoneGroups = ['intakeStrategy', 'rackStrategy', 'packStrategy'];
+  const chosenZones = zoneGroups.filter((group) => Object.keys(sim.facilityInfo).some((key) => sim.facilityInfo[key].group === group && s.facilities[key])).length;
+  el.logisticsRating.textContent = nextTarget == null ? `拡張区画 ${chosenZones} / 3` : `物流評価 ${s.logisticsRating} / ${nextTarget}`;
+  el.facilityProgressBar.style.width = `${nextTarget == null ? (chosenZones / 3) * 100 : Math.min(100, (s.logisticsRating / nextTarget) * 100)}%`;
+  document.getElementById('app')?.classList.toggle('rank2', s.facilityRank >= 2);
   el.shipped.textContent = s.shipped.toLocaleString('ja-JP');
     el.orders.textContent = s.ordersOpen.toLocaleString('ja-JP');
     el.inbound.textContent = c.inbound.toLocaleString('ja-JP');
@@ -323,8 +331,14 @@ perkButtons.forEach((button) => {
     let recommendation = d.recommendation;
     let action = '';
     let actionLabel = '';
-    if (d.severity > 0 && human[d.key]) ({ label, detail, recommendation, action, actionLabel } = human[d.key]);
-    else if (s.facilityRank < 2) {
+    if (d.severity > 0 && human[d.key]) {
+      ({ label, detail, recommendation, action, actionLabel } = human[d.key]);
+      if (s.facilityRank >= 2) {
+        action = ''; actionLabel = '';
+        const diagnose = { inbound: '受入量が棚入れ能力を上回っています', rack: '保管量が下流の処理能力を上回っています', orders: '注文到着がピック・梱包能力を上回っています', packed: '梱包完了が出荷能力を上回っています' };
+        recommendation = diagnose[d.key] || 'どの工程へ人員・区画能力を寄せるか判断してください';
+      }
+    } else if (s.facilityRank < 2) {
       const remainingRating = Math.max(0, (nextTarget || 8) - s.logisticsRating);
       const approxContracts = Math.ceil(remainingRating / 2);
       if (!s.activeContract && offerCount > 0) {
@@ -332,7 +346,13 @@ perkButtons.forEach((button) => {
       } else if (s.activeContract) {
         label = `契約: ${s.activeContract.title}`; detail = `進行 ${contractProgressText(s.activeContract)} · 評価${s.logisticsRating}/${nextTarget || 8}`; recommendation = '詰まりが出たら、ここに出る推奨方針へ切り替える'; action = `policy:${s.activeContract.kind === 'inbound' ? 'inbound' : s.activeContract.kind === 'ship' ? 'ship' : 'balanced'}`; actionLabel = s.activeContract.kind === 'inbound' ? '入庫優先にする' : s.activeContract.kind === 'ship' ? '出庫優先にする' : 'バランスにする';
       } else { label = '次の契約を待っています'; detail = `物流評価 ${s.logisticsRating}/${nextTarget || 8}`; recommendation = `Warehouseまであと約${approxContracts}契約`; }
-    } else if (d.severity === 0) { label = '次は物流設備を選ぶ'; detail = 'Warehouse解禁済み'; recommendation = '管理から、第2搬入口・ラック方針・第2梱包ラインへ投資'; action = 'management'; actionLabel = '設備を見る'; }
+    } else if (d.severity === 0) {
+      const crew = sim.staffingSummary();
+      label = chosenZones < 3 ? `Warehouse設計 · 区画${chosenZones}/3` : 'Warehouse安定運転';
+      detail = `人員 入荷${crew.store} / ピック${crew.pick} / 出荷${crew.ship}`;
+      recommendation = chosenZones < 3 ? '未決定区画を選び、物流の性格を作る' : 'FLOWを観察し、次の自動化段階に備える';
+      action = ''; actionLabel = '';
+    }
     let step = '';
     if (s.facilityRank < 2) step = s.completedContracts === 0 && !s.activeContract ? 'STEP 1/3' : s.completedContracts === 0 ? 'STEP 2/3' : 'STEP 3/3';
     el.ftueStep.hidden = !step;
@@ -350,11 +370,14 @@ perkButtons.forEach((button) => {
     speedButtons.forEach((button) => button.classList.toggle('active', Number(button.dataset.speed) === s.timeScale));
     el.quickSpeed.textContent = s.timeScale === 0 ? 'Ⅱ' : `${s.timeScale}×`;
 
-    document.querySelectorAll('[data-priority]').forEach((row) => {
-      const key = row.dataset.priority;
-      const node = row.querySelector('[data-priority-value]');
-      if (node) node.textContent = String(s.priorities[key]);
-      row.dataset.level = String(s.priorities[key]);
+    const crew = sim.staffingSummary();
+    el.crewStore.textContent = String(crew.store);
+    el.crewPick.textContent = String(crew.pick);
+    el.crewShip.textContent = String(crew.ship);
+    el.staffingLock.textContent = s.facilityRank < 2 ? 'Rank 2で解禁' : s.staffingCooldown > 0 ? `配置替え ${Math.ceil(s.staffingCooldown)}秒` : '変更可能';
+    staffingPlanButtons.forEach((button) => {
+      button.classList.toggle('active', button.dataset.staffingPlan === s.staffingPlan);
+      button.disabled = s.facilityRank < 2 || s.staffingCooldown > 0;
     });
 
     facilityButtons.forEach((button) => {
@@ -362,10 +385,12 @@ perkButtons.forEach((button) => {
     const def = sim.facilityInfo[type];
     const built = Boolean(s.facilities[type]);
     const locked = s.facilityRank < def.rank;
-    const conflicting = def.group === 'rackStrategy' && !built && (s.facilities.fastPickRack || s.facilities.highDensityRack);
+    const selectedInGroup = def.group ? Object.keys(sim.facilityInfo).find((key) => sim.facilityInfo[key].group === def.group && s.facilities[key]) : null;
+    const conflicting = Boolean(selectedInGroup && selectedInGroup !== type);
     const costNode = button.querySelector('[data-facility-cost]');
     button.classList.toggle('built', built);
     button.classList.toggle('locked', locked);
+    button.classList.toggle('chosenOther', conflicting);
     button.disabled = built || locked || conflicting || (!built && s.money < def.cost);
     if (costNode) costNode.textContent = built ? '建設済み' : locked ? `RANK ${def.rank}` : conflicting ? '方針選択済み' : yen(def.cost);
     button.title = def.desc;
@@ -379,7 +404,7 @@ perkButtons.forEach((button) => {
       const cost = sim.upgradeCost(type);
       const levelNode = button.querySelector('[data-level]');
       const costNode = button.querySelector('[data-cost]');
-      if (levelNode) levelNode.textContent = `Lv.${level}/${def.max}`;
+      if (levelNode) levelNode.textContent = def.max === 1 ? (level ? '解禁済み' : '未研究') : `Lv.${level}/${def.max}`;
       if (costNode) costNode.textContent = maxed ? 'MAX' : yen(cost);
       button.disabled = maxed || (!maxed && s.money < cost);
     });
@@ -392,7 +417,7 @@ perkButtons.forEach((button) => {
       const cost = sim.perkCost(type);
       const levelNode = button.querySelector('[data-level]');
       const costNode = button.querySelector('[data-cost]');
-      if (levelNode) levelNode.textContent = `Lv.${level}/${def.max}`;
+      if (levelNode) levelNode.textContent = def.max === 1 ? (level ? '解禁済み' : '未研究') : `Lv.${level}/${def.max}`;
       if (costNode) costNode.textContent = maxed ? 'MAX' : `${cost} RP`;
       button.disabled = maxed || (!maxed && s.research < cost);
       button.title = def.desc;

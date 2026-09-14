@@ -27,16 +27,18 @@ const UPGRADE_INFO = {
 };
 
 const PERK_INFO = {
-  smartDispatch: { label: 'スマート配車', cost: 2, max: 3, desc: '混雑度に応じて仕事選択を自動補正' },
-  bulkPack: { label: '標準化梱包', cost: 2, max: 3, desc: '梱包時間 -15%' },
-  contractBonus: { label: '高単価契約', cost: 3, max: 2, desc: '契約報酬 +25%' },
+  smartDispatch: { label: 'スマート配車', cost: 4, max: 1, desc: '担当内で混雑度に応じて仕事選択を自動補正' },
+  bulkPack: { label: '標準化梱包', cost: 4, max: 1, desc: '梱包時間 -15%' },
+  contractBonus: { label: '高単価契約', cost: 5, max: 1, desc: '契約報酬 +25%' },
 };
 
 const FACILITY_INFO = {
-  secondInbound: { label: '第2搬入口', cost: 2400, rank: 2, desc: '受入容量+6 / 入荷間隔を22%短縮' },
-  fastPickRack: { label: '高速ピックラック', cost: 2800, rank: 2, group: 'rackStrategy', desc: '棚容量+4 / ピッキング移動+25%' },
-  highDensityRack: { label: '高密度ラック', cost: 2800, rank: 2, group: 'rackStrategy', desc: '棚容量+12 / ピッキング移動-14%' },
-  secondPack: { label: '第2梱包ライン', cost: 3200, rank: 2, desc: '同時梱包数 1→2' },
+  secondInbound: { label: 'ダブルドック', cost: 2400, rank: 2, group: 'intakeStrategy', zone: 'A', desc: '入荷上限+6 / 入荷22%増。稼げるが内部が詰まりやすい' },
+  bufferYard: { label: '受入バッファ', cost: 2200, rank: 2, group: 'intakeStrategy', zone: 'A', desc: '入荷上限+14。処理速度は増えないがピークに強い' },
+  fastPickRack: { label: '高速ピックラック', cost: 2800, rank: 2, group: 'rackStrategy', zone: 'B', desc: '保管+4 / ピック25%速。高速回転向け' },
+  highDensityRack: { label: '高密度ラック', cost: 2800, rank: 2, group: 'rackStrategy', zone: 'B', desc: '保管+12 / ピック14%遅。大量在庫向け' },
+  secondPack: { label: '並列梱包ライン', cost: 3200, rank: 2, group: 'packStrategy', zone: 'C', desc: '同時2箱 / 1箱あたり10%遅。波に強い' },
+  fastPackCell: { label: '高速梱包セル', cost: 3000, rank: 2, group: 'packStrategy', zone: 'C', desc: '同時1箱 / 梱包42%速。少量高速向け' },
 };
 const FACILITY_RANKS = {
   1: { name: 'Small Depot', rating: 0 },
@@ -92,6 +94,7 @@ function createWorker(id, index) {
     carrying: null,
     state: 'idle',
     facing: 0,
+    role: 'store',
   };
 }
 
@@ -110,12 +113,14 @@ export function createSimulation(saved = null) {
   const shipmentTimes = [];
 
   const state = {
-    schema_version: 2,
+    schema_version: 3,
     money: 650,
     research: 0,
     logisticsRating: 0,
     facilityRank: 1,
-    facilities: { secondInbound: false, fastPickRack: false, highDensityRack: false, secondPack: false },
+    facilities: { secondInbound: false, bufferYard: false, fastPickRack: false, highDensityRack: false, secondPack: false, fastPackCell: false },
+    staffingPlan: 'balanced',
+    staffingCooldown: 0,
     shipped: 0,
     ordersOpen: 2,
     policy: 'balanced',
@@ -144,7 +149,8 @@ export function createSimulation(saved = null) {
   }
 
   function workerCount() {
-    return BASE.workerCount + state.upgrades.worker;
+    const rankBonus = state.facilityRank >= 2 ? 2 : 0;
+    return BASE.workerCount + rankBonus + state.upgrades.worker;
   }
 
   function workerSpeed() {
@@ -160,6 +166,7 @@ function nextRankTarget() {
 }
 
 function inboundMax() {
+  if (state.facilities.bufferYard) return BASE.inboundMax + 14;
   return BASE.inboundMax + (state.facilities.secondInbound ? 6 : 0);
 }
 
@@ -168,7 +175,7 @@ function inboundInterval() {
 }
 
 function packCapacity() {
-  return 1 + (state.facilities.secondPack ? 1 : 0);
+  return state.facilities.secondPack ? 2 : 1;
 }
 
 function rackCapacity() {
@@ -179,7 +186,8 @@ function rackCapacity() {
 function packTime() {
     const upgradeFactor = Math.pow(0.82, state.upgrades.pack);
     const perkFactor = Math.pow(0.85, state.perks.bulkPack);
-    return BASE.packTime * upgradeFactor * perkFactor;
+    const facilityFactor = state.facilities.fastPackCell ? 0.58 : state.facilities.secondPack ? 1.10 : 1;
+    return BASE.packTime * upgradeFactor * perkFactor * facilityFactor;
   }
 
   function conveyorInterval() {
@@ -202,12 +210,43 @@ function packTime() {
     saveDirty = true;
   }
 
+  function staffingSequence(plan) {
+    if (plan === 'receiving') return ['store', 'pick', 'ship', 'store', 'store', 'pick', 'store', 'ship'];
+    if (plan === 'shipping') return ['store', 'pick', 'ship', 'ship', 'pick', 'ship', 'pick', 'store'];
+    return ['store', 'pick', 'ship', 'store', 'pick', 'ship', 'store', 'pick'];
+  }
+
+  function applyStaffingPlan() {
+    const sequence = staffingSequence(state.staffingPlan);
+    state.workers.forEach((worker, index) => { worker.role = sequence[index % sequence.length]; });
+  }
+
+  function staffingSummary() {
+    const result = { store: 0, pick: 0, ship: 0, total: state.workers.length };
+    for (const worker of state.workers) result[worker.role] = (result[worker.role] || 0) + 1;
+    return result;
+  }
+
+  function setStaffingPlan(plan) {
+    if (state.facilityRank < 2) return { ok: false, reason: 'Warehouseで解禁' };
+    if (!['balanced', 'receiving', 'shipping'].includes(plan)) return { ok: false, reason: '不明な配属' };
+    if (state.staffingCooldown > 0) return { ok: false, reason: `配置替え中 ${Math.ceil(state.staffingCooldown)}秒` };
+    if (state.staffingPlan === plan) return { ok: false, reason: '現在の配属です' };
+    state.staffingPlan = plan;
+    state.staffingCooldown = 30;
+    applyStaffingPlan();
+    emit('staffing', { text: plan === 'receiving' ? '人員配置: 受入強化' : plan === 'shipping' ? '人員配置: 出荷強化' : '人員配置: 均衡' });
+    markDirty();
+    return { ok: true };
+  }
+
   function ensureWorkers() {
     while (state.workers.length < workerCount()) {
       const index = state.workers.length;
       state.workers.push(createWorker(nextWorkerId++, index));
       emit('worker_hired', { text: 'スタッフが増えた' });
     }
+    applyStaffingPlan();
   }
 
   function normalizeInboundPositions() {
@@ -284,6 +323,7 @@ function packTime() {
   }
 
   function policyWeights() {
+    if (state.facilityRank >= 2) return { store: 1, pick: 1, ship: 1 };
     if (state.policy === 'inbound') return { store: 1.8, pick: 0.72, ship: 1.05 };
     if (state.policy === 'ship') return { store: 0.62, pick: 1.7, ship: 1.75 };
     return { store: 1, pick: 1, ship: 1.15 };
@@ -328,8 +368,9 @@ function packTime() {
       score: 72 * weights.store * priorityWeight('store') * smartDispatchBonus('store'),
     });
 
-    options.sort((a, b) => b.score - a.score);
-    const selected = options[0];
+    const eligible = state.facilityRank >= 2 ? options.filter((option) => option.kind === worker.role) : options;
+    eligible.sort((a, b) => b.score - a.score);
+    const selected = eligible[0];
     if (!selected) {
       worker.state = 'idle';
       return;
@@ -562,7 +603,9 @@ function runConveyor(dt) {
   function updateFacilityRank() {
   if (state.facilityRank < 2 && state.logisticsRating >= FACILITY_RANKS[2].rating) {
     state.facilityRank = 2;
-    emit('rank_up', { rank: 2, name: facilityRankName(2), text: '施設ランクUP: Warehouse' });
+    ensureWorkers();
+    applyStaffingPlan();
+    emit('rank_up', { rank: 2, name: facilityRankName(2), text: '施設ランクUP: Warehouse / 5人編成を解禁' });
     markDirty();
   }
 }
@@ -651,6 +694,7 @@ function finishContract(success) {
       return;
     }
     simClock += scaled;
+    state.staffingCooldown = Math.max(0, state.staffingCooldown - scaled);
     updateSpawners(scaled);
     runConveyor(scaled);
     updatePacking(scaled);
@@ -708,9 +752,9 @@ function purchaseFacility(type) {
   if (!def) return { ok: false, reason: '不明な施設' };
   if (state.facilityRank < def.rank) return { ok: false, reason: `Rank ${def.rank}で解禁` };
   if (state.facilities[type]) return { ok: false, reason: '建設済み' };
-  if (def.group === 'rackStrategy') {
-    const other = type === 'fastPickRack' ? 'highDensityRack' : 'fastPickRack';
-    if (state.facilities[other]) return { ok: false, reason: 'ラック方針は選択済み' };
+  if (def.group) {
+    const chosen = Object.keys(FACILITY_INFO).find((key) => key !== type && FACILITY_INFO[key].group === def.group && state.facilities[key]);
+    if (chosen) return { ok: false, reason: `区画${def.zone}は選択済み` };
   }
   const cost = facilityCost(type);
   if (state.money < cost) return { ok: false, reason: '資金不足' };
@@ -736,18 +780,19 @@ function purchasePerk(type) {
   }
 
   function hydrate(snapshot) {
-    if (!snapshot || ![1, 2].includes(snapshot.schema_version)) return;
+    if (!snapshot || ![1, 2, 3].includes(snapshot.schema_version)) return;
     if (Number.isFinite(snapshot.money)) state.money = Math.max(0, snapshot.money);
     if (Number.isFinite(snapshot.research)) state.research = Math.max(0, Math.floor(snapshot.research));
     if (Number.isFinite(snapshot.shipped)) state.shipped = Math.max(0, snapshot.shipped);
     if (Number.isFinite(snapshot.completedContracts)) state.completedContracts = Math.max(0, Math.floor(snapshot.completedContracts));
     if (Number.isFinite(snapshot.milestoneAwarded)) state.milestoneAwarded = Math.max(0, Math.floor(snapshot.milestoneAwarded));
-  if (snapshot.schema_version === 2) {
+  if (snapshot.schema_version >= 2) {
     if (Number.isFinite(snapshot.logisticsRating)) state.logisticsRating = Math.max(0, Math.floor(snapshot.logisticsRating));
     if (Number.isFinite(snapshot.facilityRank)) state.facilityRank = clamp(Math.floor(snapshot.facilityRank), 1, 2);
     if (snapshot.facilities && typeof snapshot.facilities === 'object') {
       for (const key of Object.keys(FACILITY_INFO)) state.facilities[key] = Boolean(snapshot.facilities[key]);
     }
+    if (snapshot.schema_version >= 3 && ['balanced', 'receiving', 'shipping'].includes(snapshot.staffingPlan)) state.staffingPlan = snapshot.staffingPlan;
   } else {
     state.logisticsRating = Math.max(0, state.completedContracts * 2 + Math.floor(state.shipped / 100));
     state.facilityRank = state.logisticsRating >= FACILITY_RANKS[2].rating ? 2 : 1;
@@ -772,12 +817,13 @@ function purchasePerk(type) {
 
   function serialize() {
     return {
-      schema_version: 2,
+      schema_version: 3,
     money: state.money,
     research: state.research,
     logisticsRating: state.logisticsRating,
     facilityRank: state.facilityRank,
     facilities: { ...state.facilities },
+    staffingPlan: state.staffingPlan,
     shipped: state.shipped,
       completedContracts: state.completedContracts,
       milestoneAwarded: state.milestoneAwarded,
@@ -799,7 +845,9 @@ function purchasePerk(type) {
   state.research = 0;
   state.logisticsRating = 0;
   state.facilityRank = 1;
-  state.facilities = { secondInbound: false, fastPickRack: false, highDensityRack: false, secondPack: false };
+  state.facilities = { secondInbound: false, bufferYard: false, fastPickRack: false, highDensityRack: false, secondPack: false, fastPackCell: false };
+  state.staffingPlan = 'balanced';
+  state.staffingCooldown = 0;
   state.shipped = 0;
     state.completedContracts = 0;
     state.milestoneAwarded = 0;
@@ -845,6 +893,8 @@ function purchasePerk(type) {
     facilityRankName,
     nextRankTarget,
     facilityCost,
+    staffingSummary,
+    setStaffingPlan,
     upgradeCost,
     perkCost,
     facilityInfo: FACILITY_INFO,

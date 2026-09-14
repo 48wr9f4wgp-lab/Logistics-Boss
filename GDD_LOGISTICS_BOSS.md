@@ -130,3 +130,23 @@ UX rules:
 - Milestones use non-blocking toast feedback. Large center-screen celebration is reserved for contract completion and Facility Rank up.
 - Contract selection must be labeled explicitly; do not use an unlabeled plus icon as the primary affordance.
 - Upgrade cards must state their practical effect, not only their name and level.
+
+
+## Rank 2 Systems Pass Phase 1 LOCK
+
+Rank 2 is no longer a numeric upgrade layer. It is the first structural logistics-design layer. Repeated task-priority +/- controls and repeatable equipment-level buttons are removed from the management UI. Legacy save effects remain compatible but are not the product-facing progression model.
+
+Rank 2 rules:
+- Rank-up grants a five-person base crew. Workers receive structural roles: receiving/store, pick, or ship.
+- The player chooses one staffing plan (Receiving / Balanced / Shipping). Reassignment has a 30 simulated-second lock so it is a strategic intervention, not a twitch button.
+- Rank 1 policy buttons remain an FTUE tool; Rank 2 task dispatch is driven by crew roles and the policy weighting becomes neutral.
+- Three fixed expansion zones are available. Each zone is one-of-two and cannot be filled with both choices.
+  - Zone A Intake: Double Dock (more arrival throughput, higher downstream pressure) vs Buffer Yard (more surge capacity, no arrival-rate gain).
+  - Zone B Storage: Fast Pick Rack (less capacity, faster picks) vs High Density Rack (more capacity, slower picks).
+  - Zone C Packing: Parallel Pack Line (two concurrent packs, slower each) vs Fast Pack Cell (one concurrent pack, much faster each).
+- All six choices must change simulation behavior; new choices must also be visible in the 3D warehouse.
+- Director remains prescriptive during Rank 1 FTUE, but at Rank 2 it becomes diagnostic: it exposes which stage is imbalanced and does not provide a one-tap fix.
+- Rank 2 progress is shown as Expansion Zones 0/3 through 3/3, never as a misleading MAX label.
+- Research unlocks in this phase are one-time decisions rather than repeatable levels.
+
+Success: after entering Warehouse, the player should spend more time observing the consequences of crew/zone decisions than pressing upgrade buttons.
