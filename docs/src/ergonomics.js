@@ -18,15 +18,23 @@ export function bindErgonomics(sim, capital) {
 
   const app = document.getElementById('app');
   const dock = document.getElementById('commandDock');
+  const dockMini = document.getElementById('dockMini');
   const dockExpanded = document.getElementById('dockExpanded');
   const dockToggle = document.getElementById('dockToggle');
   const observe = document.getElementById('observeBtn');
   const capitalPanel = document.getElementById('capitalPanel');
+  const capitalGoals = capitalPanel?.querySelector('.capitalGoals');
   const capitalReport = document.getElementById('capitalReport');
   if (!app || !dock || !dockToggle) return { update() {} };
 
   // Capital is the primary management loop. Keep it first when the sheet opens.
   if (dockExpanded && capitalPanel && dockExpanded.firstElementChild !== capitalPanel) dockExpanded.prepend(capitalPanel);
+
+  // Progress targets must not be constrained by capitalPanel's scroll position.
+  // Promote them to the sheet level directly below the pinned management header.
+  if (dockMini && capitalGoals && capitalGoals.parentElement !== dock) {
+    dockMini.insertAdjacentElement('afterend', capitalGoals);
+  }
 
   const handle = document.createElement('div');
   handle.className = 'sheetHandle';
