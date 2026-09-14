@@ -44,19 +44,22 @@ jobs:
           node --check docs/tests/capital-v3-smoke.mjs
           node docs/tests/capital-v2-smoke.mjs
           node docs/tests/capital-v3-smoke.mjs
-      - name: Remove one-shot patch tooling
+      - name: Keep generated commit workflow-free
+        shell: bash
         run: |
-          rm -f tools/capital_v3_patch.py
-          rm -f .github/workflows/capital-v3-apply.yml
+          set -euo pipefail
+          git checkout -- .github/workflows/qa.yml
+          git checkout -- tools/capital_v3_patch.py
+          rm -rf tools/__pycache__
       - name: Commit generated implementation
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add CAPITAL_EXPANSION_V2.md docs/src/capital-model.js docs/src/capital.js docs/src/sim.js docs/src/scene.js docs/tests/capital-v3-smoke.mjs
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "No implementation changes to commit"
             exit 1
           fi
           git commit -m "Implement Capital v2 Phase 3 truck waves"
