@@ -18,10 +18,16 @@ export function bindErgonomics(sim, capital) {
 
   const app = document.getElementById('app');
   const dock = document.getElementById('commandDock');
+  const dockExpanded = document.getElementById('dockExpanded');
   const dockToggle = document.getElementById('dockToggle');
   const observe = document.getElementById('observeBtn');
+  const capitalPanel = document.getElementById('capitalPanel');
   const capitalReport = document.getElementById('capitalReport');
+  const topHud = document.getElementById('topHud');
   if (!app || !dock || !dockToggle) return { update() {} };
+
+  // Capital is the primary management loop. Keep it first when the sheet opens.
+  if (dockExpanded && capitalPanel && dockExpanded.firstElementChild !== capitalPanel) dockExpanded.prepend(capitalPanel);
 
   const handle = document.createElement('div');
   handle.className = 'sheetHandle';
@@ -48,6 +54,17 @@ export function bindErgonomics(sim, capital) {
 
   function closeSheet() {
     if (!dockIsCompact()) dockToggle.click();
+  }
+
+  function syncPrimaryMetrics() {
+    if (!topHud) return;
+    const metrics = [...topHud.querySelectorAll('.metric')];
+    const throughput = metrics[2];
+    if (!throughput) return;
+    const label = throughput.querySelector('span');
+    const value = throughput.querySelector('strong');
+    if (label) label.textContent = '出荷/分';
+    if (value) value.textContent = `${Math.max(0, Number(sim.state.metrics?.perMinute) || 0)}`;
   }
 
   function syncDockSemantics() {
@@ -122,6 +139,7 @@ export function bindErgonomics(sim, capital) {
   }
 
   function sync() {
+    syncPrimaryMetrics();
     syncDockSemantics();
     const snapshot = capital?.snapshot?.() || window.__logisticsBossCapital?.snapshot?.();
     const report = snapshot?.report || null;
