@@ -27,7 +27,7 @@ assert(currentUnitRevenue(fresh.state.upgrades) === 120, 'fresh commercial value
 assert(commercialTierForAssets(8000).saleValue === 450, 'mechanized tier must raise shipment value to tuned pacing baseline');
 assert(commercialTierForAssets(40000).saleValue === 1500, '40k commercial tier must support active capital pacing');
 assert(commercialTierForAssets(200000).saleValue === 2600, '200k commercial tier must support active capital pacing');
-assert(commercialTierForAssets(500000).saleValue === 6000, '500k commercial tier must bridge toward million-yen automation');
+assert(commercialTierForAssets(500000).saleValue === 4200, '500k commercial tier must bridge toward million-yen automation without trivializing it');
 assert(commercialTierForAssets(1000000).saleValue > commercialTierForAssets(500000).saleValue, 'commercial value must continue increasing after one million assets');
 
 const migrated = createSimulation({
