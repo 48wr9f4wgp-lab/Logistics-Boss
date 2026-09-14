@@ -36,6 +36,7 @@ jobs:
           test -f docs/tests/progression-smoke.mjs
           test -f GDD_LOGISTICS_BOSS.md
           test -f BENCHMARK_LOGISTICS_BOSS_2026-09-13.md
+          test -f RANK2_SYSTEMS_PASS_PLAN.md
           echo "Required files OK"
 
       - name: JavaScript syntax
@@ -89,41 +90,54 @@ jobs:
           ! test -f .github/readability-pass4-trigger.txt
           echo "Readability pass 4 contract OK"
 
-      - name: Progression Spine phase 1 contract
+      - name: Progression Spine contract
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'schema_version: 2' docs/src/sim.js
+          grep -q 'schema_version: 3' docs/src/sim.js
           grep -q 'logisticsRating' docs/src/sim.js
           grep -q 'purchaseFacility' docs/src/sim.js
           grep -q 'packCapacity' docs/src/sim.js
-          grep -q 'data-facility="secondInbound"' docs/index.html
-          grep -q 'data-facility="secondPack"' docs/index.html
-          grep -q 'secondInboundFacility.visible' docs/src/scene.js
           grep -q 'facilityProgressBar' docs/src/ui.js
           grep -q 'Progression Spine v1 — Phase 1 LOCK' GDD_LOGISTICS_BOSS.md
-          ! test -f .github/workflows/progression-spine-phase1-apply.yml
-          ! test -f .github/workflows/progression-spine-phase1-apply-v2.yml
-          ! test -f .github/progression-spine-phase1-trigger.txt
-          ! test -f .github/progression-spine-phase1-v2-trigger.txt
           node docs/tests/progression-smoke.mjs
-          echo "Progression Spine Phase 1 contract OK"
+          echo "Progression Spine contract OK"
 
       - name: Rank 1 UX FTUE contract
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq './ux.css' docs/index.html
           grep -Fq 'id="directorAction"' docs/index.html
           grep -Fq 'id="ftueStep"' docs/index.html
           grep -Fq '棚使用' docs/index.html
-          grep -Fq 'upgradeEffect' docs/index.html
           grep -Fq 'STEP 1/3' docs/src/ui.js
           grep -Fq '棚がほぼ満杯' docs/src/ui.js
           grep -Fq '契約を1つ選ぶ' docs/src/ui.js
           grep -Fq 'directorAction.dataset.action' docs/src/ui.js
           ! grep -Fq "celebrate('MILESTONE'" docs/src/ui.js
-          ! test -f .github/workflows/rank1-ux-ftue-pass1-apply.yml
-          ! test -f .github/rank1-ux-ftue-pass1-trigger.txt
-          ! test -f tools/rank1_ux_ftue_patch.py
           echo "Rank 1 UX / FTUE contract OK"
+
+      - name: Rank 2 systems contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "staffingPlan: 'balanced'" docs/src/sim.js
+          grep -Fq 'setStaffingPlan' docs/src/sim.js
+          grep -Fq 'option.kind === worker.role' docs/src/sim.js
+          grep -Fq "group: 'intakeStrategy'" docs/src/sim.js
+          grep -Fq "group: 'rackStrategy'" docs/src/sim.js
+          grep -Fq "group: 'packStrategy'" docs/src/sim.js
+          grep -Fq 'data-staffing-plan="receiving"' docs/index.html
+          grep -Fq 'data-staffing-plan="shipping"' docs/index.html
+          grep -Fq 'data-facility="bufferYard"' docs/index.html
+          grep -Fq 'data-facility="fastPackCell"' docs/index.html
+          ! grep -Fq 'data-priority-kind=' docs/index.html
+          ! grep -Fq 'data-upgrade=' docs/index.html
+          grep -Fq 'bufferYardFacility.visible' docs/src/scene.js
+          grep -Fq 'fastPackCellFacility.visible' docs/src/scene.js
+          grep -Fq '拡張区画 ${chosenZones} / 3' docs/src/ui.js
+          grep -Fq 'Rank 2 Systems Pass Phase 1 LOCK' GDD_LOGISTICS_BOSS.md
+          ! test -f .github/workflows/rank2-systems-pass1-apply.yml
+          ! test -f .github/rank2-systems-pass1-trigger.txt
+          ! test -f tools/rank2_systems_patch.py
+          echo "Rank 2 systems contract OK"
