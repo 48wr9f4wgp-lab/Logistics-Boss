@@ -22,6 +22,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Repair generated patch source
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tools/capital_v3_patch.py')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('echo "JavaScript syntax OK""""', 'echo "JavaScript syntax OK"\n"""')
+          s = s.replace('echo "Capital Expansion v2 contract OK""""', 'echo "Capital Expansion v2 contract OK"\n"""')
+          p.write_text(s, encoding='utf-8')
+          PY
+          python -m py_compile tools/capital_v3_patch.py
       - name: Apply Phase 3 patch
         run: python tools/capital_v3_patch.py
       - name: Preflight syntax and smoke
