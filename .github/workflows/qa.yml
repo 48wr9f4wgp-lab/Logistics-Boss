@@ -207,9 +207,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          grep -Fq 'workforce:' docs/src/capital-model.js
           grep -Fq 'forklift:' docs/src/capital-model.js
           grep -Fq 'agv:' docs/src/capital-model.js
           grep -Fq 'sorter:' docs/src/capital-model.js
+          grep -Fq 'hall:' docs/src/capital-model.js
+          grep -Fq "hall: { label: '物流ホール拡張'" docs/src/sim.js
+          grep -Fq 'const hallBonus = (state.upgrades.hall || 0) * 8' docs/src/sim.js
+          grep -Fq 'const hallBonus = (state.upgrades.hall || 0) * 4' docs/src/sim.js
           grep -Fq 'function runForklift(dt)' docs/src/sim.js
           grep -Fq 'function runAgv(dt)' docs/src/sim.js
           grep -Fq 'function runSorter(dt)' docs/src/sim.js
@@ -217,6 +222,7 @@ jobs:
           grep -Fq 'function forkliftUnit(index)' docs/src/scene.js
           grep -Fq 'function agvUnit(index)' docs/src/scene.js
           grep -Fq 'function sorterModule(index)' docs/src/scene.js
+          grep -Fq 'Math.floor(Number(sim.state.upgrades.hall || 0))' docs/src/scene.js
           grep -Fq "sim.purchaseCapitalUpgrade(def.upgrade, cost)" docs/src/capital.js
           ! grep -Fq 'sim.state.money -= cost' docs/src/capital.js
           node docs/tests/capital-v2-smoke.mjs

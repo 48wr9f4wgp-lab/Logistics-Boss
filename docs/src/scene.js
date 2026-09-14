@@ -839,12 +839,7 @@ export async function createSceneView(canvas, sim) {
   }
 
   function growthLevel() {
-    const u = sim.state.upgrades;
-    const total = u.worker + u.speed + u.rack + u.pack + u.conveyor + (u.forklift || 0) + (u.agv || 0) + (u.sorter || 0);
-    if (total >= 13) return 3;
-    if (total >= 8) return 2;
-    if (total >= 4) return 1;
-    return 0;
+    return Math.max(0, Math.min(3, Math.floor(Number(sim.state.upgrades.hall || 0))));
   }
 
   function updateGrowth(dt) {
