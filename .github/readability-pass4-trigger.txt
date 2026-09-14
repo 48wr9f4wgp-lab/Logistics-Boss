@@ -1,1 +1,1 @@
-Trigger the one-shot Readability Pass 4 workflow. Safe to delete after the apply commit.
+Run Readability Pass 4 at 2026-09-14T10:01+09:00.
