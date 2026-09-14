@@ -70,3 +70,15 @@ jobs:
           grep -q 'three@0.186.0' docs/src/scene.js
           grep -q 'rapier3d-compat@0.20.0' docs/src/scene.js
           echo "Static entry contract OK"
+
+      - name: Readability pass contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'group.userData.dollhouse = true' docs/src/scene.js
+          grep -q 'pitch: 0.66' docs/src/scene.js
+          grep -q 'visibleLines < 3' docs/src/scene.js
+          grep -q 'opacity: 0.5, depthTest: false' docs/src/scene.js
+          ! test -f .github/workflows/readability-pass2-apply.yml
+          ! test -f .github/workflows/readability-pass2-apply-v2.yml
+          echo "Readability pass contract OK"
