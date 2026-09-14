@@ -63,6 +63,9 @@
           <button type="button" data-policy="inbound">入庫</button>
           <button type="button" data-policy="ship">出庫</button>
         </div>
+        <div id="opsMiniSummary" class="opsMiniSummary" aria-live="polite">
+          <strong id="opsCrew">人員 —</strong><span id="opsWeakness">弱点 —</span><span id="opsNext">NEXT —</span>
+        </div>
         <button id="quickSpeedBtn" class="quickSpeed" type="button" aria-label="時間速度を切り替え">1×</button>
         <button id="flowBtn" class="miniUtility" type="button" aria-pressed="false">FLOW</button>
         <button id="observeBtn" class="miniUtility" type="button" aria-pressed="false">観察</button>
@@ -82,9 +85,11 @@
           <div class="staffingHead"><div><small>CREW PLAN</small><strong>5人をどこへ厚く置くか</strong></div><span id="staffingLock">Rank 2で解禁</span></div>
           <div class="staffingCounts"><span>入荷 <b id="crewStore">1</b></span><span>ピック <b id="crewPick">1</b></span><span>出荷 <b id="crewShip">1</b></span></div>
           <div class="staffingChoices">
-            <button type="button" data-staffing-plan="receiving"><strong>受入強化</strong><small>入荷側に厚く配置</small></button>
-            <button type="button" data-staffing-plan="balanced"><strong>均衡</strong><small>全工程へ均等配置</small></button>
-            <button type="button" data-staffing-plan="shipping"><strong>出荷強化</strong><small>ピック・出荷側へ厚く配置</small></button>
+            <button type="button" data-staffing-plan="receiving"><strong>受入 3·1·1</strong><small>入荷を最優先</small></button>
+            <button type="button" data-staffing-plan="balanced"><strong>均衡 2·2·1</strong><small>標準編成</small></button>
+            <button type="button" data-staffing-plan="picking"><strong>ピック 1·3·1</strong><small>棚→梱包を最優先</small></button>
+            <button type="button" data-staffing-plan="dock"><strong>両端 2·1·2</strong><small>入荷と出荷を厚く</small></button>
+            <button type="button" data-staffing-plan="shipping"><strong>出荷 1·2·2</strong><small>下流を厚く</small></button>
           </div>
         </section>
 
@@ -115,6 +120,13 @@
     <button class="facilityChoice" type="button" data-facility="secondPack"><strong>並列梱包ライン</strong><span>同時2箱 / 各10%遅<br>波への耐性型</span><small data-facility-cost>¥3,200</small></button>
     <button class="facilityChoice" type="button" data-facility="fastPackCell"><strong>高速梱包セル</strong><span>同時1箱 / 42%速<br>少量高速型</span><small data-facility-cost>¥3,000</small></button>
   </div></section>
+</div>
+<div id="facilityImpact" class="facilityImpact" hidden></div>
+<div id="nextStagePanel" class="nextStagePanel" aria-label="次の施設段階">
+  <div class="nextStageHead"><small>NEXT STAGE</small><strong>Fulfillment Center</strong></div>
+  <div class="nextStageGoals"><span id="goalZones">区画 0/3</span><span id="goalContracts">契約 0/8</span><span id="goalThroughput">出荷 0/6分</span></div>
+  <div class="nextStageBar"><i id="nextStageBar"></i></div>
+  <small id="nextStageHint">3条件を満たすと自動化設計の準備完了</small>
 </div>
 
 <div class="legacyNotice">数値Lvアップは廃止。Rank 2以降は人員配置と拡張区画で物流構造を変える。</div>

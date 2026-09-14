@@ -141,6 +141,7 @@ export function createSimulation(saved = null) {
       ratios: { inbound: 0, rack: 0, orders: 0, packed: 0 },
     },
     metrics: { perMinute: 0 },
+    decisionImpact: null,
   };
 
   function emit(type, detail = {}) {
@@ -212,6 +213,8 @@ function packTime() {
 
   function staffingSequence(plan) {
     if (plan === 'receiving') return ['store', 'pick', 'ship', 'store', 'store', 'pick', 'store', 'ship'];
+    if (plan === 'picking') return ['store', 'pick', 'ship', 'pick', 'pick', 'store', 'ship', 'pick'];
+    if (plan === 'dock') return ['store', 'pick', 'ship', 'store', 'ship', 'pick', 'store', 'ship'];
     if (plan === 'shipping') return ['store', 'pick', 'ship', 'ship', 'pick', 'ship', 'pick', 'store'];
     return ['store', 'pick', 'ship', 'store', 'pick', 'ship', 'store', 'pick'];
   }
@@ -229,13 +232,14 @@ function packTime() {
 
   function setStaffingPlan(plan) {
     if (state.facilityRank < 2) return { ok: false, reason: 'Warehouseで解禁' };
-    if (!['balanced', 'receiving', 'shipping'].includes(plan)) return { ok: false, reason: '不明な配属' };
+    if (!['balanced', 'receiving', 'picking', 'dock', 'shipping'].includes(plan)) return { ok: false, reason: '不明な配属' };
     if (state.staffingCooldown > 0) return { ok: false, reason: `配置替え中 ${Math.ceil(state.staffingCooldown)}秒` };
     if (state.staffingPlan === plan) return { ok: false, reason: '現在の配属です' };
     state.staffingPlan = plan;
     state.staffingCooldown = 30;
     applyStaffingPlan();
-    emit('staffing', { text: plan === 'receiving' ? '人員配置: 受入強化' : plan === 'shipping' ? '人員配置: 出荷強化' : '人員配置: 均衡' });
+    const labels = { receiving: '受入強化 3·1·1', balanced: '均衡 2·2·1', picking: 'ピック強化 1·3·1', dock: '両端強化 2·1·2', shipping: '出荷強化 1·2·2' };
+    emit('staffing', { text: `人員配置: ${labels[plan] || plan}` });
     markDirty();
     return { ok: true };
   }
@@ -687,6 +691,39 @@ function finishContract(success) {
     }
   }
 
+  function updateDecisionImpact(dt) {
+    if (!state.decisionImpact) return;
+    state.decisionImpact.elapsed += dt;
+  }
+
+  function fulfillmentReadiness() {
+    const groups = ['intakeStrategy', 'rackStrategy', 'packStrategy'];
+    const zones = groups.filter((group) => Object.keys(FACILITY_INFO).some((key) => FACILITY_INFO[key].group === group && state.facilities[key])).length;
+    const contracts = Math.min(8, state.completedContracts);
+    const throughput = Math.min(6, state.metrics.perMinute);
+    const conditions = { zones: zones >= 3, contracts: state.completedContracts >= 8, throughput: state.metrics.perMinute >= 6 };
+    const score = Number(conditions.zones) + Number(conditions.contracts) + Number(conditions.throughput);
+    return { zones, contracts, throughput, conditions, score, ready: score === 3 };
+  }
+
+  function decisionImpact() {
+    const impact = state.decisionImpact;
+    if (!impact) return null;
+    const c = counts();
+    const rackRatio = c.rack / Math.max(1, rackCapacity());
+    return {
+      ...impact,
+      ready: impact.elapsed >= 20,
+      current: { throughput: state.metrics.perMinute, rackRatio, inbound: c.inbound, orders: state.ordersOpen },
+      delta: {
+        throughput: state.metrics.perMinute - impact.before.throughput,
+        rackPoints: Math.round((rackRatio - impact.before.rackRatio) * 100),
+        inbound: c.inbound - impact.before.inbound,
+        orders: state.ordersOpen - impact.before.orders,
+      },
+    };
+  }
+
   function update(realDt) {
     const scaled = clamp(realDt, 0, 0.05) * state.timeScale;
     if (scaled <= 0) {
@@ -695,6 +732,7 @@ function finishContract(success) {
     }
     simClock += scaled;
     state.staffingCooldown = Math.max(0, state.staffingCooldown - scaled);
+    updateDecisionImpact(scaled);
     updateSpawners(scaled);
     runConveyor(scaled);
     updatePacking(scaled);
@@ -758,8 +796,16 @@ function purchaseFacility(type) {
   }
   const cost = facilityCost(type);
   if (state.money < cost) return { ok: false, reason: '資金不足' };
+  const beforeCounts = counts();
+  const before = {
+    throughput: state.metrics.perMinute,
+    rackRatio: beforeCounts.rack / Math.max(1, rackCapacity()),
+    inbound: beforeCounts.inbound,
+    orders: state.ordersOpen,
+  };
   state.money -= cost;
   state.facilities[type] = true;
+  state.decisionImpact = { type, label: def.label, elapsed: 0, before };
   emit('facility_built', { type, text: `${def.label} 建設完了`, cost });
   markDirty();
   return { ok: true, cost, type };
@@ -792,7 +838,7 @@ function purchasePerk(type) {
     if (snapshot.facilities && typeof snapshot.facilities === 'object') {
       for (const key of Object.keys(FACILITY_INFO)) state.facilities[key] = Boolean(snapshot.facilities[key]);
     }
-    if (snapshot.schema_version >= 3 && ['balanced', 'receiving', 'shipping'].includes(snapshot.staffingPlan)) state.staffingPlan = snapshot.staffingPlan;
+    if (snapshot.schema_version >= 3 && ['balanced', 'receiving', 'picking', 'dock', 'shipping'].includes(snapshot.staffingPlan)) state.staffingPlan = snapshot.staffingPlan;
   } else {
     state.logisticsRating = Math.max(0, state.completedContracts * 2 + Math.floor(state.shipped / 100));
     state.facilityRank = state.logisticsRating >= FACILITY_RANKS[2].rating ? 2 : 1;
@@ -858,6 +904,7 @@ function purchasePerk(type) {
     state.perks = { smartDispatch: 0, bulkPack: 0, contractBonus: 0 };
     state.contractOffers = [];
     state.activeContract = null;
+    state.decisionImpact = null;
     state.workers.splice(0);
     state.boxes.splice(0);
     nextWorkerId = 1;
@@ -895,6 +942,9 @@ function purchasePerk(type) {
     facilityCost,
     staffingSummary,
     setStaffingPlan,
+    fulfillmentReadiness,
+    decisionImpact,
+    setTimeScale,
     upgradeCost,
     perkCost,
     facilityInfo: FACILITY_INFO,
@@ -902,7 +952,6 @@ function purchasePerk(type) {
     perkInfo: PERK_INFO,
     setPolicy,
     setPriority,
-    setTimeScale,
     purchaseUpgrade,
     purchaseFacility,
     purchasePerk,

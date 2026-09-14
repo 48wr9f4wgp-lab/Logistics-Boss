@@ -50,6 +50,15 @@ export function bindUi(sim, sceneView) {
     crewStore: document.getElementById('crewStore'),
     crewPick: document.getElementById('crewPick'),
     crewShip: document.getElementById('crewShip'),
+    opsCrew: document.getElementById('opsCrew'),
+    opsWeakness: document.getElementById('opsWeakness'),
+    opsNext: document.getElementById('opsNext'),
+    facilityImpact: document.getElementById('facilityImpact'),
+    goalZones: document.getElementById('goalZones'),
+    goalContracts: document.getElementById('goalContracts'),
+    goalThroughput: document.getElementById('goalThroughput'),
+    nextStageBar: document.getElementById('nextStageBar'),
+    nextStageHint: document.getElementById('nextStageHint'),
   };
 
   const policyButtons = [...document.querySelectorAll('[data-policy]')];
@@ -371,6 +380,30 @@ perkButtons.forEach((button) => {
     el.quickSpeed.textContent = s.timeScale === 0 ? 'Ⅱ' : `${s.timeScale}×`;
 
     const crew = sim.staffingSummary();
+    const weaknessNames = { inbound: '荷受け', rack: '保管', orders: '注文処理', packed: '出荷口', stable: 'なし' };
+    const readiness = sim.fulfillmentReadiness();
+    if (el.opsCrew) el.opsCrew.textContent = s.facilityRank >= 2 ? `人員 ${crew.store}·${crew.pick}·${crew.ship}` : '人員 方針運転';
+    if (el.opsWeakness) el.opsWeakness.textContent = `弱点 ${weaknessNames[d.key] || d.label}`;
+    if (el.opsNext) el.opsNext.textContent = s.facilityRank >= 2 ? `NEXT ${readiness.score}/3` : `NEXT RANK 2`;
+    if (el.goalZones) el.goalZones.textContent = `区画 ${readiness.zones}/3`;
+    if (el.goalContracts) el.goalContracts.textContent = `契約 ${Math.min(s.completedContracts, 8)}/8`;
+    if (el.goalThroughput) el.goalThroughput.textContent = `出荷 ${Math.min(s.metrics.perMinute, 6)}/6分`;
+    if (el.nextStageBar) el.nextStageBar.style.width = `${(readiness.score / 3) * 100}%`;
+    if (el.nextStageHint) el.nextStageHint.textContent = readiness.ready ? '自動化設計の準備完了 · 次はコンベア/ソーターへ' : '3条件を満たすと自動化設計の準備完了';
+
+    const impact = sim.decisionImpact();
+    if (el.facilityImpact) {
+      el.facilityImpact.hidden = !impact;
+      if (impact) {
+        if (!impact.ready) {
+          el.facilityImpact.textContent = `${impact.label}の効果を観測中… ${Math.min(20, Math.floor(impact.elapsed))}/20秒`;
+        } else {
+          const signed = (n, suffix = '') => `${n > 0 ? '+' : ''}${n}${suffix}`;
+          el.facilityImpact.innerHTML = `<strong>${impact.label} · 実測</strong><span>出荷 ${signed(impact.delta.throughput, '/分')}</span><span>棚使用 ${signed(impact.delta.rackPoints, 'pt')}</span><span>入荷待ち ${signed(impact.delta.inbound, '箱')}</span><span>注文 ${signed(impact.delta.orders, '件')}</span>`;
+        }
+      }
+    }
+
     el.crewStore.textContent = String(crew.store);
     el.crewPick.textContent = String(crew.pick);
     el.crewShip.textContent = String(crew.ship);

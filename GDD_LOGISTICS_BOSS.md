@@ -150,3 +150,12 @@ Rank 2 rules:
 - Research unlocks in this phase are one-time decisions rather than repeatable levels.
 
 Success: after entering Warehouse, the player should spend more time observing the consequences of crew/zone decisions than pressing upgrade buttons.
+
+
+## Rank 2 Systems Pass — Phase 2 LOCK (2026-09-14)
+
+- Rank 2 compact dock must show the current crew split, current weakest process, and progress toward the next automation stage; empty chrome is not acceptable.
+- Warehouse staffing remains a low-frequency strategic choice. Five presets expose exact 5-person allocations: 3/1/1, 2/2/1, 1/3/1, 2/1/2, 1/2/2. Reassignment keeps a 30-second observation lock.
+- Every Rank 2 zone decision starts a 20-second observation window and reports measured throughput, rack utilization, inbound queue, and open-order deltas.
+- The next visible goal is Fulfillment Center readiness: all 3 expansion zones chosen, 8 completed contracts, and at least 6 shipments/minute. This is a readiness gate only; Rank 3 gameplay is not claimed complete until conveyor/sorter gameplay exists.
+- Director continues to diagnose rather than provide a one-tap solution at Rank 2+.
