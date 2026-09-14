@@ -45,7 +45,7 @@ try {
     last = now;
 
     sim.update(dt);
-    freedom.update(dt);
+    freedom.update(dt * sim.state.timeScale);
     sceneView.update(dt);
 
     uiTimer += dt;
