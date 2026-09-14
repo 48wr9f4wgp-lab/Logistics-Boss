@@ -26,6 +26,7 @@ jobs:
           test -f docs/styles.css
           test -f docs/focus.css
           test -f docs/readability.css
+          test -f docs/ux.css
           test -f docs/health.html
           test -f docs/.nojekyll
           test -f docs/src/main.js
@@ -66,6 +67,7 @@ jobs:
           grep -q './styles.css' docs/index.html
           grep -q './focus.css' docs/index.html
           grep -q './readability.css' docs/index.html
+          grep -q './ux.css' docs/index.html
           grep -q 'id="observeBtn"' docs/index.html
           grep -q 'id="focusExit"' docs/index.html
           grep -q './src/main.js' docs/index.html
@@ -82,7 +84,6 @@ jobs:
           grep -Fq 'flowGuideClock' docs/src/scene.js
           grep -Fq 'updateFlowFloorGuide(dt)' docs/src/scene.js
           grep -Fq 'dataset.stable' docs/src/ui.js
-          grep -Fq '安定稼働 · 契約' docs/src/ui.js
           grep -Fq '#topHud .metric:nth-child(n+5)' docs/readability.css
           ! test -f .github/workflows/readability-pass4-apply.yml
           ! test -f .github/readability-pass4-trigger.txt
@@ -107,3 +108,22 @@ jobs:
           ! test -f .github/progression-spine-phase1-v2-trigger.txt
           node docs/tests/progression-smoke.mjs
           echo "Progression Spine Phase 1 contract OK"
+
+      - name: Rank 1 UX FTUE contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq './ux.css' docs/index.html
+          grep -Fq 'id="directorAction"' docs/index.html
+          grep -Fq 'id="ftueStep"' docs/index.html
+          grep -Fq '棚使用' docs/index.html
+          grep -Fq 'upgradeEffect' docs/index.html
+          grep -Fq 'STEP 1/3' docs/src/ui.js
+          grep -Fq '棚がほぼ満杯' docs/src/ui.js
+          grep -Fq '契約を1つ選ぶ' docs/src/ui.js
+          grep -Fq 'directorAction.dataset.action' docs/src/ui.js
+          ! grep -Fq "celebrate('MILESTONE'" docs/src/ui.js
+          ! test -f .github/workflows/rank1-ux-ftue-pass1-apply.yml
+          ! test -f .github/rank1-ux-ftue-pass1-trigger.txt
+          ! test -f tools/rank1_ux_ftue_patch.py
+          echo "Rank 1 UX / FTUE contract OK"
