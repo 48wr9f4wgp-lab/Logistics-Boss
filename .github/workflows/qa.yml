@@ -39,6 +39,8 @@ jobs:
           test -f docs/src/capital-model.js
           test -f docs/tests/progression-smoke.mjs
           test -f docs/tests/director-stability-smoke.mjs
+          test -f docs/tests/ergonomics-smoke.mjs
+          test -f docs/tests/hud-metric-stability-smoke.mjs
           test -f docs/tests/capital-v2-smoke.mjs
           test -f GDD_LOGISTICS_BOSS.md
           test -f CAPITAL_EXPANSION_V1.md
@@ -56,6 +58,8 @@ jobs:
           done
           node --check docs/tests/progression-smoke.mjs
           node --check docs/tests/director-stability-smoke.mjs
+          node --check docs/tests/ergonomics-smoke.mjs
+          node --check docs/tests/hud-metric-stability-smoke.mjs
           node --check docs/tests/capital-v2-smoke.mjs
           echo "JavaScript syntax OK"
 
@@ -122,6 +126,16 @@ jobs:
           ! grep -Fq 'bindInsightStability' docs/src/main.js
           node docs/tests/director-stability-smoke.mjs
           echo "Director stability regression OK"
+
+      - name: HUD metric stability regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -Fq 'syncPrimaryMetrics' docs/src/ergonomics.js
+          grep -Fq '<span>出荷ペース</span><strong id="throughput">0/分</strong>' docs/index.html
+          node docs/tests/ergonomics-smoke.mjs
+          node docs/tests/hud-metric-stability-smoke.mjs
+          echo "HUD metric stability regression OK"
 
       - name: Rank 1 freedom UI contract
         shell: bash
