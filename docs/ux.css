@@ -1,0 +1,15 @@
+/* Rank 1 UX / FTUE Pass 1 */
+#insightToggle{width:auto;min-width:44px;padding:0 9px;font-size:10px}
+#directorActionRow{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:6px}
+#directorActionRow:has(#directorAction[hidden]):has(#ftueStep[hidden]){display:none}
+#ftueStep{flex:0 0 auto;padding:3px 6px;border-radius:999px;border:1px solid rgba(101,211,255,.28);background:rgba(68,157,201,.12);color:#aeeaff;font-size:8px;font-weight:900;letter-spacing:.06em}
+#directorAction{appearance:none;-webkit-appearance:none;margin-left:auto;min-height:30px;padding:0 10px;border-radius:9px;border:1px solid rgba(101,211,255,.46);background:rgba(65,164,211,.18);color:#d7f5ff;font-size:10px;font-weight:900}
+#directorAction:active{transform:scale(.98)}
+#insightPanel.compact{width:min(270px,calc(100vw - 16px))}
+#insightPanel.compact #directorActionRow{margin-top:5px}
+#commandDock:not(.compact){max-height:min(52dvh,470px)}
+.upgradeEffect{display:block;margin:-1px 0 5px;color:#8fa0ac;font-size:8px;line-height:1.15;white-space:normal}
+.upgrade{min-height:66px}.facilityChoice{min-height:70px}
+#celebration{top:30%;width:min(72vw,340px);padding:12px 16px;border-radius:17px}
+#celebration strong{font-size:18px}#celebration span{font-size:12px}
+@media (max-width:500px){.metric span{font-size:8px}.metric strong{font-size:13px}}

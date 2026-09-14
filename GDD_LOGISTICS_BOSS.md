@@ -118,3 +118,15 @@ Core meta loop: **contract → cash/RP/logistics rating → facility rank → st
 - Rank 2: Second Inbound ¥2,400; one rack strategy (Fast Pick or High Density) ¥2,800; Second Pack Line ¥3,200.
 - Every structural investment changes both simulation behavior and visible 3D geometry.
 - Free-placement building remains out of scope.
+
+
+## Rank 1 UX / FTUE Pass 1 LOCK
+
+Rank 1 must teach the game before adding more progression. The always-visible Director is the primary action translator: show the problem in plain Japanese, show a concrete current count, explain why it matters, and offer one contextual action button. Rank 1 FTUE communicates three steps: choose a contract, react to the Director, then repeat contracts until Logistics Rating 8 unlocks Warehouse.
+
+UX rules:
+- Use player-language labels such as 棚使用, 注文待ち, 入荷待ち, and 出荷ペース instead of abstract capacity terminology where possible.
+- Management stays open after buying an upgrade, facility, or research item; only the player closes it.
+- Milestones use non-blocking toast feedback. Large center-screen celebration is reserved for contract completion and Facility Rank up.
+- Contract selection must be labeled explicitly; do not use an unlabeled plus icon as the primary affordance.
+- Upgrade cards must state their practical effect, not only their name and level.

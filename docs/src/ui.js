@@ -37,6 +37,8 @@ export function bindUi(sim, sceneView) {
     directorLabel: document.getElementById('directorLabel'),
     directorDetail: document.getElementById('directorDetail'),
     directorRecommendation: document.getElementById('directorRecommendation'),
+    directorAction: document.getElementById('directorAction'),
+    ftueStep: document.getElementById('ftueStep'),
     severityBadge: document.getElementById('severityBadge'),
     contractTitle: document.getElementById('contractTitle'),
     contractBody: document.getElementById('contractBody'),
@@ -80,12 +82,17 @@ export function bindUi(sim, sceneView) {
     celebrationTimer = setTimeout(() => el.celebration.classList.remove('show'), 1900);
   }
 
+  function updateInsightToggle() {
+    const hasOffers = !sim.state.activeContract && (sim.state.contractOffers || []).length > 0;
+    el.insightToggle.textContent = insightCompact ? (hasOffers ? '契約' : '開く') : '閉じる';
+    el.insightToggle.setAttribute('aria-expanded', String(!insightCompact));
+    el.insightToggle.setAttribute('aria-label', insightCompact ? (hasOffers ? '契約を選ぶ' : '案内を開く') : '案内を閉じる');
+  }
+
   function setInsightCompact(compact) {
     insightCompact = Boolean(compact);
     el.insightPanel.classList.toggle('compact', insightCompact);
-    el.insightToggle.textContent = insightCompact ? '＋' : '−';
-    el.insightToggle.setAttribute('aria-expanded', String(!insightCompact));
-    el.insightToggle.setAttribute('aria-label', insightCompact ? '分析パネルを展開' : '分析パネルを縮小');
+    updateInsightToggle();
   }
 
   function setDockCompact(compact) {
@@ -150,7 +157,6 @@ export function bindUi(sim, sceneView) {
       else {
         toast(`設備強化 -${yen(result.cost)}`, 'good');
         try { navigator.vibrate?.(18); } catch {}
-        setDockCompact(true);
       }
       render();
     });
@@ -163,7 +169,6 @@ export function bindUi(sim, sceneView) {
     else {
       toast(`施設建設 -${yen(result.cost)}`, 'good');
       try { navigator.vibrate?.([18, 25, 24]); } catch {}
-      setDockCompact(true);
     }
     render();
   });
@@ -177,13 +182,19 @@ perkButtons.forEach((button) => {
       else {
         toast(`研究完了 -${result.cost} RP`, 'good');
         try { navigator.vibrate?.(18); } catch {}
-        setDockCompact(true);
       }
       render();
     });
   });
 
   el.insightToggle.addEventListener('click', () => { setInsightCompact(!insightCompact); render(); });
+  el.directorAction.addEventListener('click', () => {
+    const action = el.directorAction.dataset.action || '';
+    if (action === 'contract') setInsightCompact(false);
+    else if (action === 'management') setDockCompact(false);
+    else if (action.startsWith('policy:')) { sim.setPolicy(action.slice(7)); try { navigator.vibrate?.(10); } catch {} }
+    render();
+  });
   el.observe.addEventListener('click', () => setFocusMode(true));
   el.focusExit.addEventListener('click', () => setFocusMode(false));
   document.addEventListener('keydown', (event) => {
@@ -227,7 +238,6 @@ perkButtons.forEach((button) => {
       toast(event.text, 'good');
     } else if (event.type === 'milestone') {
       toast(event.text, 'good');
-      celebrate('MILESTONE', event.text);
     } else if (event.type === 'contract_failed') toast(event.text, 'warn');
     else if (event.type === 'order' && sim.state.ordersOpen >= 6) toast(event.text);
   });
@@ -245,8 +255,8 @@ perkButtons.forEach((button) => {
 
     const offers = sim.state.contractOffers || [];
     const signature = offers.map((item) => item.id).join(',');
-    el.contractTitle.textContent = offers.length ? `契約 ${offers.length}件` : '次の契約を準備中';
-    el.contractBody.innerHTML = offers.length ? '<div class="contractDesc">＋を押して契約を選択</div>' : '';
+    el.contractTitle.textContent = offers.length ? `契約を選ぶ（${offers.length}件）` : '次の契約を準備中';
+    el.contractBody.innerHTML = offers.length ? '<div class="contractDesc">契約を1つ選ぶ</div>' : '';
     if (signature === lastOfferSignature) return;
     lastOfferSignature = signature;
     el.contractChoices.innerHTML = '';
@@ -288,7 +298,7 @@ perkButtons.forEach((button) => {
   el.shipped.textContent = s.shipped.toLocaleString('ja-JP');
     el.orders.textContent = s.ordersOpen.toLocaleString('ja-JP');
     el.inbound.textContent = c.inbound.toLocaleString('ja-JP');
-    el.rack.textContent = `${c.rack} / ${sim.rackCapacity()}`;
+    el.rack.textContent = `${c.rack}/${sim.rackCapacity()}箱`;
     el.throughput.textContent = `${s.metrics.perMinute}/分`;
     el.workers.textContent = `${s.workers.length}人`;
     el.status.textContent = s.status;
@@ -300,11 +310,40 @@ perkButtons.forEach((button) => {
     }
 
     const offerCount = (s.contractOffers || []).length;
-    const stableSummary = s.activeContract ? `安定稼働 · ${s.activeContract.title}` : `安定稼働 · 契約${offerCount}件`;
-    el.directorLabel.textContent = d.severity === 0 && insightCompact ? stableSummary : d.label;
-    el.directorDetail.textContent = d.detail;
-    el.directorRecommendation.textContent = `→ ${d.recommendation}`;
-    el.severityBadge.textContent = d.severity === 0 ? 'OK' : d.severity === 1 ? '注意' : d.severity === 2 ? '混雑' : '危険';
+    const capacity = sim.rackCapacity();
+    const inboundCap = sim.inboundMax();
+    const human = {
+      inbound: { label: '搬入口に荷物がたまっている', detail: `未処理 ${c.inbound}箱 / 上限${inboundCap}箱`, recommendation: '入荷を棚へ流すため、入庫を優先', action: 'policy:inbound', actionLabel: '入庫優先にする' },
+      rack: { label: '棚がほぼ満杯', detail: `棚を ${c.rack}/${capacity}箱 使用 · 空き${Math.max(0, capacity - c.rack)}箱`, recommendation: '棚を空けるため、出庫を優先', action: 'policy:ship', actionLabel: '出庫優先にする' },
+      orders: { label: '注文がたまっている', detail: `未処理注文 ${s.ordersOpen}件`, recommendation: '注文を減らすため、出庫を優先', action: 'policy:ship', actionLabel: '出庫優先にする' },
+      packed: { label: '出荷待ちがたまっている', detail: `出荷待ち ${c.packed}箱`, recommendation: '梱包済み荷物を先に出す', action: 'policy:ship', actionLabel: '出庫優先にする' },
+    };
+    let label = d.label;
+    let detail = d.detail;
+    let recommendation = d.recommendation;
+    let action = '';
+    let actionLabel = '';
+    if (d.severity > 0 && human[d.key]) ({ label, detail, recommendation, action, actionLabel } = human[d.key]);
+    else if (s.facilityRank < 2) {
+      const remainingRating = Math.max(0, (nextTarget || 8) - s.logisticsRating);
+      const approxContracts = Math.ceil(remainingRating / 2);
+      if (!s.activeContract && offerCount > 0) {
+        label = 'まず契約を選ぼう'; detail = '契約達成で「物流評価」が +2'; recommendation = `物流評価${nextTarget || 8}で Warehouse 解禁`; action = 'contract'; actionLabel = '契約を選ぶ';
+      } else if (s.activeContract) {
+        label = `契約: ${s.activeContract.title}`; detail = `進行 ${contractProgressText(s.activeContract)} · 評価${s.logisticsRating}/${nextTarget || 8}`; recommendation = '詰まりが出たら、ここに出る推奨方針へ切り替える'; action = `policy:${s.activeContract.kind === 'inbound' ? 'inbound' : s.activeContract.kind === 'ship' ? 'ship' : 'balanced'}`; actionLabel = s.activeContract.kind === 'inbound' ? '入庫優先にする' : s.activeContract.kind === 'ship' ? '出庫優先にする' : 'バランスにする';
+      } else { label = '次の契約を待っています'; detail = `物流評価 ${s.logisticsRating}/${nextTarget || 8}`; recommendation = `Warehouseまであと約${approxContracts}契約`; }
+    } else if (d.severity === 0) { label = '次は物流設備を選ぶ'; detail = 'Warehouse解禁済み'; recommendation = '管理から、第2搬入口・ラック方針・第2梱包ラインへ投資'; action = 'management'; actionLabel = '設備を見る'; }
+    let step = '';
+    if (s.facilityRank < 2) step = s.completedContracts === 0 && !s.activeContract ? 'STEP 1/3' : s.completedContracts === 0 ? 'STEP 2/3' : 'STEP 3/3';
+    el.ftueStep.hidden = !step;
+    el.ftueStep.textContent = step;
+    el.directorAction.hidden = !actionLabel;
+    el.directorAction.textContent = actionLabel;
+    el.directorAction.dataset.action = action;
+    el.directorLabel.textContent = label;
+    el.directorDetail.textContent = detail;
+    el.directorRecommendation.textContent = `次に: ${recommendation}`;
+    el.severityBadge.textContent = d.severity === 0 ? '安定' : d.severity === 1 ? '注意' : d.severity === 2 ? '混雑' : '詰まり';
     el.severityBadge.dataset.level = String(d.severity);
 
     policyButtons.forEach((button) => button.classList.toggle('active', button.dataset.policy === s.policy));
@@ -360,6 +399,7 @@ perkButtons.forEach((button) => {
     });
 
     renderContracts();
+    updateInsightToggle();
   }
 
   setInsightCompact(true);
