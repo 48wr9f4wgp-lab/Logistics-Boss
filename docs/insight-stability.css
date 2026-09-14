@@ -1,0 +1,22 @@
+/* Insight Stability Pass — volatile simulation state must not reflow the HUD. */
+#insightPanel.compact,
+#insightPanel.compact[data-stable="true"]{
+  width:min(232px,calc(100vw - 16px));
+  max-width:none;
+  padding:6px 7px;
+}
+#insightPanel.compact[data-stable="true"] .insightHead{gap:8px;align-items:flex-start}
+#insightPanel.compact[data-stable="true"] .insightHead>div:first-child{display:block}
+#insightPanel.compact[data-stable="true"] .insightHead small{display:block}
+#insightPanel.compact[data-stable="true"] #severityBadge{display:inline-flex}
+#insightPanel.compact[data-stable="true"] .contractArea{display:block}
+#insightPanel.compact[data-stable="true"] #directorDetail,
+#insightPanel.compact[data-stable="true"] #directorRecommendation,
+#insightPanel.compact[data-stable="true"] #contractBody,
+#insightPanel.compact[data-stable="true"] #contractChoices{display:none}
+#insightPanel.compact[data-stable="true"] #directorLabel{font-size:12px;line-height:1.15;white-space:normal}
+#insightPanel.compact[data-stable="true"] #insightToggle{width:auto;height:28px;min-width:44px}
+@media(max-width:500px){
+  #insightPanel.compact,
+  #insightPanel.compact[data-stable="true"]{width:min(232px,calc(100vw - 16px));padding:6px 7px}
+}
