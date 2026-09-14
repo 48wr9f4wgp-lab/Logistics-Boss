@@ -13,5 +13,7 @@ assert(capital.includes('次の商圏 · ${nextTier.label}'), 'commercial row mu
 assert(capital.includes('設備解禁と商圏拡大は別々の進捗'), 'equipment and commercial progression must be explicitly separated');
 assert(css.includes('.capitalGoals'), 'capital progression must have dedicated layout styles');
 assert(css.includes('.capitalGoal[data-goal="market"] u'), 'market progression must have a distinct progress treatment');
+assert(css.includes('#commandDock:not(.compact) .capitalGoals{position:sticky'), 'capital goals must remain visible while the management sheet scrolls');
+assert(css.includes('top:86px') || css.includes('top:84px'), 'sticky capital goals must sit below the pinned management header');
 
 console.log('Capital progression clarity smoke OK');
