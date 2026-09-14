@@ -154,7 +154,7 @@ jobs:
           grep -Fq 'function fulfillmentReadiness()' docs/src/sim.js
           grep -Fq 'function decisionImpact()' docs/src/sim.js
           grep -Fq 'decisionImpact = { type' docs/src/sim.js
-          grep -Fq 'opsMiniSummary' docs/src/ui.js
+          grep -Fq 'opsCrew' docs/src/ui.js
           grep -Fq 'nextStageBar' docs/src/ui.js
           grep -Fq 'Rank 2 Systems Pass — Phase 2 LOCK' GDD_LOGISTICS_BOSS.md
           node docs/tests/progression-smoke.mjs
