@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { createSimulation } from '../src/sim.js';
 import {
   CAPITAL_INVESTMENTS,
@@ -8,6 +9,8 @@ import {
 } from '../src/capital-model.js';
 
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
+const sceneSource = fs.readFileSync(new URL('../src/scene.js', import.meta.url), 'utf8');
+const asrsVisualSource = fs.readFileSync(new URL('../src/asrs-visual.js', import.meta.url), 'utf8');
 
 assert(CAPITAL_INVESTMENTS.workforce.costs[0] === 3500, 'workforce must be a distinct capital category');
 assert(CAPITAL_INVESTMENTS.forklift.costs[0] === 15000, 'forklift must be a distinct capital category');
@@ -21,6 +24,10 @@ assert(!investmentUnlocked({}, 'forklift'), 'forklift must be gated by equipment
 assert(investmentUnlocked({ rack: 1, pack: 1, speed: 1, conveyor: 1 }, 'forklift'), 'forklift must unlock once equipment assets reach its threshold');
 assert(!investmentUnlocked({ rack: 1, pack: 1, speed: 1, conveyor: 1 }, 'agv'), 'AGV must remain locked at the first automation threshold');
 assert(!investmentUnlocked({ hall: 1 }, 'asrs'), 'ASRS must remain locked below the million-yen capital threshold');
+assert(sceneSource.includes("import { createAsrsVisual } from './asrs-visual.js';"), 'warehouse scene must wire the ASRS 3D module');
+assert(sceneSource.includes('asrsVisual.update(dt);'), 'warehouse render loop must update ASRS animation');
+assert(asrsVisualSource.includes("event.type === 'asrs_store'") && asrsVisualSource.includes("event.type === 'asrs_pick'"), 'ASRS 3D animation must react to real storage and retrieval events');
+assert(asrsVisualSource.includes('carriage.position.y') && asrsVisualSource.includes('shuttle.position.x'), 'ASRS visual must contain moving stacker-crane components');
 
 const buyer = createSimulation({
   schema_version: 3,
