@@ -3,6 +3,8 @@ name: Logistics Boss static QA
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -33,9 +35,14 @@ jobs:
           test -f docs/src/sim.js
           test -f docs/src/scene.js
           test -f docs/src/ui.js
+          test -f docs/src/capital.js
+          test -f docs/src/capital-model.js
           test -f docs/tests/progression-smoke.mjs
           test -f docs/tests/director-stability-smoke.mjs
+          test -f docs/tests/capital-v2-smoke.mjs
           test -f GDD_LOGISTICS_BOSS.md
+          test -f CAPITAL_EXPANSION_V1.md
+          test -f CAPITAL_EXPANSION_V2.md
           test -f BENCHMARK_LOGISTICS_BOSS_2026-09-13.md
           test -f RANK2_SYSTEMS_PASS_PLAN.md
           echo "Required files OK"
@@ -49,6 +56,7 @@ jobs:
           done
           node --check docs/tests/progression-smoke.mjs
           node --check docs/tests/director-stability-smoke.mjs
+          node --check docs/tests/capital-v2-smoke.mjs
           echo "JavaScript syntax OK"
 
       - name: Product identity contract
@@ -177,3 +185,22 @@ jobs:
           ! test -f .github/rank2-systems-pass2-trigger-v4.txt
           ! test -f tools/rank2_systems_pass2_patch.py
           echo "Rank 2 Systems Pass 2 contract OK"
+
+      - name: Capital Expansion v2 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'forklift:' docs/src/capital-model.js
+          grep -Fq 'agv:' docs/src/capital-model.js
+          grep -Fq 'sorter:' docs/src/capital-model.js
+          grep -Fq 'function runForklift(dt)' docs/src/sim.js
+          grep -Fq 'function runAgv(dt)' docs/src/sim.js
+          grep -Fq 'function runSorter(dt)' docs/src/sim.js
+          grep -Fq 'function purchaseCapitalUpgrade' docs/src/sim.js
+          grep -Fq 'function forkliftUnit(index)' docs/src/scene.js
+          grep -Fq 'function agvUnit(index)' docs/src/scene.js
+          grep -Fq 'function sorterModule(index)' docs/src/scene.js
+          grep -Fq "sim.purchaseCapitalUpgrade(def.upgrade, cost)" docs/src/capital.js
+          ! grep -Fq 'sim.state.money -= cost' docs/src/capital.js
+          node docs/tests/capital-v2-smoke.mjs
+          echo "Capital Expansion v2 contract OK"
