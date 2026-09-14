@@ -74,7 +74,6 @@ export function bindUi(sim, sceneView) {
   let flowEnabled = false;
   let dockCompact = true;
   let focusMode = false;
-  let lastDirectorSeverity = null;
 
   function toast(text, tone = 'normal') {
     clearTimeout(toastTimer);
@@ -123,7 +122,6 @@ export function bindUi(sim, sceneView) {
     el.observe.classList.toggle('active', focusMode);
     el.observe.setAttribute('aria-pressed', String(focusMode));
     if (focusMode) {
-      setInsightCompact(true);
       setDockCompact(true);
       sceneView.resetCamera();
       toast('観察モード');
@@ -204,8 +202,7 @@ perkButtons.forEach((button) => {
   el.directorAction.addEventListener('click', () => {
     const action = el.directorAction.dataset.action || '';
     if (sim.state.facilityRank >= 2) return;
-    if (action === 'contract') setInsightCompact(false);
-    else if (action === 'management') setDockCompact(false);
+    if (action === 'management') setDockCompact(false);
     else if (action.startsWith('policy:')) { sim.setPolicy(action.slice(7)); try { navigator.vibrate?.(10); } catch {} }
     render();
   });
@@ -243,7 +240,6 @@ perkButtons.forEach((button) => {
       toast(event.text, 'good');
       const reward = event.reward ? `${yen(event.reward.cash)}  +${event.reward.research} RP  +${event.reward.rating || 2}評価` : event.text;
       celebrate('CONTRACT COMPLETE', reward);
-      setInsightCompact(true);
     } else if (event.type === 'rank_up') {
       toast(event.text, 'good');
       celebrate('FACILITY RANK UP', event.name);
@@ -284,7 +280,6 @@ perkButtons.forEach((button) => {
         if (!result.ok) toast(result.reason, 'warn');
         else {
           toast(`契約開始: ${offer.title}`);
-          setInsightCompact(true);
           setDockCompact(true);
         }
         render();
@@ -297,11 +292,6 @@ perkButtons.forEach((button) => {
     const c = sim.counts();
     const s = sim.state;
     const d = s.director;
-    if (lastDirectorSeverity !== null) {
-      if (d.severity === 0 && lastDirectorSeverity > 0) setInsightCompact(true);
-      else if (d.severity > 0 && lastDirectorSeverity === 0) setInsightCompact(false);
-    }
-    lastDirectorSeverity = d.severity;
     el.insightPanel.dataset.stable = d.severity === 0 ? 'true' : 'false';
     el.money.textContent = yen(s.money);
     el.research.textContent = `${s.research} RP`;
