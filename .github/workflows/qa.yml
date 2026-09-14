@@ -123,19 +123,22 @@ jobs:
           node docs/tests/director-stability-smoke.mjs
           echo "Director stability regression OK"
 
-      - name: Rank 1 UX FTUE contract
+      - name: Rank 1 freedom UI contract
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq 'id="directorAction"' docs/index.html
-          grep -Fq 'id="ftueStep"' docs/index.html
-          grep -Fq '棚使用' docs/index.html
-          grep -Fq 'STEP 1/3' docs/src/ui.js
-          grep -Fq '棚がほぼ満杯' docs/src/ui.js
-          grep -Fq '契約を1つ選ぶ' docs/src/ui.js
-          grep -Fq 'directorAction.dataset.action' docs/src/ui.js
-          ! grep -Fq "celebrate('MILESTONE'" docs/src/ui.js
-          echo "Rank 1 UX / FTUE contract OK"
+          ! test -f docs/src/ftue2.js
+          ! grep -Fq './src/ftue2.js' docs/index.html
+          ! grep -Fq 'id="directorAction"' docs/index.html
+          ! grep -Fq 'id="ftueStep"' docs/index.html
+          ! grep -Fq 'STEP 1/3' docs/src/ui.js
+          ! grep -Fq 'directorAction.dataset.action' docs/src/ui.js
+          ! grep -Fq 'MutationObserver' docs/src/ui.js
+          grep -Fq '任意契約' docs/index.html
+          grep -Fq '運営方針は自由' docs/src/ui.js
+          grep -Fq '分析:' docs/src/ui.js
+          grep -Fq 'Warehouse評価' docs/src/ui.js
+          echo "Rank 1 freedom UI contract OK"
 
       - name: Rank 2 systems contract
         shell: bash
