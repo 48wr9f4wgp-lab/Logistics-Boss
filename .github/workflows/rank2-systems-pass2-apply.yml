@@ -4,7 +4,7 @@ on:
   push:
     branches: [rank2-systems-pass-2]
     paths:
-      - '.github/rank2-systems-pass2-trigger.txt'
+      - '.github/rank2-systems-pass2-trigger-v2.txt'
 
 permissions:
   contents: write
@@ -21,8 +21,21 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Apply Rank 2 systems pass 2
-        run: python tools/rank2_systems_pass2_patch.py
+      - name: Fix helper anchor and apply Rank 2 systems pass 2
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tools/rank2_systems_pass2_patch.py')
+          s = p.read_text()
+          old = """    staffingSummary,\n    setStaffingPlan,\n    setTimeScale,"""
+          new = """    staffingSummary,\n    setStaffingPlan,\n    fulfillmentReadiness,\n    decisionImpact,\n    upgradeCost,"""
+          if old not in s:
+              raise SystemExit('helper return anchor not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+          python tools/rank2_systems_pass2_patch.py
 
       - name: Verify syntax and simulation smoke
         shell: bash
@@ -46,9 +59,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f tools/rank2_systems_pass2_patch.py .github/rank2-systems-pass2-trigger.txt
+          rm -f tools/rank2_systems_pass2_patch.py .github/rank2-systems-pass2-trigger.txt .github/rank2-systems-pass2-trigger-v2.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs GDD_LOGISTICS_BOSS.md .github/workflows/qa.yml tools .github/rank2-systems-pass2-trigger.txt
+          git add docs GDD_LOGISTICS_BOSS.md .github/workflows/qa.yml tools .github/rank2-systems-pass2-trigger.txt .github/rank2-systems-pass2-trigger-v2.txt
           git commit -m 'Add Rank 2 outcome feedback and automation readiness'
           git push origin HEAD:rank2-systems-pass-2
