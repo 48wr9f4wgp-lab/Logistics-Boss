@@ -419,17 +419,24 @@ function createWarehouseShell() {
   const group = new THREE.Group();
   const steel = 0x344049;
   const lightSteel = 0x4b5964;
+
+  // Dollhouse shell: keep structure on the far/rear edges so the playable floor stays readable.
   for (const x of [-8.4, -4.2, 0, 4.2, 8.4]) {
-    for (const z of [6.4, -7.2]) addBox(group, 0.16, 3.7, 0.16, x, 1.85, z, steel, 0.58, 0, 0.42);
-    addBox(group, 0.11, 0.11, 13.6, x, 3.55, -0.4, lightSteel, 0.6, 0, 0.34);
+    addBox(group, 0.16, 3.7, 0.16, x, 1.85, -7.2, steel, 0.58, 0, 0.42);
+    addBox(group, 0.11, 0.11, 3.8, x, 3.5, -5.3, lightSteel, 0.6, 0, 0.34);
   }
-  for (const z of [6.4, 2.0, -2.4, -6.8]) addBox(group, 17.0, 0.1, 0.1, 0, 3.3, z, lightSteel, 0.6, 0, 0.34);
+  for (const z of [4.8, 0.8, -3.2]) {
+    addBox(group, 0.14, 3.45, 0.14, -8.4, 1.725, z, steel, 0.58, 0, 0.42);
+  }
+  addBox(group, 17.0, 0.1, 0.1, 0, 3.3, -6.8, lightSteel, 0.6, 0, 0.34);
+  addBox(group, 0.11, 0.11, 13.0, -8.4, 3.32, -0.55, lightSteel, 0.6, 0, 0.34);
+
+  // Rear-biased fixtures keep atmosphere without bright bars crossing workers.
   for (let x = -6.4; x <= 6.4; x += 3.2) {
-    for (const z of [4.9, 0.5, -3.9]) {
-      const light = addBox(group, 1.15, 0.035, 0.07, x, 3.12, z, 0xe1fbff, 0.4, 0xb8f4ff);
-      light.material.emissiveIntensity = 0.56;
-    }
+    const light = addBox(group, 1.0, 0.03, 0.06, x, 3.02, -4.55, 0xdaf6ff, 0.4, 0x9ee9ff);
+    light.material.emissiveIntensity = 0.3;
   }
+  group.userData.dollhouse = true;
   return group;
 }
 
@@ -475,7 +482,7 @@ export async function createSceneView(canvas, sim) {
   scene.background = new THREE.Color(0x101920);
   scene.fog = new THREE.Fog(0x101920, 23, 48);
   const camera = new THREE.PerspectiveCamera(43, innerWidth / innerHeight, 0.1, 90);
-  const cameraState = { yaw: 0.72, pitch: 0.76, distance: 16.2, targetDistance: 16.2, target: new THREE.Vector3(0, 0.32, -0.15) };
+  const cameraState = { yaw: 0.68, pitch: 0.66, distance: 15.4, targetDistance: 15.4, target: new THREE.Vector3(0, 0.52, -0.55) };
 
   scene.add(new THREE.HemisphereLight(0xe3f6ff, 0x273039, 2.2));
   const sun = new THREE.DirectionalLight(0xfff6e8, 2.15);
@@ -647,12 +654,12 @@ export async function createSceneView(canvas, sim) {
   }, { passive: false });
 
   function resetCamera() {
-    cameraState.yaw = 0.72;
-    cameraState.pitch = 0.76;
-    const growth = growthLevel();
-    cameraState.targetDistance = 16.2 + growth * 2.3;
-    cameraState.target.set(0, 0.32, -growth * 1.25);
-  }
+  cameraState.yaw = 0.68;
+  cameraState.pitch = 0.66;
+  const growth = growthLevel();
+  cameraState.targetDistance = 15.4 + growth * 2.2;
+  cameraState.target.set(0, 0.52, -0.55 - growth * 1.15);
+}
 
   function growthLevel() {
     const u = sim.state.upgrades;
@@ -691,8 +698,8 @@ export async function createSceneView(canvas, sim) {
     });
     if (growth !== lastGrowth) {
       lastGrowth = growth;
-      cameraState.targetDistance = Math.max(cameraState.targetDistance, 16.2 + growth * 2.3);
-      cameraState.target.z = -growth * 1.25;
+      cameraState.targetDistance = Math.max(cameraState.targetDistance, 15.4 + growth * 2.2);
+      cameraState.target.z = -0.55 - growth * 1.15;
     }
   }
 
@@ -710,7 +717,7 @@ export async function createSceneView(canvas, sim) {
   function ensureFlowLine(id) {
     let line = flowLines.get(id);
     if (!line) {
-      line = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.66, depthTest: false }));
+      line = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthTest: false }));
       line.renderOrder = 8;
       scene.add(line);
       flowLines.set(id, line);
@@ -740,6 +747,7 @@ export async function createSceneView(canvas, sim) {
   function syncWorkers(dt) {
     const live = new Set();
     let stableLines = 0;
+    let visibleLines = 0;
     sim.state.workers.forEach((worker, index) => {
       live.add(worker.id);
       let mesh = workerMeshes.get(worker.id);
@@ -762,9 +770,11 @@ export async function createSceneView(canvas, sim) {
       const line = ensureFlowLine(worker.id);
       const target = flowTarget(worker);
       const directorStable = sim.state.director?.key === 'stable';
-      const show = flowMode && target && worker.task && (criticalTask(worker.task.kind) || (directorStable && stableLines < 2));
+      const relevant = criticalTask(worker.task?.kind) || (directorStable && stableLines < 2);
+      const show = flowMode && target && worker.task && relevant && visibleLines < 3;
       line.visible = Boolean(show);
       if (show) {
+        visibleLines += 1;
         if (directorStable) stableLines += 1;
         line.material.color.setHex(s.color);
         const start = new THREE.Vector3(mesh.position.x, 0.12, mesh.position.z);
