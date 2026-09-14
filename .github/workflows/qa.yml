@@ -34,6 +34,7 @@ jobs:
           test -f docs/src/scene.js
           test -f docs/src/ui.js
           test -f docs/tests/progression-smoke.mjs
+          test -f docs/tests/director-stability-smoke.mjs
           test -f GDD_LOGISTICS_BOSS.md
           test -f BENCHMARK_LOGISTICS_BOSS_2026-09-13.md
           test -f RANK2_SYSTEMS_PASS_PLAN.md
@@ -47,6 +48,7 @@ jobs:
             node --check "$file"
           done
           node --check docs/tests/progression-smoke.mjs
+          node --check docs/tests/director-stability-smoke.mjs
           echo "JavaScript syntax OK"
 
       - name: Product identity contract
@@ -102,6 +104,16 @@ jobs:
           grep -q 'Progression Spine v1 — Phase 1 LOCK' GDD_LOGISTICS_BOSS.md
           node docs/tests/progression-smoke.mjs
           echo "Progression Spine contract OK"
+
+      - name: Director stability regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! test -f docs/src/insight-stability.js
+          ! grep -Fq 'lastDirectorSeverity' docs/src/ui.js
+          ! grep -Fq 'bindInsightStability' docs/src/main.js
+          node docs/tests/director-stability-smoke.mjs
+          echo "Director stability regression OK"
 
       - name: Rank 1 UX FTUE contract
         shell: bash
