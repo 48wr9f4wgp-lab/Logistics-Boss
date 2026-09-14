@@ -113,10 +113,11 @@ export const CAPITAL_INVESTMENTS = {
 
 export const COMMERCIAL_TIERS = [
   { minAssets: 0, label: 'Local Depot', saleValue: 120 },
-  { minAssets: 8000, label: 'Mechanized Depot', saleValue: 200 },
-  { minAssets: 40000, label: 'High-Throughput Warehouse', saleValue: 500 },
-  { minAssets: 200000, label: 'Regional Fulfillment', saleValue: 1200 },
-  { minAssets: 1000000, label: 'Automated DC', saleValue: 3000 },
+  { minAssets: 8000, label: 'Mechanized Depot', saleValue: 450 },
+  { minAssets: 40000, label: 'High-Throughput Warehouse', saleValue: 1500 },
+  { minAssets: 200000, label: 'Regional Fulfillment', saleValue: 2600 },
+  { minAssets: 500000, label: 'Distribution Hub', saleValue: 4200 },
+  { minAssets: 1000000, label: 'Automated DC', saleValue: 6000 },
   { minAssets: 5000000, label: 'Mega Logistics', saleValue: 8000 },
   { minAssets: 25000000, label: 'National Hub', saleValue: 18000 },
   { minAssets: 75000000, label: 'Automated Mega Hub', saleValue: 40000 },
