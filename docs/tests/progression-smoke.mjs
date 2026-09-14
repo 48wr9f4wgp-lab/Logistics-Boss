@@ -1,4 +1,12 @@
 import { createSimulation } from '../src/sim.js';
+import {
+  CAPITAL_INVESTMENTS,
+  commercialTierForAssets,
+  currentUnitRevenue,
+  investedCapital,
+  nextInvestmentCost,
+  totalAssetValue,
+} from '../src/capital-model.js';
 
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
@@ -6,6 +14,16 @@ const fresh = createSimulation(null);
 assert(fresh.state.schema_version === 3, 'fresh save must use schema v3');
 assert(fresh.state.facilityRank === 1, 'fresh game must start at Rank 1');
 assert(!fresh.setStaffingPlan('picking').ok, 'Rank 1 must not reassign Warehouse crew');
+
+assert(CAPITAL_INVESTMENTS.rack.costs[0] === 1000, 'capital loop must offer an early rack investment');
+assert(nextInvestmentCost(fresh.state.upgrades, 'rack') === 1000, 'fresh rack investment cost must be 1000');
+assert(investedCapital(fresh.state.upgrades) === 0, 'fresh game must have zero equipment assets');
+fresh.state.upgrades.rack = 1;
+assert(investedCapital(fresh.state.upgrades) === 1000, 'rack level 1 must count toward equipment assets');
+assert(totalAssetValue(650, fresh.state.upgrades) === 1650, 'total assets must include cash plus equipment assets');
+fresh.state.upgrades.rack = 0;
+assert(currentUnitRevenue(fresh.state.upgrades) === 120, 'fresh commercial value must remain 120 per shipment');
+assert(commercialTierForAssets(8000).saleValue === 200, 'mechanized tier must raise shipment value');
 
 const migrated = createSimulation({
   schema_version: 2,
@@ -47,4 +65,4 @@ const roundTrip = createSimulation(migrated.serialize());
 assert(roundTrip.state.staffingPlan === 'dock', 'staffing plan must survive save/load');
 assert(roundTrip.state.facilities.bufferYard, 'facility choice must survive save/load');
 assert(roundTrip.fulfillmentReadiness().zones === 3, 'readiness zone count must survive save/load');
-console.log('Progression Spine / Rank 2 Systems smoke OK');
+console.log('Progression Spine / Capital Expansion smoke OK');
