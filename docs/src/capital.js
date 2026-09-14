@@ -13,6 +13,7 @@ import {
 
 const yen = (value) => `¥${Math.round(value || 0).toLocaleString('ja-JP')}`;
 const round1 = (value) => Math.round((Number(value) || 0) * 10) / 10;
+const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 
 function ensureStyles() {
   if (document.querySelector('link[data-capital-expansion]')) return;
@@ -43,6 +44,18 @@ export function bindCapitalExpansion(sim) {
       <div class="capitalStat"><span>総資産</span><b id="capitalAssets">¥0</b></div>
       <div class="capitalStat"><span>出荷売上/分</span><b id="capitalRevenue">¥0</b></div>
     </div>
+    <div class="capitalGoals" aria-label="投資進捗">
+      <div class="capitalGoal" data-goal="unlock">
+        <span id="capitalUnlockLabel">次の設備解禁</span>
+        <b id="capitalUnlockText">確認中</b>
+        <i><u id="capitalUnlockBar"></u></i>
+      </div>
+      <div class="capitalGoal" data-goal="market">
+        <span id="capitalMarketLabel">次の商圏</span>
+        <b id="capitalMarketText">確認中</b>
+        <i><u id="capitalMarketBar"></u></i>
+      </div>
+    </div>
     <div id="capitalGrid" class="capitalGrid"></div>
     <div id="capitalReport" class="capitalReport" hidden></div>
     <div id="capitalHint" class="capitalHint"></div>`;
@@ -55,6 +68,12 @@ export function bindCapitalExpansion(sim) {
     invested: panel.querySelector('#capitalInvested'),
     assets: panel.querySelector('#capitalAssets'),
     revenue: panel.querySelector('#capitalRevenue'),
+    unlockLabel: panel.querySelector('#capitalUnlockLabel'),
+    unlockText: panel.querySelector('#capitalUnlockText'),
+    unlockBar: panel.querySelector('#capitalUnlockBar'),
+    marketLabel: panel.querySelector('#capitalMarketLabel'),
+    marketText: panel.querySelector('#capitalMarketText'),
+    marketBar: panel.querySelector('#capitalMarketBar'),
     grid: panel.querySelector('#capitalGrid'),
     report: panel.querySelector('#capitalReport'),
     hint: panel.querySelector('#capitalHint'),
@@ -191,6 +210,44 @@ export function bindCapitalExpansion(sim) {
     pendingReport = null;
   }
 
+  function progressPercent(current, target) {
+    if (!Number.isFinite(target) || target <= 0) return 100;
+    return clamp((current / target) * 100, 0, 100);
+  }
+
+  function nextLockedInvestment(invested) {
+    return Object.values(CAPITAL_INVESTMENTS)
+      .filter((def) => invested < (def.unlockAssets || 0))
+      .sort((a, b) => (a.unlockAssets || 0) - (b.unlockAssets || 0))[0] || null;
+  }
+
+  function renderProgress(invested) {
+    const nextUnlock = nextLockedInvestment(invested);
+    if (nextUnlock) {
+      const target = nextUnlock.unlockAssets || 0;
+      const remaining = Math.max(0, target - invested);
+      nodes.unlockLabel.textContent = `次の設備解禁 · ${nextUnlock.label}`;
+      nodes.unlockText.textContent = `${yen(invested)} / ${yen(target)} · あと ${yen(remaining)}`;
+      nodes.unlockBar.style.width = `${progressPercent(invested, target)}%`;
+    } else {
+      nodes.unlockLabel.textContent = '設備解禁';
+      nodes.unlockText.textContent = '全設備解禁済み';
+      nodes.unlockBar.style.width = '100%';
+    }
+
+    const nextTier = nextCommercialTierForAssets(invested);
+    if (nextTier) {
+      const remaining = Math.max(0, nextTier.minAssets - invested);
+      nodes.marketLabel.textContent = `次の商圏 · ${nextTier.label}`;
+      nodes.marketText.textContent = `${yen(invested)} / ${yen(nextTier.minAssets)} · あと ${yen(remaining)}`;
+      nodes.marketBar.style.width = `${progressPercent(invested, nextTier.minAssets)}%`;
+    } else {
+      nodes.marketLabel.textContent = '商圏';
+      nodes.marketText.textContent = '最大商圏まで到達';
+      nodes.marketBar.style.width = '100%';
+    }
+  }
+
   function render() {
     const invested = investedCapital(sim.state.upgrades);
     const assets = totalAssetValue(sim.state.money, sim.state.upgrades);
@@ -200,6 +257,7 @@ export function bindCapitalExpansion(sim) {
     nodes.assets.textContent = yen(assets);
     nodes.revenue.textContent = `${yen(revenuePerMinute())}/分`;
     nodes.tier.textContent = `${tier.label} · 1箱 ${yen(tier.saleValue)}`;
+    renderProgress(invested);
 
     for (const [key, button] of buttons) {
       const def = CAPITAL_INVESTMENTS[key];
@@ -213,7 +271,8 @@ export function bindCapitalExpansion(sim) {
       button.dataset.locked = unlocked ? 'false' : 'true';
       button.disabled = maxed || !ready;
       if (!unlocked) {
-        button.innerHTML = `<span class="capitalLevel">CAPITAL</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>投資総額 ${yen(def.unlockAssets)} で解禁</em><b>LOCKED</b>`;
+        const remaining = Math.max(0, (def.unlockAssets || 0) - invested);
+        button.innerHTML = `<span class="capitalLevel">CAPITAL</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>投資 ${yen(invested)} / ${yen(def.unlockAssets)} · あと ${yen(remaining)}</em><b>LOCKED</b>`;
       } else {
         const currentEffect = level > 0 ? formatInvestmentEffect(key, level) : '未導入';
         const nextEffect = maxed ? null : formatInvestmentEffect(key, level + 1);
@@ -227,10 +286,7 @@ export function bindCapitalExpansion(sim) {
     nodes.report.hidden = !report;
     if (report) nodes.report.innerHTML = reportHtml(report);
 
-    const nextTier = nextCommercialTierForAssets(invested);
-    nodes.hint.textContent = nextTier == null
-      ? '最大商圏。次の拡張は複数拠点・大型物流網へ。'
-      : `投資総額 ${yen(nextTier.minAssets)} で ${nextTier.label} 商圏へ。何を先に買うかは自由。`;
+    nodes.hint.textContent = '投資先は自由。設備解禁と商圏拡大は別々の進捗として上に表示する。';
   }
 
   function update(realDt) {

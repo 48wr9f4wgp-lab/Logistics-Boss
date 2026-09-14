@@ -43,6 +43,7 @@ jobs:
           test -f docs/tests/hud-metric-stability-smoke.mjs
           test -f docs/tests/capital-v2-smoke.mjs
           test -f docs/tests/capital-v3-smoke.mjs
+          test -f docs/tests/capital-progress-smoke.mjs
           test -f GDD_LOGISTICS_BOSS.md
           test -f CAPITAL_EXPANSION_V1.md
           test -f CAPITAL_EXPANSION_V2.md
@@ -63,6 +64,7 @@ jobs:
           node --check docs/tests/hud-metric-stability-smoke.mjs
           node --check docs/tests/capital-v2-smoke.mjs
           node --check docs/tests/capital-v3-smoke.mjs
+          node --check docs/tests/capital-progress-smoke.mjs
           echo "JavaScript syntax OK"
 
       - name: Product identity contract
@@ -198,10 +200,10 @@ jobs:
           grep -Fq 'Rank 2 Systems Pass — Phase 2 LOCK' GDD_LOGISTICS_BOSS.md
           node docs/tests/progression-smoke.mjs
           ! test -f .github/workflows/rank2-systems-pass2-apply.yml
-          ! test -f .github/workflows/rank2-systems-pass2-trigger.txt
-          ! test -f .github/workflows/rank2-systems-pass2-trigger-v2.txt
-          ! test -f .github/workflows/rank2-systems-pass2-trigger-v3.txt
-          ! test -f .github/workflows/rank2-systems-pass2-trigger-v4.txt
+          ! test -f .github/rank2-systems-pass2-trigger.txt
+          ! test -f .github/rank2-systems-pass2-trigger-v2.txt
+          ! test -f .github/rank2-systems-pass2-trigger-v3.txt
+          ! test -f .github/rank2-systems-pass2-trigger-v4.txt
           ! test -f tools/rank2_systems_pass2_patch.py
           echo "Rank 2 Systems Pass 2 contract OK"
 
@@ -244,3 +246,15 @@ jobs:
           grep -Fq '現在 ${currentEffect} → 次 ${nextEffect}' docs/src/capital.js
           node docs/tests/capital-v3-smoke.mjs
           echo "Truck Dock / Waves Phase 3 contract OK"
+
+      - name: Capital progression clarity regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'id="capitalUnlockLabel"' docs/src/capital.js
+          grep -Fq 'id="capitalMarketLabel"' docs/src/capital.js
+          grep -Fq 'function nextLockedInvestment(invested)' docs/src/capital.js
+          grep -Fq 'あと ${yen(remaining)}' docs/src/capital.js
+          grep -Fq '.capitalGoals' docs/capital.css
+          node docs/tests/capital-progress-smoke.mjs
+          echo "Capital progression clarity regression OK"
