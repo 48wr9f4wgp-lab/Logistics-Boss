@@ -7,6 +7,7 @@ import {
   nextInvestmentCost,
   totalAssetValue,
 } from '../src/capital-model.js';
+import './ergonomics-smoke.mjs';
 
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
