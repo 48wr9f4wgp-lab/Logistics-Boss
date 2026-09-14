@@ -1,0 +1,279 @@
+name: Apply Readability Pass 4
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply Readability Pass 4
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          scene = Path('docs/src/scene.js')
+          s = scene.read_text()
+
+          old_shell = '''function createWarehouseShell() {
+  const group = new THREE.Group();
+  const steel = 0x344049;
+  const lightSteel = 0x4b5964;
+
+  // Readability Pass 3: keep only a rear structural silhouette.
+  // The playable floor must stay visually open as the facility grows.
+  for (const x of [-8.2, -2.7, 2.7, 8.2]) {
+    addBox(group, 0.14, 3.35, 0.14, x, 1.675, -7.15, steel, 0.6, 0, 0.38);
+  }
+  addBox(group, 16.45, 0.1, 0.1, 0, 3.18, -7.15, lightSteel, 0.62, 0, 0.3);
+
+  // Two side posts suggest the warehouse shell without crossing the work floor.
+  for (const z of [-4.9, -2.0]) {
+    addBox(group, 0.12, 2.9, 0.12, -8.2, 1.45, z, steel, 0.62, 0, 0.34);
+  }
+
+  // Sparse rear fixtures preserve depth but never compete with workers or cargo.
+  for (const x of [-5.2, 0, 5.2]) {
+    const light = addBox(group, 0.9, 0.025, 0.055, x, 2.92, -5.75, 0xdaf6ff, 0.42, 0x9ee9ff);
+    light.material.emissiveIntensity = 0.2;
+  }
+  group.userData.dollhouse = true;
+  group.userData.readabilityPass = 3;
+  return group;
+}'''
+          new_shell = '''function createWarehouseShell() {
+  const group = new THREE.Group();
+  const steel = 0x344049;
+  const lightSteel = 0x4b5964;
+  const fade = (mesh, opacity) => {
+    mesh.material.transparent = true;
+    mesh.material.opacity = opacity;
+    mesh.material.depthWrite = false;
+    return mesh;
+  };
+
+  // Readability Pass 4: warehouse structure is only a soft rear silhouette.
+  // Gameplay equipment, workers and cargo always win the visual hierarchy.
+  for (const x of [-7.2, 0, 7.2]) {
+    fade(addBox(group, 0.11, 3.15, 0.11, x, 1.575, -7.15, steel, 0.66, 0, 0.28), 0.34);
+  }
+  fade(addBox(group, 14.55, 0.08, 0.08, 0, 3.02, -7.15, lightSteel, 0.68, 0, 0.22), 0.3);
+
+  for (const x of [-4.6, 4.6]) {
+    const light = addBox(group, 0.82, 0.022, 0.05, x, 2.82, -5.95, 0xdaf6ff, 0.45, 0x9ee9ff);
+    light.material.emissiveIntensity = 0.14;
+    light.material.transparent = true;
+    light.material.opacity = 0.42;
+  }
+  group.userData.dollhouse = true;
+  group.userData.readabilityPass = 4;
+  return group;
+}'''
+          if old_shell not in s:
+            raise SystemExit('createWarehouseShell anchor not found')
+          s = s.replace(old_shell, new_shell)
+
+          old_flow = '''function createFlowFloorGuide() {
+  const group = new THREE.Group();
+  group.visible = false;
+  group.userData.flowFloorGuide = true;
+  const points = [POS.inbound, POS.rack, POS.pack, POS.outbound];
+  const colors = [0x63c8ff, 0xf2c858, 0x61e89a];
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const a = points[i];
+    const b = points[i + 1];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const length = Math.hypot(dx, dz);
+    const angle = -Math.atan2(dz, dx);
+    const material = new THREE.MeshBasicMaterial({
+      color: colors[i], transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide,
+    });
+    const segment = new THREE.Mesh(new THREE.PlaneGeometry(length, 0.34), material);
+    segment.rotation.x = -Math.PI / 2;
+    segment.rotation.z = angle;
+    segment.position.set((a.x + b.x) / 2, 0.024, (a.z + b.z) / 2);
+    segment.renderOrder = 2;
+    group.add(segment);
+
+    for (const t of [0.38, 0.72]) {
+      const arrow = laneArrow(colors[i]);
+      arrow.position.set(a.x + dx * t, 0.03, a.z + dz * t);
+      arrow.rotation.z = angle - Math.PI / 2;
+      arrow.scale.setScalar(0.48);
+      arrow.material.opacity = 0.42;
+      arrow.renderOrder = 3;
+      group.add(arrow);
+    }
+  }
+  return group;
+}'''
+          new_flow = '''function createFlowFloorGuide() {
+  const group = new THREE.Group();
+  group.visible = false;
+  group.userData.flowFloorGuide = true;
+  group.userData.flowArrows = [];
+  const points = [POS.inbound, POS.rack, POS.pack, POS.outbound];
+  const colors = [0x63c8ff, 0xf2c858, 0x61e89a];
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const a = points[i];
+    const b = points[i + 1];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const length = Math.hypot(dx, dz);
+    const angle = -Math.atan2(dz, dx);
+    const material = new THREE.MeshBasicMaterial({
+      color: colors[i], transparent: true, opacity: 0.27, depthWrite: false, side: THREE.DoubleSide,
+    });
+    const segment = new THREE.Mesh(new THREE.PlaneGeometry(length, 0.5), material);
+    segment.rotation.x = -Math.PI / 2;
+    segment.rotation.z = angle;
+    segment.position.set((a.x + b.x) / 2, 0.024, (a.z + b.z) / 2);
+    segment.renderOrder = 2;
+    group.add(segment);
+
+    for (const t of [0.16, 0.48, 0.8]) {
+      const arrow = laneArrow(colors[i]);
+      arrow.position.set(a.x + dx * t, 0.032, a.z + dz * t);
+      arrow.rotation.z = angle - Math.PI / 2;
+      arrow.scale.setScalar(0.58);
+      arrow.material.opacity = 0.62;
+      arrow.renderOrder = 3;
+      arrow.userData.flowPath = { ax: a.x, az: a.z, dx, dz, offset: t };
+      group.userData.flowArrows.push(arrow);
+      group.add(arrow);
+    }
+  }
+  return group;
+}'''
+          if old_flow not in s:
+            raise SystemExit('createFlowFloorGuide anchor not found')
+          s = s.replace(old_flow, new_flow)
+
+          s = s.replace(
+            "const cameraState = { yaw: 0.68, pitch: 0.61, distance: 13.8, targetDistance: 13.8, target: new THREE.Vector3(0, 0.48, -0.45) };",
+            "const cameraState = { yaw: 0.68, pitch: 0.64, distance: 14.45, targetDistance: 14.45, target: new THREE.Vector3(0, 0.52, -0.35) };"
+          )
+          s = s.replace('  let flowMode = false;\n  let lastGrowth = -1;', '  let flowMode = false;\n  let flowGuideClock = 0;\n  let lastGrowth = -1;')
+          s = s.replace('  cameraState.pitch = 0.61;\n  const growth = growthLevel();\n  cameraState.targetDistance = 13.8 + growth * 1.95;\n  cameraState.target.set(0, 0.48, -0.45 - growth * 1.02);', '  cameraState.pitch = 0.64;\n  const growth = growthLevel();\n  cameraState.targetDistance = 14.45 + growth * 1.95;\n  cameraState.target.set(0, 0.52, -0.35 - growth * 1.02);')
+          s = s.replace('cameraState.targetDistance = Math.max(cameraState.targetDistance, 13.8 + growth * 1.95);\n      cameraState.target.z = -0.45 - growth * 1.02;', 'cameraState.targetDistance = Math.max(cameraState.targetDistance, 14.45 + growth * 1.95);\n      cameraState.target.z = -0.35 - growth * 1.02;')
+
+          anchor = '''  function setFlowMode(enabled) {
+    flowMode = Boolean(enabled);
+    grid.material.opacity = flowMode ? 0.42 : 0.28;
+    flowFloorGuide.visible = flowMode;
+    if (!flowMode) for (const line of flowLines.values()) line.visible = false;
+  }
+
+  function update(dt) {'''
+          replacement = '''  function setFlowMode(enabled) {
+    flowMode = Boolean(enabled);
+    grid.material.opacity = flowMode ? 0.38 : 0.28;
+    flowFloorGuide.visible = flowMode;
+    if (!flowMode) for (const line of flowLines.values()) line.visible = false;
+  }
+
+  function updateFlowFloorGuide(dt) {
+    if (!flowMode) return;
+    flowGuideClock = (flowGuideClock + dt * 0.32) % 1;
+    for (const arrow of flowFloorGuide.userData.flowArrows || []) {
+      const path = arrow.userData.flowPath;
+      const t = (path.offset + flowGuideClock) % 1;
+      arrow.position.x = path.ax + path.dx * t;
+      arrow.position.z = path.az + path.dz * t;
+      const pulse = 0.5 + Math.sin((t + flowGuideClock) * Math.PI * 2) * 0.5;
+      arrow.material.opacity = 0.48 + pulse * 0.28;
+      arrow.scale.setScalar(0.54 + pulse * 0.08);
+    }
+  }
+
+  function update(dt) {'''
+          if anchor not in s:
+            raise SystemExit('setFlowMode anchor not found')
+          s = s.replace(anchor, replacement)
+          s = s.replace('    syncBoxes(dt);\n    updateHeat();', '    syncBoxes(dt);\n    updateFlowFloorGuide(dt);\n    updateHeat();')
+          scene.write_text(s)
+
+          ui = Path('docs/src/ui.js')
+          u = ui.read_text()
+          u = u.replace('  let focusMode = false;\n', '  let focusMode = false;\n  let lastDirectorSeverity = null;\n')
+          u = u.replace("  el.insightToggle.addEventListener('click', () => setInsightCompact(!insightCompact));", "  el.insightToggle.addEventListener('click', () => { setInsightCompact(!insightCompact); render(); });")
+          u = u.replace('    const d = s.director;\n', '''    const d = s.director;
+    if (lastDirectorSeverity !== null) {
+      if (d.severity === 0 && lastDirectorSeverity > 0) setInsightCompact(true);
+      else if (d.severity > 0 && lastDirectorSeverity === 0) setInsightCompact(false);
+    }
+    lastDirectorSeverity = d.severity;
+    el.insightPanel.dataset.stable = d.severity === 0 ? 'true' : 'false';
+''')
+          u = u.replace('    el.directorLabel.textContent = d.label;\n', '''    const offerCount = (s.contractOffers || []).length;
+    const stableSummary = s.activeContract ? `安定稼働 · ${s.activeContract.title}` : `安定稼働 · 契約${offerCount}件`;
+    el.directorLabel.textContent = d.severity === 0 && insightCompact ? stableSummary : d.label;
+''')
+          ui.write_text(u)
+
+          css = Path('docs/readability.css')
+          c = css.read_text()
+          c += '''\n/* Readability Pass 4 — stable-state compression and 3D-first HUD */
+#insightPanel.compact[data-stable="true"]{width:auto;max-width:min(235px,calc(100vw - 16px));padding:5px 7px}
+#insightPanel.compact[data-stable="true"] .insightHead{gap:7px;align-items:center}
+#insightPanel.compact[data-stable="true"] .insightHead>div:first-child{display:block}
+#insightPanel.compact[data-stable="true"] .insightHead small,
+#insightPanel.compact[data-stable="true"] #severityBadge,
+#insightPanel.compact[data-stable="true"] #directorDetail,
+#insightPanel.compact[data-stable="true"] #directorRecommendation,
+#insightPanel.compact[data-stable="true"] .contractArea{display:none}
+#insightPanel.compact[data-stable="true"] #directorLabel{font-size:12px;line-height:1.05;white-space:nowrap}
+#insightPanel.compact[data-stable="true"] #insightToggle{width:30px;height:30px;min-width:30px}
+@media (max-width:500px){
+  #topHud .metric:nth-child(n+5){display:none}
+  #topHud{grid-template-columns:1.15fr .95fr .82fr .82fr;right:8px}
+  #insightPanel.compact[data-stable="true"]{max-width:min(222px,calc(100vw - 16px));padding:4px 6px}
+}\n'''
+          css.write_text(c)
+
+          qa = Path('.github/workflows/qa.yml')
+          q = qa.read_text()
+          start = q.index('      - name: Readability pass contract') if '      - name: Readability pass contract' in q else q.index('      - name: Readability pass 3 contract')
+          new_block = '''      - name: Readability pass 4 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'group.userData.readabilityPass = 4' docs/src/scene.js
+          grep -q 'group.userData.flowArrows = \[\]' docs/src/scene.js
+          grep -q 'flowGuideClock' docs/src/scene.js
+          grep -q 'updateFlowFloorGuide(dt)' docs/src/scene.js
+          grep -q "dataset.stable" docs/src/ui.js
+          grep -q '安定稼働 · 契約' docs/src/ui.js
+          grep -q '#topHud .metric:nth-child(n+5)' docs/readability.css
+          ! test -f .github/workflows/readability-pass4-apply.yml
+          echo "Readability pass 4 contract OK"
+'''
+          q = q[:start] + new_block
+          qa.write_text(q)
+
+          Path('.github/workflows/readability-pass4-apply.yml').unlink()
+          PY
+      - name: Verify syntax
+        run: |
+          node --check docs/src/scene.js
+          node --check docs/src/ui.js
+          grep -q 'readabilityPass = 4' docs/src/scene.js
+          grep -q 'Readability pass 4 contract' .github/workflows/qa.yml
+      - name: Commit Readability Pass 4
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/src/scene.js docs/src/ui.js docs/readability.css .github/workflows/qa.yml .github/workflows/readability-pass4-apply.yml
+          git commit -m 'Apply Readability Pass 4'
+          git push
