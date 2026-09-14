@@ -36,6 +36,17 @@ export function bindErgonomics(sim, capital) {
   handle.tabIndex = 0;
   dock.prepend(handle);
 
+  // Keep this outside capitalReport because capital.js refreshes the report body every 250 ms.
+  const observeAction = document.createElement('button');
+  observeAction.type = 'button';
+  observeAction.className = 'capitalObserveAction';
+  observeAction.hidden = true;
+  observeAction.addEventListener('click', () => {
+    closeSheet();
+    try { navigator.vibrate?.(10); } catch {}
+  });
+  if (capitalReport) capitalReport.insertAdjacentElement('afterend', observeAction);
+
   const pulse = document.createElement('div');
   pulse.id = 'investmentPulse';
   pulse.setAttribute('role', 'status');
@@ -86,20 +97,11 @@ export function bindErgonomics(sim, capital) {
     return `${report.key || ''}|${report.label || ''}|${report.cost || 0}`;
   }
 
-  function addObserveAction(report) {
-    if (!capitalReport || !report || capitalReport.hidden || dockIsCompact()) return;
-    let button = capitalReport.querySelector('.capitalObserveAction');
-    if (!button) {
-      button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'capitalObserveAction';
-      button.addEventListener('click', () => {
-        closeSheet();
-        try { navigator.vibrate?.(10); } catch {}
-      });
-      capitalReport.appendChild(button);
-    }
-    button.textContent = report.ready ? '結果を見ながら倉庫を観察' : '倉庫を観察しながら測定';
+  function syncObserveAction(report) {
+    const show = Boolean(report && capitalReport && !capitalReport.hidden && !dockIsCompact());
+    observeAction.hidden = !show;
+    if (!show) return;
+    observeAction.textContent = report.ready ? '結果を見ながら倉庫を観察' : '倉庫を観察しながら測定';
   }
 
   function updatePulse(report) {
@@ -143,7 +145,7 @@ export function bindErgonomics(sim, capital) {
     syncDockSemantics();
     const snapshot = capital?.snapshot?.() || window.__logisticsBossCapital?.snapshot?.();
     const report = snapshot?.report || null;
-    addObserveAction(report);
+    syncObserveAction(report);
     updatePulse(report);
   }
 
