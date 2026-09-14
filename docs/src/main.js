@@ -51,7 +51,6 @@ try {
     sim.update(dt);
     freedom.update(dt * sim.state.timeScale);
     capital.update(dt);
-    ergonomics.update(dt);
     sceneView.update(dt);
 
     uiTimer += dt;
@@ -60,6 +59,7 @@ try {
       ui.render();
       uiTimer = 0;
     }
+    ergonomics.update(dt);
     if (saveTimer >= 5) {
       if (sim.consumeDirty()) saveSnapshot(sim);
       saveTimer = 0;
