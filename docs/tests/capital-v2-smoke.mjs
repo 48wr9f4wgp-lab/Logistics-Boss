@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { createSimulation } from '../src/sim.js';
 import {
   CAPITAL_INVESTMENTS,
@@ -8,16 +9,25 @@ import {
 } from '../src/capital-model.js';
 
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
+const sceneSource = fs.readFileSync(new URL('../src/scene.js', import.meta.url), 'utf8');
+const asrsVisualSource = fs.readFileSync(new URL('../src/asrs-visual.js', import.meta.url), 'utf8');
 
 assert(CAPITAL_INVESTMENTS.workforce.costs[0] === 3500, 'workforce must be a distinct capital category');
 assert(CAPITAL_INVESTMENTS.forklift.costs[0] === 15000, 'forklift must be a distinct capital category');
 assert(CAPITAL_INVESTMENTS.agv.costs[0] === 40000, 'AGV must be a distinct capital category');
 assert(CAPITAL_INVESTMENTS.sorter.costs[0] === 90000, 'sorter must be a distinct capital category');
 assert(CAPITAL_INVESTMENTS.hall.costs[0] === 300000, 'hall must be a distinct property-scale capital category');
+assert(CAPITAL_INVESTMENTS.asrs.costs[0] === 1800000, 'ASRS must be a distinct high-bay automation category');
+assert(CAPITAL_INVESTMENTS.asrs.unlockAssets === 1000000, 'ASRS must unlock at the million-yen capital scale');
 assert(!investmentUnlocked({}, 'workforce'), 'workforce must be gated by early equipment assets');
 assert(!investmentUnlocked({}, 'forklift'), 'forklift must be gated by equipment assets');
 assert(investmentUnlocked({ rack: 1, pack: 1, speed: 1, conveyor: 1 }, 'forklift'), 'forklift must unlock once equipment assets reach its threshold');
 assert(!investmentUnlocked({ rack: 1, pack: 1, speed: 1, conveyor: 1 }, 'agv'), 'AGV must remain locked at the first automation threshold');
+assert(!investmentUnlocked({ hall: 1 }, 'asrs'), 'ASRS must remain locked below the million-yen capital threshold');
+assert(sceneSource.includes("import { createAsrsVisual } from './asrs-visual.js';"), 'warehouse scene must wire the ASRS 3D module');
+assert(sceneSource.includes('asrsVisual.update(dt);'), 'warehouse render loop must update ASRS animation');
+assert(asrsVisualSource.includes("event.type === 'asrs_store'") && asrsVisualSource.includes("event.type === 'asrs_pick'"), 'ASRS 3D animation must react to real storage and retrieval events');
+assert(asrsVisualSource.includes('carriage.position.y') && asrsVisualSource.includes('shuttle.position.x'), 'ASRS visual must contain moving stacker-crane components');
 
 const buyer = createSimulation({
   schema_version: 3,
@@ -32,7 +42,7 @@ const buyer = createSimulation({
   milestoneAwarded: 0,
   policy: 'balanced',
   priorities: { store: 3, pick: 3, ship: 4 },
-  upgrades: { worker: 0, speed: 5, rack: 4, pack: 5, conveyor: 4, forklift: 0, agv: 0, sorter: 0, hall: 0 },
+  upgrades: { worker: 0, speed: 5, rack: 4, pack: 5, conveyor: 4, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
   perks: {},
 });
 
@@ -50,6 +60,12 @@ assert(hallPurchase.ok && hallPurchase.level === 1, 'hall level 1 must be purcha
 assert(buyer.rackCapacity() === rackBeforeHall + 8, 'hall must add real rack capacity');
 assert(buyer.inboundMax() === inboundBeforeHall + 4, 'hall must add real receiving buffer capacity');
 
+const rackBeforeAsrs = buyer.rackCapacity();
+const asrsCost = nextInvestmentCost(buyer.state.upgrades, 'asrs');
+const asrsPurchase = buyer.purchaseCapitalUpgrade('asrs', asrsCost);
+assert(asrsPurchase.ok && asrsPurchase.level === 1, 'ASRS level 1 must be purchasable through the simulation domain');
+assert(buyer.rackCapacity() === rackBeforeAsrs + 16, 'ASRS level 1 must add 16 real rack slots');
+
 const cashBefore = buyer.state.money;
 const forkliftCost = nextInvestmentCost(buyer.state.upgrades, 'forklift');
 const purchase = buyer.purchaseCapitalUpgrade('forklift', forkliftCost);
@@ -60,8 +76,9 @@ const saved = buyer.serialize();
 const reloaded = createSimulation(saved);
 assert(reloaded.state.upgrades.worker === 1, 'workforce capital must survive save/load');
 assert(reloaded.state.upgrades.hall === 1, 'hall capital must survive save/load');
+assert(reloaded.state.upgrades.asrs === 1, 'ASRS capital must survive save/load');
 assert(reloaded.state.upgrades.forklift === 1, 'Capital v2 upgrades must survive save/load');
-assert(reloaded.rackCapacity() === buyer.rackCapacity(), 'hall capacity must survive save/load');
+assert(reloaded.rackCapacity() === buyer.rackCapacity(), 'hall and ASRS capacity must survive save/load');
 assert(investedCapital(reloaded.state.upgrades) > investedCapital({}), 'Capital v2 equipment must count toward equipment assets');
 
 const auto = createSimulation({
@@ -84,7 +101,7 @@ const auto = createSimulation({
   milestoneAwarded: 0,
   policy: 'balanced',
   priorities: { store: 3, pick: 3, ship: 4 },
-  upgrades: { worker: 0, speed: 5, rack: 4, pack: 5, conveyor: 0, forklift: 4, agv: 4, sorter: 4, hall: 0 },
+  upgrades: { worker: 0, speed: 5, rack: 4, pack: 5, conveyor: 0, forklift: 4, agv: 4, sorter: 4, hall: 0, truckDock: 0, asrs: 0 },
   perks: { smartDispatch: 0, bulkPack: 1, contractBonus: 0 },
 });
 
@@ -102,5 +119,29 @@ assert(shipments.some((event) => event.source === 'sorter'), 'sorter must own at
 const expectedUnitRevenue = currentUnitRevenue(auto.state.upgrades);
 assert(shipments.every((event) => event.value === expectedUnitRevenue), 'shipment revenue must be owned by the simulation domain');
 assert(auto.state.money > 100000000, 'automation shipments must add commercial revenue to simulation money');
+
+const asrsAuto = createSimulation({
+  schema_version: 3,
+  money: 100000000,
+  research: 0,
+  logisticsRating: 8,
+  facilityRank: 2,
+  facilities: {},
+  staffingPlan: 'balanced',
+  shipped: 0,
+  completedContracts: 12,
+  milestoneAwarded: 0,
+  policy: 'balanced',
+  priorities: { store: 3, pick: 3, ship: 4 },
+  upgrades: { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0, asrs: 3 },
+  perks: {},
+});
+asrsAuto.state.ordersOpen = 20;
+asrsAuto.setTimeScale(4);
+const asrsEvents = [];
+asrsAuto.onEvent((event) => asrsEvents.push(event));
+for (let i = 0; i < 500; i += 1) asrsAuto.update(0.05);
+assert(asrsEvents.some((event) => event.type === 'asrs_store'), 'ASRS must perform a real inbound-to-rack storage move');
+assert(asrsEvents.some((event) => event.type === 'asrs_pick'), 'ASRS must perform a real rack-to-packing retrieval move');
 
 console.log('Capital Expansion v2 smoke OK');

@@ -2,6 +2,8 @@ import {
   CAPITAL_INVESTMENTS,
   agvBatchForLevel,
   agvIntervalForLevel,
+  asrsCapacityForLevel,
+  asrsIntervalForLevel,
   currentUnitRevenue,
   forkliftBatchForLevel,
   forkliftIntervalForLevel,
@@ -42,6 +44,7 @@ const UPGRADE_INFO = {
   sorter: { label: '自動ソーター', max: 4, baseCost: 90000 },
   hall: { label: '物流ホール拡張', max: 3, baseCost: 300000 },
   truckDock: { label: 'トラックドック', max: 3, baseCost: 650000 },
+  asrs: { label: 'AS/RS自動倉庫', max: 3, baseCost: 1800000 },
 };
 
 const PERK_INFO = {
@@ -127,6 +130,8 @@ export function createSimulation(saved = null) {
   let forkliftTimer = 0;
   let agvTimer = 0;
   let sorterTimer = 0;
+  let asrsTimer = 0;
+  let asrsDirection = 'store';
   let truckWaveTimer = 9;
   let truckUnloadTimer = 0;
   let overflowCooldown = 0;
@@ -149,7 +154,7 @@ export function createSimulation(saved = null) {
     policy: 'balanced',
     timeScale: 1,
     priorities: { store: 3, pick: 3, ship: 4 },
-    upgrades: { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0 },
+    upgrades: { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
     truckWave: { phase: 'away', progress: 0, cargo: 0, waveSize: 0, trip: 0 },
     perks: { smartDispatch: 0, bulkPack: 0, contractBonus: 0 },
     contractOffers: [],
@@ -208,7 +213,8 @@ export function createSimulation(saved = null) {
   function rackCapacity() {
     const strategyBonus = state.facilities.highDensityRack ? 12 : state.facilities.fastPickRack ? 4 : 0;
     const hallBonus = (state.upgrades.hall || 0) * 8;
-    return BASE.rackCapacity + state.upgrades.rack * 4 + strategyBonus + hallBonus;
+    const asrsBonus = asrsCapacityForLevel(state.upgrades.asrs || 0);
+    return BASE.rackCapacity + state.upgrades.rack * 4 + strategyBonus + hallBonus + asrsBonus;
   }
 
   function packTime() {
@@ -233,6 +239,10 @@ export function createSimulation(saved = null) {
 
   function sorterInterval() {
     return sorterIntervalForLevel(state.upgrades.sorter);
+  }
+
+  function asrsInterval() {
+    return asrsIntervalForLevel(state.upgrades.asrs);
   }
 
   function truckWaveInterval() {
@@ -611,6 +621,49 @@ export function createSimulation(saved = null) {
     if (moved) emit('forklift_transfer', { text: `フォークリフト ${moved}箱搬送`, amount: moved });
   }
 
+  function runAsrs(dt) {
+    const level = state.upgrades.asrs || 0;
+    if (!level) return;
+    asrsTimer -= dt;
+    if (asrsTimer > 0) return;
+    asrsTimer = asrsInterval();
+
+    const store = () => {
+      const box = availableBox('inbound');
+      const slot = freeRackSlot();
+      if (!box || slot == null) return false;
+      box.phase = 'rack';
+      box.rackSlot = slot;
+      box.reservedBy = null;
+      box.carrierId = null;
+      Object.assign(box, rackPosition(slot));
+      emit('asrs_store', { text: 'AS/RS 自動入庫 1箱', amount: 1, boxId: box.id });
+      return true;
+    };
+
+    const pick = () => {
+      const needed = Math.max(0, state.ordersOpen - inProcessOrders());
+      if (needed <= 0) return false;
+      const box = availableBox('rack');
+      if (!box) return false;
+      box.phase = 'waiting_pack';
+      box.rackSlot = null;
+      box.reservedBy = null;
+      box.carrierId = null;
+      box.packRemaining = 0;
+      box.x = POS.pack.x;
+      box.y = 0.35;
+      box.z = POS.pack.z;
+      emit('asrs_pick', { text: 'AS/RS 自動出庫 1箱', amount: 1, boxId: box.id });
+      return true;
+    };
+
+    const primary = asrsDirection === 'store' ? store : pick;
+    const fallback = asrsDirection === 'store' ? pick : store;
+    const moved = primary() || fallback();
+    if (moved) asrsDirection = asrsDirection === 'store' ? 'pick' : 'store';
+  }
+
   function runAgv(dt) {
     const level = state.upgrades.agv || 0;
     if (!level) return;
@@ -924,6 +977,7 @@ export function createSimulation(saved = null) {
     updateSpawners(scaled);
     runConveyor(scaled);
     runForklift(scaled);
+    runAsrs(scaled);
     runAgv(scaled);
     updatePacking(scaled);
     runSorter(scaled);
@@ -970,6 +1024,8 @@ export function createSimulation(saved = null) {
     forkliftTimer = 0;
     agvTimer = 0;
     sorterTimer = 0;
+    asrsTimer = 0;
+    if (type === 'asrs') asrsDirection = 'store';
     if (type === 'truckDock') {
       truckWaveTimer = 2.5;
       state.truckWave = { phase: 'away', progress: 0, cargo: 0, waveSize: 0, trip: state.truckWave?.trip || 0 };
@@ -995,6 +1051,8 @@ export function createSimulation(saved = null) {
     forkliftTimer = 0;
     agvTimer = 0;
     sorterTimer = 0;
+    asrsTimer = 0;
+    if (type === 'asrs') asrsDirection = 'store';
     if (type === 'truckDock') {
       truckWaveTimer = 2.5;
       state.truckWave = { phase: 'away', progress: 0, cargo: 0, waveSize: 0, trip: state.truckWave?.trip || 0 };
@@ -1123,7 +1181,7 @@ export function createSimulation(saved = null) {
     state.policy = 'balanced';
     state.timeScale = 1;
     state.priorities = { store: 3, pick: 3, ship: 4 };
-    state.upgrades = { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0 };
+    state.upgrades = { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0, asrs: 0 };
     state.truckWave = { phase: 'away', progress: 0, cargo: 0, waveSize: 0, trip: 0 };
     state.perks = { smartDispatch: 0, bulkPack: 0, contractBonus: 0 };
     state.contractOffers = [];
@@ -1141,6 +1199,8 @@ export function createSimulation(saved = null) {
     forkliftTimer = 0;
     agvTimer = 0;
     sorterTimer = 0;
+    asrsTimer = 0;
+    asrsDirection = 'store';
     truckWaveTimer = 9;
     truckUnloadTimer = 0;
     offerCooldown = 0;
@@ -1170,6 +1230,7 @@ export function createSimulation(saved = null) {
     forkliftInterval,
     agvInterval,
     sorterInterval,
+    asrsInterval,
     truckWaveInterval,
     truckWaveSize,
     truckUnloadInterval,

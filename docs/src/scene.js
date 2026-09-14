@@ -1,6 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js';
 import RAPIER from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.20.0/+esm';
 import { POS } from './sim.js';
+import { createAsrsVisual } from './asrs-visual.js';
 
 const TASK_TEXTURES = new Map();
 const GEO = {
@@ -636,6 +637,7 @@ export async function createSceneView(canvas, sim) {
   renderer.setSize(innerWidth, innerHeight, false);
 
   const scene = new THREE.Scene();
+  const asrsVisual = createAsrsVisual(scene, sim);
   scene.background = new THREE.Color(0x101920);
   scene.fog = new THREE.Fog(0x101920, 23, 48);
   const camera = new THREE.PerspectiveCamera(43, innerWidth / innerHeight, 0.1, 90);
@@ -856,7 +858,7 @@ export async function createSceneView(canvas, sim) {
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     canvas.setPointerCapture?.(e.pointerId);
     if (pointers.size === 1) lastSingle = { x: e.clientX, y: e.clientY };
-    if (pointers.size === 2) { pinchStart = pointerDistance(); pinchCamera = cameraState.targetDistance; }
+    if (pointers.size === 2) { pinchStart = pointerDistance(); pinchCamera = cameraState.distance; }
   });
   canvas.addEventListener('pointermove', (e) => {
     if (!pointers.has(e.pointerId)) return;
@@ -1205,6 +1207,7 @@ export async function createSceneView(canvas, sim) {
     syncWorkers(dt);
     syncBoxes(dt);
     updateAutomationVisuals(dt);
+    asrsVisual.update(dt);
     updateTruckVisuals(dt);
     updateFlowFloorGuide(dt);
     updateHeat();

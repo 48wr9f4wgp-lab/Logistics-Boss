@@ -1,6 +1,6 @@
 # Logistics Boss — Capital Expansion v2
 
-Status: implementation baseline / 2026-09-14
+Status: implementation baseline / 2026-09-15
 Authority: title-specific continuation of `CAPITAL_EXPANSION_V1.md`.
 
 ## Product goal
@@ -103,6 +103,7 @@ The purpose of higher parcel value is to support larger machinery and property-s
 - Locked categories show their asset threshold rather than disappearing completely.
 - Buying equipment, hiring staff or expanding the hall does not close management.
 - The 25-second measurement remains visible while the player deliberately returns to the warehouse view.
+- The next equipment unlock and next commercial tier remain pinned at sheet level while capital cards scroll underneath.
 - No FTUE rail or “buy this next” recommendation is added.
 
 ## Phase 1 acceptance criteria
@@ -126,18 +127,6 @@ The purpose of higher parcel value is to support larger machinery and property-s
 - The existing 25-second Before/After report applies to both investments.
 - Static QA and Capital v2 smoke tests cover purchase, capacity, persistence and simulation behavior.
 
-## Deferred to later v2 phases
-
-- AS/RS automated storage and retrieval.
-- Truck dock scheduling and truck waves.
-- Multi-building logistics campus / second center beyond the three hall extensions.
-- True Rank 3 `Fulfillment Center` gameplay.
-- Event-synchronized pallet/parcel attachment to every vehicle animation.
-- Free-form conveyor drawing.
-
-These should be added only after the current workforce / automation / property choices prove that they create meaningfully different investment strategies and bottlenecks.
-
-
 ## Phase 3 — Truck Dock / Truck Waves
 
 Phase 3 converts late-game inbound flow from a smooth drip into visible truck arrivals.
@@ -156,3 +145,42 @@ Four-condition gate:
 2. Real logistics behavior changes from drip to waves.
 3. Before/After remains measurable.
 4. More dock capacity can expose internal bottlenecks.
+
+## Phase 4 — AS/RS Automated Storage & Retrieval
+
+Phase 4 moves the storage layer from conventional racks toward a high-bay automated warehouse rather than adding another generic speed multiplier.
+
+### AS/RS Automated Warehouse
+- Capital card: `AS/RS自動倉庫`.
+- Unlock: investment total `¥1,000,000`.
+- Costs: `¥1,800,000 / ¥14,000,000 / ¥90,000,000`.
+- Levels: 3.
+- Storage capacity: +16 real rack slots per level.
+- Automated cycle: one real storage/retrieval move approximately every `5.4 / 3.9 / 2.8` seconds by level.
+- Storage move: unreserved inbound parcel → real rack slot.
+- Retrieval move: ordered rack parcel → real packing queue.
+- The controller alternates store/retrieve intent and falls back to the available direction, so the system continues to serve the current warehouse state instead of stalling on an impossible action.
+- Visual: each level adds a distinct high-bay rack tower with a moving stacker-crane carriage, shuttle and live scanner/beacon response to `asrs_store` / `asrs_pick` events.
+- Strategic role: simultaneously create high-density storage and reduce rack-stage labor dependence without bypassing packing or outbound.
+- Expected new constraint: after rack handling is automated, packing cells, sorter/outbound capacity, or inbound truck waves can become the next limiter.
+
+Phase 4 must not make workforce, forklift, AGV, hall or truck-dock choices obsolete. Those investments solve different stages and remain valid depending on the observed bottleneck.
+
+### Phase 4 acceptance criteria
+- AS/RS is a distinct Capital category and remains locked below ¥1,000,000 invested capital.
+- Each level adds +16 authoritative rack capacity.
+- The simulation emits real `asrs_store` and `asrs_pick` events from actual parcel state changes.
+- AS/RS state and capacity survive schema-3 save/load.
+- A purchased level produces a visible high-bay 3D module; additional levels add additional modules.
+- Stack-crane/shuttle motion reacts to real AS/RS transfer events rather than being a static decoration only.
+- Existing 25-second Before/After measurement applies to AS/RS unchanged.
+- Capital v2 smoke tests require both real storage and retrieval behavior.
+
+## Deferred to later v2 phases
+
+- Multi-building logistics campus / second center beyond the three hall extensions.
+- True Rank 3 `Fulfillment Center` gameplay.
+- Event-synchronized pallet/parcel attachment to every vehicle animation.
+- Free-form conveyor drawing.
+
+These should be added only after the current workforce / automation / property choices prove that they create meaningfully different investment strategies and bottlenecks.
