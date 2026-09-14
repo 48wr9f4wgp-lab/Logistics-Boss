@@ -1,0 +1,113 @@
+/* UX / Ergonomics Pass 1 — mobile thumb reach, visual hierarchy, and investment feedback */
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+
+/* Rank 1 should feel like a sandbox, not a persistent instruction strip. */
+#rank1Guide{display:none!important}
+
+/* Glance information: readable, but never the primary interaction surface. */
+@media (max-width:500px){
+  #topHud .metric span{font-size:10px;line-height:1.05}
+  #topHud .metric strong{font-size:14px;line-height:1.15}
+  #directorDetail{font-size:11px;line-height:1.3}
+  #directorRecommendation{font-size:11px;line-height:1.32}
+  .contractChoice strong{font-size:11px}
+  .contractChoice span,.contractChoice small{font-size:10px;line-height:1.28}
+}
+
+/* Primary controls live in the lower thumb zone and use comfortable touch sizes. */
+#commandDock{bottom:max(8px,env(safe-area-inset-bottom));scrollbar-width:none}
+#commandDock::-webkit-scrollbar{display:none}
+.dockMini{min-height:48px;gap:6px}
+.miniPolicies{gap:5px}
+.miniPolicies button,.quickSpeed,.miniUtility{min-height:48px;border-radius:13px;font-size:12px;padding:0 8px}
+.quickSpeed{min-width:48px}
+#flowBtn{min-width:54px}
+#dockToggle{position:relative;min-width:58px;border-color:rgba(101,211,255,.28)}
+#dockToggle[data-afford="true"]{border-color:rgba(95,226,157,.60);background:rgba(44,157,101,.18);color:#c9ffe0;box-shadow:0 0 18px rgba(95,226,157,.12)}
+#dockToggle[data-afford="true"]::after{content:"";position:absolute;right:6px;top:6px;width:7px;height:7px;border-radius:50%;background:#78efa8;box-shadow:0 0 8px rgba(120,239,168,.75)}
+
+/* Observation is secondary: discoverable in the sheet, but not competing with the core compact row. */
+#commandDock.compact #observeBtn{display:none}
+#commandDock.compact{max-height:64px;padding:7px 7px 8px}
+#commandDock.compact .opsMiniSummary{display:none!important}
+
+/* Management behaves like a bottom sheet. Keep world context visible and keep the close controls pinned. */
+#commandDock:not(.compact){max-height:min(62dvh,570px);padding-top:8px;background:rgba(7,13,18,.91);scroll-padding-top:72px}
+#commandDock:not(.compact) .sheetHandle{display:flex}
+#commandDock:not(.compact) .dockMini{position:sticky;top:0;z-index:8;margin:-1px -1px 0;padding:5px 2px 7px;background:linear-gradient(180deg,rgba(7,13,18,.99) 72%,rgba(7,13,18,.74));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#commandDock:not(.compact) .dockMini::before{content:"管理・設備投資";flex:1;align-self:center;color:#dff6ff;font-size:13px;font-weight:900;letter-spacing:.01em;padding-left:4px}
+#commandDock:not(.compact) .miniPolicies,
+#commandDock:not(.compact) .quickSpeed,
+#commandDock:not(.compact) #flowBtn,
+#commandDock:not(.compact) .opsMiniSummary{display:none!important}
+#commandDock:not(.compact) #observeBtn,#commandDock:not(.compact) #dockToggle{display:inline-flex;align-items:center;justify-content:center;min-width:72px}
+#dockExpanded{margin-top:4px;padding-top:6px}
+.sheetHandle{display:none;position:sticky;top:0;z-index:9;align-items:center;justify-content:center;height:24px;margin:-7px -7px 0;cursor:pointer;touch-action:pan-y}
+.sheetHandle::after{content:"";width:42px;height:4px;border-radius:999px;background:rgba(210,227,237,.28)}
+
+/* Capital is the primary management decision surface. */
+.capitalPanel{margin:8px 0 14px;padding:12px;border-radius:16px}
+.capitalHead{margin-bottom:9px}
+.capitalHead strong{font-size:17px}
+.capitalHead small{font-size:10px}
+.capitalTier{font-size:10px;line-height:1.25}
+.capitalStat{padding:9px}
+.capitalStat span{font-size:10px}
+.capitalStat b{font-size:13px}
+.capitalGrid{gap:8px}
+.capitalBuy{min-height:126px;padding:11px;border-radius:14px;transition:transform .08s ease,border-color .16s ease,background .16s ease}
+.capitalBuy:not(:disabled):active{transform:scale(.985)}
+.capitalBuy strong{font-size:13px;line-height:1.2}
+.capitalBuy .capitalLevel{font-size:10px}
+.capitalBuy span{font-size:11px;line-height:1.32}
+.capitalBuy em{font-size:11px;line-height:1.28}
+.capitalBuy b{font-size:15px}
+.capitalBuy[data-ready="true"]{box-shadow:inset 0 0 0 1px rgba(101,211,255,.08),0 5px 18px rgba(21,102,135,.08)}
+.capitalReport{padding:11px;border-radius:13px}
+.capitalReport strong{font-size:12px}
+.capitalReport p{font-size:11px;line-height:1.4}
+.capitalReportGrid span{min-height:34px;display:flex;align-items:center;font-size:11px}
+.capitalHint{font-size:10px;line-height:1.42}
+.capitalObserveAction{width:100%;min-height:46px;margin-top:9px;border:1px solid rgba(101,211,255,.42);border-radius:12px;background:rgba(54,151,196,.15);color:#d8f6ff;font-size:12px;font-weight:900}
+.capitalObserveAction:active{transform:scale(.99)}
+
+/* Lower-frequency systems should read as secondary once capital investment is visible. */
+#dockExpanded>.sectionLabel,.legacyNotice{opacity:.72}
+.utilityButtons button,.speedRow button,.staffingChoices button,.facilityChoice,.upgrade{min-height:44px}
+.utilityButtons button{min-width:44px;font-size:11px}
+.speedRow button{min-width:44px;min-height:44px;font-size:12px}
+
+/* Compact investment measurement survives while the sheet is closed so the player can watch the world. */
+#investmentPulse{position:absolute;z-index:39;left:50%;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 72px);transform:translateX(-50%);width:min(340px,calc(100vw - 28px));padding:9px 12px;border-radius:13px;border:1px solid rgba(101,211,255,.30);background:rgba(7,15,20,.88);box-shadow:0 8px 28px rgba(0,0,0,.24);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);pointer-events:none;opacity:0;transition:opacity .16s ease,transform .16s ease}
+#investmentPulse.show{opacity:1;transform:translate(-50%,-2px)}
+#investmentPulse[data-tone="good"]{border-color:rgba(95,226,157,.42)}
+#investmentPulse[data-tone="bad"]{border-color:rgba(255,126,126,.42)}
+#investmentPulse strong{display:block;color:#eefaff;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#investmentPulse span{display:block;margin-top:2px;color:#9db0bb;font-size:10px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Clear pressed feedback for motor confidence. */
+.miniPolicies button:active,.quickSpeed:active,.miniUtility:active,.utilityButtons button:active,.speedRow button:active,.staffingChoices button:active,.facilityChoice:active,.upgrade:active{transform:scale(.975);filter:brightness(1.12)}
+
+@media (max-width:500px){
+  #commandDock{left:8px;right:8px}
+  #commandDock:not(.compact){max-height:62dvh}
+  .dockMini{gap:5px}
+  .miniPolicies button,.quickSpeed,.miniUtility{min-height:46px;font-size:11px;padding:0 6px}
+  .quickSpeed{min-width:46px}
+  #flowBtn{min-width:52px}
+  #dockToggle{min-width:56px}
+  .capitalStats{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .capitalGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .capitalBuy{min-height:130px;padding:10px}
+  .capitalBuy strong{font-size:12px}
+  .capitalBuy span,.capitalBuy em{font-size:10.5px}
+  .capitalBuy b{font-size:14px}
+  .cameraHelp{display:none}
+}
+
+@media (max-width:370px){
+  .miniPolicies button{padding:0 4px;font-size:10px}
+  #flowBtn{min-width:48px}
+  #dockToggle{min-width:52px}
+  .capitalGrid{grid-template-columns:1fr}
+}
