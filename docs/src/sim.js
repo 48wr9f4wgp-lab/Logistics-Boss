@@ -1,3 +1,13 @@
+import {
+  CAPITAL_INVESTMENTS,
+  agvBatchForLevel,
+  agvIntervalForLevel,
+  currentUnitRevenue,
+  forkliftBatchForLevel,
+  forkliftIntervalForLevel,
+  sorterIntervalForLevel,
+} from './capital-model.js';
+
 const POS = {
   inbound: { x: -6.1, z: 3.8 },
   rack: { x: -2.1, z: -1.1 },
@@ -24,6 +34,9 @@ const UPGRADE_INFO = {
   rack: { label: '棚拡張', max: 4, baseCost: 300 },
   pack: { label: '梱包設備', max: 5, baseCost: 320 },
   conveyor: { label: '自動搬送', max: 4, baseCost: 700 },
+  forklift: { label: 'フォークリフト隊', max: 4, baseCost: 15000 },
+  agv: { label: 'AGVピック隊', max: 4, baseCost: 40000 },
+  sorter: { label: '自動ソーター', max: 4, baseCost: 90000 },
 };
 
 const PERK_INFO = {
@@ -106,6 +119,9 @@ export function createSimulation(saved = null) {
   let inboundTimer = 0.4;
   let orderTimer = 3.0;
   let conveyorTimer = 0;
+  let forkliftTimer = 0;
+  let agvTimer = 0;
+  let sorterTimer = 0;
   let overflowCooldown = 0;
   let offerCooldown = 0;
   let saveDirty = false;
@@ -126,7 +142,7 @@ export function createSimulation(saved = null) {
     policy: 'balanced',
     timeScale: 1,
     priorities: { store: 3, pick: 3, ship: 4 },
-    upgrades: { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0 },
+    upgrades: { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0 },
     perks: { smartDispatch: 0, bulkPack: 0, contractBonus: 0 },
     contractOffers: [],
     activeContract: null,
@@ -155,36 +171,36 @@ export function createSimulation(saved = null) {
   }
 
   function workerSpeed() {
-  return BASE.workerSpeed * (1 + state.upgrades.speed * 0.16);
-}
+    return BASE.workerSpeed * (1 + state.upgrades.speed * 0.16);
+  }
 
-function facilityRankName(rank = state.facilityRank) {
-  return FACILITY_RANKS[rank]?.name || `Rank ${rank}`;
-}
+  function facilityRankName(rank = state.facilityRank) {
+    return FACILITY_RANKS[rank]?.name || `Rank ${rank}`;
+  }
 
-function nextRankTarget() {
-  return state.facilityRank < 2 ? FACILITY_RANKS[2].rating : null;
-}
+  function nextRankTarget() {
+    return state.facilityRank < 2 ? FACILITY_RANKS[2].rating : null;
+  }
 
-function inboundMax() {
-  if (state.facilities.bufferYard) return BASE.inboundMax + 14;
-  return BASE.inboundMax + (state.facilities.secondInbound ? 6 : 0);
-}
+  function inboundMax() {
+    if (state.facilities.bufferYard) return BASE.inboundMax + 14;
+    return BASE.inboundMax + (state.facilities.secondInbound ? 6 : 0);
+  }
 
-function inboundInterval() {
-  return BASE.inboundInterval * (state.facilities.secondInbound ? 0.78 : 1);
-}
+  function inboundInterval() {
+    return BASE.inboundInterval * (state.facilities.secondInbound ? 0.78 : 1);
+  }
 
-function packCapacity() {
-  return state.facilities.secondPack ? 2 : 1;
-}
+  function packCapacity() {
+    return state.facilities.secondPack ? 2 : 1;
+  }
 
-function rackCapacity() {
-  const strategyBonus = state.facilities.highDensityRack ? 12 : state.facilities.fastPickRack ? 4 : 0;
-  return BASE.rackCapacity + state.upgrades.rack * 4 + strategyBonus;
-}
+  function rackCapacity() {
+    const strategyBonus = state.facilities.highDensityRack ? 12 : state.facilities.fastPickRack ? 4 : 0;
+    return BASE.rackCapacity + state.upgrades.rack * 4 + strategyBonus;
+  }
 
-function packTime() {
+  function packTime() {
     const upgradeFactor = Math.pow(0.82, state.upgrades.pack);
     const perkFactor = Math.pow(0.85, state.perks.bulkPack);
     const facilityFactor = state.facilities.fastPackCell ? 0.58 : state.facilities.secondPack ? 1.10 : 1;
@@ -194,6 +210,18 @@ function packTime() {
   function conveyorInterval() {
     if (!state.upgrades.conveyor) return Infinity;
     return Math.max(1.15, 4.6 - state.upgrades.conveyor * 0.75);
+  }
+
+  function forkliftInterval() {
+    return forkliftIntervalForLevel(state.upgrades.forklift);
+  }
+
+  function agvInterval() {
+    return agvIntervalForLevel(state.upgrades.agv);
+  }
+
+  function sorterInterval() {
+    return sorterIntervalForLevel(state.upgrades.sorter);
   }
 
   function upgradeCost(type) {
@@ -422,6 +450,19 @@ function packTime() {
     markDirty();
   }
 
+  function completeShipment(box, source = 'worker') {
+    const index = state.boxes.indexOf(box);
+    if (index >= 0) state.boxes.splice(index, 1);
+    state.ordersOpen = Math.max(0, state.ordersOpen - 1);
+    const unitRevenue = currentUnitRevenue(state.upgrades);
+    state.money += unitRevenue;
+    state.shipped += 1;
+    shipmentTimes.push(simClock);
+    emit('shipment', { text: `出荷 +¥${unitRevenue}`, value: unitRevenue, source });
+    handleMilestone();
+    markDirty();
+  }
+
   function deliver(worker, box) {
     const kind = worker.task.kind;
     if (kind === 'store') {
@@ -439,15 +480,7 @@ function packTime() {
       box.y = 0.35;
       box.z = POS.pack.z;
     } else if (kind === 'ship') {
-      const index = state.boxes.indexOf(box);
-      if (index >= 0) state.boxes.splice(index, 1);
-      state.ordersOpen = Math.max(0, state.ordersOpen - 1);
-      state.money += BASE.saleValue;
-      state.shipped += 1;
-      shipmentTimes.push(simClock);
-      emit('shipment', { text: `出荷 +¥${BASE.saleValue}`, value: BASE.saleValue });
-      handleMilestone();
-      markDirty();
+      completeShipment(box, 'worker');
     }
     worker.carrying = null;
     worker.task = null;
@@ -495,30 +528,30 @@ function packTime() {
   }
 
   function updatePacking(dt) {
-  let active = state.boxes.filter((box) => box.phase === 'packing').length;
-  if (active < packCapacity()) {
+    let active = state.boxes.filter((box) => box.phase === 'packing').length;
+    if (active < packCapacity()) {
+      for (const box of state.boxes) {
+        if (box.phase !== 'waiting_pack') continue;
+        box.phase = 'packing';
+        box.packRemaining = packTime();
+        active += 1;
+        emit('packing_start', { boxId: box.id });
+        if (active >= packCapacity()) break;
+      }
+    }
     for (const box of state.boxes) {
-      if (box.phase !== 'waiting_pack') continue;
-      box.phase = 'packing';
-      box.packRemaining = packTime();
-      active += 1;
-      emit('packing_start', { boxId: box.id });
-      if (active >= packCapacity()) break;
+      if (box.phase !== 'packing') continue;
+      box.packRemaining -= dt;
+      if (box.packRemaining <= 0) {
+        box.phase = 'packed';
+        box.packRemaining = 0;
+        emit('packed', { boxId: box.id, text: '梱包完了' });
+      }
     }
+    normalizePackedPositions();
   }
-  for (const box of state.boxes) {
-    if (box.phase !== 'packing') continue;
-    box.packRemaining -= dt;
-    if (box.packRemaining <= 0) {
-      box.phase = 'packed';
-      box.packRemaining = 0;
-      emit('packed', { boxId: box.id, text: '梱包完了' });
-    }
-  }
-  normalizePackedPositions();
-}
 
-function runConveyor(dt) {
+  function runConveyor(dt) {
     if (!state.upgrades.conveyor) return;
     conveyorTimer -= dt;
     if (conveyorTimer > 0) return;
@@ -531,6 +564,68 @@ function runConveyor(dt) {
     box.reservedBy = null;
     Object.assign(box, rackPosition(slot));
     emit('conveyor', { text: '自動搬送が1箱処理' });
+  }
+
+  function runForklift(dt) {
+    const level = state.upgrades.forklift || 0;
+    if (!level) return;
+    forkliftTimer -= dt;
+    if (forkliftTimer > 0) return;
+    forkliftTimer = forkliftInterval();
+    const batch = forkliftBatchForLevel(level);
+    let moved = 0;
+    for (let i = 0; i < batch; i += 1) {
+      const box = availableBox('inbound');
+      const slot = freeRackSlot();
+      if (!box || slot == null) break;
+      box.phase = 'rack';
+      box.rackSlot = slot;
+      box.reservedBy = null;
+      box.carrierId = null;
+      Object.assign(box, rackPosition(slot));
+      moved += 1;
+    }
+    if (moved) emit('forklift_transfer', { text: `フォークリフト ${moved}箱搬送`, amount: moved });
+  }
+
+  function runAgv(dt) {
+    const level = state.upgrades.agv || 0;
+    if (!level) return;
+    agvTimer -= dt;
+    if (agvTimer > 0) return;
+    agvTimer = agvInterval();
+    let needed = Math.max(0, state.ordersOpen - inProcessOrders());
+    if (needed <= 0) return;
+    const batch = Math.min(needed, agvBatchForLevel(level));
+    let moved = 0;
+    for (let i = 0; i < batch; i += 1) {
+      const box = availableBox('rack');
+      if (!box) break;
+      box.phase = 'waiting_pack';
+      box.rackSlot = null;
+      box.reservedBy = null;
+      box.carrierId = null;
+      box.packRemaining = 0;
+      box.x = POS.pack.x;
+      box.y = 0.35;
+      box.z = POS.pack.z;
+      moved += 1;
+      needed -= 1;
+      if (needed <= 0) break;
+    }
+    if (moved) emit('agv_transfer', { text: `AGV ${moved}箱ピック`, amount: moved });
+  }
+
+  function runSorter(dt) {
+    const level = state.upgrades.sorter || 0;
+    if (!level) return;
+    sorterTimer -= dt;
+    if (sorterTimer > 0) return;
+    sorterTimer = sorterInterval();
+    const box = availableBox('packed');
+    if (!box || state.ordersOpen <= 0) return;
+    completeShipment(box, 'sorter');
+    emit('sorter_transfer', { text: '自動ソーター 1箱出荷', amount: 1 });
   }
 
   function orderInterval() {
@@ -605,16 +700,16 @@ function runConveyor(dt) {
   }
 
   function updateFacilityRank() {
-  if (state.facilityRank < 2 && state.logisticsRating >= FACILITY_RANKS[2].rating) {
-    state.facilityRank = 2;
-    ensureWorkers();
-    applyStaffingPlan();
-    emit('rank_up', { rank: 2, name: facilityRankName(2), text: '施設ランクUP: Warehouse / 5人編成を解禁' });
-    markDirty();
+    if (state.facilityRank < 2 && state.logisticsRating >= FACILITY_RANKS[2].rating) {
+      state.facilityRank = 2;
+      ensureWorkers();
+      applyStaffingPlan();
+      emit('rank_up', { rank: 2, name: facilityRankName(2), text: '施設ランクUP: Warehouse / 5人編成を解禁' });
+      markDirty();
+    }
   }
-}
 
-function finishContract(success) {
+  function finishContract(success) {
     const contract = state.activeContract;
     if (!contract) return;
     if (success) {
@@ -735,7 +830,10 @@ function finishContract(success) {
     updateDecisionImpact(scaled);
     updateSpawners(scaled);
     runConveyor(scaled);
+    runForklift(scaled);
+    runAgv(scaled);
     updatePacking(scaled);
+    runSorter(scaled);
     updateWorkers(scaled);
     updateMetrics();
     updateContract(scaled);
@@ -776,42 +874,66 @@ function finishContract(success) {
     state.upgrades[type] = level + 1;
     ensureWorkers();
     conveyorTimer = 0;
+    forkliftTimer = 0;
+    agvTimer = 0;
+    sorterTimer = 0;
     emit('upgrade', { text: `${def.label} Lv.${state.upgrades[type]}`, type });
     markDirty();
     return { ok: true, cost, level: state.upgrades[type] };
   }
 
-  function facilityCost(type) {
-  return FACILITY_INFO[type]?.cost ?? Infinity;
-}
-
-function purchaseFacility(type) {
-  const def = FACILITY_INFO[type];
-  if (!def) return { ok: false, reason: '不明な施設' };
-  if (state.facilityRank < def.rank) return { ok: false, reason: `Rank ${def.rank}で解禁` };
-  if (state.facilities[type]) return { ok: false, reason: '建設済み' };
-  if (def.group) {
-    const chosen = Object.keys(FACILITY_INFO).find((key) => key !== type && FACILITY_INFO[key].group === def.group && state.facilities[key]);
-    if (chosen) return { ok: false, reason: `区画${def.zone}は選択済み` };
+  function purchaseCapitalUpgrade(type, cost) {
+    const def = UPGRADE_INFO[type];
+    const capitalDef = Object.values(CAPITAL_INVESTMENTS).find((item) => item.upgrade === type);
+    const price = Math.round(Number(cost));
+    if (!def || !capitalDef) return { ok: false, reason: '不明な設備投資' };
+    if (!Number.isFinite(price) || price <= 0) return { ok: false, reason: '価格エラー' };
+    const level = state.upgrades[type] ?? 0;
+    if (level >= def.max || level >= capitalDef.costs.length) return { ok: false, reason: '最大設備' };
+    if (state.money < price) return { ok: false, reason: '資金不足' };
+    state.money -= price;
+    state.upgrades[type] = level + 1;
+    ensureWorkers();
+    conveyorTimer = 0;
+    forkliftTimer = 0;
+    agvTimer = 0;
+    sorterTimer = 0;
+    emit('capital_investment', { type, level: state.upgrades[type], cost: price, text: `${capitalDef.label} Lv.${state.upgrades[type]}` });
+    markDirty();
+    return { ok: true, cost: price, level: state.upgrades[type], type };
   }
-  const cost = facilityCost(type);
-  if (state.money < cost) return { ok: false, reason: '資金不足' };
-  const beforeCounts = counts();
-  const before = {
-    throughput: state.metrics.perMinute,
-    rackRatio: beforeCounts.rack / Math.max(1, rackCapacity()),
-    inbound: beforeCounts.inbound,
-    orders: state.ordersOpen,
-  };
-  state.money -= cost;
-  state.facilities[type] = true;
-  state.decisionImpact = { type, label: def.label, elapsed: 0, before };
-  emit('facility_built', { type, text: `${def.label} 建設完了`, cost });
-  markDirty();
-  return { ok: true, cost, type };
-}
 
-function purchasePerk(type) {
+  function facilityCost(type) {
+    return FACILITY_INFO[type]?.cost ?? Infinity;
+  }
+
+  function purchaseFacility(type) {
+    const def = FACILITY_INFO[type];
+    if (!def) return { ok: false, reason: '不明な施設' };
+    if (state.facilityRank < def.rank) return { ok: false, reason: `Rank ${def.rank}で解禁` };
+    if (state.facilities[type]) return { ok: false, reason: '建設済み' };
+    if (def.group) {
+      const chosen = Object.keys(FACILITY_INFO).find((key) => key !== type && FACILITY_INFO[key].group === def.group && state.facilities[key]);
+      if (chosen) return { ok: false, reason: `区画${def.zone}は選択済み` };
+    }
+    const cost = facilityCost(type);
+    if (state.money < cost) return { ok: false, reason: '資金不足' };
+    const beforeCounts = counts();
+    const before = {
+      throughput: state.metrics.perMinute,
+      rackRatio: beforeCounts.rack / Math.max(1, rackCapacity()),
+      inbound: beforeCounts.inbound,
+      orders: state.ordersOpen,
+    };
+    state.money -= cost;
+    state.facilities[type] = true;
+    state.decisionImpact = { type, label: def.label, elapsed: 0, before };
+    emit('facility_built', { type, text: `${def.label} 建設完了`, cost });
+    markDirty();
+    return { ok: true, cost, type };
+  }
+
+  function purchasePerk(type) {
     const def = PERK_INFO[type];
     if (!def) return { ok: false, reason: '不明な研究' };
     const level = state.perks[type] ?? 0;
@@ -832,18 +954,18 @@ function purchasePerk(type) {
     if (Number.isFinite(snapshot.shipped)) state.shipped = Math.max(0, snapshot.shipped);
     if (Number.isFinite(snapshot.completedContracts)) state.completedContracts = Math.max(0, Math.floor(snapshot.completedContracts));
     if (Number.isFinite(snapshot.milestoneAwarded)) state.milestoneAwarded = Math.max(0, Math.floor(snapshot.milestoneAwarded));
-  if (snapshot.schema_version >= 2) {
-    if (Number.isFinite(snapshot.logisticsRating)) state.logisticsRating = Math.max(0, Math.floor(snapshot.logisticsRating));
-    if (Number.isFinite(snapshot.facilityRank)) state.facilityRank = clamp(Math.floor(snapshot.facilityRank), 1, 2);
-    if (snapshot.facilities && typeof snapshot.facilities === 'object') {
-      for (const key of Object.keys(FACILITY_INFO)) state.facilities[key] = Boolean(snapshot.facilities[key]);
+    if (snapshot.schema_version >= 2) {
+      if (Number.isFinite(snapshot.logisticsRating)) state.logisticsRating = Math.max(0, Math.floor(snapshot.logisticsRating));
+      if (Number.isFinite(snapshot.facilityRank)) state.facilityRank = clamp(Math.floor(snapshot.facilityRank), 1, 2);
+      if (snapshot.facilities && typeof snapshot.facilities === 'object') {
+        for (const key of Object.keys(FACILITY_INFO)) state.facilities[key] = Boolean(snapshot.facilities[key]);
+      }
+      if (snapshot.schema_version >= 3 && ['balanced', 'receiving', 'picking', 'dock', 'shipping'].includes(snapshot.staffingPlan)) state.staffingPlan = snapshot.staffingPlan;
+    } else {
+      state.logisticsRating = Math.max(0, state.completedContracts * 2 + Math.floor(state.shipped / 100));
+      state.facilityRank = state.logisticsRating >= FACILITY_RANKS[2].rating ? 2 : 1;
     }
-    if (snapshot.schema_version >= 3 && ['balanced', 'receiving', 'picking', 'dock', 'shipping'].includes(snapshot.staffingPlan)) state.staffingPlan = snapshot.staffingPlan;
-  } else {
-    state.logisticsRating = Math.max(0, state.completedContracts * 2 + Math.floor(state.shipped / 100));
-    state.facilityRank = state.logisticsRating >= FACILITY_RANKS[2].rating ? 2 : 1;
-  }
-  if (['balanced', 'inbound', 'ship'].includes(snapshot.policy)) state.policy = snapshot.policy;
+    if (['balanced', 'inbound', 'ship'].includes(snapshot.policy)) state.policy = snapshot.policy;
     if (snapshot.priorities && typeof snapshot.priorities === 'object') {
       for (const key of ['store', 'pick', 'ship']) state.priorities[key] = clamp(Math.round(Number(snapshot.priorities[key] ?? state.priorities[key])), 1, 5);
     }
@@ -864,13 +986,13 @@ function purchasePerk(type) {
   function serialize() {
     return {
       schema_version: 3,
-    money: state.money,
-    research: state.research,
-    logisticsRating: state.logisticsRating,
-    facilityRank: state.facilityRank,
-    facilities: { ...state.facilities },
-    staffingPlan: state.staffingPlan,
-    shipped: state.shipped,
+      money: state.money,
+      research: state.research,
+      logisticsRating: state.logisticsRating,
+      facilityRank: state.facilityRank,
+      facilities: { ...state.facilities },
+      staffingPlan: state.staffingPlan,
+      shipped: state.shipped,
       completedContracts: state.completedContracts,
       milestoneAwarded: state.milestoneAwarded,
       policy: state.policy,
@@ -888,19 +1010,19 @@ function purchasePerk(type) {
 
   function resetProgress() {
     state.money = 650;
-  state.research = 0;
-  state.logisticsRating = 0;
-  state.facilityRank = 1;
-  state.facilities = { secondInbound: false, bufferYard: false, fastPickRack: false, highDensityRack: false, secondPack: false, fastPackCell: false };
-  state.staffingPlan = 'balanced';
-  state.staffingCooldown = 0;
-  state.shipped = 0;
+    state.research = 0;
+    state.logisticsRating = 0;
+    state.facilityRank = 1;
+    state.facilities = { secondInbound: false, bufferYard: false, fastPickRack: false, highDensityRack: false, secondPack: false, fastPackCell: false };
+    state.staffingPlan = 'balanced';
+    state.staffingCooldown = 0;
+    state.shipped = 0;
     state.completedContracts = 0;
     state.milestoneAwarded = 0;
     state.policy = 'balanced';
     state.timeScale = 1;
     state.priorities = { store: 3, pick: 3, ship: 4 };
-    state.upgrades = { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0 };
+    state.upgrades = { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0 };
     state.perks = { smartDispatch: 0, bulkPack: 0, contractBonus: 0 };
     state.contractOffers = [];
     state.activeContract = null;
@@ -913,6 +1035,10 @@ function purchasePerk(type) {
     simClock = 0;
     inboundTimer = 0.4;
     orderTimer = 3.0;
+    conveyorTimer = 0;
+    forkliftTimer = 0;
+    agvTimer = 0;
+    sorterTimer = 0;
     offerCooldown = 0;
     ensureWorkers();
     for (let i = 0; i < 6; i += 1) spawnInbound();
@@ -937,6 +1063,9 @@ function purchasePerk(type) {
     packCapacity,
     inboundMax,
     conveyorInterval,
+    forkliftInterval,
+    agvInterval,
+    sorterInterval,
     facilityRankName,
     nextRankTarget,
     facilityCost,
@@ -953,6 +1082,7 @@ function purchasePerk(type) {
     setPolicy,
     setPriority,
     purchaseUpgrade,
+    purchaseCapitalUpgrade,
     purchaseFacility,
     purchasePerk,
     chooseContract,
