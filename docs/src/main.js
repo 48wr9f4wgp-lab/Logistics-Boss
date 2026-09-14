@@ -2,6 +2,7 @@ import { createSimulation } from './sim.js';
 import { createSceneView } from './scene.js';
 import { bindUi } from './ui.js';
 import { bindFreedomProgression } from './freedom.js';
+import { bindCapitalExpansion } from './capital.js';
 
 const SAVE_KEY = 'logistics_boss_save';
 const fatal = document.getElementById('fatal');
@@ -30,6 +31,7 @@ function saveSnapshot(sim) {
 try {
   const sim = createSimulation(loadSnapshot());
   const freedom = bindFreedomProgression(sim);
+  const capital = bindCapitalExpansion(sim);
   const sceneView = await createSceneView(document.getElementById('game'), sim);
   const ui = bindUi(sim, sceneView);
 
@@ -46,6 +48,7 @@ try {
 
     sim.update(dt);
     freedom.update(dt * sim.state.timeScale);
+    capital.update(dt);
     sceneView.update(dt);
 
     uiTimer += dt;
