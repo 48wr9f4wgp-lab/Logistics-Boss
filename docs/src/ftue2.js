@@ -7,14 +7,12 @@ const facilityRank = document.getElementById('facilityRank');
 const logisticsRating = document.getElementById('logisticsRating');
 const contractTitle = document.getElementById('contractTitle');
 const contractBody = document.getElementById('contractBody');
-const insightToggle = document.getElementById('insightToggle');
+const directorLabel = document.getElementById('directorLabel');
+const directorRecommendation = document.getElementById('directorRecommendation');
 const directorAction = document.getElementById('directorAction');
-const severityBadge = document.getElementById('severityBadge');
-const quickSpeed = document.getElementById('quickSpeedBtn');
+const ftueStep = document.getElementById('ftueStep');
 
 let scheduled = false;
-let autoPausedForFirstContract = false;
-let guideTarget = 'none';
 
 function scheduleSync() {
   if (scheduled) return;
@@ -26,85 +24,67 @@ function scheduleSync() {
 }
 
 function ratingProgress() {
+  const snapshot = window.__logisticsBossFreedom?.snapshot?.();
+  if (snapshot) return { current: snapshot.rating, target: 8 };
   const text = logisticsRating?.textContent || '';
   const match = text.match(/(\d+)\s*\/\s*(\d+)/);
   return match ? { current: Number(match[1]), target: Number(match[2]) } : { current: 0, target: 8 };
 }
 
-function clickSpeed(value) {
-  const button = document.querySelector(`[data-speed="${value}"]`);
-  button?.click();
+function neutralAnalysis() {
+  const label = directorLabel?.textContent || '';
+  if (label.includes('搬入口')) return '分析：受入側の負荷が高い';
+  if (label.includes('棚')) return '分析：保管工程の負荷が高い';
+  if (label.includes('注文')) return '分析：注文量が処理能力を上回っている';
+  if (label.includes('出荷待ち')) return '分析：梱包後の出荷工程が律速になっている';
+  return '分析：大きなボトルネックは見つかっていない';
 }
 
-function setGuide(title, detail, buttonLabel = '', target = 'none', tone = 'normal') {
-  if (!guide) return;
-  guideTitle.textContent = title;
-  guideDetail.textContent = detail;
-  guideButton.hidden = !buttonLabel;
-  guideButton.textContent = buttonLabel;
-  guideTarget = target;
-  guide.dataset.tone = tone;
+function setText(node, text) {
+  if (node && node.textContent !== text) node.textContent = text;
 }
 
 function sync() {
   if (!app || !facilityRank || !logisticsRating || !guide) return;
 
   const isRank1 = facilityRank.textContent.trim().startsWith('RANK 1');
-  app.classList.toggle('rank1Ftue', isRank1);
+  app.classList.toggle('rank1Free', isRank1);
+  app.classList.remove('rank1Ftue');
   guide.hidden = !isRank1;
   if (!isRank1) return;
 
   const progress = ratingProgress();
-  const desiredProgress = `Warehouse昇格 ${progress.current} / ${progress.target}`;
-  if (logisticsRating.textContent !== desiredProgress) logisticsRating.textContent = desiredProgress;
+  setText(logisticsRating, `Warehouse評価 ${progress.current} / ${progress.target}`);
+
+  const guideTag = guide.querySelector('small');
+  setText(guideTag, 'OPERATIONS');
+  setText(guideTitle, `Warehouse評価 ${progress.current} / ${progress.target}`);
+  setText(guideDetail, '出荷・処理速度・安定運転・任意契約のどれからでも評価を伸ばせる。運営方針は自由。');
+  guideButton.hidden = true;
+  guide.dataset.tone = 'normal';
+
+  // Director is an analyst, not an instruction engine.
+  if (directorAction) directorAction.hidden = true;
+  if (ftueStep) ftueStep.hidden = true;
+  setText(directorRecommendation, neutralAnalysis());
 
   const activeContract = Boolean(contractBody?.querySelector('.contractProgress'));
-  const hasOffers = /契約を選ぶ/.test(contractTitle?.textContent || '');
-  const severity = severityBadge?.textContent?.trim() || '';
-  const hasProblem = ['注意', '混雑', '詰まり'].includes(severity);
-  const actionVisible = directorAction && !directorAction.hidden;
-
-  if (progress.current === 0 && !activeContract && hasOffers && !autoPausedForFirstContract) {
-    if ((quickSpeed?.textContent || '').trim() !== 'Ⅱ') clickSpeed(0);
-    autoPausedForFirstContract = true;
+  if (!activeContract && /契約を選ぶ/.test(contractTitle?.textContent || '')) {
+    const count = (contractTitle.textContent.match(/(\d+)件/) || [])[1];
+    setText(contractTitle, count ? `任意契約（${count}件）` : '任意契約');
+    const desc = contractBody?.querySelector('.contractDesc');
+    setText(desc, '追加報酬を狙う場合だけ受注する');
   }
-
-  if (activeContract && autoPausedForFirstContract) {
-    if ((quickSpeed?.textContent || '').trim() === 'Ⅱ') clickSpeed(1);
-    autoPausedForFirstContract = false;
-  }
-
-  if (!activeContract && hasOffers) {
-    setGuide('今やること：契約を1つ選ぶ', `契約達成でWarehouse昇格が進む · ${progress.current}/${progress.target}`, '契約を見る', 'contract');
-    return;
-  }
-
-  if (activeContract && hasProblem && actionVisible) {
-    const label = directorAction.textContent.trim() || '方針を変える';
-    setGuide(`今やること：${label}`, '詰まりを解消したら、また自動運転を観察する', label, 'director', 'warn');
-    return;
-  }
-
-  if (activeContract) {
-    setGuide('今やること：倉庫を観察する', `自動で処理中 · 赤い「詰まり」が出た時だけ対処する · 昇格 ${progress.current}/${progress.target}`);
-    return;
-  }
-
-  setGuide('今やること：次の契約を待つ', `Warehouse昇格 ${progress.current}/${progress.target} · 準備できたら契約を選ぶ`);
 }
 
-guideButton?.addEventListener('click', () => {
-  if (guideTarget === 'director') {
-    directorAction?.click();
-    return;
-  }
-  if (guideTarget === 'contract') {
-    if (insightToggle?.getAttribute('aria-expanded') === 'false') insightToggle.click();
-    document.querySelector('.contractArea')?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
-  }
-});
-
 const observer = new MutationObserver(scheduleSync);
-observer.observe(app, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class', 'hidden', 'aria-expanded'] });
+observer.observe(app, {
+  subtree: true,
+  childList: true,
+  characterData: true,
+  attributes: true,
+  attributeFilter: ['class', 'hidden', 'aria-expanded'],
+});
 window.addEventListener('load', scheduleSync, { once: true });
+setInterval(scheduleSync, 500);
 scheduleSync();
