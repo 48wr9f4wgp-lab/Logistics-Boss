@@ -20,3 +20,14 @@
   #directorRecommendation{font-size:9px;line-height:1.22}
   .contractArea{margin-top:6px;padding-top:6px}
 }
+
+/* Readability Pass 3 — give the 3D floor priority over UI chrome */
+#insightPanel{width:min(246px,calc(100vw - 16px))}
+#insightPanel.compact{width:min(188px,calc(100vw - 16px));padding:5px 6px}
+@media (max-width:500px){
+  #insightPanel{width:min(232px,calc(100vw - 16px));padding:6px}
+  #insightPanel.compact{width:min(184px,calc(100vw - 16px));padding:5px 6px}
+  #insightPanel.compact .eyebrow{font-size:8px;line-height:1.05}
+  #insightPanel.compact #directorTitle{font-size:12px;line-height:1.05}
+}
+

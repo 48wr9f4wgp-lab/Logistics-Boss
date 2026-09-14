@@ -420,23 +420,25 @@ function createWarehouseShell() {
   const steel = 0x344049;
   const lightSteel = 0x4b5964;
 
-  // Dollhouse shell: keep structure on the far/rear edges so the playable floor stays readable.
-  for (const x of [-8.4, -4.2, 0, 4.2, 8.4]) {
-    addBox(group, 0.16, 3.7, 0.16, x, 1.85, -7.2, steel, 0.58, 0, 0.42);
-    addBox(group, 0.11, 0.11, 3.8, x, 3.5, -5.3, lightSteel, 0.6, 0, 0.34);
+  // Readability Pass 3: keep only a rear structural silhouette.
+  // The playable floor must stay visually open as the facility grows.
+  for (const x of [-8.2, -2.7, 2.7, 8.2]) {
+    addBox(group, 0.14, 3.35, 0.14, x, 1.675, -7.15, steel, 0.6, 0, 0.38);
   }
-  for (const z of [4.8, 0.8, -3.2]) {
-    addBox(group, 0.14, 3.45, 0.14, -8.4, 1.725, z, steel, 0.58, 0, 0.42);
-  }
-  addBox(group, 17.0, 0.1, 0.1, 0, 3.3, -6.8, lightSteel, 0.6, 0, 0.34);
-  addBox(group, 0.11, 0.11, 13.0, -8.4, 3.32, -0.55, lightSteel, 0.6, 0, 0.34);
+  addBox(group, 16.45, 0.1, 0.1, 0, 3.18, -7.15, lightSteel, 0.62, 0, 0.3);
 
-  // Rear-biased fixtures keep atmosphere without bright bars crossing workers.
-  for (let x = -6.4; x <= 6.4; x += 3.2) {
-    const light = addBox(group, 1.0, 0.03, 0.06, x, 3.02, -4.55, 0xdaf6ff, 0.4, 0x9ee9ff);
-    light.material.emissiveIntensity = 0.3;
+  // Two side posts suggest the warehouse shell without crossing the work floor.
+  for (const z of [-4.9, -2.0]) {
+    addBox(group, 0.12, 2.9, 0.12, -8.2, 1.45, z, steel, 0.62, 0, 0.34);
+  }
+
+  // Sparse rear fixtures preserve depth but never compete with workers or cargo.
+  for (const x of [-5.2, 0, 5.2]) {
+    const light = addBox(group, 0.9, 0.025, 0.055, x, 2.92, -5.75, 0xdaf6ff, 0.42, 0x9ee9ff);
+    light.material.emissiveIntensity = 0.2;
   }
   group.userData.dollhouse = true;
+  group.userData.readabilityPass = 3;
   return group;
 }
 
@@ -469,6 +471,43 @@ function createFloorMarkings() {
   return group;
 }
 
+
+function createFlowFloorGuide() {
+  const group = new THREE.Group();
+  group.visible = false;
+  group.userData.flowFloorGuide = true;
+  const points = [POS.inbound, POS.rack, POS.pack, POS.outbound];
+  const colors = [0x63c8ff, 0xf2c858, 0x61e89a];
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const a = points[i];
+    const b = points[i + 1];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const length = Math.hypot(dx, dz);
+    const angle = -Math.atan2(dz, dx);
+    const material = new THREE.MeshBasicMaterial({
+      color: colors[i], transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide,
+    });
+    const segment = new THREE.Mesh(new THREE.PlaneGeometry(length, 0.34), material);
+    segment.rotation.x = -Math.PI / 2;
+    segment.rotation.z = angle;
+    segment.position.set((a.x + b.x) / 2, 0.024, (a.z + b.z) / 2);
+    segment.renderOrder = 2;
+    group.add(segment);
+
+    for (const t of [0.38, 0.72]) {
+      const arrow = laneArrow(colors[i]);
+      arrow.position.set(a.x + dx * t, 0.03, a.z + dz * t);
+      arrow.rotation.z = angle - Math.PI / 2;
+      arrow.scale.setScalar(0.48);
+      arrow.material.opacity = 0.42;
+      arrow.renderOrder = 3;
+      group.add(arrow);
+    }
+  }
+  return group;
+}
+
 export async function createSceneView(canvas, sim) {
   await RAPIER.init();
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -482,7 +521,7 @@ export async function createSceneView(canvas, sim) {
   scene.background = new THREE.Color(0x101920);
   scene.fog = new THREE.Fog(0x101920, 23, 48);
   const camera = new THREE.PerspectiveCamera(43, innerWidth / innerHeight, 0.1, 90);
-  const cameraState = { yaw: 0.68, pitch: 0.66, distance: 15.4, targetDistance: 15.4, target: new THREE.Vector3(0, 0.52, -0.55) };
+  const cameraState = { yaw: 0.68, pitch: 0.61, distance: 13.8, targetDistance: 13.8, target: new THREE.Vector3(0, 0.48, -0.45) };
 
   scene.add(new THREE.HemisphereLight(0xe3f6ff, 0x273039, 2.2));
   const sun = new THREE.DirectionalLight(0xfff6e8, 2.15);
@@ -499,21 +538,28 @@ export async function createSceneView(canvas, sim) {
   const grid = new THREE.GridHelper(18, 18, 0x68757e, 0x45515a);
   grid.position.z = -0.7;
   grid.material.transparent = true;
-  grid.material.opacity = 0.36;
+  grid.material.opacity = 0.28;
   scene.add(grid);
   scene.add(createFloorMarkings());
+  const flowFloorGuide = createFlowFloorGuide();
+  scene.add(flowFloorGuide);
   scene.add(createWarehouseShell());
 
   const inbound = loadingDock(POS.inbound);
   const pack = packStation(POS.pack);
   const outbound = outboundStation(POS.outbound);
+  inbound.scale.setScalar(1.08);
+  pack.scale.setScalar(1.12);
+  outbound.scale.setScalar(1.08);
   scene.add(inbound, pack, outbound);
 
   const rackBanks = [rackBank(-2.15, -1.65)];
+  rackBanks[0].scale.setScalar(1.06);
   scene.add(rackBanks[0]);
   for (let i = 0; i < 4; i += 1) {
     const bank = rackBank(-2.15, -2.75 - i * 0.95, 0xe2a048);
     bank.visible = false;
+    bank.scale.setScalar(1.06);
     scene.add(bank);
     rackBanks.push(bank);
   }
@@ -655,10 +701,10 @@ export async function createSceneView(canvas, sim) {
 
   function resetCamera() {
   cameraState.yaw = 0.68;
-  cameraState.pitch = 0.66;
+  cameraState.pitch = 0.61;
   const growth = growthLevel();
-  cameraState.targetDistance = 15.4 + growth * 2.2;
-  cameraState.target.set(0, 0.52, -0.55 - growth * 1.15);
+  cameraState.targetDistance = 13.8 + growth * 1.95;
+  cameraState.target.set(0, 0.48, -0.45 - growth * 1.02);
 }
 
   function growthLevel() {
@@ -698,8 +744,8 @@ export async function createSceneView(canvas, sim) {
     });
     if (growth !== lastGrowth) {
       lastGrowth = growth;
-      cameraState.targetDistance = Math.max(cameraState.targetDistance, 15.4 + growth * 2.2);
-      cameraState.target.z = -0.55 - growth * 1.15;
+      cameraState.targetDistance = Math.max(cameraState.targetDistance, 13.8 + growth * 1.95);
+      cameraState.target.z = -0.45 - growth * 1.02;
     }
   }
 
@@ -717,7 +763,7 @@ export async function createSceneView(canvas, sim) {
   function ensureFlowLine(id) {
     let line = flowLines.get(id);
     if (!line) {
-      line = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthTest: false }));
+      line = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.32, depthTest: false }));
       line.renderOrder = 8;
       scene.add(line);
       flowLines.set(id, line);
@@ -771,7 +817,7 @@ export async function createSceneView(canvas, sim) {
       const target = flowTarget(worker);
       const directorStable = sim.state.director?.key === 'stable';
       const relevant = criticalTask(worker.task?.kind) || (directorStable && stableLines < 2);
-      const show = flowMode && target && worker.task && relevant && visibleLines < 3;
+      const show = flowMode && target && worker.task && relevant && visibleLines < 2;
       line.visible = Boolean(show);
       if (show) {
         visibleLines += 1;
@@ -866,7 +912,8 @@ export async function createSceneView(canvas, sim) {
 
   function setFlowMode(enabled) {
     flowMode = Boolean(enabled);
-    grid.material.opacity = flowMode ? 0.5 : 0.36;
+    grid.material.opacity = flowMode ? 0.42 : 0.28;
+    flowFloorGuide.visible = flowMode;
     if (!flowMode) for (const line of flowLines.values()) line.visible = false;
   }
 
