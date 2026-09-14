@@ -1,6 +1,7 @@
 import { createSimulation } from './sim.js';
 import { createSceneView } from './scene.js';
 import { bindUi } from './ui.js';
+import { bindFreedomProgression } from './freedom.js';
 
 const SAVE_KEY = 'logistics_boss_save';
 const fatal = document.getElementById('fatal');
@@ -11,7 +12,7 @@ function loadSnapshot() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return [1, 2].includes(parsed?.schema_version) ? parsed : null;
+    return [1, 2, 3].includes(parsed?.schema_version) ? parsed : null;
   } catch {
     return null;
   }
@@ -28,6 +29,7 @@ function saveSnapshot(sim) {
 
 try {
   const sim = createSimulation(loadSnapshot());
+  const freedom = bindFreedomProgression(sim);
   const sceneView = await createSceneView(document.getElementById('game'), sim);
   const ui = bindUi(sim, sceneView);
 
@@ -43,6 +45,7 @@ try {
     last = now;
 
     sim.update(dt);
+    freedom.update(dt);
     sceneView.update(dt);
 
     uiTimer += dt;
