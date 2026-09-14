@@ -345,6 +345,48 @@ function sorterModule(index) {
   return group;
 }
 
+function truckDockBay(index) {
+  const group = new THREE.Group();
+  const slab = addBox(group, 1.55, 0.08, 2.45, 0, 0.04, 0, index % 2 ? 0x34566a : 0x3e6275, 0.9);
+  const steel = 0x4c5860;
+  addBox(group, 0.12, 1.7, 0.12, -0.62, 0.85, -0.72, steel, 0.62, 0, 0.3);
+  addBox(group, 0.12, 1.7, 0.12, 0.62, 0.85, -0.72, steel, 0.62, 0, 0.3);
+  addBox(group, 1.36, 0.12, 0.12, 0, 1.62, -0.72, steel, 0.62, 0, 0.3);
+  const lamp = addBox(group, 0.72, 0.05, 0.07, 0, 1.48, -0.66, 0x84e8ff, 0.42, 0x55d7ff);
+  lamp.material.emissiveIntensity = 0.6;
+  const stripe = hazardStripe(1.26, 0.15, 0x75dfff);
+  stripe.position.set(0, 0.01, 0.86);
+  group.add(stripe);
+  group.position.set(-6.15 + index * 1.72, 0, 5.95);
+  group.visible = false;
+  group.userData = { slab, lamp };
+  return group;
+}
+
+function truckUnit() {
+  const group = new THREE.Group();
+  const trailer = addBox(group, 1.28, 1.38, 2.7, 0, 0.86, 0.72, 0xd5dde1, 0.72, 0x000000, 0.08);
+  addBox(group, 1.18, 0.12, 2.55, 0, 0.2, 0.72, 0x56616a, 0.62, 0, 0.3);
+  const cab = addBox(group, 1.18, 1.08, 1.0, 0, 0.72, -1.18, 0x2f82a7, 0.55, 0x0b2d3a, 0.14);
+  const glass = addBox(group, 0.92, 0.38, 0.05, 0, 0.93, -1.7, 0x7bdcf1, 0.3, 0x43bad6, 0.08);
+  glass.material.emissiveIntensity = 0.18;
+  for (const z of [-1.2, 0.1, 1.3]) {
+    for (const x of [-0.58, 0.58]) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.14, 10), mat(0x20262a, 0.9));
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(x, 0.24, z);
+      group.add(wheel);
+    }
+  }
+  const tail = addBox(group, 0.64, 0.08, 0.05, 0, 0.45, 2.08, 0x71efad, 0.38, 0x58dd98);
+  tail.material.emissiveIntensity = 0.7;
+  group.rotation.y = Math.PI;
+  group.scale.setScalar(0.82);
+  group.visible = false;
+  group.userData = { trailer, cab, tail };
+  return group;
+}
+
 function workerMesh(index) {
   const colors = [0x54b7ee, 0xf4aa45, 0x9a7de0, 0x55d18d, 0xec7182, 0x61c8c5, 0xd793e9, 0xe9bf52];
   const accent = colors[index % colors.length];
@@ -703,6 +745,15 @@ export async function createSceneView(canvas, sim) {
     sorters.push(unit);
   }
 
+  const truckDockBays = [];
+  for (let i = 0; i < 3; i += 1) {
+    const bay = truckDockBay(i);
+    scene.add(bay);
+    truckDockBays.push(bay);
+  }
+  const truck = truckUnit();
+  scene.add(truck);
+
   const annexes = [];
   for (let i = 1; i <= 3; i += 1) {
     const a = annex(i);
@@ -732,6 +783,7 @@ export async function createSceneView(canvas, sim) {
   let forkliftPulse = 0;
   let agvPulse = 0;
   let sorterPulse = 0;
+  let truckPulse = 0;
 
   const physics = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
   physics.createCollider(RAPIER.ColliderDesc.cuboid(9, 0.08, 10).setTranslation(0, -0.08, -2));
@@ -783,6 +835,9 @@ export async function createSceneView(canvas, sim) {
     if (event.type === 'forklift_transfer') forkliftPulse = 1;
     if (event.type === 'agv_transfer') agvPulse = 1;
     if (event.type === 'sorter_transfer') sorterPulse = 1;
+    if (event.type === 'truck_arrive') truckPulse = 1;
+    if (event.type === 'truck_unload') truckPulse = Math.max(truckPulse, 0.45);
+    if (event.type === 'truck_depart') truckPulse = Math.max(truckPulse, 0.7);
     if (event.type === 'shipment') {
       outboundPulse = 1;
       spawnShipmentBurst();
@@ -858,6 +913,8 @@ export async function createSceneView(canvas, sim) {
     forklifts.forEach((unit, i) => { unit.visible = i < (u.forklift || 0); });
     agvs.forEach((unit, i) => { unit.visible = i < (u.agv || 0); });
     sorters.forEach((unit, i) => { unit.visible = i < (u.sorter || 0); });
+    truckDockBays.forEach((bay, i) => { bay.visible = i < (u.truckDock || 0); });
+    truck.visible = (u.truckDock || 0) > 0 && sim.state.truckWave?.phase !== 'away';
     gates.forEach((g, i) => { g.visible = i === 0 || i <= Math.floor((u.conveyor + u.worker + (u.sorter || 0)) / 3); });
 
     const growth = growthLevel();
@@ -1051,6 +1108,27 @@ export async function createSceneView(canvas, sim) {
     });
   }
 
+  function updateTruckVisuals(dt) {
+    truckPulse = THREE.MathUtils.lerp(truckPulse, 0, Math.min(1, dt * 2.2));
+    const wave = sim.state.truckWave || { phase: 'away', progress: 0, cargo: 0, waveSize: 0 };
+    if (!truck.visible) return;
+    const p = THREE.MathUtils.clamp(Number(wave.progress) || 0, 0, 1);
+    const roadZ = 8.45;
+    const dockZ = 6.78;
+    let z = dockZ;
+    if (wave.phase === 'approach') z = THREE.MathUtils.lerp(roadZ, dockZ, p);
+    else if (wave.phase === 'depart') z = THREE.MathUtils.lerp(dockZ, roadZ, p);
+    truck.position.set(-6.15, 0.02 + truckPulse * 0.02, z);
+    const loadRatio = wave.waveSize > 0 ? wave.cargo / wave.waveSize : 0;
+    truck.userData.trailer.material.emissive.setHex(loadRatio > 0.55 ? 0x24465a : 0x173323);
+    truck.userData.trailer.material.emissiveIntensity = 0.05 + loadRatio * 0.12 + truckPulse * 0.18;
+    truck.userData.tail.material.emissiveIntensity = 0.55 + truckPulse * 1.2;
+    truckDockBays.forEach((bay, i) => {
+      if (!bay.visible) return;
+      bay.userData.lamp.material.emissiveIntensity = 0.5 + (i === 0 ? truckPulse * 1.2 : 0);
+    });
+  }
+
   function heat(material, ratio) {
     if (!material?.emissive) return;
     const r = Math.max(0, ratio || 0);
@@ -1127,6 +1205,7 @@ export async function createSceneView(canvas, sim) {
     syncWorkers(dt);
     syncBoxes(dt);
     updateAutomationVisuals(dt);
+    updateTruckVisuals(dt);
     updateFlowFloorGuide(dt);
     updateHeat();
     updateOverflow(dt);

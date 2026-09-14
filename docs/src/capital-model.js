@@ -89,6 +89,16 @@ export const CAPITAL_INVESTMENTS = {
     effect: '保管容量 +8箱 / 入荷上限 +4箱 / 3Dホール棟を増設',
     emphasis: '建物そのものを拡張し、受入・保管余力を増やす',
   },
+  truckDock: {
+    key: 'truckDock',
+    upgrade: 'truckDock',
+    label: 'トラックドック',
+    short: '幹線入荷',
+    costs: [650000, 5000000, 40000000],
+    unlockAssets: 500000,
+    effect: '連続入荷をトラック波動へ変更 / ドック・トラックを3D表示',
+    emphasis: 'まとまった荷量を受け、ドック能力と倉庫内処理の差を経営する',
+  },
 };
 
 export const COMMERCIAL_TIERS = [
@@ -176,6 +186,21 @@ export function sorterIntervalForLevel(level) {
   return Math.max(1.6, 4.8 - Math.max(1, level) * 0.8);
 }
 
+export function truckWaveSizeForLevel(level) {
+  if (!level) return 0;
+  return [0, 10, 12, 15][Math.min(3, Math.max(1, Math.floor(level)))] || 10;
+}
+
+export function truckWaveIntervalForLevel(level) {
+  if (!level) return Infinity;
+  return [Infinity, 28, 24, 20][Math.min(3, Math.max(1, Math.floor(level)))] || 28;
+}
+
+export function truckUnloadIntervalForLevel(level) {
+  if (!level) return Infinity;
+  return [Infinity, 0.75, 0.55, 0.4][Math.min(3, Math.max(1, Math.floor(level)))] || 0.75;
+}
+
 export function formatInvestmentEffect(key, nextLevel) {
   const level = Math.max(1, Number(nextLevel) || 1);
   if (key === 'rack') return `棚容量 +${level * 4}箱`;
@@ -187,5 +212,6 @@ export function formatInvestmentEffect(key, nextLevel) {
   if (key === 'agv') return `${agvBatchForLevel(level)}箱自動ピック / 約${agvIntervalForLevel(level).toFixed(1)}秒`;
   if (key === 'sorter') return `自動出荷 1箱 / 約${sorterIntervalForLevel(level).toFixed(1)}秒`;
   if (key === 'hall') return `ホール +${level}棟 / 保管 +${level * 8}箱 / 入荷上限 +${level * 4}箱`;
+  if (key === 'truckDock') return `${truckWaveSizeForLevel(level)}箱/便 · 約${truckWaveIntervalForLevel(level)}秒周期 · 荷下ろし${truckUnloadIntervalForLevel(level).toFixed(2)}秒/箱`;
   return '';
 }
