@@ -1,0 +1,1 @@
+Capital Expansion v2 Phase 2 contract marker: workforce and hall expansion are implemented through simulation-owned capital upgrades and covered by capital-v2-smoke.mjs.
