@@ -37,6 +37,7 @@ const UPGRADE_INFO = {
   forklift: { label: 'フォークリフト隊', max: 4, baseCost: 15000 },
   agv: { label: 'AGVピック隊', max: 4, baseCost: 40000 },
   sorter: { label: '自動ソーター', max: 4, baseCost: 90000 },
+  hall: { label: '物流ホール拡張', max: 3, baseCost: 300000 },
 };
 
 const PERK_INFO = {
@@ -142,7 +143,7 @@ export function createSimulation(saved = null) {
     policy: 'balanced',
     timeScale: 1,
     priorities: { store: 3, pick: 3, ship: 4 },
-    upgrades: { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0 },
+    upgrades: { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0 },
     perks: { smartDispatch: 0, bulkPack: 0, contractBonus: 0 },
     contractOffers: [],
     activeContract: null,
@@ -183,8 +184,9 @@ export function createSimulation(saved = null) {
   }
 
   function inboundMax() {
-    if (state.facilities.bufferYard) return BASE.inboundMax + 14;
-    return BASE.inboundMax + (state.facilities.secondInbound ? 6 : 0);
+    const hallBonus = (state.upgrades.hall || 0) * 4;
+    if (state.facilities.bufferYard) return BASE.inboundMax + 14 + hallBonus;
+    return BASE.inboundMax + (state.facilities.secondInbound ? 6 : 0) + hallBonus;
   }
 
   function inboundInterval() {
@@ -197,7 +199,8 @@ export function createSimulation(saved = null) {
 
   function rackCapacity() {
     const strategyBonus = state.facilities.highDensityRack ? 12 : state.facilities.fastPickRack ? 4 : 0;
-    return BASE.rackCapacity + state.upgrades.rack * 4 + strategyBonus;
+    const hallBonus = (state.upgrades.hall || 0) * 8;
+    return BASE.rackCapacity + state.upgrades.rack * 4 + strategyBonus + hallBonus;
   }
 
   function packTime() {
@@ -1022,7 +1025,7 @@ export function createSimulation(saved = null) {
     state.policy = 'balanced';
     state.timeScale = 1;
     state.priorities = { store: 3, pick: 3, ship: 4 };
-    state.upgrades = { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0 };
+    state.upgrades = { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0 };
     state.perks = { smartDispatch: 0, bulkPack: 0, contractBonus: 0 };
     state.contractOffers = [];
     state.activeContract = null;
