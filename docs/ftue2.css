@@ -1,0 +1,33 @@
+/* Rank 1 FTUE Pass 2 — one clear action at a time */
+#rank1Guide{position:fixed;z-index:24;left:16px;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));display:none;align-items:center;gap:10px;padding:11px 12px;border:1px solid rgba(101,211,255,.28);border-radius:16px;background:rgba(10,20,27,.94);box-shadow:0 14px 32px rgba(0,0,0,.28);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#app.rank1Ftue #rank1Guide{display:flex}
+#rank1Guide .guideCopy{min-width:0;flex:1}
+#rank1Guide small{display:block;margin-bottom:2px;color:#72d8ff;font-size:8px;font-weight:900;letter-spacing:.15em}
+#rank1Guide strong{display:block;color:#f4fbff;font-size:14px;line-height:1.18}
+#rank1Guide span{display:block;margin-top:3px;color:#8fa4b0;font-size:9px;line-height:1.25}
+#rank1Guide button{flex:0 0 auto;min-height:42px;max-width:42%;padding:0 12px;border:1px solid rgba(101,211,255,.48);border-radius:11px;background:rgba(53,158,207,.22);color:#dff7ff;font-size:10px;font-weight:900}
+#rank1Guide button[hidden]{display:none}
+#rank1Guide[data-tone="warn"]{border-color:rgba(255,150,112,.38);background:rgba(30,19,18,.94)}
+#rank1Guide[data-tone="warn"] small{color:#ffb08e}
+#rank1Guide[data-tone="warn"] button{border-color:rgba(255,150,112,.48);background:rgba(173,68,45,.22);color:#ffe8df}
+
+/* Rank 1 should teach the loop, not expose Rank 2 systems early. */
+#app.rank1Ftue .rank2Only{display:none!important}
+#app.rank1Ftue #dockMini .miniPolicies,
+#app.rank1Ftue #quickSpeedBtn,
+#app.rank1Ftue #flowBtn,
+#app.rank1Ftue #observeBtn{display:none!important}
+#app.rank1Ftue #dockMini{justify-content:flex-end;min-height:48px}
+#app.rank1Ftue #commandDock:not(.compact) .speedRow{display:none}
+#app.rank1Ftue #commandDock:not(.compact){max-height:min(34dvh,300px)}
+#app.rank1Ftue #facilityProgress{margin-top:8px}
+#app.rank1Ftue #logisticsRating{color:#bdeeff;font-weight:800}
+#app.rank1Ftue #directorRecommendation{font-weight:700}
+#app.rank1Ftue #ftueStep{font-size:9px;padding:4px 8px}
+
+@media (max-width:500px){
+  #rank1Guide{left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));padding:10px}
+  #rank1Guide strong{font-size:13px}
+  #rank1Guide span{font-size:8px}
+  #rank1Guide button{min-height:40px;padding:0 10px}
+}
