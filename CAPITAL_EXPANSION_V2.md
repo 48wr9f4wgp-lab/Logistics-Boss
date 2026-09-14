@@ -38,28 +38,52 @@ Three physically distinct automation categories are added after the first equipm
 - Visual: conveyor/sorter modules with rollers, scanner and diverter grow near outbound.
 - Expected new constraint: packing, storage or inbound supply becomes the next pressure point after outbound is accelerated.
 
+## Phase 2 workforce and property expansion
+
+Phase 2 adds two investments that answer different bottleneck classes instead of extending automation as a single ladder.
+
+### Workforce Expansion
+- Unlock: equipment assets ≥ ¥2,500.
+- First cost: ¥3,500.
+- Levels: 5.
+- Simulation: each purchase adds one real worker to the current staffing plan. The worker receives tasks through the same store / pick / ship dispatch system as the existing crew.
+- Visual: one additional 3D worker appears immediately in the warehouse for each level.
+- Strategic role: flexible short- and mid-term capacity. It can relieve several bottlenecks, but it is less specialized than later automation.
+- Expected new constraint: once labor clears one process, packing capacity, rack capacity, receiving or outbound can become the next limiter.
+
+### Logistics Hall Expansion
+- Unlock: equipment assets ≥ ¥200,000.
+- First cost: ¥300,000.
+- Levels: 3.
+- Simulation per level: rack capacity +8 parcels and receiving buffer +4 parcels.
+- Visual: a full additional warehouse hall is revealed in 3D for every purchased level; camera framing expands with the site.
+- Strategic role: property-scale buffer/capacity investment. It does not magically process parcels faster; it creates physical headroom for a larger operation.
+- Expected new constraint: after storage/receiving pressure is reduced, labor, picking, packing or outbound becomes the limiting stage.
+
+Workforce and hall expansion are not prescribed upgrades. A player can automate early, hire more people, buy property, or mix the approaches according to the observed constraint.
+
 ## Four-condition gate
 
-Every Capital v2 major equipment category must pass all four conditions:
+Every Capital v2 major investment category must pass all four conditions:
 
-1. **Visible 3D change** — the machine/fleet must be readable in the warehouse.
-2. **Actual logistics behavior change** — it must move work between real simulation stages, not only multiply a number.
+1. **Visible 3D change** — the machine, worker, fleet or building must be readable in the warehouse.
+2. **Actual logistics behavior change** — it must change real simulation capacity or move work between real stages, not only multiply a display number.
 3. **Measured Before/After** — the existing 25-second investment result report must apply unchanged and may show negative results.
-4. **New bottleneck potential** — accelerating one stage must be capable of moving the limiting constraint downstream/upstream.
+4. **New bottleneck potential** — relieving one constraint must be capable of moving the limiting constraint elsewhere.
 
 ## Economy ownership
 
-Capital v2 moves capital mutation and commercial shipment revenue into the simulation domain.
+Capital v2 keeps capital mutation and commercial shipment revenue inside the simulation domain.
 
 - `capital.js` is presentation/measurement and requests a purchase through the simulation API.
-- `sim.js` owns cash deduction, upgrade state and shipment revenue.
+- `sim.js` owns cash deduction, upgrade state, workforce growth, hall capacity and shipment revenue.
 - Shipment events expose the actual unit revenue so ROI measurement observes the same economy that the simulation uses.
 
 This removes the v1 split where UI code directly changed money/upgrades and patched commercial revenue after the shipment event.
 
 ## Economic escalation
 
-Existing v1 equipment remains the early capital layer. Phase 1 automation then reaches into larger capital bands.
+Existing v1 equipment remains the early capital layer. Workforce, automation and property then reach into progressively larger capital bands.
 
 Commercial asset tiers extend beyond Mega Logistics:
 - Local Depot
@@ -71,13 +95,13 @@ Commercial asset tiers extend beyond Mega Logistics:
 - National Hub
 - Automated Mega Hub
 
-The purpose of higher parcel value is to support larger machinery and future property-scale expansion, not to create passive waiting as the main gameplay.
+The purpose of higher parcel value is to support larger machinery and property-scale expansion, not to create passive waiting as the main gameplay.
 
 ## Mobile / UX rules
 
 - Capital Expansion remains first in the management bottom sheet.
-- Locked automation categories show their asset threshold rather than disappearing completely.
-- Buying equipment does not close management.
+- Locked categories show their asset threshold rather than disappearing completely.
+- Buying equipment, hiring staff or expanding the hall does not close management.
 - The 25-second measurement remains visible while the player deliberately returns to the warehouse view.
 - No FTUE rail or “buy this next” recommendation is added.
 
@@ -91,14 +115,24 @@ The purpose of higher parcel value is to support larger machinery and future pro
 - Existing Capital v1 investments and Rank 1/Rank 2 progression continue to work.
 - Static QA and simulation smoke tests cover the new chain.
 
+## Phase 2 acceptance criteria
+
+- Workforce Expansion is a Capital card and each level adds one real worker.
+- The added worker is visible in 3D and participates in the same role/dispatch system as existing staff.
+- Logistics Hall Expansion is a Capital card with three escalating property levels.
+- Each hall level increases real receiving and rack capacity.
+- Each hall level reveals one additional 3D warehouse hall and widens camera framing.
+- Workforce and hall levels survive schema-3 save/load.
+- The existing 25-second Before/After report applies to both investments.
+- Static QA and Capital v2 smoke tests cover purchase, capacity, persistence and simulation behavior.
+
 ## Deferred to later v2 phases
 
 - AS/RS automated storage and retrieval.
-- Property / hall expansion as an explicit purchasable capital category.
 - Truck dock scheduling and truck waves.
-- Multi-building logistics campus / second center.
+- Multi-building logistics campus / second center beyond the three hall extensions.
 - True Rank 3 `Fulfillment Center` gameplay.
 - Event-synchronized pallet/parcel attachment to every vehicle animation.
 - Free-form conveyor drawing.
 
-These should be added only after Phase 1 proves that automation visibly changes the system and creates interesting new bottlenecks.
+These should be added only after the current workforce / automation / property choices prove that they create meaningfully different investment strategies and bottlenecks.
