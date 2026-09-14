@@ -34,12 +34,12 @@ export function bindCapitalExpansion(sim) {
   panel.className = 'capitalPanel';
   panel.innerHTML = `
     <div class="capitalHead">
-      <div><small>CAPITAL EXPANSION</small><strong>設備投資</strong></div>
+      <div><small>CAPITAL EXPANSION</small><strong>事業投資</strong></div>
       <span id="capitalTier" class="capitalTier">Local Depot</span>
     </div>
     <div class="capitalStats">
       <div class="capitalStat"><span>現金</span><b id="capitalCash">¥0</b></div>
-      <div class="capitalStat"><span>設備資産</span><b id="capitalInvested">¥0</b></div>
+      <div class="capitalStat"><span>投資総額</span><b id="capitalInvested">¥0</b></div>
       <div class="capitalStat"><span>総資産</span><b id="capitalAssets">¥0</b></div>
       <div class="capitalStat"><span>出荷売上/分</span><b id="capitalRevenue">¥0</b></div>
     </div>
@@ -126,11 +126,11 @@ export function bindCapitalExpansion(sim) {
 
   function reportHtml(report) {
     if (!report.ready) {
-      return `<strong>${report.label} · 効果測定中</strong><p>直前の運転状態と、導入後25秒を同じ基準で比較する。追加投資すると測定は新しい設備からやり直す。</p><div class="capitalReportGrid"><span>観測 ${Math.min(25, Math.floor(report.elapsed))}/25秒</span><span>投資 ${yen(report.cost)}</span></div>`;
+      return `<strong>${report.label} · 効果測定中</strong><p>直前の運転状態と、導入後25秒を同じ基準で比較する。追加投資すると測定は新しい投資からやり直す。</p><div class="capitalReportGrid"><span>観測 ${Math.min(25, Math.floor(report.elapsed))}/25秒</span><span>投資 ${yen(report.cost)}</span></div>`;
     }
     const d = report.delta;
     const roi = d.revenue > 0 ? `${(report.cost / d.revenue).toFixed(1)}分` : '測定不能';
-    return `<strong>${report.label} · INVESTMENT RESULT</strong><p>導入前の直近運転と導入後25秒を比較。設備が詰まりを別工程へ移した場合も、その悪化を隠さず表示する。</p><div class="capitalReportGrid"><span>出荷 ${signed(d.throughput, '/分')}</span><span>売上 ${signed(d.revenue, '円/分')}</span><span>注文待ち ${signed(d.orders, '件')}</span><span>入荷待ち ${signed(d.inbound, '箱')}</span><span>棚使用 ${signed(d.rackPoints, 'pt')}</span><span>回収目安 ${roi}</span></div>`;
+    return `<strong>${report.label} · INVESTMENT RESULT</strong><p>導入前の直近運転と導入後25秒を比較。投資によって詰まりが別工程へ移った場合も、その悪化を隠さず表示する。</p><div class="capitalReportGrid"><span>出荷 ${signed(d.throughput, '/分')}</span><span>売上 ${signed(d.revenue, '円/分')}</span><span>注文待ち ${signed(d.orders, '件')}</span><span>入荷待ち ${signed(d.inbound, '箱')}</span><span>棚使用 ${signed(d.rackPoints, 'pt')}</span><span>回収目安 ${roi}</span></div>`;
   }
 
   function buyInvestment(key) {
@@ -213,9 +213,9 @@ export function bindCapitalExpansion(sim) {
       button.dataset.locked = unlocked ? 'false' : 'true';
       button.disabled = maxed || !ready;
       if (!unlocked) {
-        button.innerHTML = `<span class="capitalLevel">AUTOMATION</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>設備資産 ${yen(def.unlockAssets)} で解禁</em><b>LOCKED</b>`;
+        button.innerHTML = `<span class="capitalLevel">CAPITAL</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>投資総額 ${yen(def.unlockAssets)} で解禁</em><b>LOCKED</b>`;
       } else {
-        button.innerHTML = `<span class="capitalLevel">Lv.${level}/${def.costs.length}</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>${maxed ? '最大設備' : formatInvestmentEffect(key, level + 1)}</em><b>${maxed ? 'MAX' : yen(cost)}</b>`;
+        button.innerHTML = `<span class="capitalLevel">Lv.${level}/${def.costs.length}</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>${maxed ? '最大段階' : formatInvestmentEffect(key, level + 1)}</em><b>${maxed ? 'MAX' : yen(cost)}</b>`;
       }
       button.title = def.effect;
     }
@@ -227,7 +227,7 @@ export function bindCapitalExpansion(sim) {
     const nextTier = nextCommercialTierForAssets(invested);
     nodes.hint.textContent = nextTier == null
       ? '最大商圏。次の拡張は複数拠点・大型物流網へ。'
-      : `設備資産 ${yen(nextTier.minAssets)} で ${nextTier.label} 商圏へ。何を先に買うかは自由。`;
+      : `投資総額 ${yen(nextTier.minAssets)} で ${nextTier.label} 商圏へ。何を先に買うかは自由。`;
   }
 
   function update(realDt) {
