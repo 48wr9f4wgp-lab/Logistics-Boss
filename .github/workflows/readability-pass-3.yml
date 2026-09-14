@@ -1,0 +1,176 @@
+name: Apply Readability Pass 3
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/readability-pass-3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply logistics readability patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('docs/src/scene.js')
+          s = p.read_text()
+
+          shell = '''function createWarehouseShell() {
+            const group = new THREE.Group();
+            const steel = 0x344049;
+            const lightSteel = 0x4b5964;
+
+            // Readability Pass 3: keep only a rear structural silhouette.
+            // The playable floor must stay visually open as the facility grows.
+            for (const x of [-8.2, -2.7, 2.7, 8.2]) {
+              addBox(group, 0.14, 3.35, 0.14, x, 1.675, -7.15, steel, 0.6, 0, 0.38);
+            }
+            addBox(group, 16.45, 0.1, 0.1, 0, 3.18, -7.15, lightSteel, 0.62, 0, 0.3);
+
+            // Two side posts suggest the warehouse shell without crossing the work floor.
+            for (const z of [-4.9, -2.0]) {
+              addBox(group, 0.12, 2.9, 0.12, -8.2, 1.45, z, steel, 0.62, 0, 0.34);
+            }
+
+            // Sparse rear fixtures preserve depth but never compete with workers or cargo.
+            for (const x of [-5.2, 0, 5.2]) {
+              const light = addBox(group, 0.9, 0.025, 0.055, x, 2.92, -5.75, 0xdaf6ff, 0.42, 0x9ee9ff);
+              light.material.emissiveIntensity = 0.2;
+            }
+            group.userData.dollhouse = true;
+            group.userData.readabilityPass = 3;
+            return group;
+          }
+
+          function createFloorMarkings() {'''
+
+          s, n = re.subn(r"function createWarehouseShell\(\) \{.*?\n\}\n\nfunction createFloorMarkings\(\) \{", shell, s, count=1, flags=re.S)
+          if n != 1:
+            raise SystemExit('createWarehouseShell replacement failed')
+
+          flow_fn = '''
+
+          function createFlowFloorGuide() {
+            const group = new THREE.Group();
+            group.visible = false;
+            group.userData.flowFloorGuide = true;
+            const points = [POS.inbound, POS.rack, POS.pack, POS.outbound];
+            const colors = [0x63c8ff, 0xf2c858, 0x61e89a];
+            for (let i = 0; i < points.length - 1; i += 1) {
+              const a = points[i];
+              const b = points[i + 1];
+              const dx = b.x - a.x;
+              const dz = b.z - a.z;
+              const length = Math.hypot(dx, dz);
+              const angle = -Math.atan2(dz, dx);
+              const material = new THREE.MeshBasicMaterial({
+                color: colors[i], transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide,
+              });
+              const segment = new THREE.Mesh(new THREE.PlaneGeometry(length, 0.34), material);
+              segment.rotation.x = -Math.PI / 2;
+              segment.rotation.z = angle;
+              segment.position.set((a.x + b.x) / 2, 0.024, (a.z + b.z) / 2);
+              segment.renderOrder = 2;
+              group.add(segment);
+
+              for (const t of [0.38, 0.72]) {
+                const arrow = laneArrow(colors[i]);
+                arrow.position.set(a.x + dx * t, 0.03, a.z + dz * t);
+                arrow.rotation.z = angle - Math.PI / 2;
+                arrow.scale.setScalar(0.48);
+                arrow.material.opacity = 0.42;
+                arrow.renderOrder = 3;
+                group.add(arrow);
+              }
+            }
+            return group;
+          }
+          '''
+
+          marker = '\nexport async function createSceneView(canvas, sim) {'
+          if marker not in s:
+            raise SystemExit('createSceneView marker missing')
+          s = s.replace(marker, flow_fn + marker, 1)
+
+          s = s.replace(
+            "const cameraState = { yaw: 0.68, pitch: 0.66, distance: 15.4, targetDistance: 15.4, target: new THREE.Vector3(0, 0.52, -0.55) };",
+            "const cameraState = { yaw: 0.68, pitch: 0.61, distance: 13.8, targetDistance: 13.8, target: new THREE.Vector3(0, 0.48, -0.45) };"
+          )
+          s = s.replace('grid.material.opacity = 0.36;', 'grid.material.opacity = 0.28;', 1)
+          s = s.replace('scene.add(createFloorMarkings());\n  scene.add(createWarehouseShell());', 'scene.add(createFloorMarkings());\n  const flowFloorGuide = createFlowFloorGuide();\n  scene.add(flowFloorGuide);\n  scene.add(createWarehouseShell());', 1)
+
+          s = s.replace(
+            'const inbound = loadingDock(POS.inbound);\n  const pack = packStation(POS.pack);\n  const outbound = outboundStation(POS.outbound);\n  scene.add(inbound, pack, outbound);',
+            'const inbound = loadingDock(POS.inbound);\n  const pack = packStation(POS.pack);\n  const outbound = outboundStation(POS.outbound);\n  inbound.scale.setScalar(1.08);\n  pack.scale.setScalar(1.12);\n  outbound.scale.setScalar(1.08);\n  scene.add(inbound, pack, outbound);',
+            1
+          )
+          s = s.replace('const rackBanks = [rackBank(-2.15, -1.65)];\n  scene.add(rackBanks[0]);', 'const rackBanks = [rackBank(-2.15, -1.65)];\n  rackBanks[0].scale.setScalar(1.06);\n  scene.add(rackBanks[0]);', 1)
+          s = s.replace('bank.visible = false;\n    scene.add(bank);', 'bank.visible = false;\n    bank.scale.setScalar(1.06);\n    scene.add(bank);')
+
+          s = s.replace('cameraState.pitch = 0.66;', 'cameraState.pitch = 0.61;', 1)
+          s = s.replace('cameraState.targetDistance = 15.4 + growth * 2.2;', 'cameraState.targetDistance = 13.8 + growth * 1.95;', 1)
+          s = s.replace('cameraState.target.set(0, 0.52, -0.55 - growth * 1.15);', 'cameraState.target.set(0, 0.48, -0.45 - growth * 1.02);', 1)
+          s = s.replace('cameraState.targetDistance = Math.max(cameraState.targetDistance, 15.4 + growth * 2.2);', 'cameraState.targetDistance = Math.max(cameraState.targetDistance, 13.8 + growth * 1.95);', 1)
+          s = s.replace('cameraState.target.z = -0.55 - growth * 1.15;', 'cameraState.target.z = -0.45 - growth * 1.02;', 1)
+
+          s = s.replace('opacity: 0.5, depthTest: false', 'opacity: 0.32, depthTest: false', 1)
+          s = s.replace('visibleLines < 3', 'visibleLines < 2', 1)
+          s = s.replace('grid.material.opacity = flowMode ? 0.5 : 0.36;', 'grid.material.opacity = flowMode ? 0.42 : 0.28;\n    flowFloorGuide.visible = flowMode;', 1)
+
+          if 'group.userData.readabilityPass = 3;' not in s or 'flowFloorGuide.visible = flowMode;' not in s:
+            raise SystemExit('Readability Pass 3 markers missing')
+          p.write_text(s)
+
+          css = Path('docs/readability.css')
+          c = css.read_text()
+          block = '''
+
+          /* Readability Pass 3 — give the 3D floor priority over UI chrome */
+          #insightPanel{width:min(246px,calc(100vw - 16px))}
+          #insightPanel.compact{width:min(188px,calc(100vw - 16px));padding:5px 6px}
+          @media (max-width:500px){
+            #insightPanel{width:min(232px,calc(100vw - 16px));padding:6px}
+            #insightPanel.compact{width:min(184px,calc(100vw - 16px));padding:5px 6px}
+            #insightPanel.compact .eyebrow{font-size:8px;line-height:1.05}
+            #insightPanel.compact #directorTitle{font-size:12px;line-height:1.05}
+          }
+          '''
+          if 'Readability Pass 3' not in c:
+            css.write_text(c.rstrip() + block + '\n')
+          PY
+
+      - name: Verify patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/src/scene.js
+          grep -q 'readabilityPass = 3' docs/src/scene.js
+          grep -q 'flowFloorGuide.visible = flowMode' docs/src/scene.js
+          grep -q 'Readability Pass 3' docs/readability.css
+
+      - name: Commit readability pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/src/scene.js docs/readability.css
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git commit -m 'Apply Readability Pass 3'
+          git push
