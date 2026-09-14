@@ -1,0 +1,51 @@
+name: Capital v2 Phase 3 apply
+
+on:
+  push:
+    branches: [feature/capital-v2-truck-waves]
+    paths:
+      - tools/capital_v3_patch.py
+      - .github/workflows/capital-v3-apply.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/capital-v2-truck-waves
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply Phase 3 patch
+        run: python tools/capital_v3_patch.py
+      - name: Preflight syntax and smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in docs/src/*.js; do node --check "$file"; done
+          node --check docs/tests/capital-v3-smoke.mjs
+          node docs/tests/capital-v2-smoke.mjs
+          node docs/tests/capital-v3-smoke.mjs
+      - name: Remove one-shot patch tooling
+        run: |
+          rm -f tools/capital_v3_patch.py
+          rm -f .github/workflows/capital-v3-apply.yml
+      - name: Commit generated implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 1
+          fi
+          git commit -m "Implement Capital v2 Phase 3 truck waves"
+          git push origin HEAD:feature/capital-v2-truck-waves
