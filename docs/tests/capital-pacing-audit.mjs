@@ -16,18 +16,27 @@ const baseFacilities = {
 
 const scenarios = [
   {
+    name: '8k_band',
+    nextTarget: 40000,
+    maxBridgeMinutes: 15,
+    upgrades: { worker: 0, speed: 1, rack: 1, pack: 1, conveyor: 1, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
+  },
+  {
     name: '40k_band',
     nextTarget: 200000,
+    maxBridgeMinutes: 15,
     upgrades: { worker: 1, speed: 1, rack: 1, pack: 1, conveyor: 2, forklift: 1, agv: 0, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
   },
   {
     name: '200k_band',
     nextTarget: 500000,
+    maxBridgeMinutes: 15,
     upgrades: { worker: 2, speed: 3, rack: 2, pack: 3, conveyor: 2, forklift: 1, agv: 1, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
   },
   {
     name: '500k_band',
     nextTarget: 1000000,
+    maxBridgeMinutes: 15,
     upgrades: { worker: 2, speed: 3, rack: 3, pack: 3, conveyor: 3, forklift: 2, agv: 1, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
   },
 ];
@@ -72,6 +81,7 @@ function runScenario(def) {
   assert(invested > 0, `${def.name}: invested capital must be positive`);
   assert(sample.length > 0, `${def.name}: healthy operation must ship during the sample window`);
   assert(revenuePerMinute > 0, `${def.name}: revenue rate must be positive`);
+  assert(bridgeMinutes <= def.maxBridgeMinutes, `${def.name}: healthy capital bridge must stay within ${def.maxBridgeMinutes} minutes, measured ${bridgeMinutes.toFixed(1)}`);
 
   return {
     scenario: def.name,
@@ -83,6 +93,7 @@ function runScenario(def) {
     nextTarget: def.nextTarget,
     remaining,
     bridgeMinutes: Math.round(bridgeMinutes * 10) / 10,
+    maxBridgeMinutes: def.maxBridgeMinutes,
   };
 }
 
