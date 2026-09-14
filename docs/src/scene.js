@@ -271,6 +271,80 @@ function conveyorModule(index) {
   return group;
 }
 
+function forkliftUnit(index) {
+  const group = new THREE.Group();
+  const bodyColor = index % 2 ? 0xf2b13f : 0xe88d32;
+  const body = addBox(group, 0.82, 0.46, 1.06, 0, 0.42, 0.15, bodyColor, 0.56, 0x000000, 0.08);
+  addBox(group, 0.62, 0.62, 0.62, 0, 0.88, 0.18, 0x38434a, 0.48, 0x000000, 0.28);
+  const glass = addBox(group, 0.5, 0.38, 0.05, 0, 0.98, -0.16, 0x70cdea, 0.28, 0x2b8db3, 0.08);
+  glass.material.emissiveIntensity = 0.18;
+  const mast = addBox(group, 0.12, 1.38, 0.12, 0, 0.86, -0.58, 0x4b555c, 0.5, 0, 0.42);
+  addBox(group, 0.52, 0.08, 0.08, 0, 1.42, -0.58, 0x59646b, 0.5, 0, 0.42);
+  const forkA = addBox(group, 0.08, 0.07, 0.9, -0.18, 0.18, -0.86, 0x657078, 0.48, 0, 0.45);
+  const forkB = addBox(group, 0.08, 0.07, 0.9, 0.18, 0.18, -0.86, 0x657078, 0.48, 0, 0.45);
+  const pallet = addBox(group, 0.58, 0.08, 0.52, 0, 0.27, -0.96, 0x8d633b, 0.86);
+  addBox(group, 0.48, 0.3, 0.42, 0, 0.46, -0.96, 0xc88f58, 0.84);
+  for (const [x, z] of [[-0.38, -0.22], [0.38, -0.22], [-0.38, 0.46], [0.38, 0.46]]) {
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.13, 10), mat(0x20262a, 0.9));
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(x, 0.22, z);
+    group.add(wheel);
+  }
+  group.visible = false;
+  group.scale.setScalar(0.78);
+  group.userData = { body, mast, forkA, forkB, pallet };
+  return group;
+}
+
+function agvUnit(index) {
+  const group = new THREE.Group();
+  const body = addBox(group, 0.92, 0.18, 0.72, 0, 0.16, 0, index % 2 ? 0x4699b7 : 0x3d7f9f, 0.5, 0x102f3a, 0.22);
+  body.material.emissiveIntensity = 0.08;
+  addBox(group, 0.72, 0.08, 0.56, 0, 0.29, 0, 0x606d75, 0.54, 0, 0.28);
+  addBox(group, 0.58, 0.06, 0.46, 0, 0.36, 0, 0x8b623b, 0.84);
+  addBox(group, 0.46, 0.28, 0.36, 0, 0.54, 0, 0xc99459, 0.82);
+  const lightA = addBox(group, 0.18, 0.05, 0.04, -0.25, 0.22, -0.37, 0x76e8ff, 0.36, 0x54dfff);
+  const lightB = addBox(group, 0.18, 0.05, 0.04, 0.25, 0.22, -0.37, 0x76e8ff, 0.36, 0x54dfff);
+  lightA.material.emissiveIntensity = 0.8;
+  lightB.material.emissiveIntensity = 0.8;
+  group.visible = false;
+  group.scale.setScalar(0.72);
+  group.userData = { body, lightA, lightB };
+  return group;
+}
+
+function sorterModule(index) {
+  const group = new THREE.Group();
+  const belt = addBox(group, 2.15, 0.16, 0.62, 0, 0.46, 0, 0x252e34, 0.68, 0x000000, 0.2);
+  const rollers = [];
+  for (let i = 0; i < 7; i += 1) {
+    const roller = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 8), mat(0x9ca7ad, 0.42, 0, 0.48));
+    roller.rotation.z = Math.PI / 2;
+    roller.position.set(-0.88 + i * 0.29, 0.55, 0);
+    group.add(roller);
+    rollers.push(roller);
+  }
+  const archColor = index % 2 ? 0x65dda3 : 0x63c8ff;
+  addBox(group, 0.08, 1.2, 0.08, -0.72, 1.0, 0, 0x56626a, 0.56, 0, 0.3);
+  addBox(group, 0.08, 1.2, 0.08, 0.72, 1.0, 0, 0x56626a, 0.56, 0, 0.3);
+  const scanner = addBox(group, 1.5, 0.1, 0.1, 0, 1.55, 0, archColor, 0.42, archColor);
+  scanner.material.emissiveIntensity = 0.55;
+  const diverter = addBox(group, 0.9, 0.1, 0.12, 0.28, 0.66, 0, 0xf0b24a, 0.48, 0x7e4c0f, 0.18);
+  diverter.rotation.y = -0.42;
+  const chute = addBox(group, 1.1, 0.08, 0.5, 0.92, 0.38, -0.48, 0x4f5b63, 0.62, 0, 0.3);
+  chute.rotation.y = -0.58;
+  for (const px of [-0.82, 0.82]) {
+    addBox(group, 0.08, 0.42, 0.08, px, 0.22, -0.22, 0x4d5962, 0.6, 0, 0.3);
+    addBox(group, 0.08, 0.42, 0.08, px, 0.22, 0.22, 0x4d5962, 0.6, 0, 0.3);
+  }
+  group.position.set(3.2 + index * 0.75, 0, -2.7 - index * 0.58);
+  group.rotation.y = -0.38;
+  group.visible = false;
+  group.scale.setScalar(0.82);
+  group.userData = { belt, rollers, scanner, diverter };
+  return group;
+}
+
 function workerMesh(index) {
   const colors = [0x54b7ee, 0xf4aa45, 0x9a7de0, 0x55d18d, 0xec7182, 0x61c8c5, 0xd793e9, 0xe9bf52];
   const accent = colors[index % colors.length];
@@ -426,8 +500,6 @@ function createWarehouseShell() {
     return mesh;
   };
 
-  // Readability Pass 4: warehouse structure is only a soft rear silhouette.
-  // Gameplay equipment, workers and cargo always win the visual hierarchy.
   for (const x of [-7.2, 0, 7.2]) {
     fade(addBox(group, 0.11, 3.15, 0.11, x, 1.575, -7.15, steel, 0.66, 0, 0.28), 0.34);
   }
@@ -472,7 +544,6 @@ function createFloorMarkings() {
   }
   return group;
 }
-
 
 function createFlowFloorGuide() {
   const group = new THREE.Group();
@@ -558,33 +629,33 @@ export async function createSceneView(canvas, sim) {
   outbound.scale.setScalar(1.08);
   scene.add(inbound, pack, outbound);
 
-const secondInboundFacility = loadingDock({ x: -4.25, z: 4.25 });
-secondInboundFacility.scale.setScalar(0.82);
-secondInboundFacility.visible = false;
-scene.add(secondInboundFacility);
-const bufferYardFacility = rackBank(-4.7, 2.65, 0x63c8ff);
-bufferYardFacility.scale.setScalar(0.72);
-bufferYardFacility.visible = false;
-scene.add(bufferYardFacility);
-const secondPackFacility = packStation({ x: 4.15, z: 1.45 });
-secondPackFacility.scale.setScalar(0.82);
-secondPackFacility.visible = false;
-scene.add(secondPackFacility);
-const fastPackCellFacility = packStation({ x: 4.15, z: 1.45 });
-fastPackCellFacility.scale.setScalar(0.68);
-fastPackCellFacility.userData.base.material.color.setHex(0x3c8f88);
-fastPackCellFacility.visible = false;
-scene.add(fastPackCellFacility);
-const fastPickRackFacility = rackBank(-2.15, -0.35, 0x65d8b4);
-fastPickRackFacility.scale.setScalar(0.9);
-fastPickRackFacility.visible = false;
-scene.add(fastPickRackFacility);
-const highDensityRackFacility = rackBank(-2.15, -3.7, 0xc783d9);
-highDensityRackFacility.scale.setScalar(0.96);
-highDensityRackFacility.visible = false;
-scene.add(highDensityRackFacility);
+  const secondInboundFacility = loadingDock({ x: -4.25, z: 4.25 });
+  secondInboundFacility.scale.setScalar(0.82);
+  secondInboundFacility.visible = false;
+  scene.add(secondInboundFacility);
+  const bufferYardFacility = rackBank(-4.7, 2.65, 0x63c8ff);
+  bufferYardFacility.scale.setScalar(0.72);
+  bufferYardFacility.visible = false;
+  scene.add(bufferYardFacility);
+  const secondPackFacility = packStation({ x: 4.15, z: 1.45 });
+  secondPackFacility.scale.setScalar(0.82);
+  secondPackFacility.visible = false;
+  scene.add(secondPackFacility);
+  const fastPackCellFacility = packStation({ x: 4.15, z: 1.45 });
+  fastPackCellFacility.scale.setScalar(0.68);
+  fastPackCellFacility.userData.base.material.color.setHex(0x3c8f88);
+  fastPackCellFacility.visible = false;
+  scene.add(fastPackCellFacility);
+  const fastPickRackFacility = rackBank(-2.15, -0.35, 0x65d8b4);
+  fastPickRackFacility.scale.setScalar(0.9);
+  fastPickRackFacility.visible = false;
+  scene.add(fastPickRackFacility);
+  const highDensityRackFacility = rackBank(-2.15, -3.7, 0xc783d9);
+  highDensityRackFacility.scale.setScalar(0.96);
+  highDensityRackFacility.visible = false;
+  scene.add(highDensityRackFacility);
 
-const rackBanks = [rackBank(-2.15, -1.65)];
+  const rackBanks = [rackBank(-2.15, -1.65)];
   rackBanks[0].scale.setScalar(1.06);
   scene.add(rackBanks[0]);
   for (let i = 0; i < 4; i += 1) {
@@ -611,6 +682,27 @@ const rackBanks = [rackBank(-2.15, -1.65)];
     conveyors.push(c);
   }
 
+  const forklifts = [];
+  for (let i = 0; i < 4; i += 1) {
+    const unit = forkliftUnit(i);
+    scene.add(unit);
+    forklifts.push(unit);
+  }
+
+  const agvs = [];
+  for (let i = 0; i < 4; i += 1) {
+    const unit = agvUnit(i);
+    scene.add(unit);
+    agvs.push(unit);
+  }
+
+  const sorters = [];
+  for (let i = 0; i < 4; i += 1) {
+    const unit = sorterModule(i);
+    scene.add(unit);
+    sorters.push(unit);
+  }
+
   const annexes = [];
   for (let i = 1; i <= 3; i += 1) {
     const a = annex(i);
@@ -635,7 +727,11 @@ const rackBanks = [rackBank(-2.15, -1.65)];
   const shipmentBursts = [];
   let flowMode = false;
   let flowGuideClock = 0;
+  let automationClock = 0;
   let lastGrowth = -1;
+  let forkliftPulse = 0;
+  let agvPulse = 0;
+  let sorterPulse = 0;
 
   const physics = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
   physics.createCollider(RAPIER.ColliderDesc.cuboid(9, 0.08, 10).setTranslation(0, -0.08, -2));
@@ -684,6 +780,9 @@ const rackBanks = [rackBank(-2.15, -1.65)];
   let outboundPulse = 0;
   sim.onEvent((event) => {
     if (event.type === 'overflow') spawnOverflow();
+    if (event.type === 'forklift_transfer') forkliftPulse = 1;
+    if (event.type === 'agv_transfer') agvPulse = 1;
+    if (event.type === 'sorter_transfer') sorterPulse = 1;
     if (event.type === 'shipment') {
       outboundPulse = 1;
       spawnShipmentBurst();
@@ -732,16 +831,16 @@ const rackBanks = [rackBank(-2.15, -1.65)];
   }, { passive: false });
 
   function resetCamera() {
-  cameraState.yaw = 0.68;
-  cameraState.pitch = 0.64;
-  const growth = growthLevel();
-  cameraState.targetDistance = 14.45 + growth * 1.95;
-  cameraState.target.set(0, 0.52, -0.35 - growth * 1.02);
-}
+    cameraState.yaw = 0.68;
+    cameraState.pitch = 0.64;
+    const growth = growthLevel();
+    cameraState.targetDistance = 14.45 + growth * 1.95;
+    cameraState.target.set(0, 0.52, -0.35 - growth * 1.02);
+  }
 
   function growthLevel() {
     const u = sim.state.upgrades;
-    const total = u.worker + u.speed + u.rack + u.pack + u.conveyor;
+    const total = u.worker + u.speed + u.rack + u.pack + u.conveyor + (u.forklift || 0) + (u.agv || 0) + (u.sorter || 0);
     if (total >= 13) return 3;
     if (total >= 8) return 2;
     if (total >= 4) return 1;
@@ -749,19 +848,22 @@ const rackBanks = [rackBank(-2.15, -1.65)];
   }
 
   function updateGrowth(dt) {
-  const u = sim.state.upgrades;
-  const facilities = sim.state.facilities || {};
-  secondInboundFacility.visible = Boolean(facilities.secondInbound);
-  bufferYardFacility.visible = Boolean(facilities.bufferYard);
-  secondPackFacility.visible = Boolean(facilities.secondPack);
-  fastPackCellFacility.visible = Boolean(facilities.fastPackCell);
-  fastPickRackFacility.visible = Boolean(facilities.fastPickRack);
-  highDensityRackFacility.visible = Boolean(facilities.highDensityRack);
-  rackBanks.forEach((b, i) => { b.visible = i === 0 || i <= u.rack; });
+    const u = sim.state.upgrades;
+    const facilities = sim.state.facilities || {};
+    secondInboundFacility.visible = Boolean(facilities.secondInbound);
+    bufferYardFacility.visible = Boolean(facilities.bufferYard);
+    secondPackFacility.visible = Boolean(facilities.secondPack);
+    fastPackCellFacility.visible = Boolean(facilities.fastPackCell);
+    fastPickRackFacility.visible = Boolean(facilities.fastPickRack);
+    highDensityRackFacility.visible = Boolean(facilities.highDensityRack);
+    rackBanks.forEach((b, i) => { b.visible = i === 0 || i <= u.rack; });
     packModules.forEach((m, i) => { m.visible = i < u.pack; });
     conveyors.forEach((c, i) => { c.visible = i < u.conveyor; });
     lanes.forEach((l, i) => { l.visible = i < u.speed; });
-    gates.forEach((g, i) => { g.visible = i === 0 || i <= Math.floor((u.conveyor + u.worker) / 3); });
+    forklifts.forEach((unit, i) => { unit.visible = i < (u.forklift || 0); });
+    agvs.forEach((unit, i) => { unit.visible = i < (u.agv || 0); });
+    sorters.forEach((unit, i) => { unit.visible = i < (u.sorter || 0); });
+    gates.forEach((g, i) => { g.visible = i === 0 || i <= Math.floor((u.conveyor + u.worker + (u.sorter || 0)) / 3); });
 
     const growth = growthLevel();
     annexes.forEach((a, i) => {
@@ -900,6 +1002,60 @@ const rackBanks = [rackBank(-2.15, -1.65)];
     for (const [id, mesh] of boxMeshes) if (!live.has(id)) { scene.remove(mesh); boxMeshes.delete(id); }
   }
 
+  function updateAutomationVisuals(dt) {
+    const scale = Math.max(0, sim.state.timeScale || 0);
+    automationClock += dt * scale;
+    forkliftPulse = THREE.MathUtils.lerp(forkliftPulse, 0, Math.min(1, dt * 2.5));
+    agvPulse = THREE.MathUtils.lerp(agvPulse, 0, Math.min(1, dt * 2.8));
+    sorterPulse = THREE.MathUtils.lerp(sorterPulse, 0, Math.min(1, dt * 3.2));
+
+    const forkliftStart = { x: POS.inbound.x + 0.45, z: POS.inbound.z - 0.45 };
+    const forkliftEnd = { x: POS.rack.x - 1.4, z: POS.rack.z + 0.8 };
+    const forkliftAngle = Math.atan2(forkliftEnd.x - forkliftStart.x, forkliftEnd.z - forkliftStart.z);
+    forklifts.forEach((unit, index) => {
+      if (!unit.visible) return;
+      const phase = (automationClock * (0.085 + (sim.state.upgrades.forklift || 0) * 0.01) + index * 0.22) % 1;
+      const forward = phase < 0.5;
+      const t = forward ? phase * 2 : (1 - phase) * 2;
+      unit.position.set(
+        THREE.MathUtils.lerp(forkliftStart.x, forkliftEnd.x, t),
+        0.02 + forkliftPulse * 0.025,
+        THREE.MathUtils.lerp(forkliftStart.z, forkliftEnd.z, t) + index * 0.08
+      );
+      unit.rotation.y = forward ? forkliftAngle : forkliftAngle + Math.PI;
+      unit.userData.pallet.position.y = 0.27 + Math.sin((automationClock + index) * 5) * 0.012;
+      unit.userData.body.material.emissive.setHex(forkliftPulse > 0.12 ? 0x5f3510 : 0x000000);
+      unit.userData.body.material.emissiveIntensity = forkliftPulse * 0.38;
+    });
+
+    const agvStart = { x: POS.rack.x + 0.55, z: POS.rack.z + 0.25 };
+    const agvEnd = { x: POS.pack.x - 0.7, z: POS.pack.z - 0.35 };
+    const agvAngle = Math.atan2(agvEnd.x - agvStart.x, agvEnd.z - agvStart.z);
+    agvs.forEach((unit, index) => {
+      if (!unit.visible) return;
+      const phase = (automationClock * (0.11 + (sim.state.upgrades.agv || 0) * 0.012) + index * 0.24) % 1;
+      const forward = phase < 0.5;
+      const t = forward ? phase * 2 : (1 - phase) * 2;
+      unit.position.set(
+        THREE.MathUtils.lerp(agvStart.x, agvEnd.x, t),
+        0.04 + agvPulse * 0.018,
+        THREE.MathUtils.lerp(agvStart.z, agvEnd.z, t) - index * 0.09
+      );
+      unit.rotation.y = forward ? agvAngle : agvAngle + Math.PI;
+      const glow = 0.55 + agvPulse * 1.4 + Math.sin((automationClock + index) * 8) * 0.12;
+      unit.userData.lightA.material.emissiveIntensity = glow;
+      unit.userData.lightB.material.emissiveIntensity = glow;
+    });
+
+    sorters.forEach((unit, index) => {
+      if (!unit.visible) return;
+      const speed = 4.5 + (sim.state.upgrades.sorter || 0) * 1.2;
+      unit.userData.rollers.forEach((roller) => { roller.rotation.x += dt * scale * speed; });
+      unit.userData.diverter.rotation.y = -0.42 + Math.sin((automationClock + index * 0.4) * 3.8) * (0.08 + sorterPulse * 0.16);
+      unit.userData.scanner.material.emissiveIntensity = 0.5 + sorterPulse * 1.2 + Math.sin((automationClock + index) * 6) * 0.08;
+    });
+  }
+
   function heat(material, ratio) {
     if (!material?.emissive) return;
     const r = Math.max(0, ratio || 0);
@@ -975,12 +1131,13 @@ const rackBanks = [rackBank(-2.15, -1.65)];
     updateCamera(dt);
     syncWorkers(dt);
     syncBoxes(dt);
+    updateAutomationVisuals(dt);
     updateFlowFloorGuide(dt);
     updateHeat();
     updateOverflow(dt);
     updateShipmentBursts(dt);
     conveyors.forEach((c) => {
-      if (c.visible) c.userData.rollers.forEach((r) => { r.rotation.x += dt * 4.5; });
+      if (c.visible) c.userData.rollers.forEach((r) => { r.rotation.x += dt * Math.max(0, sim.state.timeScale || 0) * 4.5; });
     });
     outboundPulse = THREE.MathUtils.lerp(outboundPulse, 0, Math.min(1, dt * 3.5));
     outbound.scale.setScalar(1 + outboundPulse * 0.055);
