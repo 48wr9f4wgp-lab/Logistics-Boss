@@ -10,6 +10,7 @@ import {
 } from './capital-model.js';
 
 const yen = (value) => `¥${Math.round(value || 0).toLocaleString('ja-JP')}`;
+const round1 = (value) => Math.round((Number(value) || 0) * 10) / 10;
 
 function ensureStyles() {
   if (document.querySelector('link[data-capital-expansion]')) return;
@@ -44,9 +45,7 @@ export function bindCapitalExpansion(sim) {
     <div id="capitalReport" class="capitalReport" hidden></div>
     <div id="capitalHint" class="capitalHint"></div>`;
 
-  const firstSectionLabel = [...dock.querySelectorAll('.sectionLabel')][0];
-  if (firstSectionLabel) firstSectionLabel.before(panel);
-  else dock.prepend(panel);
+  dock.prepend(panel);
 
   const nodes = {
     tier: panel.querySelector('#capitalTier'),
@@ -76,23 +75,42 @@ export function bindCapitalExpansion(sim) {
   let latestReport = null;
 
   function pruneRevenue() {
-    while (shipmentHistory.length && gameClock - shipmentHistory[0].at > 60) shipmentHistory.shift();
+    while (shipmentHistory.length && gameClock - shipmentHistory[0].at > 120) shipmentHistory.shift();
+  }
+
+  function flowBetween(startAt, endAt, minimumWindow = 1) {
+    pruneRevenue();
+    const start = Math.max(0, Number(startAt) || 0);
+    const end = Math.max(start, Number(endAt) || 0);
+    const elapsed = Math.max(minimumWindow, end - start);
+    const rows = shipmentHistory.filter((row) => row.at >= start && row.at <= end);
+    const total = rows.reduce((sum, row) => sum + row.value, 0);
+    return {
+      seconds: elapsed,
+      count: rows.length,
+      throughput: round1(rows.length * 60 / elapsed),
+      revenue: Math.round(total * 60 / elapsed),
+    };
+  }
+
+  function recentFlow(seconds = 60) {
+    const span = Math.max(1, Number(seconds) || 60);
+    const start = Math.max(0, gameClock - span);
+    return flowBetween(start, gameClock, Math.min(10, span));
   }
 
   function revenuePerMinute() {
-    pruneRevenue();
-    if (!shipmentHistory.length) return 0;
-    const windowSeconds = Math.max(10, Math.min(60, gameClock - shipmentHistory[0].at + 1));
-    const total = shipmentHistory.reduce((sum, row) => sum + row.value, 0);
-    return Math.round(total * (60 / windowSeconds));
+    return recentFlow(60).revenue;
   }
 
-  function metricSnapshot() {
+  function metricSnapshot(flow = null) {
     const c = sim.counts();
     const capacity = Math.max(1, sim.rackCapacity());
+    const measuredFlow = flow || recentFlow(60);
     return {
-      throughput: sim.state.metrics?.perMinute || 0,
-      revenue: revenuePerMinute(),
+      throughput: measuredFlow.throughput,
+      revenue: measuredFlow.revenue,
+      flowSeconds: measuredFlow.seconds,
       orders: sim.state.ordersOpen || 0,
       inbound: c.inbound || 0,
       rackRatio: c.rack / capacity,
@@ -106,11 +124,11 @@ export function bindCapitalExpansion(sim) {
 
   function reportHtml(report) {
     if (!report.ready) {
-      return `<strong>${report.label} · 効果測定中</strong><p>設備導入前後を25秒観測。出荷量だけでなく、売上・滞留・棚使用率まで比較する。</p><div class="capitalReportGrid"><span>観測 ${Math.min(25, Math.floor(report.elapsed))}/25秒</span><span>投資 ${yen(report.cost)}</span></div>`;
+      return `<strong>${report.label} · 効果測定中</strong><p>直前の運転状態と、導入後25秒を同じ基準で比較する。追加投資すると測定は新しい設備からやり直す。</p><div class="capitalReportGrid"><span>観測 ${Math.min(25, Math.floor(report.elapsed))}/25秒</span><span>投資 ${yen(report.cost)}</span></div>`;
     }
     const d = report.delta;
     const roi = d.revenue > 0 ? `${(report.cost / d.revenue).toFixed(1)}分` : '測定不能';
-    return `<strong>${report.label} · INVESTMENT RESULT</strong><p>買った設備が本当に効いたかを実測。プラスだけでなく悪化もそのまま表示する。</p><div class="capitalReportGrid"><span>出荷 ${signed(d.throughput, '/分')}</span><span>売上 ${signed(d.revenue, '円/分')}</span><span>注文待ち ${signed(d.orders, '件')}</span><span>入荷待ち ${signed(d.inbound, '箱')}</span><span>棚使用 ${signed(d.rackPoints, 'pt')}</span><span>回収目安 ${roi}</span></div>`;
+    return `<strong>${report.label} · INVESTMENT RESULT</strong><p>導入前の直近運転と導入後25秒を比較。設備が詰まりを別工程へ移した場合も、その悪化を隠さず表示する。</p><div class="capitalReportGrid"><span>出荷 ${signed(d.throughput, '/分')}</span><span>売上 ${signed(d.revenue, '円/分')}</span><span>注文待ち ${signed(d.orders, '件')}</span><span>入荷待ち ${signed(d.inbound, '箱')}</span><span>棚使用 ${signed(d.rackPoints, 'pt')}</span><span>回収目安 ${roi}</span></div>`;
   }
 
   function buyInvestment(key) {
@@ -121,7 +139,8 @@ export function bindCapitalExpansion(sim) {
     const cost = nextInvestmentCost(sim.state.upgrades, key);
     if (sim.state.money < cost) return;
 
-    const before = metricSnapshot();
+    const beforeFlow = recentFlow(25);
+    const before = metricSnapshot(beforeFlow);
     sim.state.money -= cost;
     sim.state.upgrades[def.upgrade] = level + 1;
     // Reuse the simulation's existing dirty/save path without changing the player's policy.
@@ -131,6 +150,7 @@ export function bindCapitalExpansion(sim) {
       label: `${def.label} Lv.${level + 1}`,
       cost,
       elapsed: 0,
+      startAt: gameClock,
       before,
       ready: false,
     };
@@ -157,14 +177,16 @@ export function bindCapitalExpansion(sim) {
     if (!pendingReport) return;
     pendingReport.elapsed += dt;
     if (pendingReport.elapsed < 25) return;
-    const after = metricSnapshot();
+    const afterFlow = flowBetween(pendingReport.startAt, pendingReport.startAt + 25, 25);
+    const after = metricSnapshot(afterFlow);
     const before = pendingReport.before;
     latestReport = {
       ...pendingReport,
+      elapsed: 25,
       ready: true,
       after,
       delta: {
-        throughput: after.throughput - before.throughput,
+        throughput: round1(after.throughput - before.throughput),
         revenue: after.revenue - before.revenue,
         orders: after.orders - before.orders,
         inbound: after.inbound - before.inbound,
