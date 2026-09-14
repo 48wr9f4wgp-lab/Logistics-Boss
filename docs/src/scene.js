@@ -419,26 +419,28 @@ function createWarehouseShell() {
   const group = new THREE.Group();
   const steel = 0x344049;
   const lightSteel = 0x4b5964;
+  const fade = (mesh, opacity) => {
+    mesh.material.transparent = true;
+    mesh.material.opacity = opacity;
+    mesh.material.depthWrite = false;
+    return mesh;
+  };
 
-  // Readability Pass 3: keep only a rear structural silhouette.
-  // The playable floor must stay visually open as the facility grows.
-  for (const x of [-8.2, -2.7, 2.7, 8.2]) {
-    addBox(group, 0.14, 3.35, 0.14, x, 1.675, -7.15, steel, 0.6, 0, 0.38);
+  // Readability Pass 4: warehouse structure is only a soft rear silhouette.
+  // Gameplay equipment, workers and cargo always win the visual hierarchy.
+  for (const x of [-7.2, 0, 7.2]) {
+    fade(addBox(group, 0.11, 3.15, 0.11, x, 1.575, -7.15, steel, 0.66, 0, 0.28), 0.34);
   }
-  addBox(group, 16.45, 0.1, 0.1, 0, 3.18, -7.15, lightSteel, 0.62, 0, 0.3);
+  fade(addBox(group, 14.55, 0.08, 0.08, 0, 3.02, -7.15, lightSteel, 0.68, 0, 0.22), 0.3);
 
-  // Two side posts suggest the warehouse shell without crossing the work floor.
-  for (const z of [-4.9, -2.0]) {
-    addBox(group, 0.12, 2.9, 0.12, -8.2, 1.45, z, steel, 0.62, 0, 0.34);
-  }
-
-  // Sparse rear fixtures preserve depth but never compete with workers or cargo.
-  for (const x of [-5.2, 0, 5.2]) {
-    const light = addBox(group, 0.9, 0.025, 0.055, x, 2.92, -5.75, 0xdaf6ff, 0.42, 0x9ee9ff);
-    light.material.emissiveIntensity = 0.2;
+  for (const x of [-4.6, 4.6]) {
+    const light = addBox(group, 0.82, 0.022, 0.05, x, 2.82, -5.95, 0xdaf6ff, 0.45, 0x9ee9ff);
+    light.material.emissiveIntensity = 0.14;
+    light.material.transparent = true;
+    light.material.opacity = 0.42;
   }
   group.userData.dollhouse = true;
-  group.userData.readabilityPass = 3;
+  group.userData.readabilityPass = 4;
   return group;
 }
 
@@ -476,6 +478,7 @@ function createFlowFloorGuide() {
   const group = new THREE.Group();
   group.visible = false;
   group.userData.flowFloorGuide = true;
+  group.userData.flowArrows = [];
   const points = [POS.inbound, POS.rack, POS.pack, POS.outbound];
   const colors = [0x63c8ff, 0xf2c858, 0x61e89a];
   for (let i = 0; i < points.length - 1; i += 1) {
@@ -486,22 +489,24 @@ function createFlowFloorGuide() {
     const length = Math.hypot(dx, dz);
     const angle = -Math.atan2(dz, dx);
     const material = new THREE.MeshBasicMaterial({
-      color: colors[i], transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide,
+      color: colors[i], transparent: true, opacity: 0.27, depthWrite: false, side: THREE.DoubleSide,
     });
-    const segment = new THREE.Mesh(new THREE.PlaneGeometry(length, 0.34), material);
+    const segment = new THREE.Mesh(new THREE.PlaneGeometry(length, 0.5), material);
     segment.rotation.x = -Math.PI / 2;
     segment.rotation.z = angle;
     segment.position.set((a.x + b.x) / 2, 0.024, (a.z + b.z) / 2);
     segment.renderOrder = 2;
     group.add(segment);
 
-    for (const t of [0.38, 0.72]) {
+    for (const t of [0.16, 0.48, 0.8]) {
       const arrow = laneArrow(colors[i]);
-      arrow.position.set(a.x + dx * t, 0.03, a.z + dz * t);
+      arrow.position.set(a.x + dx * t, 0.032, a.z + dz * t);
       arrow.rotation.z = angle - Math.PI / 2;
-      arrow.scale.setScalar(0.48);
-      arrow.material.opacity = 0.42;
+      arrow.scale.setScalar(0.58);
+      arrow.material.opacity = 0.62;
       arrow.renderOrder = 3;
+      arrow.userData.flowPath = { ax: a.x, az: a.z, dx, dz, offset: t };
+      group.userData.flowArrows.push(arrow);
       group.add(arrow);
     }
   }
@@ -521,7 +526,7 @@ export async function createSceneView(canvas, sim) {
   scene.background = new THREE.Color(0x101920);
   scene.fog = new THREE.Fog(0x101920, 23, 48);
   const camera = new THREE.PerspectiveCamera(43, innerWidth / innerHeight, 0.1, 90);
-  const cameraState = { yaw: 0.68, pitch: 0.61, distance: 13.8, targetDistance: 13.8, target: new THREE.Vector3(0, 0.48, -0.45) };
+  const cameraState = { yaw: 0.68, pitch: 0.64, distance: 14.45, targetDistance: 14.45, target: new THREE.Vector3(0, 0.52, -0.35) };
 
   scene.add(new THREE.HemisphereLight(0xe3f6ff, 0x273039, 2.2));
   const sun = new THREE.DirectionalLight(0xfff6e8, 2.15);
@@ -603,6 +608,7 @@ export async function createSceneView(canvas, sim) {
   const flowLines = new Map();
   const shipmentBursts = [];
   let flowMode = false;
+  let flowGuideClock = 0;
   let lastGrowth = -1;
 
   const physics = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
@@ -701,10 +707,10 @@ export async function createSceneView(canvas, sim) {
 
   function resetCamera() {
   cameraState.yaw = 0.68;
-  cameraState.pitch = 0.61;
+  cameraState.pitch = 0.64;
   const growth = growthLevel();
-  cameraState.targetDistance = 13.8 + growth * 1.95;
-  cameraState.target.set(0, 0.48, -0.45 - growth * 1.02);
+  cameraState.targetDistance = 14.45 + growth * 1.95;
+  cameraState.target.set(0, 0.52, -0.35 - growth * 1.02);
 }
 
   function growthLevel() {
@@ -744,8 +750,8 @@ export async function createSceneView(canvas, sim) {
     });
     if (growth !== lastGrowth) {
       lastGrowth = growth;
-      cameraState.targetDistance = Math.max(cameraState.targetDistance, 13.8 + growth * 1.95);
-      cameraState.target.z = -0.45 - growth * 1.02;
+      cameraState.targetDistance = Math.max(cameraState.targetDistance, 14.45 + growth * 1.95);
+      cameraState.target.z = -0.35 - growth * 1.02;
     }
   }
 
@@ -912,9 +918,23 @@ export async function createSceneView(canvas, sim) {
 
   function setFlowMode(enabled) {
     flowMode = Boolean(enabled);
-    grid.material.opacity = flowMode ? 0.42 : 0.28;
+    grid.material.opacity = flowMode ? 0.38 : 0.28;
     flowFloorGuide.visible = flowMode;
     if (!flowMode) for (const line of flowLines.values()) line.visible = false;
+  }
+
+  function updateFlowFloorGuide(dt) {
+    if (!flowMode) return;
+    flowGuideClock = (flowGuideClock + dt * 0.32) % 1;
+    for (const arrow of flowFloorGuide.userData.flowArrows || []) {
+      const path = arrow.userData.flowPath;
+      const t = (path.offset + flowGuideClock) % 1;
+      arrow.position.x = path.ax + path.dx * t;
+      arrow.position.z = path.az + path.dz * t;
+      const pulse = 0.5 + Math.sin((t + flowGuideClock) * Math.PI * 2) * 0.5;
+      arrow.material.opacity = 0.48 + pulse * 0.28;
+      arrow.scale.setScalar(0.54 + pulse * 0.08);
+    }
   }
 
   function update(dt) {
@@ -922,6 +942,7 @@ export async function createSceneView(canvas, sim) {
     updateCamera(dt);
     syncWorkers(dt);
     syncBoxes(dt);
+    updateFlowFloorGuide(dt);
     updateHeat();
     updateOverflow(dt);
     updateShipmentBursts(dt);

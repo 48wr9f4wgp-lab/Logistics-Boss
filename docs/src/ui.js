@@ -55,6 +55,7 @@ export function bindUi(sim, sceneView) {
   let flowEnabled = false;
   let dockCompact = true;
   let focusMode = false;
+  let lastDirectorSeverity = null;
 
   function toast(text, tone = 'normal') {
     clearTimeout(toastTimer);
@@ -165,7 +166,7 @@ export function bindUi(sim, sceneView) {
     });
   });
 
-  el.insightToggle.addEventListener('click', () => setInsightCompact(!insightCompact));
+  el.insightToggle.addEventListener('click', () => { setInsightCompact(!insightCompact); render(); });
   el.observe.addEventListener('click', () => setFocusMode(true));
   el.focusExit.addEventListener('click', () => setFocusMode(false));
   document.addEventListener('keydown', (event) => {
@@ -249,6 +250,12 @@ export function bindUi(sim, sceneView) {
     const c = sim.counts();
     const s = sim.state;
     const d = s.director;
+    if (lastDirectorSeverity !== null) {
+      if (d.severity === 0 && lastDirectorSeverity > 0) setInsightCompact(true);
+      else if (d.severity > 0 && lastDirectorSeverity === 0) setInsightCompact(false);
+    }
+    lastDirectorSeverity = d.severity;
+    el.insightPanel.dataset.stable = d.severity === 0 ? 'true' : 'false';
     el.money.textContent = yen(s.money);
     el.research.textContent = `${s.research} RP`;
     el.shipped.textContent = s.shipped.toLocaleString('ja-JP');
@@ -265,7 +272,9 @@ export function bindUi(sim, sceneView) {
       el.focusExit.dataset.alert = d.severity >= 2 ? 'true' : 'false';
     }
 
-    el.directorLabel.textContent = d.label;
+    const offerCount = (s.contractOffers || []).length;
+    const stableSummary = s.activeContract ? `安定稼働 · ${s.activeContract.title}` : `安定稼働 · 契約${offerCount}件`;
+    el.directorLabel.textContent = d.severity === 0 && insightCompact ? stableSummary : d.label;
     el.directorDetail.textContent = d.detail;
     el.directorRecommendation.textContent = `→ ${d.recommendation}`;
     el.severityBadge.textContent = d.severity === 0 ? 'OK' : d.severity === 1 ? '注意' : d.severity === 2 ? '混雑' : '危険';
