@@ -5,6 +5,8 @@ import {
   formatInvestmentEffect,
   investedCapital,
   investmentLevel,
+  investmentUnlocked,
+  nextCommercialTierForAssets,
   nextInvestmentCost,
   totalAssetValue,
 } from './capital-model.js';
@@ -59,7 +61,7 @@ export function bindCapitalExpansion(sim) {
   };
 
   const buttons = new Map();
-  for (const [key, def] of Object.entries(CAPITAL_INVESTMENTS)) {
+  for (const [key] of Object.entries(CAPITAL_INVESTMENTS)) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'capitalBuy';
@@ -133,7 +135,7 @@ export function bindCapitalExpansion(sim) {
 
   function buyInvestment(key) {
     const def = CAPITAL_INVESTMENTS[key];
-    if (!def) return;
+    if (!def || !investmentUnlocked(sim.state.upgrades, key)) return;
     const level = investmentLevel(sim.state.upgrades, key);
     if (level >= def.costs.length) return;
     const cost = nextInvestmentCost(sim.state.upgrades, key);
@@ -141,14 +143,12 @@ export function bindCapitalExpansion(sim) {
 
     const beforeFlow = recentFlow(25);
     const before = metricSnapshot(beforeFlow);
-    sim.state.money -= cost;
-    sim.state.upgrades[def.upgrade] = level + 1;
-    // Reuse the simulation's existing dirty/save path without changing the player's policy.
-    sim.setPolicy(sim.state.policy);
+    const result = sim.purchaseCapitalUpgrade(def.upgrade, cost);
+    if (!result.ok) return;
     pendingReport = {
       key,
-      label: `${def.label} Lv.${level + 1}`,
-      cost,
+      label: `${def.label} Lv.${result.level}`,
+      cost: result.cost,
       elapsed: 0,
       startAt: gameClock,
       before,
@@ -163,13 +163,8 @@ export function bindCapitalExpansion(sim) {
 
   sim.onEvent((event) => {
     if (event.type !== 'shipment') return;
-    const unitRevenue = currentUnitRevenue(sim.state.upgrades);
-    const baseValue = Number(event.value) || 120;
-    const bonus = Math.max(0, unitRevenue - baseValue);
-    if (bonus > 0) sim.state.money += bonus;
-    event.value = unitRevenue;
-    event.text = `出荷 +${yen(unitRevenue)}`;
-    shipmentHistory.push({ at: gameClock, value: unitRevenue });
+    const value = Math.max(0, Number(event.value) || currentUnitRevenue(sim.state.upgrades));
+    shipmentHistory.push({ at: gameClock, value });
     pruneRevenue();
   });
 
@@ -210,12 +205,18 @@ export function bindCapitalExpansion(sim) {
       const def = CAPITAL_INVESTMENTS[key];
       const level = investmentLevel(sim.state.upgrades, key);
       const maxed = level >= def.costs.length;
+      const unlocked = investmentUnlocked(sim.state.upgrades, key);
       const cost = nextInvestmentCost(sim.state.upgrades, key);
-      const ready = !maxed && sim.state.money >= cost;
+      const ready = unlocked && !maxed && sim.state.money >= cost;
       button.dataset.ready = ready ? 'true' : 'false';
       button.dataset.max = maxed ? 'true' : 'false';
+      button.dataset.locked = unlocked ? 'false' : 'true';
       button.disabled = maxed || !ready;
-      button.innerHTML = `<span class="capitalLevel">Lv.${level}/${def.costs.length}</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>${maxed ? '最大設備' : formatInvestmentEffect(key, level + 1)}</em><b>${maxed ? 'MAX' : yen(cost)}</b>`;
+      if (!unlocked) {
+        button.innerHTML = `<span class="capitalLevel">AUTOMATION</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>設備資産 ${yen(def.unlockAssets)} で解禁</em><b>LOCKED</b>`;
+      } else {
+        button.innerHTML = `<span class="capitalLevel">Lv.${level}/${def.costs.length}</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>${maxed ? '最大設備' : formatInvestmentEffect(key, level + 1)}</em><b>${maxed ? 'MAX' : yen(cost)}</b>`;
+      }
       button.title = def.effect;
     }
 
@@ -223,16 +224,10 @@ export function bindCapitalExpansion(sim) {
     nodes.report.hidden = !report;
     if (report) nodes.report.innerHTML = reportHtml(report);
 
-    const nextTier = (() => {
-      const index = Math.max(0, [
-        'Local Depot', 'Mechanized Depot', 'High-Throughput Warehouse', 'Regional Fulfillment', 'Automated DC', 'Mega Logistics',
-      ].indexOf(tier.label));
-      const tiers = [8000, 40000, 200000, 1000000, 5000000];
-      return tiers[index] ?? null;
-    })();
+    const nextTier = nextCommercialTierForAssets(invested);
     nodes.hint.textContent = nextTier == null
       ? '最大商圏。次の拡張は複数拠点・大型物流網へ。'
-      : `設備資産 ${yen(nextTier)} で取扱単価が上昇。何を先に買うかは自由。`;
+      : `設備資産 ${yen(nextTier.minAssets)} で ${nextTier.label} 商圏へ。何を先に買うかは自由。`;
   }
 
   function update(realDt) {
