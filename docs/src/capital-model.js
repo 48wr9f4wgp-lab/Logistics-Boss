@@ -39,6 +39,16 @@ export const CAPITAL_INVESTMENTS = {
     effect: '搬入口→棚を自動搬送 / 上位ほど間隔短縮',
     emphasis: '人手搬送そのものを設備へ置き換える',
   },
+  workforce: {
+    key: 'workforce',
+    upgrade: 'worker',
+    label: '現場チーム増員',
+    short: '人員',
+    costs: [3500, 15000, 70000, 350000, 1800000],
+    unlockAssets: 2500,
+    effect: '作業員 +1人 / 3Dスタッフを追加',
+    emphasis: '人手で複数工程の詰まりを柔軟に吸収する',
+  },
   forklift: {
     key: 'forklift',
     upgrade: 'forklift',
@@ -68,6 +78,16 @@ export const CAPITAL_INVESTMENTS = {
     unlockAssets: 200000,
     effect: '梱包済み→出荷口を自動仕分け / 3Dソーターを増設',
     emphasis: '出荷口の人手処理を機械仕分けへ置き換える',
+  },
+  hall: {
+    key: 'hall',
+    upgrade: 'hall',
+    label: '物流ホール拡張',
+    short: '敷地',
+    costs: [300000, 2500000, 20000000],
+    unlockAssets: 200000,
+    effect: '保管容量 +8箱 / 入荷上限 +4箱 / 3Dホール棟を増設',
+    emphasis: '建物そのものを拡張し、受入・保管余力を増やす',
   },
 };
 
@@ -162,8 +182,10 @@ export function formatInvestmentEffect(key, nextLevel) {
   if (key === 'pack') return `基準比 約${Math.round((1 - Math.pow(0.82, level)) * 100)}%短縮`;
   if (key === 'speed') return `移動速度 +${level * 16}%`;
   if (key === 'conveyor') return level === 1 ? '自動搬送を解禁' : `自動搬送 Lv.${level}`;
+  if (key === 'workforce') return `作業員 +${level}人`;
   if (key === 'forklift') return `${forkliftBatchForLevel(level)}箱まとめ搬送 / 約${forkliftIntervalForLevel(level).toFixed(1)}秒`;
   if (key === 'agv') return `${agvBatchForLevel(level)}箱自動ピック / 約${agvIntervalForLevel(level).toFixed(1)}秒`;
   if (key === 'sorter') return `自動出荷 1箱 / 約${sorterIntervalForLevel(level).toFixed(1)}秒`;
+  if (key === 'hall') return `ホール +${level}棟 / 保管 +${level * 8}箱 / 入荷上限 +${level * 4}箱`;
   return '';
 }
