@@ -3,390 +3,242 @@
 Updated: 2026-09-14 JST
 Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
-Audited code baseline before this HANDOFF-only commit: `e75e1e694efe13a163a4452e6575b3bb0902ff16`
+Current audited main baseline: `9d94634d41d8eafdce129fd36366086038e36e64`
 
-> **Source-of-truth order for the next chat**
-> 1. Current `main` implementation
-> 2. Title-specific current specs: `CAPITAL_EXPANSION_V1.md`, `UX_ERGONOMICS_PASS_2026-09-14.md`, benchmark addendum
-> 3. `GDD_LOGISTICS_BOSS.md`
-> 4. Project-level `GAME_DEV_MASTER_RULES v1.3`
->
-> `GDD_LOGISTICS_BOSS.md` still contains older Rank 1 FTUE / prescribed-action text that conflicts with the newer freedom/capital direction. **Do not reintroduce those stale rails just because the text still exists.** Current code + newer title-specific specs win.
+## 0. Canonical source order
 
-## 1. Purpose / intended finished product
+For every development decision, use this order:
 
-**Logistics Boss** is a mobile-first 3D logistics management / automation-observer game.
+1. Current `main` implementation.
+2. This `HANDOFF.md` for the latest title-specific state and immediate task.
+3. `CAPITAL_EXPANSION_V1.md`, `CAPITAL_EXPANSION_V2.md`, `UX_ERGONOMICS_PASS_2026-09-14.md`, and current benchmark addenda.
+4. `GDD_LOGISTICS_BOSS.md`.
+5. Project-level `GAME_DEV_MASTER_RULES v1.3`.
 
-The player does **not** manually carry boxes or control an avatar. The fantasy is:
+Older GDD / FTUE language that prescribes a single path is stale. Do **not** restore:
+- mandatory “choose a contract” progression;
+- “今やること” rails;
+- Director buttons that choose the correct answer for the player;
+- severity-driven automatic Director opening;
+- MutationObserver layers that compete over UI state.
 
-`observe flow → identify constraint → invest / change operations → autonomous workers & equipment react → throughput/revenue changes → measure result → reinvest at a much larger scale`
+Current product rule: **the game diagnoses state and consequences; the player chooses the solution.**
 
-Target finished experience:
-- begin as a tiny manual depot;
-- earn aggressively increasing cash;
-- buy visibly meaningful equipment;
-- watch the facility become faster/larger/more automated;
-- solved bottlenecks expose new bottlenecks downstream;
-- grow toward conveyors, sorters, forklifts/AGVs, automated storage, truck yards, multiple halls / logistics centers;
-- the player chooses **what to improve first**; the app shows state and consequences, not a single correct path.
+## 1. Product core
 
-The differentiator is **visible autonomous 3D logistics + capital escalation + measurable ROI**, not spreadsheet-only management and not idle waiting.
+Logistics Boss is a mobile-first 3D logistics management / automation-observer game.
 
-Current stage: Vertical Slice / Functional Build. Not release-ready.
+Canonical loop:
 
-## 2. Technology / libraries / external services
+`observe → find bottleneck → choose investment / operating decision → visible 3D logistics changes → measure Before/After → a new bottleneck emerges → reinvest at a larger scale → grow into a huge logistics center`
 
-Current production path is intentionally simple:
-- Static HTML / CSS / vanilla JavaScript (ES modules)
-- Three.js `0.186.0` from jsDelivr CDN
-- `@dimforge/rapier3d-compat` `0.20.0` from jsDelivr CDN
-- GitHub repository + GitHub Actions
-- GitHub Pages deploying `main/docs`
-- PWA-style manifest / Apple Home Screen icon
-- iPhone Safari / Home Screen web app is primary device test target
+The player does not manually carry parcels or control an avatar. The fantasy is operating and capital allocation: workers, machines and buildings react autonomously.
 
-No npm, bundler, TypeScript, backend, database, account system, analytics service or app-store wrapper exists yet.
+Finished-product priorities:
+- visible autonomous 3D logistics;
+- meaningful capital escalation;
+- multiple viable investment paths;
+- measurable operational consequences;
+- new bottlenecks created by successful improvements;
+- clear mobile UX while keeping the warehouse visually primary.
 
-Important: Three.js is still the correct current engine **until an actual scale/native blocker appears**. Do not migrate to Godot/Unity/PlayCanvas merely for preference.
+Current stage: Functional Build moving toward deeper Vertical Slice / product-quality validation. Not release-ready.
 
-## 3. Current directory structure / important files
+## 2. Technology / deployment
 
-```text
-/
-├─ README.md
-├─ GDD_LOGISTICS_BOSS.md
-├─ CAPITAL_EXPANSION_V1.md
-├─ BENCHMARK_LOGISTICS_BOSS_2026-09-13.md
-├─ BENCHMARK_CAPITAL_LOOP_ADDENDUM_2026-09-14.md
-├─ UX_ERGONOMICS_PASS_2026-09-14.md
-├─ RANK2_SYSTEMS_PASS_PLAN.md
-├─ HANDOFF.md
-├─ .github/
-│  └─ workflows/
-│     ├─ qa.yml
-│     └─ readability-pass-3.yml   # old one-shot patch workflow; trigger is path-limited
-└─ docs/
-   ├─ index.html
-   ├─ styles.css
-   ├─ readability.css
-   ├─ ux.css
-   ├─ focus.css
-   ├─ ftue2.css
-   ├─ capital.css
-   ├─ ergonomics.css
-   ├─ insight-stability.css
-   ├─ manifest.webmanifest
-   ├─ apple-touch-icon.png
-   ├─ health.html
-   ├─ .nojekyll
-   ├─ src/
-   │  ├─ main.js
-   │  ├─ sim.js
-   │  ├─ scene.js
-   │  ├─ ui.js
-   │  ├─ freedom.js
-   │  ├─ ftue2.js
-   │  ├─ capital-model.js
-   │  ├─ capital.js
-   │  ├─ ergonomics.js
-   │  └─ insight-stability.js
-   └─ tests/
-      ├─ progression-smoke.mjs
-      └─ ergonomics-smoke.mjs
-```
+Current production path:
+- static HTML / CSS / vanilla JavaScript ES modules;
+- Three.js `0.186.0` via jsDelivr;
+- `@dimforge/rapier3d-compat` `0.20.0` via jsDelivr;
+- GitHub Actions static QA + Node smoke tests;
+- GitHub Pages from `main/docs`;
+- iPhone Safari / Home Screen web app is the primary real-device target;
+- localStorage save key: `logistics_boss_save`;
+- save schema: `3`.
 
-Critical responsibilities:
-- `sim.js`: domain state, workers, parcel lifecycle, contracts, Rank 2 facilities, save schema, time/update loop.
-- `scene.js`: Three.js rendering, warehouse geometry, workers/boxes, camera/touch, FLOW visuals, decorative Rapier overflow.
-- `ui.js`: legacy/core HUD + policies + contracts + Rank 2 UI; currently contains some stale FTUE/autotoggle logic.
-- `freedom.js`: non-linear Rank 1 Warehouse-rating progression.
-- `capital-model.js`: investment definitions, nonlinear costs, commercial revenue tiers.
-- `capital.js`: capital UI, purchases, revenue uplift, 25 s before/after investment measurement.
-- `ergonomics.js`: mobile bottom-sheet behavior, investment affordance, observation/result pulse, top metric override.
-- `ftue2.js`: overrides old Rank 1 prescribed FTUE into freedom/sandbox language.
-- `insight-stability.js`: current guard against Director panel auto-open/close / 契約-button flicker.
+No backend, accounts, analytics service, npm build, app-store wrapper or native engine is currently required. Do not migrate engines without an actual requirement/performance/native blocker.
 
-## 4. Implemented features
+## 3. Current architecture
+
+Important files:
+- `docs/src/sim.js` — authoritative simulation/economy state, workers, parcel lifecycle, facilities, capital purchase API, contracts, save/load.
+- `docs/src/scene.js` — Three.js scene, workers/parcels, visible equipment/building growth, camera/touch, FLOW visualization.
+- `docs/src/ui.js` — HUD, Director presentation, policies/contracts, Rank 2 UI. Director open/closed state is user-controlled here.
+- `docs/src/freedom.js` — non-linear Rank 1 Warehouse-rating progression.
+- `docs/src/capital-model.js` — Capital investment definitions, cost ladders, unlock assets, commercial tiers.
+- `docs/src/capital.js` — Capital bottom-sheet UI and 25-second Before/After measurement. Requests purchases through `sim.purchaseCapitalUpgrade()`; it does not own money mutation.
+- `docs/src/ergonomics.js` — mobile sheet/ergonomic behavior only; it must not overwrite primary HUD metrics.
+- `docs/tests/` — progression, Director stability, ergonomics/HUD and Capital smoke coverage.
+- `.github/workflows/qa.yml` — canonical static/regression gate.
+
+Removed architectural debt that must stay removed:
+- `docs/src/insight-stability.js` observer guard;
+- `docs/src/ftue2.js` post-render FTUE override;
+- duplicated top-HUD writers.
+
+## 4. Confirmed interaction fixes
+
+### Director / optional-contract flicker — CLOSED on iPhone
+Root cause was multiple modules/old FTUE logic competing for the same Director DOM/open state.
+
+Current architecture:
+- `ui.js` is the single authority for Director presentation/open state;
+- severity changes do not automatically open a closed panel;
+- old `STEP 1/3` / “出庫優先にする” correct-answer UI is removed;
+- contracts are explicitly optional;
+- regression tests fail if the old FTUE/Director ownership returns.
+
+User re-tested the deployed Pages build on iPhone and confirmed the earlier rapid Director/contract flicker no longer occurs.
+
+### Top HUD `出荷ペース` flicker — CLOSED on iPhone
+Root cause: `ui.js` wrote cumulative shipped count while `ergonomics.js` rewrote the same third HUD card as shipments/min, producing rapid values such as `3 ↔ 79`.
+
+Current architecture:
+- the third primary HUD card is explicitly `出荷ペース`;
+- `ui.js` is its single numeric writer;
+- cumulative shipped count is separate;
+- `ergonomics.js` no longer performs positional top-HUD rewrites;
+- `hud-metric-stability-smoke.mjs` + CI lock the ownership.
+
+User supplied a follow-up iPhone screen recording. The metric then changed naturally over time instead of alternating between two unrelated values, so this P0 is closed.
+
+## 5. Current gameplay systems
 
 ### Core simulation
-- Inbound → rack → pick → pack → outbound parcel flow.
-- Autonomous workers and task assignment.
-- Rank 1 policies: Balanced / Inbound / Ship.
+- Inbound → rack → pick → pack → outbound flow.
+- Autonomous workers and role/task assignment.
 - Pause / 1x / 2x / 4x.
-- Cash only after successful shipment.
-- Orders, inbound arrivals, packing queue, outbound queue.
-- Bottleneck ratios for inbound / rack / orders / packed output.
-- Recovery-first congestion; no hard game-over.
+- Cash after real shipment.
+- Orders, receiving, packing and outbound queues.
+- Bottleneck diagnosis for inbound / rack / orders / packed output.
+- Recovery-first congestion; no hard fail state.
 
-### Contracts / research
-- Optional 3-choice contract offers: shipping, inbound-clean, throughput.
-- Contract cash/RP/reputation rewards.
-- Milestone RP rewards.
-- Research perks: Smart Dispatch, Standardized Packing, High-value Contracts.
+### Freedom progression / contracts
+- Rank 1 Warehouse rating can grow through shipped volume, throughput, stable operation and optional contracts.
+- Warehouse target remains rating 8.
+- Optional three-choice contracts remain available but are not a mandatory rail.
+- RP and research perks remain active.
 
-### Freedom progression
-Rank 1 Warehouse rating can increase through multiple routes instead of a mandatory contract rail:
-- cumulative shipped volume;
-- throughput;
-- stable operation time;
-- optional contracts.
+### Rank 2
+- Warehouse rank unlocks a 5-worker base operation.
+- Staffing presets: receiving / balanced / picking / dock / shipping.
+- Three one-of-two structural zones for intake, storage and packing.
+- Facilities visibly change the 3D warehouse and affect the simulation.
+- Rank 2 facility decisions have a Before/After impact report.
+- Fulfillment Center readiness UI exists; true Rank 3 gameplay is still not implemented.
 
-Warehouse unlock target remains rating 8.
+## 6. Capital Expansion — current main
 
-### Rank 2 systems
-- Rank 2 `Warehouse` unlocks 5-worker operation.
-- Five staffing presets: 3/1/1, 2/2/1, 1/3/1, 2/1/2, 1/2/2.
-- 30 simulated-second staffing reassignment lock.
-- Three one-of-two structural zones:
-  - Intake: Double Dock vs Buffer Yard
-  - Storage: Fast Pick Rack vs High Density Rack
-  - Packing: Parallel Pack Line vs Fast Pack Cell
-- All affect simulation; scene has corresponding visible structures.
-- 20-second Rank 2 facility decision-impact report.
-- Fulfillment Center readiness UI exists (zones/contracts/throughput) but **Rank 3 gameplay does not**.
+### Capital v1
+Early capital layer remains:
+- Rack Wing;
+- Packing Module;
+- Handling / Route Improvement;
+- Conveyor Spine.
 
-### Capital Expansion v1
-Current primary product direction:
-- Rack Wing: costs `1,000 / 4,500 / 30,000 / 250,000`
-- Packing Module: `1,600 / 7,000 / 50,000 / 400,000 / 4,000,000`
-- Handling/Route Improvement: `2,000 / 8,500 / 60,000 / 500,000 / 5,000,000`
-- Conveyor Spine: `3,500 / 18,000 / 120,000 / 1,000,000`
+They produce real simulation and visible 3D effects.
 
-Effects are real simulation effects using existing upgrade state:
-- rack capacity + visible rack growth;
-- pack-time reduction + visible modules;
-- movement-speed increase + visible route/lane expansion;
-- automatic inbound→rack conveyor movement.
+### Capital v2 Phase 1 — automation
+Implemented and merged:
+- **Forklift Fleet** — batch inbound → rack handling with visible forklift vehicles.
+- **AGV Pick Fleet** — rack → packing automated picking with visible AGVs.
+- **Automatic Sorter** — packed → real shipment automation with visible sorter modules.
 
-Commercial tiers based on invested equipment assets increase parcel revenue:
-`¥120 → ¥200 → ¥500 → ¥1,200 → ¥3,000 → ¥8,000`.
+Commercial shipment revenue and capital mutation are owned by `sim.js`. Capital UI measures the same economy through shipment events.
 
-After investment, `capital.js` compares a pre-purchase 25 s window with a post-purchase 25 s window and reports:
-- shipments/min;
-- revenue/min;
-- open orders;
-- inbound queue;
-- rack utilization;
-- rough payback time.
+### Capital v2 Phase 2 — workforce + property
+Merged into main at `9d94634d41d8eafdce129fd36366086038e36e64`.
 
-Negative outcomes are intentionally shown; do not fake positive ROI.
+#### Workforce Expansion
+Capital card: `現場チーム増員`.
+- Unlock: equipment assets `¥2,500`.
+- Costs: `¥3,500 / 15,000 / 70,000 / 350,000 / 1,800,000`.
+- Five levels.
+- Each level adds **one real simulation worker** through the existing staffing/dispatch system.
+- Because workers are rendered from `sim.state.workers`, each hire produces another visible 3D worker.
+- This is deliberately a flexible human-capacity path, not an infinite +1 numeric clicker.
 
-### 3D / presentation
-- Low-poly warehouse, racks, stations, parcels, workers.
-- Cutaway/dollhouse warehouse shell to avoid structural occlusion.
-- FLOW overlay / route cues.
-- Touch orbit + pinch zoom; no joystick.
-- Observation mode.
-- Visible facility growth for several current upgrades/facilities.
-- Rapier used only for incidental overflow/physical chaos; core economy does not depend on physics.
+#### Logistics Hall Expansion
+Capital card: `物流ホール拡張`.
+- Unlock: equipment assets `¥200,000`.
+- Costs: `¥300,000 / 2,500,000 / 20,000,000`.
+- Three levels.
+- Each level adds real simulation capacity: rack `+8` and receiving buffer `+4`.
+- Each purchased level reveals one additional full 3D hall (`HALL 2`–`HALL 4`) and widens camera framing.
+- Hall expansion does **not** directly process parcels faster. It creates physical headroom, so labor/picking/packing/outbound can become the new bottleneck.
 
-### Mobile UX
-- Bottom thumb-zone compact controls.
-- Investment entry point in bottom row; affordable equipment gets a subtle green affordance.
-- Management is a bottom sheet, not a full-screen mode.
-- Sheet does not auto-close after purchases.
-- Downward handle gesture / tap closes sheet.
-- Purchase measurement can continue while watching the warehouse; compact result pulse remains visible.
-- Safe-area-aware PWA layout.
-- Frequent touch targets targeted around 44–48 CSS px.
+The existing Capital 25-second Before/After measurement applies to workforce and hall purchases through the same generic purchase path.
 
-### Persistence / build
-- localStorage save key: `logistics_boss_save`
-- save schema: `3`
-- periodic save + pagehide/visibility save
-- GitHub Actions static QA + Node smoke tests
-- GitHub Pages deploy from `main/docs`
+## 7. Four-condition gate for every new major purchase
 
-## 5. Currently in progress / progress state
+Do not add a major Capital category unless all four are true:
 
-### A. Bottleneck Director / 契約-toggle stability — **latest active bugfix**
-User reported:
-1. Director frame flickered as bottleneck severity changed.
-2. After the first fix, when collapsed, the **契約 button itself** flickered as if `契約 ↔ 閉じる` were fighting.
+1. **Visible 3D change** — machine, worker, fleet, building or site visibly changes.
+2. **Real logistics behavior change** — it changes actual capacity or parcel/work movement, not only a displayed multiplier.
+3. **Before/After measurement** — the player can see operational effect, including negative outcomes.
+4. **New bottleneck potential** — solving one constraint can expose another.
 
-Current main now has `insight-stability.js` using DOM state as the authority and restoring the user-preferred compact state after `ui.render()`.
+This is more important than adding a large number of upgrade cards.
 
-**Status:** code committed, static QA success, Pages deploy success, but the final `契約` flicker fix has **NOT yet been re-verified on the user's iPhone**.
+## 8. Latest verification state
 
-Important architectural cause still present: `ui.js` itself retains severity-driven auto open/close logic and a private `insightCompact` flag, while `insight-stability.js` tries to override it. This is technical debt even if the visible flicker is now hidden.
+For PR #5 (`feature/capital-v2-workforce-hall` → `main`):
+- PR static QA: success.
+- Changed-file audit: only intended six files.
+- Squash merged to main: `9d94634d41d8eafdce129fd36366086038e36e64`.
+- Main static QA: success, including Director stability, HUD stability, Rank 1 freedom, Rank 2 and Capital v2 smoke gates.
+- GitHub Pages build: success.
+- GitHub Pages deploy: success.
 
-### B. Capital loop
-Capital Expansion v1 is implemented and functional, but product depth is only the first tier. It has not yet reached the intended “massive logistics empire” scale.
+What is **not** yet verified:
+- real-iPhone visual/interaction check of the new Workforce and Hall Capital cards;
+- real-iPhone visual reveal/camera framing for a purchased hall;
+- real-iPhone confirmation that an added worker is readable at current camera scale.
 
-### C. Human-factors pass
-UX/ergonomics pass is implemented. Further user testing should happen only after obvious code-side friction is audited first.
+Do not call those visual details finished until device-tested.
 
-## 6. Unimplemented / next work in priority order
+## 9. Known risks / design watchpoints
 
-### P0 — stabilize existing interaction before asking user to test again
-1. **Remove the root Director state conflict** from `ui.js` rather than stacking another observer workaround.
-   - delete severity-triggered `setInsightCompact(true/false)` from render;
-   - make panel open/closed state user-controlled, single-source;
-   - align `updateInsightToggle()` with actual panel state;
-   - remove `lastDirectorSeverity` if no longer needed;
-   - simplify/delete `insight-stability.js` after direct fix if safe.
-2. Add a regression test that repeatedly changes severity and renders while collapsed, asserting the panel stays collapsed and button label never alternates.
-3. Deploy, then iPhone verify the left-top panel for 20–30 s.
+- Workforce must remain a strategic alternative/bridge to automation, not dominate every bottleneck by cheap headcount spam. Tune costs and marginal value from play data.
+- Hall expansion creates capacity, not processing speed. If the player does not feel the building-scale payoff or cannot understand why throughput did not immediately jump, presentation/measurement needs improvement rather than fake speed bonuses.
+- Existing commercial tiers may need rebalance now that property costs reach tens of millions.
+- True Rank 3 does not exist despite Fulfillment Center readiness UI.
+- `sim.js`, `scene.js` and `ui.js` are getting large; refactor by responsibility before another major complexity jump, but do not rewrite functioning systems wholesale.
+- No service worker; CDN dependencies mean true offline launch is not guaranteed.
+- No analytics yet; real product tuning still relies on manual play/device observation.
+- Build/test success is not equivalent to real-device UX success.
 
-### P1 — clean stale/contradictory FTUE/UI code
-4. Remove old Rank 1 prescribed-step logic still living in `ui.js` (`STEP 1/3`, “まず契約を選ぼう”, one-tap recommendations) instead of relying on `ftue2.js` to override it after render.
-5. Update `GDD_LOGISTICS_BOSS.md` and `.github/workflows/qa.yml` so QA no longer requires stale prescriptive FTUE strings.
-6. Preserve the current design rule: app reports **goal/state/diagnosis**, player chooses solution.
+## 10. Next product-development order
 
-### P1 — Capital Expansion v2 / product depth
-7. Tune first-session economy from real play data: first meaningful investment timing, ROI readability, next-purchase anticipation.
-8. Add new physically distinct capital categories, not more invisible multipliers. Priority candidates from current spec/benchmarks:
-   - forklift / pallet handling;
-   - sorter;
-   - AGV fleet;
-   - automated rack / AS-RS;
-   - property / hall expansion;
-   - truck dock / truck waves;
-   - multi-building logistics campus / second center.
-9. Every new major purchase must satisfy all four:
-   - visible 3D change;
-   - actual simulation behavior change;
-   - measurable before/after result;
-   - creates/reveals a new bottleneck / new desire to invest.
+After the Phase 2 device check, continue Capital v2 depth in this order unless fresh benchmark evidence says otherwise:
 
-### P1 — actual Rank 3 gameplay
-10. Implement Fulfillment Center gameplay. Current UI says it is the next stage, but there is no true Rank 3 state/rank yet.
-11. First Rank 3 layer should likely be conveyor/sorter routing packages with mobile-friendly staged choices, **not** desktop-style free-form belt drawing.
+1. **Truck dock / truck-wave system** — create visible inbound/outbound demand waves and a reason to invest in dock throughput/buffering.
+2. **AS/RS automated storage/retrieval** — property/automation interaction, not a plain rack multiplier.
+3. **True Rank 3: Fulfillment Center** — larger operating layer and staged routing packages.
+4. **Campus / second-center expansion** — only after one-center capital escalation is proven fun and readable.
 
-### P2 — production engineering
-12. Refactor oversized files before complexity explodes (`scene.js` ~39 KB, `sim.js` ~35 KB, `ui.js` ~24 KB).
-13. Introduce proper unit/E2E/browser regression tooling when migration cost is justified (Vitest/Playwright were recommended; not installed yet).
-14. Add performance budgets/profiling for worker/equipment scale.
-15. Add audio/game-feel/haptics pass beyond current light vibration feedback.
-16. Add analytics only after product proof / closed testing.
-17. Decide native wrapper/engine only when Store/native SDK/performance needs are real.
-18. Implement real offline support if still required: there is currently **no service worker**, and Three/Rapier load from CDN, so GDD's “offline” intent is not fully satisfied.
+Before a major new visual pass or Rank 3 implementation, refresh live-market/benchmark evidence per project rules.
 
-## 7. Current bugs / technical risks
+## 11. Exact first task for the next chat
 
-### Known / unverified
-- **Director 契約-button flicker:** latest fix deployed but not yet iPhone-confirmed.
+1. Pull current `main` and confirm baseline at or after `9d94634d41d8eafdce129fd36366086038e36e64`.
+2. Confirm the newest `HANDOFF.md` supersedes the older P0 Director/FTUE instructions.
+3. If the user has not yet device-checked Capital v2 Phase 2, request only this focused iPhone verification after code-side checks:
+   - open `投資` and verify `現場チーム増員` / `物流ホール拡張` cards are readable;
+   - when affordable, buy one workforce level and confirm one visible worker appears and operates;
+   - when a hall purchase is reachable/test-funded, confirm the additional hall appears and camera framing remains usable.
+4. If device verification is clean, begin **Truck Dock / Truck Waves** as Capital v2 Phase 3. It must satisfy the four-condition gate and must not introduce a prescribed correct purchase.
+5. Continue the normal gate after changes: `syntax/build → automated tests → behavior/regression → Pages deploy → iPhone visual verification where required`.
 
-### Architectural debt
-- `ui.js` and `insight-stability.js` both influence Director compact/open state. Single-source state is required.
-- `ui.js` still contains obsolete prescriptive FTUE logic while `ftue2.js` post-processes/neutralizes it. This is fragile and makes QA misleading.
-- `qa.yml` still explicitly greps for stale Rank 1 FTUE strings, so “QA success” does not mean the latest design architecture is clean.
-- `capital.js` mutates `sim.state.upgrades` and money directly, then calls `setPolicy()` mainly to mark save dirty. This works but should become a simulation-domain purchase API before capital systems expand significantly.
-- Commercial revenue uplift is applied in `capital.js` by listening to shipment events after `sim.js` has already applied base revenue. Functional, but cross-module economy ownership is split.
-- GDD calls the simulation deterministic, but inbound/order/contract generation uses `Math.random`; treat deterministic-domain intent as “physics does not own economy”, not true replay determinism.
-- Static CDN dependencies + no service worker mean no guaranteed offline launch.
-- `main` is currently unprotected.
-- Legacy one-shot `.github/workflows/readability-pass-3.yml` remains; it is path-triggered and inert unless edited, but should not be reused as the normal development mechanism.
+## 12. Non-negotiable rules
 
-## 8. Important design decisions and why
-
-### Observer-management, not manual controls
-The product originally explored more direct operation, but the stronger loop is giving instructions/investments and watching autonomous logistics react. No avatar/joystick gameplay.
-
-### Capital amplification is the primary growth fantasy
-The user wants to earn aggressively, spend large capital, visibly improve efficiency, then spend vastly more. Therefore equipment and facility scale—not button count—is the core progression reward.
-
-### Visible effect + measured effect
-A purchase must look different in 3D **and** provide operational evidence. This avoids “did that upgrade even do anything?” and turns ROI into gameplay.
-
-### Freedom over prescribed rails
-No “next press this button” FTUE. Contracts are optional. Rank 1 rating has multiple sources. Director should diagnose, not choose the solution.
-
-### Staged logistics packages instead of free-form factory editor (for now)
-Benchmarks (Factorio / Builderment / shapez 2 / Satisfactory) support deep automation, but full belt editing creates mobile complexity. Current strategy is readable staged equipment choices first; free-form placement is deferred.
-
-### Three.js + deterministic-ish domain state + decorative Rapier
-Three.js gives rapid mobile/PWA iteration. Simulation state is kept separate from rendering. Rapier is intentionally non-authoritative so physics chaos cannot corrupt the economy/task loop.
-
-### 3D world is primary, management is a bottom sheet
-Human-factors pass keeps frequent actions in thumb reach and keeps the warehouse visible. UI should support observation, not replace it.
-
-## 9. Rejected ideas / changes not to reintroduce
-
-Do **not** reintroduce without a new explicit design review:
-- mandatory “contract → contract → contract” progression rail;
-- “今やること: X” prescriptive FTUE;
-- Director one-tap “correct answer” as the default product loop;
-- repeated +/- priority tapping as the main game;
-- numeric Lv-up clicker gameplay with no visible machine/world change;
-- passive waiting / ad-idle model as the core gameplay;
-- manual first-person/avatar/joystick operation;
-- full free-form conveyor editor before staged automation proves itself on mobile;
-- core economy driven by nondeterministic physics;
-- automatic panel opening/closing caused by volatile bottleneck severity;
-- giant UI panels permanently covering the 3D warehouse;
-- engine migration without a measured blocker;
-- developing Logistics Boss in the old Velvet repository; this repo is canonical.
-
-Also: do not treat one benchmark as a template. Extract principles from multiple titles.
-
-## 10. UI / UX policy
-
-- 3D warehouse is the visual hero.
-- Top HUD = glance metrics; bottom = frequent controls.
-- Frequent touch targets ≈44–48 CSS px minimum.
-- Primary compact row should fit portrait iPhone without horizontal scrolling.
-- Investment is a primary bottom-row action; affordable state may be signaled subtly.
-- Management is a bottom sheet and must preserve world context.
-- Purchase must never force-close management.
-- User decides when panels open/close; volatile simulation state may change labels/colors, **not layout state**.
-- Director: diagnose state/cause; do not prescribe a single solution.
-- No tutorial rail. Explain controls/systems, not the required play sequence.
-- Before/after metrics must use comparable windows and show negative deltas honestly.
-- Equipment investment should be visually readable in the world without needing the numbers.
-- Observation mode / FLOW are secondary analysis tools, not mandatory steps.
-
-## 11. DB / API / auth / env configuration
-
-There is currently no server-side stack.
-
-- DB: none
-- Backend API: none
-- Authentication: none
-- Accounts/cloud save: none
-- Environment variables: none
-- Analytics: none
-- Monetization/IAP/ads: none
-- Save: browser localStorage, key `logistics_boss_save`, schema v3
-- External runtime network: jsDelivr CDN for Three.js and Rapier
-- Hosting: GitHub Pages from `main/docs`
-- PWA: manifest + 180x180 icon + standalone mode; no service worker
-
-## 12. Exact first task for the next chat
-
-**Do not add new gameplay features first. Do not ask the user to retest immediately.**
-
-Start with the Director state architecture:
-
-1. Fetch current `main` and confirm HEAD.
-2. Inspect `docs/src/ui.js`, `docs/src/insight-stability.js`, `docs/src/main.js`, `docs/src/ftue2.js`.
-3. Remove severity-driven automatic `setInsightCompact()` calls from `ui.js`.
-4. Make user toggle state the only authority for Director open/closed state.
-5. Ensure label changes (`契約 / 開く / 閉じる`) never mutate panel open/closed state.
-6. Add automated regression coverage for repeated severity changes + repeated renders while collapsed.
-7. Run static QA/smoke tests and deploy.
-8. Only then ask for a short iPhone visual check of the left-top Director.
-
-After that passes, continue Capital Expansion v2 rather than returning to FTUE rails.
-
-## 13. Git state / branch / work status
-
-- Repository: `48wr9f4wgp-lab/Logistics-Boss`
-- Default/canonical branch: `main`
-- Audited code baseline before HANDOFF doc commit: `e75e1e694efe13a163a4452e6575b3bb0902ff16`
-- Baseline message: `Remove unused temporary stability helper`
-- Previous functional fix commit: `0cb0bebd992e4687241a4654f429fc1a4b3468a6` — `Stop contract toggle flicker after closing insight panel`
-- `main` is not branch-protected.
-- Open PRs at handoff time: none.
-- Static QA for baseline: success.
-- GitHub Pages deploy for baseline: success.
-- Final iPhone verification of the last flicker fix: **not done yet**.
-- Remote GitHub has no concept of local uncommitted changes; all work performed in this session was committed to remote `main`. No local worktree was available to inspect.
-- Existing old topic branches include capital/ergonomics/FTUE/Rank2/readability/flicker branches. Treat them as historical unless intentionally comparing; **`main` is canonical**.
-
-## Handoff safety notes
-
-- Never claim a visual/mobile bug fixed until iPhone behavior is actually rechecked.
-- Build/test/deploy success is not equivalent to real-device UX success.
-- Before a major visual pass, RC, or major gameplay expansion, refresh benchmarks per project rules.
-- Keep changes reversible; avoid destructive cleanup just to make the repository look tidy.
+- Current GitHub main is canonical; never trust an old chat over the code.
+- Do not claim an untested fix is fixed.
+- Do not restore old prescribed FTUE/Director rails.
+- Do not stack MutationObservers to hide state-ownership bugs; fix ownership.
+- Do not turn Capital progression into invisible numeric level-ups.
+- Do not add features merely for quantity; prioritize touch feel, clarity, visible growth, progression and replay desire.
+- Do not let a resource/bottleneck state make the game unintentionally impossible to play.
+- Preserve save compatibility unless an explicit migration is implemented and tested.
+- Keep money/economy mutation in the simulation domain.
+- After meaningful code changes, run the strongest available build/test/behavior/regression checks before reporting completion.
