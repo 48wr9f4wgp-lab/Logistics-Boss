@@ -136,3 +136,23 @@ The purpose of higher parcel value is to support larger machinery and property-s
 - Free-form conveyor drawing.
 
 These should be added only after the current workforce / automation / property choices prove that they create meaningfully different investment strategies and bottlenecks.
+
+
+## Phase 3 — Truck Dock / Truck Waves
+
+Phase 3 converts late-game inbound flow from a smooth drip into visible truck arrivals.
+
+- Capital card: `トラックドック`
+- Costs: `¥650,000 / ¥5,000,000 / ¥40,000,000`
+- Unlock: investment total `¥500,000`
+- Level 1–3 add visible 3D dock bays and a real truck arrival/unload/depart cycle.
+- Once installed, inbound supply comes in waves instead of the old continuous cadence.
+- Higher levels increase boxes per truck and arrival frequency while reducing unload time per box.
+- Trucks unload into the same authoritative inbound parcel queue, so insufficient receiving/rack/picking/packing capacity creates a new bottleneck instead of being bypassed.
+- Existing 25-second Capital Before/After measurement applies without forcing a prescribed solution.
+
+Four-condition gate:
+1. Visible 3D dock/truck change.
+2. Real logistics behavior changes from drip to waves.
+3. Before/After remains measurable.
+4. More dock capacity can expose internal bottlenecks.

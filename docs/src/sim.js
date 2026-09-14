@@ -6,6 +6,9 @@ import {
   forkliftBatchForLevel,
   forkliftIntervalForLevel,
   sorterIntervalForLevel,
+  truckUnloadIntervalForLevel,
+  truckWaveIntervalForLevel,
+  truckWaveSizeForLevel,
 } from './capital-model.js';
 
 const POS = {
@@ -38,6 +41,7 @@ const UPGRADE_INFO = {
   agv: { label: 'AGVピック隊', max: 4, baseCost: 40000 },
   sorter: { label: '自動ソーター', max: 4, baseCost: 90000 },
   hall: { label: '物流ホール拡張', max: 3, baseCost: 300000 },
+  truckDock: { label: 'トラックドック', max: 3, baseCost: 650000 },
 };
 
 const PERK_INFO = {
@@ -123,6 +127,8 @@ export function createSimulation(saved = null) {
   let forkliftTimer = 0;
   let agvTimer = 0;
   let sorterTimer = 0;
+  let truckWaveTimer = 9;
+  let truckUnloadTimer = 0;
   let overflowCooldown = 0;
   let offerCooldown = 0;
   let saveDirty = false;
@@ -143,7 +149,8 @@ export function createSimulation(saved = null) {
     policy: 'balanced',
     timeScale: 1,
     priorities: { store: 3, pick: 3, ship: 4 },
-    upgrades: { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0 },
+    upgrades: { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0 },
+    truckWave: { phase: 'away', progress: 0, cargo: 0, waveSize: 0, trip: 0 },
     perks: { smartDispatch: 0, bulkPack: 0, contractBonus: 0 },
     contractOffers: [],
     activeContract: null,
@@ -185,8 +192,9 @@ export function createSimulation(saved = null) {
 
   function inboundMax() {
     const hallBonus = (state.upgrades.hall || 0) * 4;
-    if (state.facilities.bufferYard) return BASE.inboundMax + 14 + hallBonus;
-    return BASE.inboundMax + (state.facilities.secondInbound ? 6 : 0) + hallBonus;
+    const truckDockBonus = (state.upgrades.truckDock || 0) * 2;
+    if (state.facilities.bufferYard) return BASE.inboundMax + 14 + hallBonus + truckDockBonus;
+    return BASE.inboundMax + (state.facilities.secondInbound ? 6 : 0) + hallBonus + truckDockBonus;
   }
 
   function inboundInterval() {
@@ -225,6 +233,18 @@ export function createSimulation(saved = null) {
 
   function sorterInterval() {
     return sorterIntervalForLevel(state.upgrades.sorter);
+  }
+
+  function truckWaveInterval() {
+    return truckWaveIntervalForLevel(state.upgrades.truckDock);
+  }
+
+  function truckWaveSize() {
+    return truckWaveSizeForLevel(state.upgrades.truckDock);
+  }
+
+  function truckUnloadInterval() {
+    return truckUnloadIntervalForLevel(state.upgrades.truckDock);
   }
 
   function upgradeCost(type) {
@@ -294,7 +314,7 @@ export function createSimulation(saved = null) {
     packed.forEach((box, index) => Object.assign(box, packedPosition(index)));
   }
 
-  function spawnInbound() {
+  function spawnInbound(source = 'ambient') {
     const current = counts().inbound;
     if (current >= inboundMax()) {
       if (overflowCooldown <= 0) {
@@ -308,7 +328,7 @@ export function createSimulation(saved = null) {
       packRemaining: 0, carrierId: null, ...inboundPosition(current),
     };
     state.boxes.push(box);
-    emit('inbound', { boxId: box.id });
+    emit('inbound', { boxId: box.id, source });
     return true;
   }
 
@@ -635,13 +655,83 @@ export function createSimulation(saved = null) {
     return BASE.orderInterval;
   }
 
+  function startTruckWave() {
+    const waveSize = truckWaveSize();
+    if (!waveSize) return;
+    state.truckWave.phase = 'approach';
+    state.truckWave.progress = 0;
+    state.truckWave.cargo = waveSize;
+    state.truckWave.waveSize = waveSize;
+    state.truckWave.trip += 1;
+    emit('truck_approach', { amount: waveSize, trip: state.truckWave.trip, text: `入荷トラック ${waveSize}箱 接近` });
+  }
+
+  function updateTruckWave(dt) {
+    const level = state.upgrades.truckDock || 0;
+    if (!level) {
+      state.truckWave.phase = 'away';
+      state.truckWave.progress = 0;
+      state.truckWave.cargo = 0;
+      return;
+    }
+    const wave = state.truckWave;
+    if (wave.phase === 'away') {
+      truckWaveTimer -= dt;
+      if (truckWaveTimer <= 0) startTruckWave();
+      return;
+    }
+    if (wave.phase === 'approach') {
+      wave.progress = Math.min(1, wave.progress + dt / 2.5);
+      if (wave.progress >= 1) {
+        wave.phase = 'unload';
+        wave.progress = 0;
+        truckUnloadTimer = 0;
+        emit('truck_arrive', { amount: wave.waveSize, trip: wave.trip, text: `トラック到着 ${wave.waveSize}箱` });
+      }
+      return;
+    }
+    if (wave.phase === 'unload') {
+      truckUnloadTimer -= dt;
+      if (wave.cargo > 0 && truckUnloadTimer <= 0) {
+        if (spawnInbound('truck')) {
+          wave.cargo -= 1;
+          wave.progress = wave.waveSize > 0 ? 1 - wave.cargo / wave.waveSize : 1;
+          truckUnloadTimer += truckUnloadInterval();
+          emit('truck_unload', { amount: 1, remaining: wave.cargo, text: `トラック荷下ろし 残${wave.cargo}箱` });
+        } else {
+          truckUnloadTimer = 0.45;
+        }
+      }
+      if (wave.cargo <= 0) {
+        wave.phase = 'depart';
+        wave.progress = 0;
+        emit('truck_depart', { trip: wave.trip, text: '入荷トラック出発' });
+      }
+      return;
+    }
+    if (wave.phase === 'depart') {
+      wave.progress = Math.min(1, wave.progress + dt / 2.2);
+      if (wave.progress >= 1) {
+        wave.phase = 'away';
+        wave.progress = 0;
+        wave.waveSize = 0;
+        truckWaveTimer = truckWaveInterval();
+        emit('truck_cycle_complete', { trip: wave.trip });
+      }
+    }
+  }
+
   function updateSpawners(dt) {
-    inboundTimer -= dt;
     orderTimer -= dt;
     overflowCooldown -= dt;
-    if (inboundTimer <= 0) {
-      inboundTimer += inboundInterval();
-      spawnInbound();
+    if ((state.upgrades.truckDock || 0) > 0) {
+      updateTruckWave(dt);
+    } else {
+      inboundTimer -= dt;
+      if (inboundTimer <= 0) {
+        inboundTimer += inboundInterval();
+        spawnInbound();
+      }
     }
     if (orderTimer <= 0) {
       orderTimer += orderInterval();
@@ -880,6 +970,10 @@ export function createSimulation(saved = null) {
     forkliftTimer = 0;
     agvTimer = 0;
     sorterTimer = 0;
+    if (type === 'truckDock') {
+      truckWaveTimer = 2.5;
+      state.truckWave = { phase: 'away', progress: 0, cargo: 0, waveSize: 0, trip: state.truckWave?.trip || 0 };
+    }
     emit('upgrade', { text: `${def.label} Lv.${state.upgrades[type]}`, type });
     markDirty();
     return { ok: true, cost, level: state.upgrades[type] };
@@ -901,6 +995,10 @@ export function createSimulation(saved = null) {
     forkliftTimer = 0;
     agvTimer = 0;
     sorterTimer = 0;
+    if (type === 'truckDock') {
+      truckWaveTimer = 2.5;
+      state.truckWave = { phase: 'away', progress: 0, cargo: 0, waveSize: 0, trip: state.truckWave?.trip || 0 };
+    }
     emit('capital_investment', { type, level: state.upgrades[type], cost: price, text: `${capitalDef.label} Lv.${state.upgrades[type]}` });
     markDirty();
     return { ok: true, cost: price, level: state.upgrades[type], type };
@@ -1025,7 +1123,8 @@ export function createSimulation(saved = null) {
     state.policy = 'balanced';
     state.timeScale = 1;
     state.priorities = { store: 3, pick: 3, ship: 4 };
-    state.upgrades = { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0 };
+    state.upgrades = { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0 };
+    state.truckWave = { phase: 'away', progress: 0, cargo: 0, waveSize: 0, trip: 0 };
     state.perks = { smartDispatch: 0, bulkPack: 0, contractBonus: 0 };
     state.contractOffers = [];
     state.activeContract = null;
@@ -1042,6 +1141,8 @@ export function createSimulation(saved = null) {
     forkliftTimer = 0;
     agvTimer = 0;
     sorterTimer = 0;
+    truckWaveTimer = 9;
+    truckUnloadTimer = 0;
     offerCooldown = 0;
     ensureWorkers();
     for (let i = 0; i < 6; i += 1) spawnInbound();
@@ -1069,6 +1170,9 @@ export function createSimulation(saved = null) {
     forkliftInterval,
     agvInterval,
     sorterInterval,
+    truckWaveInterval,
+    truckWaveSize,
+    truckUnloadInterval,
     facilityRankName,
     nextRankTarget,
     facilityCost,

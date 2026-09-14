@@ -215,7 +215,10 @@ export function bindCapitalExpansion(sim) {
       if (!unlocked) {
         button.innerHTML = `<span class="capitalLevel">CAPITAL</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>投資総額 ${yen(def.unlockAssets)} で解禁</em><b>LOCKED</b>`;
       } else {
-        button.innerHTML = `<span class="capitalLevel">Lv.${level}/${def.costs.length}</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>${maxed ? '最大段階' : formatInvestmentEffect(key, level + 1)}</em><b>${maxed ? 'MAX' : yen(cost)}</b>`;
+        const currentEffect = level > 0 ? formatInvestmentEffect(key, level) : '未導入';
+        const nextEffect = maxed ? null : formatInvestmentEffect(key, level + 1);
+        const effectLine = maxed ? `現在 ${currentEffect} / 最大段階` : `現在 ${currentEffect} → 次 ${nextEffect}`;
+        button.innerHTML = `<span class="capitalLevel">Lv.${level}/${def.costs.length}</span><strong>${def.label}</strong><span>${def.emphasis}</span><em>${effectLine}</em><b>${maxed ? 'MAX' : yen(cost)}</b>`;
       }
       button.title = def.effect;
     }
