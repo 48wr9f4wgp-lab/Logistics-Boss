@@ -141,3 +141,27 @@ jobs:
           ! test -f .github/rank2-systems-pass1-trigger.txt
           ! test -f tools/rank2_systems_patch.py
           echo "Rank 2 systems contract OK"
+
+      - name: Rank 2 Systems Pass 2 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'id="opsMiniSummary"' docs/index.html
+          grep -Fq 'data-staffing-plan="picking"' docs/index.html
+          grep -Fq 'data-staffing-plan="dock"' docs/index.html
+          grep -Fq 'id="facilityImpact"' docs/index.html
+          grep -Fq 'Fulfillment Center' docs/index.html
+          grep -Fq 'function fulfillmentReadiness()' docs/src/sim.js
+          grep -Fq 'function decisionImpact()' docs/src/sim.js
+          grep -Fq 'decisionImpact = { type' docs/src/sim.js
+          grep -Fq 'opsMiniSummary' docs/src/ui.js
+          grep -Fq 'nextStageBar' docs/src/ui.js
+          grep -Fq 'Rank 2 Systems Pass — Phase 2 LOCK' GDD_LOGISTICS_BOSS.md
+          node docs/tests/progression-smoke.mjs
+          ! test -f .github/workflows/rank2-systems-pass2-apply.yml
+          ! test -f .github/rank2-systems-pass2-trigger.txt
+          ! test -f .github/rank2-systems-pass2-trigger-v2.txt
+          ! test -f .github/rank2-systems-pass2-trigger-v3.txt
+          ! test -f .github/rank2-systems-pass2-trigger-v4.txt
+          ! test -f tools/rank2_systems_pass2_patch.py
+          echo "Rank 2 Systems Pass 2 contract OK"
