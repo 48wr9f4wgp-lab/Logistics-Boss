@@ -39,25 +39,20 @@
         <div><small>BOTTLENECK DIRECTOR</small><strong id="directorLabel">分析中</strong></div>
         <div class="insightTools">
           <span id="severityBadge">OK</span>
-          <button id="insightToggle" type="button" aria-label="案内を開く" aria-expanded="false">開く</button>
+          <button id="insightToggle" type="button" aria-label="分析を開く" aria-expanded="false">開く</button>
         </div>
       </div>
       <div id="directorDetail">施設の流れを解析しています</div>
       <div id="directorRecommendation">—</div>
-      <div id="directorActionRow">
-        <span id="ftueStep" hidden></span>
-        <button id="directorAction" type="button" hidden></button>
-      </div>
       <div class="contractArea">
-        <div class="contractHead"><small>CONTRACT</small><strong id="contractTitle">契約を選択</strong></div>
+        <div class="contractHead"><small>OPTIONAL CONTRACT</small><strong id="contractTitle">任意契約</strong></div>
         <div id="contractBody"></div>
         <div id="contractChoices"></div>
       </div>
     </section>
 
     <section id="rank1Guide" hidden aria-live="polite">
-      <div class="guideCopy"><small>NOW</small><strong id="rank1GuideTitle">今やること</strong><span id="rank1GuideDetail"></span></div>
-      <button id="rank1GuideButton" type="button" hidden></button>
+      <div class="guideCopy"><small>OPERATIONS</small><strong id="rank1GuideTitle">Warehouse評価 0 / 8</strong><span id="rank1GuideDetail">出荷・処理速度・安定運転・任意契約のどれからでも評価を伸ばせる。運営方針は自由。</span></div>
     </section>
 
     <div id="statusBar"><span id="status">起動中</span></div>
@@ -111,7 +106,7 @@
 
         <div class="sectionLabel">施設成長</div>
         <div id="facilityProgress" class="facilityProgress" aria-label="施設ランク進行">
-          <div class="facilityProgressHead"><strong id="facilityRank">RANK 1 · Small Depot</strong><span id="logisticsRating">Warehouse昇格 0 / 8</span></div>
+          <div class="facilityProgressHead"><strong id="facilityRank">RANK 1 · Small Depot</strong><span id="logisticsRating">Warehouse評価 0 / 8</span></div>
           <div class="facilityProgressBar"><i id="facilityProgressBar"></i></div>
         </div>
         <div class="facilityZones rank2Only" aria-label="拡張区画">
@@ -156,6 +151,5 @@
     <div id="fatal" role="alert" hidden></div>
   </main>
   <script type="module" src="./src/main.js"></script>
-  <script type="module" src="./src/ftue2.js"></script>
 </body>
 </html>

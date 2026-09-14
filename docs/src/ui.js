@@ -11,6 +11,7 @@ function contractProgressText(contract) {
 
 export function bindUi(sim, sceneView) {
   const el = {
+    app: document.getElementById('app'),
     money: document.getElementById('money'),
     research: document.getElementById('research'),
     facilityRank: document.getElementById('facilityRank'),
@@ -37,8 +38,6 @@ export function bindUi(sim, sceneView) {
     directorLabel: document.getElementById('directorLabel'),
     directorDetail: document.getElementById('directorDetail'),
     directorRecommendation: document.getElementById('directorRecommendation'),
-    directorAction: document.getElementById('directorAction'),
-    ftueStep: document.getElementById('ftueStep'),
     severityBadge: document.getElementById('severityBadge'),
     contractTitle: document.getElementById('contractTitle'),
     contractBody: document.getElementById('contractBody'),
@@ -59,6 +58,9 @@ export function bindUi(sim, sceneView) {
     goalThroughput: document.getElementById('goalThroughput'),
     nextStageBar: document.getElementById('nextStageBar'),
     nextStageHint: document.getElementById('nextStageHint'),
+    rank1Guide: document.getElementById('rank1Guide'),
+    rank1GuideTitle: document.getElementById('rank1GuideTitle'),
+    rank1GuideDetail: document.getElementById('rank1GuideDetail'),
   };
 
   const policyButtons = [...document.querySelectorAll('[data-policy]')];
@@ -98,7 +100,7 @@ export function bindUi(sim, sceneView) {
     const hasOffers = !sim.state.activeContract && (sim.state.contractOffers || []).length > 0;
     el.insightToggle.textContent = insightCompact ? (hasOffers ? '契約' : '開く') : '閉じる';
     el.insightToggle.setAttribute('aria-expanded', String(!insightCompact));
-    el.insightToggle.setAttribute('aria-label', insightCompact ? (hasOffers ? '契約を選ぶ' : '案内を開く') : '案内を閉じる');
+    el.insightToggle.setAttribute('aria-label', insightCompact ? (hasOffers ? '任意契約を見る' : '分析を開く') : '分析を閉じる');
   }
 
   function setInsightCompact(compact) {
@@ -117,7 +119,7 @@ export function bindUi(sim, sceneView) {
 
   function setFocusMode(enabled) {
     focusMode = Boolean(enabled);
-    document.getElementById('app')?.classList.toggle('focusMode', focusMode);
+    el.app?.classList.toggle('focusMode', focusMode);
     el.focusExit.hidden = !focusMode;
     el.observe.classList.toggle('active', focusMode);
     el.observe.setAttribute('aria-pressed', String(focusMode));
@@ -174,18 +176,18 @@ export function bindUi(sim, sceneView) {
   });
 
   facilityButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    const result = sim.purchaseFacility(button.dataset.facility);
-    if (!result.ok) toast(result.reason, 'warn');
-    else {
-      toast(`施設建設 -${yen(result.cost)}`, 'good');
-      try { navigator.vibrate?.([18, 25, 24]); } catch {}
-    }
-    render();
+    button.addEventListener('click', () => {
+      const result = sim.purchaseFacility(button.dataset.facility);
+      if (!result.ok) toast(result.reason, 'warn');
+      else {
+        toast(`施設建設 -${yen(result.cost)}`, 'good');
+        try { navigator.vibrate?.([18, 25, 24]); } catch {}
+      }
+      render();
+    });
   });
-});
 
-perkButtons.forEach((button) => {
+  perkButtons.forEach((button) => {
     button.addEventListener('click', () => {
       const type = button.dataset.perk;
       const result = sim.purchasePerk(type);
@@ -199,13 +201,6 @@ perkButtons.forEach((button) => {
   });
 
   el.insightToggle.addEventListener('click', () => { setInsightCompact(!insightCompact); render(); });
-  el.directorAction.addEventListener('click', () => {
-    const action = el.directorAction.dataset.action || '';
-    if (sim.state.facilityRank >= 2) return;
-    if (action === 'management') setDockCompact(false);
-    else if (action.startsWith('policy:')) { sim.setPolicy(action.slice(7)); try { navigator.vibrate?.(10); } catch {} }
-    render();
-  });
   el.observe.addEventListener('click', () => setFocusMode(true));
   el.focusExit.addEventListener('click', () => setFocusMode(false));
   document.addEventListener('keydown', (event) => {
@@ -265,8 +260,9 @@ perkButtons.forEach((button) => {
 
     const offers = sim.state.contractOffers || [];
     const signature = offers.map((item) => item.id).join(',');
-    el.contractTitle.textContent = offers.length ? `契約を選ぶ（${offers.length}件）` : '次の契約を準備中';
-    el.contractBody.innerHTML = offers.length ? '<div class="contractDesc">契約を1つ選ぶ</div>' : '';
+    const isRank1 = sim.state.facilityRank < 2;
+    el.contractTitle.textContent = offers.length ? (isRank1 ? `任意契約（${offers.length}件）` : `契約候補（${offers.length}件）`) : '次の契約を準備中';
+    el.contractBody.innerHTML = offers.length ? `<div class="contractDesc">${isRank1 ? '追加報酬を狙う場合だけ受注する' : '受けたい契約を選ぶ'}</div>` : '';
     if (signature === lastOfferSignature) return;
     lastOfferSignature = signature;
     el.contractChoices.innerHTML = '';
@@ -292,17 +288,22 @@ perkButtons.forEach((button) => {
     const c = sim.counts();
     const s = sim.state;
     const d = s.director;
+    const isRank1 = s.facilityRank < 2;
     el.insightPanel.dataset.stable = d.severity === 0 ? 'true' : 'false';
     el.money.textContent = yen(s.money);
     el.research.textContent = `${s.research} RP`;
-  const nextTarget = sim.nextRankTarget();
-  el.facilityRank.textContent = `RANK ${s.facilityRank} · ${sim.facilityRankName()}`;
-  const zoneGroups = ['intakeStrategy', 'rackStrategy', 'packStrategy'];
-  const chosenZones = zoneGroups.filter((group) => Object.keys(sim.facilityInfo).some((key) => sim.facilityInfo[key].group === group && s.facilities[key])).length;
-  el.logisticsRating.textContent = nextTarget == null ? `拡張区画 ${chosenZones} / 3` : `物流評価 ${s.logisticsRating} / ${nextTarget}`;
-  el.facilityProgressBar.style.width = `${nextTarget == null ? (chosenZones / 3) * 100 : Math.min(100, (s.logisticsRating / nextTarget) * 100)}%`;
-  document.getElementById('app')?.classList.toggle('rank2', s.facilityRank >= 2);
-  el.shipped.textContent = s.shipped.toLocaleString('ja-JP');
+    const nextTarget = sim.nextRankTarget();
+    el.facilityRank.textContent = `RANK ${s.facilityRank} · ${sim.facilityRankName()}`;
+    const zoneGroups = ['intakeStrategy', 'rackStrategy', 'packStrategy'];
+    const chosenZones = zoneGroups.filter((group) => Object.keys(sim.facilityInfo).some((key) => sim.facilityInfo[key].group === group && s.facilities[key])).length;
+    el.logisticsRating.textContent = nextTarget == null ? `拡張区画 ${chosenZones} / 3` : `Warehouse評価 ${s.logisticsRating} / ${nextTarget}`;
+    el.facilityProgressBar.style.width = `${nextTarget == null ? (chosenZones / 3) * 100 : Math.min(100, (s.logisticsRating / nextTarget) * 100)}%`;
+    el.app?.classList.toggle('rank2', s.facilityRank >= 2);
+    el.app?.classList.toggle('rank1Free', isRank1);
+    if (el.rank1Guide) el.rank1Guide.hidden = !isRank1;
+    if (el.rank1GuideTitle) el.rank1GuideTitle.textContent = `Warehouse評価 ${s.logisticsRating} / ${nextTarget || 8}`;
+    if (el.rank1GuideDetail) el.rank1GuideDetail.textContent = '出荷・処理速度・安定運転・任意契約のどれからでも評価を伸ばせる。運営方針は自由。';
+    el.shipped.textContent = s.shipped.toLocaleString('ja-JP');
     el.orders.textContent = s.ordersOpen.toLocaleString('ja-JP');
     el.inbound.textContent = c.inbound.toLocaleString('ja-JP');
     el.rack.textContent = `${c.rack}/${sim.rackCapacity()}箱`;
@@ -316,52 +317,47 @@ perkButtons.forEach((button) => {
       el.focusExit.dataset.alert = d.severity >= 2 ? 'true' : 'false';
     }
 
-    const offerCount = (s.contractOffers || []).length;
-    const capacity = sim.rackCapacity();
-    const inboundCap = sim.inboundMax();
-    const human = {
-      inbound: { label: '搬入口に荷物がたまっている', detail: `未処理 ${c.inbound}箱 / 上限${inboundCap}箱`, recommendation: '入荷を棚へ流すため、入庫を優先', action: 'policy:inbound', actionLabel: '入庫優先にする' },
-      rack: { label: '棚がほぼ満杯', detail: `棚を ${c.rack}/${capacity}箱 使用 · 空き${Math.max(0, capacity - c.rack)}箱`, recommendation: '棚を空けるため、出庫を優先', action: 'policy:ship', actionLabel: '出庫優先にする' },
-      orders: { label: '注文がたまっている', detail: `未処理注文 ${s.ordersOpen}件`, recommendation: '注文を減らすため、出庫を優先', action: 'policy:ship', actionLabel: '出庫優先にする' },
-      packed: { label: '出荷待ちがたまっている', detail: `出荷待ち ${c.packed}箱`, recommendation: '梱包済み荷物を先に出す', action: 'policy:ship', actionLabel: '出庫優先にする' },
+    const diagnostic = {
+      inbound: {
+        label: '搬入口に荷物がたまっている',
+        detail: `未処理 ${c.inbound}箱 / 上限${sim.inboundMax()}箱`,
+        analysis: '受入側の負荷が高い',
+      },
+      rack: {
+        label: '棚がほぼ満杯',
+        detail: `棚を ${c.rack}/${sim.rackCapacity()}箱 使用 · 空き${Math.max(0, sim.rackCapacity() - c.rack)}箱`,
+        analysis: '保管工程の負荷が高い',
+      },
+      orders: {
+        label: '注文がたまっている',
+        detail: `未処理注文 ${s.ordersOpen}件`,
+        analysis: '注文量が処理能力を上回っている',
+      },
+      packed: {
+        label: '出荷待ちがたまっている',
+        detail: `出荷待ち ${c.packed}箱`,
+        analysis: '梱包後の出荷工程が律速になっている',
+      },
     };
+
     let label = d.label;
     let detail = d.detail;
-    let recommendation = d.recommendation;
-    let action = '';
-    let actionLabel = '';
-    if (d.severity > 0 && human[d.key]) {
-      ({ label, detail, recommendation, action, actionLabel } = human[d.key]);
-      if (s.facilityRank >= 2) {
-        action = ''; actionLabel = '';
-        const diagnose = { inbound: '受入量が棚入れ能力を上回っています', rack: '保管量が下流の処理能力を上回っています', orders: '注文到着がピック・梱包能力を上回っています', packed: '梱包完了が出荷能力を上回っています' };
-        recommendation = diagnose[d.key] || 'どの工程へ人員・区画能力を寄せるか判断してください';
-      }
-    } else if (s.facilityRank < 2) {
-      const remainingRating = Math.max(0, (nextTarget || 8) - s.logisticsRating);
-      const approxContracts = Math.ceil(remainingRating / 2);
-      if (!s.activeContract && offerCount > 0) {
-        label = 'まず契約を選ぼう'; detail = '契約達成で「物流評価」が +2'; recommendation = `物流評価${nextTarget || 8}で Warehouse 解禁`; action = 'contract'; actionLabel = '契約を選ぶ';
-      } else if (s.activeContract) {
-        label = `契約: ${s.activeContract.title}`; detail = `進行 ${contractProgressText(s.activeContract)} · 評価${s.logisticsRating}/${nextTarget || 8}`; recommendation = '詰まりが出たら、ここに出る推奨方針へ切り替える'; action = `policy:${s.activeContract.kind === 'inbound' ? 'inbound' : s.activeContract.kind === 'ship' ? 'ship' : 'balanced'}`; actionLabel = s.activeContract.kind === 'inbound' ? '入庫優先にする' : s.activeContract.kind === 'ship' ? '出庫優先にする' : 'バランスにする';
-      } else { label = '次の契約を待っています'; detail = `物流評価 ${s.logisticsRating}/${nextTarget || 8}`; recommendation = `Warehouseまであと約${approxContracts}契約`; }
+    let analysis = d.severity === 0 ? '大きなボトルネックは見つかっていない' : d.recommendation;
+    if (d.severity > 0 && diagnostic[d.key]) {
+      ({ label, detail, analysis } = diagnostic[d.key]);
+    } else if (isRank1) {
+      label = '安定稼働';
+      detail = `Warehouse評価 ${s.logisticsRating}/${nextTarget || 8} · 契約は任意`;
+      analysis = '大きなボトルネックは見つかっていない';
     } else if (d.severity === 0) {
       const crew = sim.staffingSummary();
       label = chosenZones < 3 ? `Warehouse設計 · 区画${chosenZones}/3` : 'Warehouse安定運転';
       detail = `人員 入荷${crew.store} / ピック${crew.pick} / 出荷${crew.ship}`;
-      recommendation = chosenZones < 3 ? '未決定区画を選び、物流の性格を作る' : 'FLOWを観察し、次の自動化段階に備える';
-      action = ''; actionLabel = '';
+      analysis = chosenZones < 3 ? '未決定区画があり、物流特性をまだ変えられる' : '現在は大きな律速が見つかっていない';
     }
-    let step = '';
-    if (s.facilityRank < 2) step = s.completedContracts === 0 && !s.activeContract ? 'STEP 1/3' : s.completedContracts === 0 ? 'STEP 2/3' : 'STEP 3/3';
-    el.ftueStep.hidden = !step;
-    el.ftueStep.textContent = step;
-    el.directorAction.hidden = !actionLabel;
-    el.directorAction.textContent = actionLabel;
-    el.directorAction.dataset.action = action;
     el.directorLabel.textContent = label;
     el.directorDetail.textContent = detail;
-    el.directorRecommendation.textContent = `次に: ${recommendation}`;
+    el.directorRecommendation.textContent = `分析: ${analysis}`;
     el.severityBadge.textContent = d.severity === 0 ? '安定' : d.severity === 1 ? '注意' : d.severity === 2 ? '混雑' : '詰まり';
     el.severityBadge.dataset.level = String(d.severity);
 
@@ -379,7 +375,7 @@ perkButtons.forEach((button) => {
     if (el.goalContracts) el.goalContracts.textContent = `契約 ${Math.min(s.completedContracts, 8)}/8`;
     if (el.goalThroughput) el.goalThroughput.textContent = `出荷 ${Math.min(s.metrics.perMinute, 6)}/6分`;
     if (el.nextStageBar) el.nextStageBar.style.width = `${(readiness.score / 3) * 100}%`;
-    if (el.nextStageHint) el.nextStageHint.textContent = readiness.ready ? '自動化設計の準備完了 · 次はコンベア/ソーターへ' : '3条件を満たすと自動化設計の準備完了';
+    if (el.nextStageHint) el.nextStageHint.textContent = readiness.ready ? '自動化設計の準備完了 · 次は設備投資へ' : '3条件を満たすと自動化設計の準備完了';
 
     const impact = sim.decisionImpact();
     if (el.facilityImpact) {
@@ -404,22 +400,22 @@ perkButtons.forEach((button) => {
     });
 
     facilityButtons.forEach((button) => {
-    const type = button.dataset.facility;
-    const def = sim.facilityInfo[type];
-    const built = Boolean(s.facilities[type]);
-    const locked = s.facilityRank < def.rank;
-    const selectedInGroup = def.group ? Object.keys(sim.facilityInfo).find((key) => sim.facilityInfo[key].group === def.group && s.facilities[key]) : null;
-    const conflicting = Boolean(selectedInGroup && selectedInGroup !== type);
-    const costNode = button.querySelector('[data-facility-cost]');
-    button.classList.toggle('built', built);
-    button.classList.toggle('locked', locked);
-    button.classList.toggle('chosenOther', conflicting);
-    button.disabled = built || locked || conflicting || (!built && s.money < def.cost);
-    if (costNode) costNode.textContent = built ? '建設済み' : locked ? `RANK ${def.rank}` : conflicting ? '方針選択済み' : yen(def.cost);
-    button.title = def.desc;
-  });
+      const type = button.dataset.facility;
+      const def = sim.facilityInfo[type];
+      const built = Boolean(s.facilities[type]);
+      const locked = s.facilityRank < def.rank;
+      const selectedInGroup = def.group ? Object.keys(sim.facilityInfo).find((key) => sim.facilityInfo[key].group === def.group && s.facilities[key]) : null;
+      const conflicting = Boolean(selectedInGroup && selectedInGroup !== type);
+      const costNode = button.querySelector('[data-facility-cost]');
+      button.classList.toggle('built', built);
+      button.classList.toggle('locked', locked);
+      button.classList.toggle('chosenOther', conflicting);
+      button.disabled = built || locked || conflicting || (!built && s.money < def.cost);
+      if (costNode) costNode.textContent = built ? '建設済み' : locked ? `RANK ${def.rank}` : conflicting ? '方針選択済み' : yen(def.cost);
+      button.title = def.desc;
+    });
 
-  upgradeButtons.forEach((button) => {
+    upgradeButtons.forEach((button) => {
       const type = button.dataset.upgrade;
       const def = sim.upgradeInfo[type];
       const level = s.upgrades[type];
