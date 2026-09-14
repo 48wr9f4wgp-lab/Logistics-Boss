@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="./focus.css" />
   <link rel="stylesheet" href="./readability.css" />
   <link rel="stylesheet" href="./ux.css" />
+  <link rel="stylesheet" href="./ftue2.css" />
 </head>
 <body>
   <main id="app">
@@ -53,6 +54,11 @@
       </div>
     </section>
 
+    <section id="rank1Guide" hidden aria-live="polite">
+      <div class="guideCopy"><small>NOW</small><strong id="rank1GuideTitle">今やること</strong><span id="rank1GuideDetail"></span></div>
+      <button id="rank1GuideButton" type="button" hidden></button>
+    </section>
+
     <div id="statusBar"><span id="status">起動中</span></div>
     <div id="toast" role="status"></div>
 
@@ -81,7 +87,7 @@
           </div>
         </div>
 
-        <section id="staffingPanel" class="staffingPanel" aria-label="人員配置">
+        <section id="staffingPanel" class="staffingPanel rank2Only" aria-label="人員配置">
           <div class="staffingHead"><div><small>CREW PLAN</small><strong>5人をどこへ厚く置くか</strong></div><span id="staffingLock">Rank 2で解禁</span></div>
           <div class="staffingCounts"><span>入荷 <b id="crewStore">1</b></span><span>ピック <b id="crewPick">1</b></span><span>出荷 <b id="crewShip">1</b></span></div>
           <div class="staffingChoices">
@@ -103,36 +109,36 @@
         </div>
 
         <div class="sectionLabel">施設成長</div>
-<div id="facilityProgress" class="facilityProgress" aria-label="施設ランク進行">
-  <div class="facilityProgressHead"><strong id="facilityRank">RANK 1 · Small Depot</strong><span id="logisticsRating">物流評価 0 / 8</span></div>
-  <div class="facilityProgressBar"><i id="facilityProgressBar"></i></div>
-</div>
-<div class="facilityZones" aria-label="拡張区画">
-  <section class="facilityZone" data-zone="A"><div class="zoneHead"><strong>区画A · 荷受け</strong><span>どちらか1つ</span></div><div class="zoneChoices">
-    <button class="facilityChoice" type="button" data-facility="secondInbound"><strong>ダブルドック</strong><span>上限+6 / 入荷22%増<br>高収益・高負荷</span><small data-facility-cost>¥2,400</small></button>
-    <button class="facilityChoice" type="button" data-facility="bufferYard"><strong>受入バッファ</strong><span>上限+14 / 入荷量は据置<br>ピーク耐性型</span><small data-facility-cost>¥2,200</small></button>
-  </div></section>
-  <section class="facilityZone" data-zone="B"><div class="zoneHead"><strong>区画B · 保管</strong><span>どちらか1つ</span></div><div class="zoneChoices">
-    <button class="facilityChoice" type="button" data-facility="fastPickRack"><strong>高速ピックラック</strong><span>保管+4 / ピック25%速<br>高速回転型</span><small data-facility-cost>¥2,800</small></button>
-    <button class="facilityChoice" type="button" data-facility="highDensityRack"><strong>高密度ラック</strong><span>保管+12 / ピック14%遅<br>大量在庫型</span><small data-facility-cost>¥2,800</small></button>
-  </div></section>
-  <section class="facilityZone" data-zone="C"><div class="zoneHead"><strong>区画C · 梱包</strong><span>どちらか1つ</span></div><div class="zoneChoices">
-    <button class="facilityChoice" type="button" data-facility="secondPack"><strong>並列梱包ライン</strong><span>同時2箱 / 各10%遅<br>波への耐性型</span><small data-facility-cost>¥3,200</small></button>
-    <button class="facilityChoice" type="button" data-facility="fastPackCell"><strong>高速梱包セル</strong><span>同時1箱 / 42%速<br>少量高速型</span><small data-facility-cost>¥3,000</small></button>
-  </div></section>
-</div>
-<div id="facilityImpact" class="facilityImpact" hidden></div>
-<div id="nextStagePanel" class="nextStagePanel" aria-label="次の施設段階">
-  <div class="nextStageHead"><small>NEXT STAGE</small><strong>Fulfillment Center</strong></div>
-  <div class="nextStageGoals"><span id="goalZones">区画 0/3</span><span id="goalContracts">契約 0/8</span><span id="goalThroughput">出荷 0/6分</span></div>
-  <div class="nextStageBar"><i id="nextStageBar"></i></div>
-  <small id="nextStageHint">3条件を満たすと自動化設計の準備完了</small>
-</div>
+        <div id="facilityProgress" class="facilityProgress" aria-label="施設ランク進行">
+          <div class="facilityProgressHead"><strong id="facilityRank">RANK 1 · Small Depot</strong><span id="logisticsRating">Warehouse昇格 0 / 8</span></div>
+          <div class="facilityProgressBar"><i id="facilityProgressBar"></i></div>
+        </div>
+        <div class="facilityZones rank2Only" aria-label="拡張区画">
+          <section class="facilityZone" data-zone="A"><div class="zoneHead"><strong>区画A · 荷受け</strong><span>どちらか1つ</span></div><div class="zoneChoices">
+            <button class="facilityChoice" type="button" data-facility="secondInbound"><strong>ダブルドック</strong><span>上限+6 / 入荷22%増<br>高収益・高負荷</span><small data-facility-cost>¥2,400</small></button>
+            <button class="facilityChoice" type="button" data-facility="bufferYard"><strong>受入バッファ</strong><span>上限+14 / 入荷量は据置<br>ピーク耐性型</span><small data-facility-cost>¥2,200</small></button>
+          </div></section>
+          <section class="facilityZone" data-zone="B"><div class="zoneHead"><strong>区画B · 保管</strong><span>どちらか1つ</span></div><div class="zoneChoices">
+            <button class="facilityChoice" type="button" data-facility="fastPickRack"><strong>高速ピックラック</strong><span>保管+4 / ピック25%速<br>高速回転型</span><small data-facility-cost>¥2,800</small></button>
+            <button class="facilityChoice" type="button" data-facility="highDensityRack"><strong>高密度ラック</strong><span>保管+12 / ピック14%遅<br>大量在庫型</span><small data-facility-cost>¥2,800</small></button>
+          </div></section>
+          <section class="facilityZone" data-zone="C"><div class="zoneHead"><strong>区画C · 梱包</strong><span>どちらか1つ</span></div><div class="zoneChoices">
+            <button class="facilityChoice" type="button" data-facility="secondPack"><strong>並列梱包ライン</strong><span>同時2箱 / 各10%遅<br>波への耐性型</span><small data-facility-cost>¥3,200</small></button>
+            <button class="facilityChoice" type="button" data-facility="fastPackCell"><strong>高速梱包セル</strong><span>同時1箱 / 42%速<br>少量高速型</span><small data-facility-cost>¥3,000</small></button>
+          </div></section>
+        </div>
+        <div id="facilityImpact" class="facilityImpact rank2Only" hidden></div>
+        <div id="nextStagePanel" class="nextStagePanel rank2Only" aria-label="次の施設段階">
+          <div class="nextStageHead"><small>NEXT STAGE</small><strong>Fulfillment Center</strong></div>
+          <div class="nextStageGoals"><span id="goalZones">区画 0/3</span><span id="goalContracts">契約 0/8</span><span id="goalThroughput">出荷 0/6分</span></div>
+          <div class="nextStageBar"><i id="nextStageBar"></i></div>
+          <small id="nextStageHint">3条件を満たすと自動化設計の準備完了</small>
+        </div>
 
-<div class="legacyNotice">数値Lvアップは廃止。Rank 2以降は人員配置と拡張区画で物流構造を変える。</div>
+        <div class="legacyNotice rank2Only">数値Lvアップは廃止。Rank 2以降は人員配置と拡張区画で物流構造を変える。</div>
 
-        <div class="sectionLabel">研究</div>
-        <div class="upgradeStrip researchStrip" aria-label="研究強化">
+        <div class="sectionLabel rank2Only">研究</div>
+        <div class="upgradeStrip researchStrip rank2Only" aria-label="研究強化">
           <button class="upgrade perk" type="button" data-perk="smartDispatch"><span class="upgradeName">スマート配車</span><small class="upgradeEffect">混雑に合わせ自動配分</small><span data-level>Lv.0/3</span><strong data-cost>2 RP</strong></button>
           <button class="upgrade perk" type="button" data-perk="bulkPack"><span class="upgradeName">標準化梱包</span><small class="upgradeEffect">梱包時間 -15%</small><span data-level>Lv.0/3</span><strong data-cost>2 RP</strong></button>
           <button class="upgrade perk" type="button" data-perk="contractBonus"><span class="upgradeName">高単価契約</span><small class="upgradeEffect">契約報酬 +25%</small><span data-level>Lv.0/2</span><strong data-cost>3 RP</strong></button>
@@ -149,5 +155,6 @@
     <div id="fatal" role="alert" hidden></div>
   </main>
   <script type="module" src="./src/main.js"></script>
+  <script type="module" src="./src/ftue2.js"></script>
 </body>
 </html>
