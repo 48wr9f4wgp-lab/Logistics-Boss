@@ -1,161 +1,377 @@
-# Logistics Boss — Vertical Slice GDD
+# LOGISTICS BOSS — Game Design Document
 
-Status: Context Lock / Vertical Slice
-Canonical project rule: GAME_DEV_MASTER_RULES v1.3
+Status: **Code RC Candidate**
+Last synchronized: 2026-09-16 JST
+Canonical project rule: `GAME_DEV_MASTER_RULES.md`
 
-## 1. Context Lock
-- Product name: Logistics Boss
-- Platform: iPhone Safari / PWA-first web, PC browser secondary
-- Region / audience: global-capable, Japanese prototype UI, casual-to-midcore management/simulation players
-- Genre: 3D logistics management sim / automation observer
-- Core loop: issue priorities -> autonomous workers move goods -> observe bottlenecks -> change priorities / buy upgrades -> throughput and profit rise
-- Meta loop: more workers -> faster handling -> larger racks -> faster packing -> conveyor automation -> larger facility
-- Session: 5–15 minutes for vertical slice
-- Orientation / input: responsive portrait-landscape; tap, drag/orbit, pinch zoom; no virtual joystick
-- Offline / online: offline single-player vertical slice
-- Monetization: none in prototype; decision deferred until product proof
-- LiveOps: none in prototype
-- Device tier: recent mid-range iPhone and above; low-poly stylized 3D; stable interactive frame rate over visual complexity
-- Save: localStorage with schema_version; backend not required for vertical slice
-- Privacy class: no account, no PII, no external analytics in prototype
+This document supersedes the earlier Web/PWA-first and Three.js vertical-slice assumptions. The production implementation is Godot-native-first, with Web used only as an engineering preview.
 
-## 2. Success Definition
-- Repeat action: set policy, inspect the flow, remove bottlenecks, buy the next throughput upgrade.
-- Satisfaction: the facility visibly clears queues and becomes more efficient because of the player's decisions.
-- Growth: worker count, walking speed, rack capacity, packing speed, automation level, cash, shipments and physical facility size.
-- Return reason: unlock the next automation layer and see a larger autonomous logistics center operate.
-- Monetization point: intentionally undecided until retention and session appeal are proven.
-- Shared category expectations: pause / 1x / 2x / 4x, readable bottlenecks, autonomous agents, visible production flow, meaningful upgrades.
-- Differentiation: compact mobile-first 3D logistics simulation where operational problems are visible in the world instead of hidden behind spreadsheets.
+## 1. Product Context Lock
 
-## 3. Vertical Slice
-### Facility
-- Inbound dock
-- Rack storage
-- Packing station
-- Outbound dock
-- 3 autonomous workers
+- Product: LOGISTICS BOSS
+- Genre: portrait 3D logistics management / automation observer
+- Player role: logistics-center owner / operations manager
+- Final platforms: native iOS + Android
+- Engineering preview: Godot Web export / GitHub Pages
+- Engine: Godot 4.7.2 Standard
+- Language: GDScript
+- Renderer: GL Compatibility
+- Reference viewport: 390×844 portrait
+- Input: tap, single-finger orbit, pinch zoom; no virtual joystick
+- Session target: roughly 5–15 minutes per active session
+- Online requirement: none for current product
+- Account/backend/cloud save: none
+- Monetization: not activated; decision remains outside current RC scope
+- Analytics: provider-neutral local instrumentation only; no external transmission
 
-### Flow
-Inbound parcel -> worker stores parcel -> rack -> order arrives -> worker picks parcel -> packing -> worker ships packed parcel -> cash
+## 2. Canonical Core Loop
 
-### Player directives
-- BALANCE: balanced intake and shipping
-- INBOUND: prioritize clearing inbound backlog
-- SHIP: prioritize orders and outbound flow
+**Observe logistics → identify bottleneck → invest / change operations → autonomous workers and equipment react → throughput / revenue / congestion change → measure result → reinvest at larger scale.**
 
-### Time controls
-Pause / 1x / 2x / 4x
+The player is not asked to manually carry parcels, drive forklifts or perform worker-level actions.
 
-### Upgrades
-- Hire worker
-- Worker speed
-- Rack capacity
-- Packing speed
-- Conveyor automation
+The product succeeds only if the player can understand:
+- what is entering
+- where inventory is accumulating
+- which stage is constraining flow
+- what changed after an operational decision
+- why the next investment matters
 
-### Research
-- Smart Dispatch
-- Standardized Packing
-- High-value Contracts
+## 3. Meta Loop
 
-### Bottlenecks surfaced to player
-- Inbound queue full
-- Rack capacity full
-- Pending orders rising
-- Packed goods waiting for outbound
+The long-term progression spine is:
 
-### Observation systems
-- Bottleneck Director identifies dominant constraint and recommends an action.
-- FLOW overlay shows only useful task routes and saturation cues, not all data at all times.
-- Facility growth must be visible: racks, packing modules, conveyors, gates and halls expand as upgrades accumulate.
+**contract / operating profit → cash + RP + logistics rating → larger facility rank → structural investment → new bottleneck → new operating decision → larger profit**
 
-### Physics use
-Rapier is limited to visible overflow parcels / incidental physical chaos when inbound is clogged. Core economy and task assignment do not depend on nondeterministic physics.
+Growth must be visible in both the authoritative simulation and the 3D facility.
 
-## 4. Non-goals for this slice
-- Character customization
-- Large building editor
-- Complex pathfinding/navmesh
-- Multiple product SKUs
-- Staff needs/moods
-- Cloud save, accounts, multiplayer
-- Monetization, ads, store release
+A major investment should normally provide:
+1. visible 3D change
+2. authoritative logistics effect
+3. measurable before/after result
+4. a credible chance that solving one bottleneck exposes another
 
-## 5. Acceptance Criteria
-- The player can understand what is entering, stored, packing, and shipping without controlling an avatar.
-- Workers continuously find and execute valid tasks without player micromanagement.
-- Changing policy visibly changes worker behavior within several seconds.
-- Money and shipment count increase only after successful outbound delivery.
-- At least one bottleneck can emerge naturally and be improved by an upgrade or directive change.
-- Pause / speed controls work on iPhone.
-- Camera orbit / zoom works with touch and does not require a virtual joystick.
-- Save restores progression fields safely with schema_version.
-- No critical interaction depends on hover.
-- Normal play keeps the 3D facility visually dominant over UI chrome.
+Numeric-only purchases without physical or operational meaning are not the target product pattern.
 
-## 6. Tech Decision
-- Rendering: Three.js
-- Camera: lightweight custom touch orbit / pinch zoom controller
-- Physics: Rapier WASM, capped decorative overflow bodies only
-- Simulation: deterministic JavaScript domain state separated from rendering
-- Persistence: localStorage key `logistics_boss_save`, versioned snapshot
-- Hosting: GitHub Pages static `/docs`; no Replit or always-on server required
-- Canonical repository: `48wr9f4wgp-lab/Logistics-Boss`
+## 4. Domain Authority
 
-## 7. Next Gate
-Do not expand content broadly until the slice proves: directive -> autonomous response -> bottleneck visibility -> upgrade -> measurable throughput improvement -> visible facility growth.
+The Domain simulation owns:
+- queues
+- worker tasks
+- shipments
+- shipment value
+- money
+- routing
+- contracts
+- progression
+- capital ownership
+- facility rank
 
+UI and View layers may display or animate state but must never manufacture shipment revenue, money or fake logistics outcomes.
 
-## Progression Spine v1 — Phase 1 LOCK
+## 5. Rank 1 — Small Depot
 
-Core meta loop: **contract → cash/RP/logistics rating → facility rank → structural investment → new bottleneck → new directive**.
+Initial state:
+- cash ¥5,000
+- 3 workers
+- rack capacity 8
 
-- Cash builds structural facilities and secondary numeric upgrades.
-- RP buys research/perks.
-- Logistics Rating is non-spend progression from contracts.
-- Rank 1 Small Depot → Rank 2 Warehouse at Logistics Rating 8.
-- Rank 2: Second Inbound ¥2,400; one rack strategy (Fast Pick or High Density) ¥2,800; Second Pack Line ¥3,200.
-- Every structural investment changes both simulation behavior and visible 3D geometry.
-- Free-placement building remains out of scope.
+Authoritative flow:
 
+Inbound → Store → Rack → Pick → Pack → Ship
 
-## Rank 1 UX / FTUE Pass 1 LOCK
+Player controls:
+- BALANCED
+- INBOUND
+- SHIP
+- Pause / 1× / 2× / 4×
 
-Rank 1 must teach the game before adding more progression. The always-visible Director is the primary action translator: show the problem in plain Japanese, show a concrete current count, explain why it matters, and offer one contextual action button. Rank 1 FTUE communicates three steps: choose a contract, react to the Director, then repeat contracts until Logistics Rating 8 unlocks Warehouse.
+Capital:
+- Worker
+- Rack
+- Worker Speed
+- Packing
+- Forklift Automation
 
-UX rules:
-- Use player-language labels such as 棚使用, 注文待ち, 入荷待ち, and 出荷ペース instead of abstract capacity terminology where possible.
-- Management stays open after buying an upgrade, facility, or research item; only the player closes it.
-- Milestones use non-blocking toast feedback. Large center-screen celebration is reserved for contract completion and Facility Rank up.
-- Contract selection must be labeled explicitly; do not use an unlabeled plus icon as the primary affordance.
-- Upgrade cards must state their practical effect, not only their name and level.
+Forklift Automation is a real Domain logistics behavior, not a decorative animation.
 
+### Rank 1 FTUE
 
-## Rank 2 Systems Pass Phase 1 LOCK
+Fresh-save FTUE teaches:
+1. observe the facility
+2. notice a bottleneck
+3. change operating policy
+4. open management
+5. make an investment
+6. read the measured result
 
-Rank 2 is no longer a numeric upgrade layer. It is the first structural logistics-design layer. Repeated task-priority +/- controls and repeatable equipment-level buttons are removed from the management UI. Legacy save effects remain compatible but are not the product-facing progression model.
+FTUE is non-blocking and persists completion separately so experienced saves are not forced through onboarding again.
 
-Rank 2 rules:
-- Rank-up grants a five-person base crew. Workers receive structural roles: receiving/store, pick, or ship.
-- The player chooses one staffing plan (Receiving / Balanced / Shipping). Reassignment has a 30 simulated-second lock so it is a strategic intervention, not a twitch button.
-- Rank 1 policy buttons remain an FTUE tool; Rank 2 task dispatch is driven by crew roles and the policy weighting becomes neutral.
-- Three fixed expansion zones are available. Each zone is one-of-two and cannot be filled with both choices.
-  - Zone A Intake: Double Dock (more arrival throughput, higher downstream pressure) vs Buffer Yard (more surge capacity, no arrival-rate gain).
-  - Zone B Storage: Fast Pick Rack (less capacity, faster picks) vs High Density Rack (more capacity, slower picks).
-  - Zone C Packing: Parallel Pack Line (two concurrent packs, slower each) vs Fast Pack Cell (one concurrent pack, much faster each).
-- All six choices must change simulation behavior; new choices must also be visible in the 3D warehouse.
-- Director remains prescriptive during Rank 1 FTUE, but at Rank 2 it becomes diagnostic: it exposes which stage is imbalanced and does not provide a one-tap fix.
-- Rank 2 progress is shown as Expansion Zones 0/3 through 3/3, never as a misleading MAX label.
-- Research unlocks in this phase are one-time decisions rather than repeatable levels.
+## 6. Bottleneck / Measurement UX
 
-Success: after entering Warehouse, the player should spend more time observing the consequences of crew/zone decisions than pressing upgrade buttons.
+The player-facing Director exposes the dominant constraint with concrete language.
 
+Current bottleneck families:
+- inbound congestion
+- rack/storage pressure
+- packing congestion
+- outbound backlog
+- open-order backlog
+- stable operation
 
-## Rank 2 Systems Pass — Phase 2 LOCK (2026-09-14)
+Major capital measurement window:
+- Before: 25 seconds
+- After: 25 seconds
 
-- Rank 2 compact dock must show the current crew split, current weakest process, and progress toward the next automation stage; empty chrome is not acceptable.
-- Warehouse staffing remains a low-frequency strategic choice. Five presets expose exact 5-person allocations: 3/1/1, 2/2/1, 1/3/1, 2/1/2, 1/2/2. Reassignment keeps a 30-second observation lock.
-- Every Rank 2 zone decision starts a 20-second observation window and reports measured throughput, rack utilization, inbound queue, and open-order deltas.
-- The next visible goal is Fulfillment Center readiness: all 3 expansion zones chosen, 8 completed contracts, and at least 6 shipments/minute. This is a readiness gate only; Rank 3 gameplay is not claimed complete until conveyor/sorter gameplay exists.
-- Director continues to diagnose rather than provide a one-tap solution at Rank 2+.
+Investment result classification:
+- 改善
+- 横ばい
+- 要再判断
+
+Result hierarchy:
+1. judgment + shipment delta
+2. operational context
+3. next action / interpretation
+
+At higher ranks the game should diagnose rather than simply provide a one-tap answer.
+
+## 7. Rank 2 — Warehouse
+
+Rank 2 begins at Logistics Rating 8.
+
+Minimum base crew after promotion: 5 workers.
+
+Staffing presets:
+- Receiving 3/1/1
+- Balanced 2/2/1
+- Picking 1/3/1
+- Dock 2/1/2
+- Shipping 1/2/2
+
+Reassignment lock: 30 simulated seconds.
+
+This lock makes staffing a strategic intervention rather than a twitch control.
+
+### Rank 2 fixed expansion zones
+
+One choice per zone.
+
+Zone A — Intake:
+- Double Dock: higher inbound acceptance / faster arrivals, creates downstream pressure
+- Buffer Yard: larger surge capacity without the same arrival-rate gain
+
+Zone B — Storage:
+- Fast Pick Rack: lower capacity, faster picks
+- High Density Rack: higher capacity, slower picks
+
+Zone C — Packing:
+- Parallel Pack: two parallel jobs with slower individual duration
+- Fast Pack Cell: one job with much faster duration
+
+All choices must affect Domain behavior and visible 3D geometry.
+
+### Rank 2 workload waves
+
+Deterministic cycle:
+- inbound forecast
+- inbound surge
+- order forecast
+- order surge
+- dispatch forecast
+- dispatch window
+
+The forecast duration is longer than the staffing lock so anticipatory staffing is possible.
+
+## 8. Rank 3 — Fulfillment Center
+
+Canonical Rank 3 gate:
+- all 3 Rank 2 expansion zones complete
+- equipment assets >= ¥200,000
+- live throughput >= 6 shipments/min
+
+Contracts are optional and are **not** a Rank 3 gate.
+
+### Receiving Annex
+
+- one-time capital
+- cost ¥24,000
+- inbound acceptance +14
+- visible 3D expansion
+- measured Before/After
+- save/load supported
+
+### Carrier Routing
+
+Balanced Parcel:
+- batch 1
+- dispatch 3.0 seconds
+- ¥500 per parcel
+
+Express Dispatch:
+- batch 1
+- dispatch 1.65 seconds
+- ¥410 per parcel
+
+Consolidated Linehaul:
+- threshold / batch 4
+- dispatch 6.8 seconds
+- ¥620 per parcel
+
+Routing state is Domain-authoritative. A SHIP task freezes route, batch and value at task start so changing mode cannot reprice in-flight shipments.
+
+### High-frequency inbound carrier program
+
+- one-time capital
+- requires Receiving Annex
+- cost ¥30,000
+- scheduled inbound interval ×0.85
+- counted in equipment assets
+- visible 3D state
+- schema-v7 persistence
+
+Research showed that scheduled inbound cadence is the first post-routing lever that materially increases shipments. AGV / sorter / ASRS-style candidates are not automatically added unless measurement proves product value.
+
+## 9. Save / Recovery
+
+Current save schema: v7.
+
+Persistence:
+- local JSON under `user://`
+- primary save
+- backup save
+- semantic-invalid primary fallback to backup
+- autosave every 10 seconds
+- save on close / application pause
+
+Save compatibility is a release requirement. Existing valid progression must not be destroyed by ordinary upgrades.
+
+## 10. Camera / Mobile UX
+
+The facility must remain the main visual focus.
+
+Requirements:
+- single-finger orbit
+- pinch zoom
+- bounded drag/pinch input to avoid jumpy motion
+- portrait camera preserves useful horizontal field of view
+- maximum zoom-out must show the operation as a readable whole
+- close zoom must not become tunnel-like
+- no critical interaction depends on hover
+
+The verified mobile implementation uses a dedicated mobile warehouse-view subclass with smoothed position/FOV behavior.
+
+## 11. Management UI
+
+Management is a fixed mobile sheet with a vertically scrollable content body.
+
+Requirements:
+- header and bottom dock remain reachable
+- no horizontal overflow
+- touch drag must scroll through controls on iOS/Web and native targets
+- multi-line controls reserve sufficient height
+- historical Rank 2 choices are compacted at Rank 3 so current decisions stay prominent
+- all Rank 3 routing and capital actions remain reachable
+
+## 12. Art Direction
+
+Visual north star:
+- dark navy industrial base
+- cyan technology accents
+- amber/orange safety accents
+- warm local lighting
+- stylized premium mobile readability
+- open-top / cutaway logistics center
+
+Do not obstruct the operation with decorative roof/truss geometry that hides the flow.
+
+Facility growth should visibly change the scene, not merely update text.
+
+## 13. Game Feel
+
+Current baseline:
+- procedural short feedback tones
+- shipment feedback
+- stronger investment / contract / rank-up feedback
+- native haptic hooks using `Input.vibrate_handheld`
+- shipment haptics throttled to prevent spam
+
+Native audio/haptic quality is not considered verified until signed physical-device testing.
+
+## 14. Performance / Telemetry
+
+Runtime health tracks:
+- average FPS
+- minimum FPS
+- low-FPS seconds / ratio
+
+Native RC target includes no sustained sub-30 FPS behavior during a representative mature Rank 3 scene on target devices.
+
+Provider-neutral analytics records major gameplay events locally. No external analytics provider or data upload is active.
+
+## 15. Current Acceptance Criteria
+
+Code-level acceptance:
+- runtime startup is stable
+- workers continue executing valid tasks autonomously
+- money and shipment count only advance through authoritative delivery
+- progression cannot enter a deadlocked no-action state during normal tested paths
+- Rank 1 → Rank 2 → Rank 3 can be exercised in simulation
+- all Rank 2 facility choices and Rank 3 capital/routing systems have authoritative effects
+- save/reload retains mature state
+- backup recovery works
+- mobile management content is readable and scrollable
+- camera can frame the warehouse at useful overview and close distances
+- embedded Japanese font is used
+- no critical interaction requires hover
+- engineering Web export builds successfully
+
+Native acceptance additionally requires:
+- signed iOS and Android builds
+- cold launch on physical devices
+- safe-area verification
+- background/resume
+- save after app kill/relaunch
+- touch input at screen edges
+- audio/haptic verification
+- sustained Rank 3 performance check
+
+## 16. Current Non-goals
+
+Not required for this RC candidate:
+- free-placement factory building editor
+- multiplayer
+- cloud save
+- account system
+- multiple product SKUs
+- staff mood/needs simulation
+- ad/IAP activation
+- external analytics provider
+- live-service backend
+
+These can be reconsidered only if they improve marketability, retention or monetization after the core product proves itself.
+
+## 17. Technology Decision
+
+Production implementation:
+- Godot 4.7.2 Standard
+- GDScript
+- GL Compatibility
+- native iOS / Android final targets
+- Godot Web as engineering preview only
+- local `user://` persistence
+- GitHub main as canonical repository baseline
+
+The previous Three.js / PWA-first implementation direction is superseded and must not be restored as the production game path.
+
+## 18. Release Gate
+
+Current label: **Code RC Candidate**, pending RC audit CI.
+
+Do not call the build **Native RC** until:
+1. final iOS/Android identifiers are supplied
+2. native export presets are finalized
+3. signed builds exist
+4. physical iPhone and Android QA passes
+5. safe area, lifecycle, save, audio, haptics and performance are verified
+
+Store submission and monetization activation remain separate external actions requiring explicit approval.
