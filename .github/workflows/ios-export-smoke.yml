@@ -65,53 +65,34 @@ jobs:
             exit 1
           fi
 
-      - name: Export unsigned iOS Xcode project
+      - name: Generate unsigned iOS Xcode project
+        id: ios_export
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          rm -rf ios-build
+          mkdir -p ios-build
+          godot --headless --path godot --export-release 'iOS CI Project' ../ios-build/LogisticsBoss 2>&1 | tee /tmp/godot-ios-export.log
+
+      - name: Validate unsigned iOS Xcode project payload
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf ios-build
-          mkdir -p ios-build
 
-          # Run Godot through Python so its known non-zero project-only status cannot
-          # trip GitHub Actions' shell-level errexit before we inspect the generated files.
-          python3 - <<'PY'
-          import pathlib
-          import subprocess
-
-          command = [
-              "godot",
-              "--headless",
-              "--path",
-              "godot",
-              "--export-release",
-              "iOS CI Project",
-              "../ios-build/LogisticsBoss",
-          ]
-          result = subprocess.run(
-              command,
-              stdout=subprocess.PIPE,
-              stderr=subprocess.STDOUT,
-              text=True,
-              check=False,
-          )
-          log_path = pathlib.Path("/tmp/godot-ios-export.log")
-          log_path.write_text(result.stdout, encoding="utf-8")
-          pathlib.Path("/tmp/godot-ios-status.txt").write_text(
-              str(result.returncode), encoding="utf-8"
-          )
-          print(result.stdout, end="")
-          PY
-
-          godot_status="$(cat /tmp/godot-ios-status.txt)"
+          if [ ! -f /tmp/godot-ios-export.log ]; then
+            echo 'Godot iOS export log is missing'
+            exit 1
+          fi
 
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-export.log; then
             echo 'Godot iOS export emitted an engine/script error'
             exit 1
           fi
 
-          # Project-only export can return non-zero on an unsigned macOS runner after
-          # generating the Xcode project. For this smoke test, the authoritative pass
-          # condition is the complete unsigned Xcode project payload, not code signing.
+          # Godot project-only iOS export can report a non-zero process status on an
+          # unsigned runner after the complete Xcode payload has been generated.
+          # The smoke-test authority is therefore the payload itself.
           test -s ios-build/LogisticsBoss.xcodeproj/project.pbxproj
           test -s ios-build/LogisticsBoss/LogisticsBoss-Info.plist
           test -s ios-build/LogisticsBoss/data.pck
@@ -119,12 +100,10 @@ jobs:
           test -s ios-build/LogisticsBoss.xcframework/ios-arm64/libgodot.a
           test -s ios-build/MoltenVK.xcframework/Info.plist
 
-          if [ "$godot_status" -ne 0 ]; then
-            echo "Godot returned status $godot_status after generating the complete unsigned Xcode project; accepted for project-only smoke."
-          fi
-
+          echo "Godot export step outcome: ${{ steps.ios_export.outcome }}"
           ditto -c -k --sequesterRsrc --keepParent ios-build /tmp/LogisticsBoss-ios-project.zip
           test -s /tmp/LogisticsBoss-ios-project.zip
+          echo 'Unsigned iOS Xcode project payload validated.'
 
       - name: Upload unsigned iOS Xcode-project smoke artifact
         uses: actions/upload-artifact@v4
