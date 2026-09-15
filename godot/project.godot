@@ -1,0 +1,29 @@
+; Engine configuration file.
+; Logistics Boss Godot vertical slice.
+
+config_version=5
+
+[application]
+
+config/name="Logistics Boss"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=390
+window/size/viewport_height=844
+window/size/window_width_override=390
+window/size/window_height_override=844
+window/stretch/mode="canvas_items"
+window/handheld/orientation=1
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+
+[physics]
+
+common/enable_pause_aware_picking=true
