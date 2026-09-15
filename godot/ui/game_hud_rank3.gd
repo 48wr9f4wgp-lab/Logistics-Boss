@@ -6,6 +6,7 @@ var _rank3_status: Label
 var _routing_summary: Label
 var _routing_select: OptionButton
 var _receiving_annex_button: Button
+var _inbound_carrier_button: Button
 
 
 func _ready() -> void:
@@ -33,6 +34,9 @@ func _on_sim_event(event: Dictionary) -> void:
         "routing_changed":
             _show_measurement_status("配送ルートの効果を計測中\n前25秒 → 後25秒", 30.0)
             _show_toast("配送変更  %s" % String(event.get("label", "")))
+        "inbound_carrier_program_purchased":
+            _show_measurement_status("高頻度入荷の効果を計測中\n前25秒 → 後25秒", 30.0)
+            _show_toast("高頻度入荷プログラム  稼働開始")
 
 
 func _build_rank3_section() -> void:
@@ -87,6 +91,15 @@ func _build_rank3_section() -> void:
     _receiving_annex_button.pressed.connect(_purchase_receiving_annex)
     column.add_child(_receiving_annex_button)
 
+    _inbound_carrier_button = Button.new()
+    _inbound_carrier_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    _inbound_carrier_button.custom_minimum_size = Vector2(0, 68)
+    _inbound_carrier_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+    _inbound_carrier_button.add_theme_font_size_override("font_size", 11)
+    _apply_button_style(_inbound_carrier_button, false)
+    _inbound_carrier_button.pressed.connect(_purchase_inbound_carrier_program)
+    column.add_child(_inbound_carrier_button)
+
 
 func _render_rank3() -> void:
     if (
@@ -96,6 +109,7 @@ func _render_rank3() -> void:
         or _routing_summary == null
         or _routing_select == null
         or _receiving_annex_button == null
+        or _inbound_carrier_button == null
     ):
         return
     if not sim.has_method("rank3_readiness"):
@@ -120,6 +134,7 @@ func _render_rank3() -> void:
         _routing_summary.visible = false
         _routing_select.visible = false
         _receiving_annex_button.visible = false
+        _inbound_carrier_button.visible = false
         return
 
     _progression_label.text = "RANK 3  FULFILLMENT CENTER  ｜ 評価 %d  ｜ 契約 %d件" % [
@@ -156,6 +171,24 @@ func _render_rank3() -> void:
     ]
     _apply_button_style(_receiving_annex_button, owned)
 
+    _inbound_carrier_button.visible = sim.has_method("inbound_carrier_program_info")
+    if _inbound_carrier_button.visible:
+        var carrier_info: Dictionary = sim.call("inbound_carrier_program_info")
+        var carrier_owned := bool(carrier_info.get("owned", false))
+        var carrier_cost := int(carrier_info.get("cost", 0))
+        var annex_ready := bool(carrier_info.get("annex_ready", false))
+        _inbound_carrier_button.disabled = carrier_owned or not annex_ready or sim.money < carrier_cost
+        var carrier_effect := String(carrier_info.get("effect", "定期入荷頻度を増加"))
+        if not annex_ready and not carrier_owned:
+            carrier_effect = "先に受入増設棟が必要"
+        _inbound_carrier_button.text = "%s%s\n%s  ｜ ¥%s" % [
+            "✓ " if carrier_owned else "",
+            String(carrier_info.get("label", "高頻度入荷プログラム")),
+            carrier_effect,
+            _format_number(carrier_cost),
+        ]
+        _apply_button_style(_inbound_carrier_button, carrier_owned)
+
 
 func _select_routing_mode(index: int) -> void:
     if sim == null or not sim.has_method("set_routing_mode"):
@@ -190,3 +223,22 @@ func _purchase_receiving_annex() -> void:
             _show_toast("RANK 3で解禁")
         _:
             _show_toast("増設できない")
+
+
+func _purchase_inbound_carrier_program() -> void:
+    if sim == null or not sim.has_method("purchase_inbound_carrier_program"):
+        return
+    var result: Dictionary = sim.call("purchase_inbound_carrier_program")
+    if bool(result.get("ok", false)):
+        return
+    match String(result.get("reason", "")):
+        "funds":
+            _show_toast("資金不足  ¥%s必要" % _format_number(int(result.get("cost", 0))))
+        "annex":
+            _show_toast("先に受入増設棟が必要")
+        "owned":
+            _show_toast("高頻度入荷プログラムは稼働済み")
+        "rank":
+            _show_toast("RANK 3で解禁")
+        _:
+            _show_toast("高頻度入荷を開始できない")

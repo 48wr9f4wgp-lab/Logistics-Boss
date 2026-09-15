@@ -1,6 +1,6 @@
 extends Node
 
-const WarehouseSimScript = preload("res://domain/rank3_warehouse_sim.gd")
+const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
 const WarehouseViewScript = preload("res://view/warehouse_view.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
 const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")

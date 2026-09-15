@@ -92,6 +92,16 @@ jobs:
       - name: Rank 3 Carrier Routing pacing report
         run: godot --headless --path godot --script res://tests/rank3_carrier_routing_pacing_report.gd
 
+      - name: Rank 3 inbound carrier program smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --script res://tests/rank3_inbound_carrier_smoke.gd 2>&1 | tee /tmp/rank3-inbound-carrier-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/rank3-inbound-carrier-smoke.log; then
+            echo 'Rank 3 inbound carrier program smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Rank 3 post-routing frontier scout
         shell: bash
         run: |
@@ -135,11 +145,31 @@ jobs:
             exit 1
           fi
 
+      - name: Rank 3 inbound carrier UI smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --script res://tests/rank3_inbound_carrier_ui_smoke.gd 2>&1 | tee /tmp/rank3-inbound-carrier-ui-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/rank3-inbound-carrier-ui-smoke.log; then
+            echo 'Rank 3 inbound carrier UI smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Rank 2 facility visual smoke
         run: godot --headless --path godot --script res://tests/rank2_facility_visual_smoke.gd
 
       - name: Rank 3 visual smoke
         run: godot --headless --path godot --script res://tests/rank3_visual_smoke.gd
+
+      - name: Rank 3 inbound carrier visual smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --script res://tests/rank3_inbound_carrier_visual_smoke.gd 2>&1 | tee /tmp/rank3-inbound-carrier-visual-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/rank3-inbound-carrier-visual-smoke.log; then
+            echo 'Rank 3 inbound carrier visual smoke emitted an engine/script error'
+            exit 1
+          fi
 
       - name: Japanese font glyph smoke
         run: godot --headless --path godot --script res://tests/font_smoke.gd
