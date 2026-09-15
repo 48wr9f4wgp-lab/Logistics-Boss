@@ -1,0 +1,88 @@
+name: Logistics Boss iOS Export Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/ios-export-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-export-smoke:
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode environment
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcode-select -p
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Godot version
+        run: godot --version
+
+      - name: Native input validator self-test
+        run: python3 godot/tools/native_release_inputs.py --self-test
+
+      - name: iOS preset generator self-test
+        run: python3 godot/tools/prepare_ios_export.py --self-test
+
+      - name: Generate ephemeral synthetic iOS preset
+        env:
+          LOGISTICS_BOSS_IOS_TEAM_ID: ABCDE12XYZ
+          LOGISTICS_BOSS_IOS_BUNDLE_ID: com.example.logistics-boss-ci
+        run: |
+          set -euo pipefail
+          cp godot/export_presets.cfg /tmp/logistics-boss-web-export-presets.cfg
+          python3 godot/tools/native_release_inputs.py --platform ios
+          python3 godot/tools/prepare_ios_export.py \
+            --base /tmp/logistics-boss-web-export-presets.cfg \
+            --output godot/export_presets.cfg \
+            --preset-name 'iOS CI Project'
+          grep -q 'name="iOS CI Project"' godot/export_presets.cfg
+          grep -q 'application/export_project_only=true' godot/export_presets.cfg
+
+      - name: Parse/import project on macOS
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --editor --quit 2>&1 | tee /tmp/godot-ios-import.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-import.log; then
+            echo 'Godot macOS parse/import emitted an engine/script error'
+            exit 1
+          fi
+
+      - name: Export unsigned iOS Xcode project
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf ios-build
+          mkdir -p ios-build
+          godot --headless --path godot --export-release 'iOS CI Project' ../ios-build/LogisticsBoss.zip 2>&1 | tee /tmp/godot-ios-export.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-export.log; then
+            echo 'Godot iOS export emitted an engine/script error'
+            exit 1
+          fi
+          test -s ios-build/LogisticsBoss.zip
+          unzip -l ios-build/LogisticsBoss.zip | tee /tmp/logistics-boss-ios-zip.txt
+          grep -E '\.xcodeproj/project\.pbxproj' /tmp/logistics-boss-ios-zip.txt
+
+      - name: Upload unsigned iOS Xcode-project smoke artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: logistics-boss-ios-xcode-smoke
+          path: ios-build/LogisticsBoss.zip
+          if-no-files-found: error
+          retention-days: 3
