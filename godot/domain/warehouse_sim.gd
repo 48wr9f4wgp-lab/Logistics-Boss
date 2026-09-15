@@ -6,11 +6,13 @@ signal event_emitted(event: Dictionary)
 const CapitalCatalogScript = preload("res://domain/capital_catalog.gd")
 const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 const ProgressionSystemScript = preload("res://domain/progression_system.gd")
+const Rank2FacilityCatalogScript = preload("res://domain/rank2_facility_catalog.gd")
 
 const SAVE_SCHEMA := 3
 const BASE_SHIPMENT_VALUE := 500
 const INBOUND_INTERVAL := 2.8
 const ORDER_INTERVAL := 3.0
+const RANK2_ORDER_INTERVAL := 2.2
 const INBOUND_LIMIT := 14
 const ORDER_LIMIT := 18
 const FORKLIFT_CYCLE := 3.2
@@ -37,6 +39,14 @@ var contract_offers: Array[Dictionary] = []
 var active_contract: Dictionary = {}
 var staffing_plan: String = "balanced"
 var staffing_cooldown: float = 0.0
+var facilities: Dictionary = {
+    "double_dock": false,
+    "buffer_yard": false,
+    "fast_pick_rack": false,
+    "high_density_rack": false,
+    "parallel_pack": false,
+    "fast_pack_cell": false,
+}
 
 var inbound_queue: int = 4
 var rack_stock: int = 2
@@ -64,9 +74,7 @@ var last_measurement: Dictionary = {}
 
 var _inbound_timer: float = 2.0
 var _order_timer: float = 3.0
-var _packing_active: bool = false
-var _packing_remaining: float = 0.0
-var _packing_duration: float = 0.0
+var _packing_jobs: Array[float] = []
 var _forklift_remaining: float = 0.0
 var _contract_offer_cooldown: float = 0.0
 var _next_contract_id: int = 1
@@ -75,6 +83,7 @@ var workers: Array[Dictionary] = []
 var _capital: CapitalCatalog = CapitalCatalogScript.new()
 var _measurement: FlowMeasurement = FlowMeasurementScript.new()
 var _progression: LogisticsProgression = ProgressionSystemScript.new()
+var _rank2_facilities: Rank2FacilityCatalog = Rank2FacilityCatalogScript.new()
 
 
 func _init() -> void:
@@ -159,6 +168,68 @@ func choose_contract(contract_id: int) -> Dictionary:
     return {"ok": false, "reason": "missing"}
 
 
+func facility_info(kind: StringName) -> Dictionary:
+    return _rank2_facilities.info(kind)
+
+
+func facility_cost(kind: StringName) -> int:
+    return _rank2_facilities.cost(kind)
+
+
+func expansion_zones_completed() -> int:
+    var completed := 0
+    for group in ["intake", "storage", "packing"]:
+        if not selected_facility_for_group(group).is_empty():
+            completed += 1
+    return completed
+
+
+func selected_facility_for_group(group: String) -> String:
+    for kind in _rank2_facilities.all_kinds():
+        if _rank2_facilities.group(kind) == group and bool(facilities.get(String(kind), false)):
+            return String(kind)
+    return ""
+
+
+func purchase_facility(kind: StringName) -> Dictionary:
+    if facility_rank < 2:
+        return {"ok": false, "reason": "rank", "cost": facility_cost(kind)}
+    if not _rank2_facilities.is_known(kind):
+        return {"ok": false, "reason": "unknown", "cost": 0}
+    if bool(facilities.get(String(kind), false)):
+        return {"ok": false, "reason": "owned", "cost": facility_cost(kind)}
+
+    var group := _rank2_facilities.group(kind)
+    if not selected_facility_for_group(group).is_empty():
+        return {"ok": false, "reason": "exclusive", "cost": facility_cost(kind)}
+
+    var cost := facility_cost(kind)
+    if money < cost:
+        return {"ok": false, "reason": "funds", "cost": cost}
+
+    money -= cost
+    facilities[String(kind)] = true
+    match kind:
+        &"fast_pick_rack":
+            rack_capacity += 4
+        &"high_density_rack":
+            rack_capacity += 12
+
+    var measurement_kind := StringName("facility_%s" % String(kind))
+    var before := _measurement.begin_investment(measurement_kind, cost, sim_time)
+    _emit("facility_purchased", {
+        "kind": String(kind),
+        "zone": _rank2_facilities.zone(kind),
+        "group": group,
+        "label": _rank2_facilities.label(kind),
+        "cost": cost,
+        "zones_completed": expansion_zones_completed(),
+        "measurement_window": FlowMeasurement.WINDOW_SECONDS,
+        "before": before,
+    })
+    return {"ok": true, "cost": cost, "zones_completed": expansion_zones_completed()}
+
+
 func set_time_scale(next_scale: float) -> void:
     time_scale = clampf(next_scale, 0.0, 4.0)
 
@@ -235,6 +306,8 @@ func snapshot() -> Dictionary:
         "active_contract": active_contract.duplicate(true),
         "staffing_plan": staffing_plan,
         "staffing_cooldown": staffing_cooldown,
+        "facilities": facilities.duplicate(true),
+        "expansion_zones_completed": expansion_zones_completed(),
         "inbound_queue": inbound_queue,
         "rack_stock": rack_stock,
         "packing_queue": packing_queue,
@@ -273,6 +346,7 @@ func save_data() -> Dictionary:
         "next_contract_id": _next_contract_id,
         "staffing_plan": staffing_plan,
         "staffing_cooldown": staffing_cooldown,
+        "facilities": facilities.duplicate(true),
         "inbound_queue": inbound_queue,
         "rack_stock": rack_stock,
         "packing_queue": packing_queue,
@@ -321,6 +395,20 @@ func load_data(data: Dictionary) -> bool:
     staffing_cooldown = maxf(0.0, float(data.get("staffing_cooldown", 0.0))) if source_schema >= 3 else 0.0
     _next_contract_id = maxi(1, int(data.get("next_contract_id", 1))) if source_schema >= 3 else 1
 
+    facilities = {
+        "double_dock": false,
+        "buffer_yard": false,
+        "fast_pick_rack": false,
+        "high_density_rack": false,
+        "parallel_pack": false,
+        "fast_pack_cell": false,
+    }
+    if source_schema >= 3:
+        var saved_facilities: Variant = data.get("facilities", {})
+        if saved_facilities is Dictionary:
+            for kind in facilities.keys():
+                facilities[kind] = bool((saved_facilities as Dictionary).get(kind, false))
+
     contract_offers.clear()
     if source_schema >= 3:
         var saved_offers: Variant = data.get("contract_offers", [])
@@ -336,6 +424,7 @@ func load_data(data: Dictionary) -> bool:
     forklift_active = false
     forklift_progress = 0.0
     _forklift_remaining = 0.0
+    _packing_jobs.clear()
     _contract_offer_cooldown = 0.0
     if facility_rank >= 2:
         worker_count = maxi(5, worker_count)
@@ -355,33 +444,60 @@ func load_data(data: Dictionary) -> bool:
 func _spawn_flow(dt: float) -> void:
     _inbound_timer -= dt
     while _inbound_timer <= 0.0:
-        _inbound_timer += INBOUND_INTERVAL
-        if inbound_queue < INBOUND_LIMIT:
+        _inbound_timer += _current_inbound_interval()
+        if inbound_queue < _current_inbound_limit():
             inbound_queue += 1
             _emit("inbound_arrival", {"count": inbound_queue})
 
     _order_timer -= dt
     while _order_timer <= 0.0:
-        _order_timer += ORDER_INTERVAL
+        _order_timer += _current_order_interval()
         if open_orders < ORDER_LIMIT:
             open_orders += 1
             _emit("order_arrival", {"count": open_orders})
 
 
+func _current_inbound_interval() -> float:
+    return INBOUND_INTERVAL * (0.78 if bool(facilities.get("double_dock", false)) else 1.0)
+
+
+func _current_inbound_limit() -> int:
+    if bool(facilities.get("buffer_yard", false)):
+        return INBOUND_LIMIT + 14
+    if bool(facilities.get("double_dock", false)):
+        return INBOUND_LIMIT + 6
+    return INBOUND_LIMIT
+
+
+func _current_order_interval() -> float:
+    return RANK2_ORDER_INTERVAL if facility_rank >= 2 else ORDER_INTERVAL
+
+
+func _packing_capacity() -> int:
+    return 2 if bool(facilities.get("parallel_pack", false)) else 1
+
+
+func _packing_duration() -> float:
+    var facility_factor := 1.0
+    if bool(facilities.get("fast_pack_cell", false)):
+        facility_factor = 0.58
+    elif bool(facilities.get("parallel_pack", false)):
+        facility_factor = 1.10
+    return 3.0 * pack_time_multiplier * facility_factor
+
+
 func _update_packing(dt: float) -> void:
-    if not _packing_active and packing_queue > 0:
+    while packing_queue > 0 and _packing_jobs.size() < _packing_capacity():
         packing_queue -= 1
-        _packing_active = true
-        _packing_duration = 3.0 * pack_time_multiplier
-        _packing_remaining = _packing_duration
-        _emit("packing_started", {"duration": _packing_duration})
+        var duration := _packing_duration()
+        _packing_jobs.append(duration)
+        _emit("packing_started", {"duration": duration, "parallel": _packing_jobs.size()})
 
-    if not _packing_active:
-        return
-
-    _packing_remaining -= dt
-    if _packing_remaining <= 0.0:
-        _packing_active = false
+    for index in range(_packing_jobs.size() - 1, -1, -1):
+        _packing_jobs[index] = maxf(0.0, _packing_jobs[index] - dt)
+        if _packing_jobs[index] > 0.0:
+            continue
+        _packing_jobs.remove_at(index)
         packed_queue += 1
         _emit("packing_complete", {"packed_queue": packed_queue})
 
@@ -479,7 +595,7 @@ func _choose_task() -> int:
             if can_store:
                 return Task.STORE
         _:
-            var inbound_pressure := float(inbound_queue) / float(INBOUND_LIMIT)
+            var inbound_pressure := float(inbound_queue) / float(_current_inbound_limit())
             var rack_pressure := float(rack_stock) / float(maxi(1, rack_capacity))
             var order_pressure := float(open_orders) / float(ORDER_LIMIT)
             var outbound_pressure := float(packed_queue) / 8.0
@@ -515,6 +631,10 @@ func _start_task(worker: Dictionary, task: int) -> void:
             rack_stock -= 1
             open_orders -= 1
             base_duration = 3.8
+            if bool(facilities.get("fast_pick_rack", false)):
+                base_duration *= 0.75
+            elif bool(facilities.get("high_density_rack", false)):
+                base_duration *= 1.14
             source = "rack"
             target = "packing"
         Task.SHIP:
