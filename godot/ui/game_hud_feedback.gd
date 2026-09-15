@@ -62,17 +62,20 @@ func measurement_feedback(event: Dictionary) -> Dictionary:
     elif bottleneck_key != "stable":
         next_action = "次: 「%s」と投資先が合っているか確認" % bottleneck_label
 
-    var text := "%s｜出荷 %s/分  %.1f→%.1f\n入庫 %.1f→%.1f / 梱包 %.1f→%.1f｜%s" % [
+    var result_line := "%s｜出荷 %s/分（%.1f→%.1f）" % [
         headline,
         _signed_delta(delta),
         before_rate,
         after_rate,
+    ]
+    var context_line := "入庫 %.1f→%.1f｜梱包 %.1f→%.1f" % [
         float(before.get("inbound_queue", 0.0)),
         float(after.get("inbound_queue", 0.0)),
         float(before.get("packing_queue", 0.0)),
         float(after.get("packing_queue", 0.0)),
-        next_action,
     ]
+    var action_line := next_action.replace("次:", "次 →")
+    var text := "%s\n%s\n%s" % [result_line, context_line, action_line]
 
     return {
         "state": state,
@@ -80,6 +83,8 @@ func measurement_feedback(event: Dictionary) -> Dictionary:
         "delta": delta,
         "threshold": threshold,
         "text": text,
+        "result_line": result_line,
+        "context_line": context_line,
         "next_action": next_action,
     }
 
@@ -101,15 +106,15 @@ func _style_measurement_state(state: String) -> void:
         "improved":
             border = Color(0.28, 0.90, 0.62, 0.96)
             text_color = Color(0.76, 1.0, 0.86)
-            font_size = 11
+            font_size = 12
         "regressed":
             border = Color(1.0, 0.58, 0.20, 0.96)
             text_color = Color(1.0, 0.86, 0.66)
-            font_size = 11
+            font_size = 12
         "flat":
             border = Color(0.40, 0.68, 0.92, 0.94)
             text_color = Color(0.84, 0.94, 1.0)
-            font_size = 11
+            font_size = 12
 
     _measurement_panel.add_theme_stylebox_override(
         "panel",
