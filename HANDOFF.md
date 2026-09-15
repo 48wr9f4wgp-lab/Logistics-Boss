@@ -1,20 +1,23 @@
 # Logistics Boss — Development Handoff
 
-Updated: 2026-09-15 JST
-Repository: `48wr9f4wgp-lab/Logistics-Boss`
-Canonical production baseline: GitHub `main`
-Active migration branch: `port/godot-vertical-slice`
+Updated: 2026-09-15 JST  
+Repository: `48wr9f4wgp-lab/Logistics-Boss`  
+Canonical production baseline: GitHub `main`  
+Canonical engine: **Godot 4.7.x + GDScript**
 
 ## 0. Canonical source order
 
 For current development decisions use:
 
 1. Current user instruction.
-2. This `HANDOFF.md` and `TECH_DECISION_GODOT_MIGRATION_2026-09-15.md` while the Godot migration branch is active.
-3. Current `main` Web implementation as the behavioral / balance / rollback reference.
-4. `RANK3_FULFILLMENT_CENTER.md`, `CAPITAL_PACING_V1.md`, `CAPITAL_EXPANSION_V2.md`, current UX / benchmark addenda.
-5. `GDD_LOGISTICS_BOSS.md` except where later title-specific decisions supersede stale FTUE / technology language.
-6. Project-level `GAME_DEV_MASTER_RULES v1.3`.
+2. This `HANDOFF.md`.
+3. `TECH_DECISION_GODOT_MIGRATION_2026-09-15.md`.
+4. Current `/godot` implementation on `main`.
+5. `RANK3_FULFILLMENT_CENTER.md`, `CAPITAL_PACING_V1.md`, `CAPITAL_EXPANSION_V2.md`, benchmark / UX addenda.
+6. `GDD_LOGISTICS_BOSS.md` except where later title-specific decisions supersede stale FTUE / technology language.
+7. Project-level `GAME_DEV_MASTER_RULES v1.3`.
+
+The old Three.js / DOM implementation under `/docs` is **legacy reference only**. It is no longer a compatibility target and must not block Godot-side architecture, UI, rendering, input, save, balance, or content decisions.
 
 Do not restore stale mandatory-contract FTUE, Director one-tap answers, severity-driven panel opening, MutationObserver ownership guards, or a single prescribed progression path.
 
@@ -40,189 +43,187 @@ Finished-product priorities:
 
 Current stage: Functional Build / deeper Vertical Slice maturation. **Not release-ready.**
 
-## 2. Technology decision — GODOT MIGRATION ACTIVE
+## 2. Technology decision — GODOT IS CANONICAL
 
-On 2026-09-15 the user explicitly chose to continue development in Godot.
+On 2026-09-15 the user explicitly chose to continue development in Godot and later approved retiring the old Web implementation as a production target.
 
-The migration is deliberate and reversible:
-- Godot 4.7.x Standard + GDScript;
-- GL Compatibility renderer for mobile/Web compatibility;
-- Godot project lives under `/godot` during the migration gate;
-- current Web build under `/docs` remains intact and deployable;
-- Web is the reference implementation for proven simulation behavior, pacing, Capital systems, Rank 3 routing and iPhone findings;
-- do **not** delete or rewrite the Web baseline until the Godot slice wins the migration gate.
+Canonical technology direction:
+- Godot 4.7.x Standard;
+- GDScript;
+- GL Compatibility renderer for mobile breadth during development;
+- native iOS / Android are the production targets;
+- Web export may remain as a temporary engineering preview only;
+- Web limitations must not force English UI, DOM-style layout, or architecture compromises.
 
-Why the decision changed from older “do not migrate engine” wording:
-- product risk is no longer primarily discovering the core loop;
-- future value depends increasingly on scene hierarchy, autonomous 3D motion, facility growth, VFX/audio/haptics, mobile interaction and native packaging;
-- the existing DOM + Three.js management surface was still accumulating readability / responsibility cost on iPhone;
-- the user explicitly approved Godot migration.
+The migration gate has been passed. PR #20 was merged into `main` as commit `070fb9866a759a3f376cb941231a83c1a5cac3a9`.
 
-`TECH_DECISION_GODOT_MIGRATION_2026-09-15.md` is the title-specific ADR for this transition.
+Why Godot won:
+- core logistics loop runs in the Godot domain model;
+- real autonomous workers execute STORE / PICK / SHIP tasks;
+- investments change both simulation and visible 3D state;
+- touch orbit / pinch zoom and time controls are implemented;
+- save/load is versioned and smoke-tested;
+- Godot 4.7.2 import, deterministic sim smoke, full-scene runtime and Web export all pass CI;
+- real iPhone visual checks show the Godot direction exceeds the old DOM / Three.js presentation ceiling.
 
-## 3. Web baseline — preserve as rollback/reference
+`TECH_DECISION_GODOT_MIGRATION_2026-09-15.md` is the title-specific ADR.
 
-Current Web stack:
-- static HTML/CSS/vanilla JavaScript ES modules;
-- Three.js `0.186.0`;
-- Rapier compat `0.20.0`;
-- GitHub Pages from `main/docs`;
-- Web save key `logistics_boss_save`, schema `3`.
+## 3. Godot production architecture
 
-The latest Web gameplay includes:
-- free-form Rank 1;
-- Rank 2 staffing + structural zones;
-- Capital automation, workforce, hall expansion, truck waves and AS/RS;
-- measured capital pacing;
-- persisted Rank 3 Fulfillment Center;
-- Carrier Routing with Balanced / Express / Consolidated tradeoffs;
-- real routing events and 3D routing visualization;
-- mobile management readability pass after real-iPhone QA.
-
-Web money/revenue remains owned by `docs/src/sim.js`; UI and visuals must not become alternate economy writers.
-
-## 4. Active Godot branch
-
-Branch: `port/godot-vertical-slice`
-Draft PR: #20
-
-Initial architecture:
-- `godot/domain/warehouse_sim.gd` — authoritative deterministic logistics/economy state;
-- `godot/view/warehouse_view.gd` — low-poly 3D facility, workers, parcels and touch camera;
-- `godot/ui/game_hud.gd` — portrait-first HUD, policy/speed controls and management sheet;
+Current source structure:
+- `godot/domain/warehouse_sim.gd` — authoritative deterministic logistics / economy state;
+- `godot/view/warehouse_view.gd` — facility, workers, parcels, touch camera;
+- `godot/view/visual_pass_2.gd` — facility presentation enrichment;
+- `godot/view/visual_pass_3.gd` — hero-machine, lighting, material/readability details;
+- `godot/view/visual_composition_fix.gd` — real-device composition correction;
+- `godot/ui/game_hud.gd` — base mobile HUD;
+- `godot/ui/game_hud_ja.gd` — **canonical Japanese-first HUD**;
 - `godot/persistence/save_store.gd` — Godot-specific versioned save / backup;
-- `godot/main.gd` — composition root only;
-- `godot/tests/sim_smoke.gd` — headless domain smoke once a Godot executable is available.
+- `godot/icon.svg` — canonical app icon asset;
+- `godot/main.gd` — composition root only.
 
-Current Godot slice code contains:
+Domain ownership rule:
+- simulation owns money, parcel lifecycle, task assignment and progression mutations;
+- UI / rendering consume state and events;
+- rendering must not create revenue or fake operational outcomes.
+
+## 4. Current Godot slice
+
+Implemented:
 - inbound generation;
 - order generation;
-- 3 autonomous workers;
+- 3+ autonomous workers;
 - real STORE / PICK / SHIP tasks;
 - separate packing stage;
 - outbound-completion-only revenue;
-- BALANCED / INBOUND / SHIP policy switching;
+- BALANCED / INBOUND / SHIP operating policy switching;
 - pause / 1x / 2x / 4x;
-- hire worker, rack capacity, worker speed and packing investments;
+- worker / rack / speed / packing investments;
 - visible workers and carried parcels;
-- visible rack growth from rack investment;
-- visible inbound / rack / outbound parcel counts;
-- bottleneck label;
+- visible rack growth from investment;
+- visible inbound / rack / outbound parcel states;
+- bottleneck diagnosis;
 - one-finger orbit + two-finger pinch zoom;
-- autosave with temp file + backup fallback.
+- autosave with temp file + backup fallback;
+- Visual Pass 1–3;
+- real-device composition fix;
+- Japanese-first native UI;
+- canonical warehouse-growth app icon.
 
-### Godot verification status
+Current icon direction:
+- dark navy background;
+- isometric warehouse block;
+- visible parcels in the bay;
+- cyan logistics flow path;
+- amber upward-growth arrow;
+- no text inside the icon.
 
-Verified:
-- repository structure exists;
-- Web regression suites still pass on the migration branch;
-- domain/economy ownership is separated in the new code;
-- migration is isolated from existing `/docs` gameplay.
+## 5. Japanese UI policy
 
-Not yet verified:
-- GDScript compile in Godot 4.7.2;
-- headless `godot/tests/sim_smoke.gd` execution;
-- scene launch;
-- worker animation / camera behavior in-engine;
-- Japanese font fallback;
-- performance;
-- Web export;
-- iPhone behavior.
+Product UI is **Japanese-first**.
 
-**Do not call the Godot slice functional or visually complete until those checks pass.**
+Current native labels include:
+- 資金
+- 研究RP
+- 出荷ペース
+- 注文待ち
+- 詰まり分析
+- バランス / 入庫 / 出庫 / 投資
+- 事業投資
 
-The current ChatGPT execution environment does not contain a Godot executable. The draft PR intentionally remains unmerged for this reason.
+`godot/ui/game_hud_ja.gd` uses native system-font fallback for iOS / Android / desktop CJK rendering.
 
-## 5. Godot vertical-slice migration gate
+Important:
+- Godot Web does not provide the same reliable system-font fallback path for CJK.
+- Do not reintroduce English product UI merely to satisfy Web preview limitations.
+- Web preview may remain useful for geometry / camera / interaction checks, but native builds are the typography truth.
 
-Godot becomes the production baseline only after all of the following are demonstrated:
+## 6. Visual North Star
 
-1. `inbound → storage → pick → pack → outbound → revenue` runs continuously.
-2. Three or more autonomous workers visibly execute actual simulation tasks.
-3. Policy choice changes task priority within seconds.
-4. A natural bottleneck appears without scripted fake congestion.
-5. At least one investment removes or shifts that bottleneck.
-6. Investment creates both a real domain change and a visible 3D change.
-7. Revenue is awarded only from successful outbound completion.
-8. Mobile portrait UI leaves the facility visually dominant.
-9. Touch orbit / pinch and pause / 1x / 2x / 4x are usable.
-10. Versioned save/load restores progression safely.
-11. Godot Web export runs on iPhone.
-12. The Godot slice is at least equal to the Web baseline on clarity, interaction feel, performance and development maintainability.
+The adopted North Star is the premium mobile isometric warehouse image approved in this project conversation and recorded by `VISUAL_NORTH_STAR_GODOT.md`.
 
-Until this gate passes, `main/docs` remains the safe rollback product.
+Target qualities:
+- dark navy industrial space;
+- warm local work lights + restrained cyan emissive accents;
+- readable logistics flow at phone scale;
+- warehouse remains visually dominant over HUD;
+- facility visibly becomes denser and more sophisticated with investment;
+- workers, racks, AGV / forklift / dock assets read immediately at a glance;
+- avoid toy-model emptiness, but also avoid clutter that blocks the facility.
 
-## 6. Port order after the gate
+Recent real-device correction:
+- foreground truck was too dominant;
+- front ceiling trusses crossed the visual focus too aggressively;
+- camera was too close / low;
+- composition was corrected by raising / pulling camera back, reducing foreground obstructions and demoting the truck visually.
 
-Do not immediately recreate every Web feature.
+## 7. Legacy Web policy
 
-Port in this order:
-1. Core slice quality: movement, queue readability, game feel, mobile controls.
-2. Director as diagnostic-only state explanation.
-3. Rank 1 free progression.
-4. Rank 2 staffing and one-of-two structural zones.
-5. Capital measurement framework.
-6. Forklift / AGV / sorter automation.
-7. Workforce + hall growth.
-8. Truck waves.
-9. AS/RS.
-10. Rank 3 promotion and Carrier Routing.
-11. Audio / haptics / VFX / accessibility / analytics / performance gates.
+The old `/docs` implementation may remain in the repository for historical / behavioral reference, but:
+- do not add new gameplay there;
+- do not require feature parity;
+- do not delay Godot work to preserve DOM or Three.js behavior;
+- do not use legacy Web as the rollback target for normal development;
+- old Web regression workflows may be removed once equivalent Godot tests cover the same product risks.
 
-Every major investment must still satisfy the four-condition gate:
+Preserved useful reference concepts from the old build:
+- measured Capital pacing;
+- optional contracts;
+- diagnostic-only Director;
+- four-condition major-investment gate;
+- Rank 3 routing tradeoffs;
+- historical iPhone UX findings.
+
+## 8. Major design rules preserved across the engine change
+
+- Contracts are optional.
+- Director diagnoses; it does not choose the solution.
+- Player decisions are low-frequency operating / capital decisions, not avatar micromanagement.
+- No permanent “correct route”.
+- Negative Before/After results are allowed and should be shown honestly.
+- Resource states must not accidentally make the game impossible to continue.
+- Decorative automation detached from real events is not acceptable.
+- Save formats remain versioned and engine-specific until an explicit migration is designed.
+- New UI is game-native, not a DOM layout copied into Godot.
+
+Every major investment must still satisfy:
 1. visible 3D change;
 2. real logistics behavior or capacity change;
 3. measurable Before/After;
 4. ability to create or reveal another bottleneck.
 
-## 7. Preserved design decisions
+## 9. Balance reference
 
-- Contracts are optional.
-- Director diagnoses; it does not choose the solution.
-- Player decisions are low-frequency operating / capital decisions, not avatar micromanagement.
-- No permanent “correct route” at Rank 3.
-- Negative Before/After results are allowed and should be shown honestly.
-- Resource states must not accidentally make the game impossible to continue.
-- Decorative automation detached from real events is not acceptable.
-- Save formats remain versioned and engine-specific until an explicit migration is designed.
-- New Godot UI should be redesigned as game UI, not a pixel copy of the Web DOM.
+Legacy Web numbers are **reference only**, not automatic Godot constants.
 
-## 8. Capital / balance reference from Web
-
-Use Web numbers as **reference**, not automatic Godot constants, until Godot throughput is measured.
-
-Web mid-game pacing was audited into roughly:
+The old audited mid-game milestone times were roughly:
 - 8.5 min;
 - 12.0 min;
 - 11.1 min;
 - 7.5 min;
 
-for the tested capital milestones, with a desired 7–15 minute band.
+with a desired 7–15 minute band.
 
-Do not transplant those values blindly if Godot task cadence differs. First match the perceived loop, then rerun deterministic pacing in the Godot domain model.
+Do not transplant values blindly. Measure real Godot task cadence and rebuild pacing around the perceived loop.
 
-## 9. Immediate next actions
+## 10. Immediate next actions
 
-1. Open branch / PR #20 in a real Godot 4.7.2 environment.
-2. Run project import / script compile.
-3. Fix every parser/runtime error before visual work.
-4. Run:
-   `godot --headless --path godot --script tests/sim_smoke.gd`
-5. Launch desktop scene and verify real worker flow + revenue ownership.
-6. Tune initial camera framing and mobile UI only after it actually runs.
-7. Create Web export preset and export only after the native/editor slice is stable.
-8. Deploy the Godot Web slice separately from current production Pages; do not overwrite `/docs` yet.
-9. Verify on iPhone.
-10. Only then decide whether Godot becomes canonical production implementation and merge the migration PR.
+1. Continue real-device Visual Pass against the approved North Star.
+2. Port the progression / Capital framework into Godot domain modules without recreating the old Web monolith.
+3. Add Before/After measurement in Godot from real domain events.
+4. Port visible automation in order of player value: forklift / AGV / sorter → workforce / hall → truck waves → AS/RS.
+5. Rebuild Rank 3 promotion and Carrier Routing as Godot-native systems.
+6. Add audio, VFX and haptics after the core investment loop is stable.
+7. Establish native iOS build / signing / device-install pipeline before Release Candidate.
+8. Remove legacy Web CI only after equivalent Godot coverage exists.
 
-## 10. Non-negotiable engineering rules
+## 11. Non-negotiable engineering rules
 
-- GitHub is the canonical shared baseline.
-- Large migration changes stay on branch/PR until verified.
+- GitHub `main` is canonical.
 - Never claim uncompiled code works.
 - Never claim device visuals are complete without device verification.
 - Domain simulation owns money, parcel lifecycle and progression mutations.
 - Rendering/UI consume state and events; they do not create revenue independently.
-- Avoid new God scripts becoming monoliths; extract responsibilities before feature growth.
-- Preserve the Web baseline until the migration gate passes.
-- After meaningful changes: compile/build → automated behavior test → visual/behavior verify → regression → device check where required.
+- Avoid large God scripts becoming monoliths; extract responsibilities before feature growth.
+- After meaningful changes: parse/build → automated behavior test → runtime verify → regression → device check where required.
+- Godot is now the production engine. Do not return to the legacy Web architecture unless the user explicitly reverses this decision.
