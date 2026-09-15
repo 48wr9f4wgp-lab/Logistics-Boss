@@ -46,9 +46,12 @@ func _ready() -> void:
     view.add_child(rank3_routing)
     rank3_routing.bind(view, sim)
 
+    # Bind the authoritative simulation before the HUD enters the tree.
+    # This prevents a late _ready() failure in an optional HUD section from
+    # leaving the entire visible shell stuck on placeholder values.
     var hud: GameHud = GameHudScript.new()
-    add_child(hud)
     hud.bind_sim(sim)
+    add_child(hud)
 
     var visual_pass_3: WarehouseVisualPass3 = WarehouseVisualPass3Script.new()
     view.add_child(visual_pass_3)
@@ -60,12 +63,16 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+    if sim == null:
+        return
+
     sim.step(delta)
 
     _autosave_timer += delta
     if _autosave_timer >= 10.0:
         _autosave_timer = 0.0
-        save_store.save_sim(sim)
+        if save_store != null:
+            save_store.save_sim(sim)
 
 
 func _notification(what: int) -> void:
