@@ -12,6 +12,7 @@ import {
   truckWaveIntervalForLevel,
   truckWaveSizeForLevel,
 } from './capital-model.js';
+import { RANK3_NAME, rank3ReadinessFromState } from './rank3-model.js';
 
 const POS = {
   inbound: { x: -6.1, z: 3.8 },
@@ -64,6 +65,7 @@ const FACILITY_INFO = {
 const FACILITY_RANKS = {
   1: { name: 'Small Depot', rating: 0 },
   2: { name: 'Warehouse', rating: 8 },
+  3: { name: RANK3_NAME, rating: null },
 };
 const CONTRACT_KINDS = ['ship', 'inbound', 'throughput'];
 
@@ -853,6 +855,11 @@ export function createSimulation(saved = null) {
       emit('rank_up', { rank: 2, name: facilityRankName(2), text: '施設ランクUP: Warehouse / 5人編成を解禁' });
       markDirty();
     }
+    if (state.facilityRank === 2 && fulfillmentReadiness().ready) {
+      state.facilityRank = 3;
+      emit('rank_up', { rank: 3, name: facilityRankName(3), text: '施設ランクUP: Fulfillment Center' });
+      markDirty();
+    }
   }
 
   function finishContract(success) {
@@ -938,13 +945,7 @@ export function createSimulation(saved = null) {
   }
 
   function fulfillmentReadiness() {
-    const groups = ['intakeStrategy', 'rackStrategy', 'packStrategy'];
-    const zones = groups.filter((group) => Object.keys(FACILITY_INFO).some((key) => FACILITY_INFO[key].group === group && state.facilities[key])).length;
-    const contracts = Math.min(8, state.completedContracts);
-    const throughput = Math.min(6, state.metrics.perMinute);
-    const conditions = { zones: zones >= 3, contracts: state.completedContracts >= 8, throughput: state.metrics.perMinute >= 6 };
-    const score = Number(conditions.zones) + Number(conditions.contracts) + Number(conditions.throughput);
-    return { zones, contracts, throughput, conditions, score, ready: score === 3 };
+    return rank3ReadinessFromState(state, FACILITY_INFO);
   }
 
   function decisionImpact() {
@@ -983,6 +984,7 @@ export function createSimulation(saved = null) {
     runSorter(scaled);
     updateWorkers(scaled);
     updateMetrics();
+    updateFacilityRank();
     updateContract(scaled);
   }
 
@@ -1115,7 +1117,7 @@ export function createSimulation(saved = null) {
     if (Number.isFinite(snapshot.milestoneAwarded)) state.milestoneAwarded = Math.max(0, Math.floor(snapshot.milestoneAwarded));
     if (snapshot.schema_version >= 2) {
       if (Number.isFinite(snapshot.logisticsRating)) state.logisticsRating = Math.max(0, Math.floor(snapshot.logisticsRating));
-      if (Number.isFinite(snapshot.facilityRank)) state.facilityRank = clamp(Math.floor(snapshot.facilityRank), 1, 2);
+      if (Number.isFinite(snapshot.facilityRank)) state.facilityRank = clamp(Math.floor(snapshot.facilityRank), 1, 3);
       if (snapshot.facilities && typeof snapshot.facilities === 'object') {
         for (const key of Object.keys(FACILITY_INFO)) state.facilities[key] = Boolean(snapshot.facilities[key]);
       }
