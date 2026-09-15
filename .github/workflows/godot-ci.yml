@@ -96,7 +96,14 @@ jobs:
         run: godot --headless --path godot --script res://tests/rank2_facility_ui_smoke.gd
 
       - name: Rank 3 UI smoke
-        run: godot --headless --path godot --script res://tests/rank3_ui_smoke.gd
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --script res://tests/rank3_ui_smoke.gd 2>&1 | tee /tmp/rank3-ui-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/rank3-ui-smoke.log; then
+            echo 'Rank 3 UI smoke emitted an engine/script error'
+            exit 1
+          fi
 
       - name: Rank 2 facility visual smoke
         run: godot --headless --path godot --script res://tests/rank2_facility_visual_smoke.gd

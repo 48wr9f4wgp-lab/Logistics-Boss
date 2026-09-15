@@ -24,8 +24,14 @@ var _speeds := [0.0, 1.0, 2.0, 4.0]
 
 
 func bind_sim(next_sim: WarehouseSim) -> void:
+    if sim != null and sim.event_emitted.is_connected(_on_sim_event):
+        sim.event_emitted.disconnect(_on_sim_event)
+
     sim = next_sim
-    sim.event_emitted.connect(_on_sim_event)
+    if sim == null:
+        return
+    if not sim.event_emitted.is_connected(_on_sim_event):
+        sim.event_emitted.connect(_on_sim_event)
     _render()
 
 
