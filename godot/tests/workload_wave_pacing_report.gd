@@ -3,6 +3,7 @@ extends SceneTree
 const WorkloadSimScript = preload("res://domain/workload_warehouse_sim.gd")
 const STEP_SECONDS := 0.1
 const SCENARIO_SECONDS := 40.0
+const REPLENISHMENT_SECONDS := 12.0
 const CYCLE_SECONDS := 510.0
 const STAFFING_PLANS := ["receiving", "balanced", "picking", "dock", "shipping"]
 const PHASE_CLOCKS := {
@@ -40,6 +41,12 @@ func _init() -> void:
             "winners": winners,
         }
 
+    var replenishment_results: Array[Dictionary] = []
+    for plan in STAFFING_PLANS:
+        replenishment_results.append(_run_replenishment(plan))
+    var replenishment_winner: Dictionary = _phase_winner("inbound_surge", replenishment_results)
+    distinct_winners[String(replenishment_winner.get("staffing", ""))] = true
+
     var strategy_report: Dictionary = {
         "fixed_balanced": _run_cycle_strategy("flow", "fixed_balanced"),
         "fixed_shipping": _run_cycle_strategy("flow", "fixed_shipping"),
@@ -48,19 +55,29 @@ func _init() -> void:
 
     print("RANK2_WORKLOAD_WAVE_REPORT %s" % JSON.stringify({
         "scenario_seconds": SCENARIO_SECONDS,
+        "replenishment_seconds": REPLENISHMENT_SECONDS,
         "cycle_seconds": CYCLE_SECONDS,
         "profiles": profiles_report,
+        "replenishment": {
+            "winner": replenishment_winner,
+            "plans": replenishment_results,
+        },
         "distinct_winners": distinct_winners.keys(),
         "strategy": strategy_report,
     }))
 
-    if not _require(distinct_winners.size() >= 3, "workload waves must create at least three situational staffing winners across representative facility contexts"):
+    if not _require(distinct_winners.size() >= 5, "every Rank 2 staffing preset must have at least one measured operating niche"):
         return
     var adaptive: Dictionary = strategy_report["adaptive"]
     var fixed_shipping: Dictionary = strategy_report["fixed_shipping"]
-    if not _require(int(adaptive.get("shipments", 0)) > 0, "adaptive workload strategy must keep real shipments flowing"):
+    var fixed_balanced: Dictionary = strategy_report["fixed_balanced"]
+    if not _require(int(adaptive.get("shipments", 0)) > int(fixed_shipping.get("shipments", 0)), "forecast-driven staffing must beat always-shipping throughput across full workload cycles"):
         return
-    if not _require(float(adaptive.get("queue_pressure", INF)) < float(fixed_shipping.get("queue_pressure", INF)), "forecast-driven staffing must materially reduce accumulated queue pressure versus always shipping"):
+    if not _require(int(adaptive.get("revenue", 0)) > int(fixed_shipping.get("revenue", 0)), "forecast-driven staffing must beat always-shipping revenue across full workload cycles"):
+        return
+    if not _require(int(adaptive.get("shipments", 0)) >= int(fixed_balanced.get("shipments", 0)) + 10, "workload decisions must materially outperform leaving staffing balanced"):
+        return
+    if not _require(int(adaptive.get("ending_packed", 999)) <= 2, "adaptive strategy must clear staged outbound work by the end of the dispatch window"):
         return
 
     print("Godot Rank 2 workload wave pacing report passed")
@@ -100,6 +117,36 @@ func _run_phase(profile: String, phase: String, plan: String) -> Dictionary:
     }
 
 
+func _run_replenishment(plan: String) -> Dictionary:
+    var sim: WorkloadWarehouseSim = _prepared_rank2("capacity", plan, float(PHASE_CLOCKS["inbound_surge"]))
+    sim.inbound_queue = 18
+    sim.rack_stock = 0
+    sim.open_orders = 0
+    sim.packing_queue = 0
+    sim.packed_queue = 0
+    var inbound_sum: float = 0.0
+    var samples: int = 0
+
+    for _i in int(ceil(REPLENISHMENT_SECONDS / STEP_SECONDS)):
+        sim.step(STEP_SECONDS)
+        inbound_sum += float(sim.inbound_queue)
+        samples += 1
+
+    return {
+        "staffing": plan,
+        "shipments": sim.shipped,
+        "revenue": sim.money,
+        "inbound_avg": snappedf(inbound_sum / maxf(1.0, float(samples)), 0.01),
+        "orders_avg": 0.0,
+        "packing_avg": 0.0,
+        "outbound_avg": 0.0,
+        "ending_inbound": sim.inbound_queue,
+        "ending_orders": sim.open_orders,
+        "ending_packed": sim.packed_queue,
+        "rack_stock": sim.rack_stock,
+    }
+
+
 func _run_cycle_strategy(profile: String, strategy: String) -> Dictionary:
     var starting_plan := "balanced"
     if strategy == "fixed_shipping":
@@ -122,7 +169,7 @@ func _run_cycle_strategy(profile: String, strategy: String) -> Dictionary:
             if phase_id != last_phase_id:
                 last_phase_id = phase_id
                 var target := _adaptive_plan_for_phase(phase_id)
-                if target != sim.staffing_plan and sim.staffing_cooldown <= 0.001:
+                if not target.is_empty() and target != sim.staffing_plan and sim.staffing_cooldown <= 0.001:
                     var result: Dictionary = sim.set_staffing_plan(target)
                     if bool(result.get("ok", false)):
                         switches += 1
@@ -144,6 +191,10 @@ func _run_cycle_strategy(profile: String, strategy: String) -> Dictionary:
         "orders_avg": snappedf(orders_sum / divisor, 0.01),
         "packing_avg": snappedf(packing_sum / divisor, 0.01),
         "outbound_avg": snappedf(outbound_sum / divisor, 0.01),
+        "ending_inbound": sim.inbound_queue,
+        "ending_orders": sim.open_orders,
+        "ending_packing": sim.packing_queue,
+        "ending_packed": sim.packed_queue,
         "switches": switches,
     }
 
