@@ -13,12 +13,14 @@ import {
   truckWaveSizeForLevel,
 } from './capital-model.js';
 import { RANK3_NAME, rank3ReadinessFromState } from './rank3-model.js';
+import { ROUTING_PACKAGES, isRoutingMode, routingPackage, routingRevenue } from './routing-model.js';
 
 const POS = {
   inbound: { x: -6.1, z: 3.8 },
   rack: { x: -2.1, z: -1.1 },
   pack: { x: 2.25, z: 0.2 },
   packed: { x: 3.1, z: -1.25 },
+  routing: { x: 5.25, z: -2.45 },
   outbound: { x: 6.0, z: -3.4 },
   center: { x: 0, z: 1.4 },
 };
@@ -108,6 +110,10 @@ function packedPosition(index) {
   return { x: 2.75 + (index % 3) * 0.55, y: 0.3, z: -1.45 - Math.floor(index / 3) * 0.58 };
 }
 
+function routingPosition(index) {
+  return { x: 4.85 + (index % 3) * 0.42, y: 0.3, z: -2.2 - Math.floor(index / 3) * 0.48 };
+}
+
 function createWorker(id, index) {
   return {
     id,
@@ -140,7 +146,9 @@ export function createSimulation(saved = null) {
   let offerCooldown = 0;
   let saveDirty = false;
   let simClock = 0;
+  let routingDispatchTimer = 0;
   const shipmentTimes = [];
+  const shipmentRevenue = [];
 
   const state = {
     schema_version: 3,
@@ -154,6 +162,7 @@ export function createSimulation(saved = null) {
     shipped: 0,
     ordersOpen: 2,
     policy: 'balanced',
+    routingMode: 'balanced',
     timeScale: 1,
     priorities: { store: 3, pick: 3, ship: 4 },
     upgrades: { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0, asrs: 0 },
@@ -171,7 +180,7 @@ export function createSimulation(saved = null) {
       detail: '流れは安定しています', recommendation: '次の強化に備えて資金を貯める',
       ratios: { inbound: 0, rack: 0, orders: 0, packed: 0 },
     },
-    metrics: { perMinute: 0 },
+    metrics: { perMinute: 0, revenuePerMinute: 0 },
     decisionImpact: null,
   };
 
@@ -326,6 +335,11 @@ export function createSimulation(saved = null) {
     packed.forEach((box, index) => Object.assign(box, packedPosition(index)));
   }
 
+  function normalizeRoutingPositions() {
+    const routing = state.boxes.filter((box) => box.phase === 'routing' && !box.reservedBy);
+    routing.forEach((box, index) => Object.assign(box, routingPosition(index)));
+  }
+
   function spawnInbound(source = 'ambient') {
     const current = counts().inbound;
     if (current >= inboundMax()) {
@@ -353,7 +367,7 @@ export function createSimulation(saved = null) {
       if (box.phase === 'inbound' || box.phase === 'carried_store') inbound += 1;
       else if (box.phase === 'rack') rack += 1;
       else if (box.phase === 'waiting_pack' || box.phase === 'packing' || box.phase === 'carried_pick') packing += 1;
-      else if (box.phase === 'packed' || box.phase === 'carried_ship') packed += 1;
+      else if (box.phase === 'packed' || box.phase === 'carried_ship' || box.phase === 'routing') packed += 1;
     }
     return { inbound, rack, packing, packed };
   }
@@ -361,7 +375,7 @@ export function createSimulation(saved = null) {
   function inProcessOrders() {
     let total = 0;
     for (const box of state.boxes) {
-      if (['carried_pick', 'waiting_pack', 'packing', 'packed', 'carried_ship'].includes(box.phase)) total += 1;
+      if (['carried_pick', 'waiting_pack', 'packing', 'packed', 'carried_ship', 'routing'].includes(box.phase)) total += 1;
     }
     return total;
   }
@@ -489,13 +503,30 @@ export function createSimulation(saved = null) {
     const index = state.boxes.indexOf(box);
     if (index >= 0) state.boxes.splice(index, 1);
     state.ordersOpen = Math.max(0, state.ordersOpen - 1);
-    const unitRevenue = currentUnitRevenue(state.upgrades);
+    const baseRevenue = currentUnitRevenue(state.upgrades);
+    const routeMode = state.facilityRank >= 3 ? state.routingMode : 'balanced';
+    const unitRevenue = state.facilityRank >= 3 ? routingRevenue(baseRevenue, routeMode) : baseRevenue;
     state.money += unitRevenue;
     state.shipped += 1;
     shipmentTimes.push(simClock);
-    emit('shipment', { text: `出荷 +¥${unitRevenue}`, value: unitRevenue, source });
+    shipmentRevenue.push({ at: simClock, value: unitRevenue });
+    emit('shipment', { text: `出荷 +¥${unitRevenue}`, value: unitRevenue, source, routeMode });
     handleMilestone();
     markDirty();
+    return unitRevenue;
+  }
+
+  function stageForRouting(box, source = 'worker') {
+    if (state.facilityRank < 3) return completeShipment(box, source);
+    const hadQueue = state.boxes.some((item) => item.phase === 'routing');
+    box.phase = 'routing';
+    box.reservedBy = null;
+    box.carrierId = null;
+    box.rackSlot = null;
+    if (!hadQueue) routingDispatchTimer = routingPackage(state.routingMode).dispatchInterval;
+    normalizeRoutingPositions();
+    emit('routing_stage', { boxId: box.id, source, mode: state.routingMode, text: '出荷ステージへ搬送' });
+    return 0;
   }
 
   function deliver(worker, box) {
@@ -515,7 +546,7 @@ export function createSimulation(saved = null) {
       box.y = 0.35;
       box.z = POS.pack.z;
     } else if (kind === 'ship') {
-      completeShipment(box, 'worker');
+      stageForRouting(box, 'worker');
     }
     worker.carrying = null;
     worker.task = null;
@@ -560,6 +591,7 @@ export function createSimulation(saved = null) {
     }
     normalizeInboundPositions();
     normalizePackedPositions();
+    normalizeRoutingPositions();
   }
 
   function updatePacking(dt) {
@@ -702,8 +734,27 @@ export function createSimulation(saved = null) {
     sorterTimer = sorterInterval();
     const box = availableBox('packed');
     if (!box || state.ordersOpen <= 0) return;
-    completeShipment(box, 'sorter');
-    emit('sorter_transfer', { text: '自動ソーター 1箱出荷', amount: 1 });
+    stageForRouting(box, 'sorter');
+    emit('sorter_transfer', { text: state.facilityRank >= 3 ? '自動ソーター 1箱ルーティングへ' : '自動ソーター 1箱出荷', amount: 1 });
+  }
+
+  function runRouting(dt) {
+    if (state.facilityRank < 3) return;
+    const queue = state.boxes.filter((box) => box.phase === 'routing');
+    if (!queue.length) {
+      routingDispatchTimer = 0;
+      return;
+    }
+    const route = routingPackage(state.routingMode);
+    routingDispatchTimer = Math.max(0, routingDispatchTimer - dt);
+    if (queue.length < route.minBatch || routingDispatchTimer > 0) return;
+    const amount = Math.min(route.batchSize, queue.length);
+    if (amount < route.minBatch) return;
+    let totalValue = 0;
+    for (const box of queue.slice(0, amount)) totalValue += completeShipment(box, `routing:${state.routingMode}`);
+    routingDispatchTimer = route.dispatchInterval;
+    normalizeRoutingPositions();
+    emit('route_dispatch', { mode: state.routingMode, amount, value: totalValue, text: `${route.label} ${amount}箱出荷` });
   }
 
   function orderInterval() {
@@ -909,7 +960,9 @@ export function createSimulation(saved = null) {
 
   function updateMetrics() {
     while (shipmentTimes.length && simClock - shipmentTimes[0] > 60) shipmentTimes.shift();
+    while (shipmentRevenue.length && simClock - shipmentRevenue[0].at > 60) shipmentRevenue.shift();
     state.metrics.perMinute = shipmentTimes.length;
+    state.metrics.revenuePerMinute = shipmentRevenue.reduce((sum, item) => sum + item.value, 0);
     const c = counts();
     const ratios = {
       inbound: c.inbound / inboundMax(),
@@ -983,6 +1036,7 @@ export function createSimulation(saved = null) {
     updatePacking(scaled);
     runSorter(scaled);
     updateWorkers(scaled);
+    runRouting(scaled);
     updateMetrics();
     updateFacilityRank();
     updateContract(scaled);
@@ -994,6 +1048,18 @@ export function createSimulation(saved = null) {
     emit('policy', { text: policy === 'balanced' ? '方針: バランス' : policy === 'inbound' ? '方針: 入庫優先' : '方針: 出庫優先' });
     markDirty();
     return true;
+  }
+
+  function setRoutingMode(mode) {
+    if (state.facilityRank < 3) return { ok: false, reason: 'Fulfillment Centerで解禁' };
+    if (!isRoutingMode(mode)) return { ok: false, reason: '不明な配送ルート' };
+    if (state.routingMode === mode) return { ok: false, reason: '現在のルートです' };
+    state.routingMode = mode;
+    if (state.boxes.some((box) => box.phase === 'routing')) routingDispatchTimer = routingPackage(mode).dispatchInterval;
+    else routingDispatchTimer = 0;
+    emit('route_change', { mode, text: `配送ルート: ${routingPackage(mode).label}` });
+    markDirty();
+    return { ok: true, mode };
   }
 
   function setPriority(kind, value) {
@@ -1127,6 +1193,7 @@ export function createSimulation(saved = null) {
       state.facilityRank = state.logisticsRating >= FACILITY_RANKS[2].rating ? 2 : 1;
     }
     if (['balanced', 'inbound', 'ship'].includes(snapshot.policy)) state.policy = snapshot.policy;
+    if (isRoutingMode(snapshot.routingMode)) state.routingMode = snapshot.routingMode;
     if (snapshot.priorities && typeof snapshot.priorities === 'object') {
       for (const key of ['store', 'pick', 'ship']) state.priorities[key] = clamp(Math.round(Number(snapshot.priorities[key] ?? state.priorities[key])), 1, 5);
     }
@@ -1157,6 +1224,7 @@ export function createSimulation(saved = null) {
       completedContracts: state.completedContracts,
       milestoneAwarded: state.milestoneAwarded,
       policy: state.policy,
+      routingMode: state.routingMode,
       priorities: { ...state.priorities },
       upgrades: { ...state.upgrades },
       perks: { ...state.perks },
@@ -1181,6 +1249,7 @@ export function createSimulation(saved = null) {
     state.completedContracts = 0;
     state.milestoneAwarded = 0;
     state.policy = 'balanced';
+    state.routingMode = 'balanced';
     state.timeScale = 1;
     state.priorities = { store: 3, pick: 3, ship: 4 };
     state.upgrades = { worker: 0, speed: 0, rack: 0, pack: 0, conveyor: 0, forklift: 0, agv: 0, sorter: 0, hall: 0, truckDock: 0, asrs: 0 };
@@ -1194,6 +1263,8 @@ export function createSimulation(saved = null) {
     nextWorkerId = 1;
     nextBoxId = 1;
     shipmentTimes.splice(0);
+    shipmentRevenue.splice(0);
+    routingDispatchTimer = 0;
     simClock = 0;
     inboundTimer = 0.4;
     orderTimer = 3.0;
@@ -1250,6 +1321,8 @@ export function createSimulation(saved = null) {
     upgradeInfo: UPGRADE_INFO,
     perkInfo: PERK_INFO,
     setPolicy,
+    setRoutingMode,
+    routingInfo: ROUTING_PACKAGES,
     setPriority,
     purchaseUpgrade,
     purchaseCapitalUpgrade,
