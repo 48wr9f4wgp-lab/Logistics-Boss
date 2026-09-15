@@ -13,6 +13,9 @@ var _contract_buttons: Array[Button] = []
 var _staffing_label: Label
 var _staffing_grid: GridContainer
 var _staffing_buttons: Dictionary = {}
+var _facility_header: Label
+var _facility_zone_labels: Dictionary = {}
+var _facility_buttons: Dictionary = {}
 
 
 func _ready() -> void:
@@ -70,6 +73,12 @@ func _on_sim_event(event: Dictionary) -> void:
     match String(event.get("type", "")):
         "upgrade_purchased":
             _show_measurement_status("投資効果を計測中\n前25秒 → 後25秒", 30.0)
+        "facility_purchased":
+            _show_measurement_status("拡張効果を計測中\n前25秒 → 後25秒", 30.0)
+            _show_toast("ZONE %s  %s" % [
+                String(event.get("zone", "")),
+                String(event.get("label", "拡張完了")),
+            ])
         "measurement_completed":
             var before: Dictionary = event.get("before", {})
             var after: Dictionary = event.get("after", {})
@@ -185,6 +194,38 @@ func _build_progression_section() -> void:
         _staffing_grid.add_child(button)
         _staffing_buttons[plan] = button
 
+    _facility_header = Label.new()
+    _facility_header.visible = false
+    _facility_header.add_theme_font_size_override("font_size", 13)
+    _facility_header.add_theme_color_override("font_color", Color(1.0, 0.76, 0.34))
+    column.add_child(_facility_header)
+
+    _build_facility_zone(column, "intake", "ZONE A  入荷", [&"double_dock", &"buffer_yard"])
+    _build_facility_zone(column, "storage", "ZONE B  保管", [&"fast_pick_rack", &"high_density_rack"])
+    _build_facility_zone(column, "packing", "ZONE C  梱包", [&"parallel_pack", &"fast_pack_cell"])
+
+
+func _build_facility_zone(parent: VBoxContainer, group: String, title: String, kinds: Array[StringName]) -> void:
+    var label := Label.new()
+    label.text = title
+    label.visible = false
+    label.add_theme_font_size_override("font_size", 11)
+    label.add_theme_color_override("font_color", Color(0.66, 0.80, 0.86))
+    parent.add_child(label)
+    _facility_zone_labels[group] = label
+
+    for kind in kinds:
+        var button := Button.new()
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.custom_minimum_size = Vector2(0, 58)
+        button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+        button.add_theme_font_size_override("font_size", 11)
+        _apply_button_style(button, false)
+        button.pressed.connect(_purchase_facility.bind(kind))
+        button.visible = false
+        parent.add_child(button)
+        _facility_buttons[String(kind)] = button
+
 
 func _choose_contract_slot(index: int) -> void:
     if sim == null or index < 0 or index >= sim.contract_offers.size():
@@ -210,6 +251,23 @@ func _select_staffing_plan(plan: String) -> void:
             _show_toast("現在の人員配置です")
         _:
             _show_toast("人員配置を変更できない")
+
+
+func _purchase_facility(kind: StringName) -> void:
+    if sim == null:
+        return
+    var result := sim.purchase_facility(kind)
+    if bool(result.get("ok", false)):
+        return
+    match String(result.get("reason", "")):
+        "funds":
+            _show_toast("資金不足  ¥%s必要" % _format_number(int(result.get("cost", 0))))
+        "exclusive":
+            _show_toast("このゾーンは選択済み")
+        "owned":
+            _show_toast("採用済みの設備です")
+        _:
+            _show_toast("拡張できない")
 
 
 func _render_progression() -> void:
@@ -271,6 +329,8 @@ func _render_progression() -> void:
             _apply_button_style(staffing_button, String(plan) == sim.staffing_plan)
             staffing_button.disabled = sim.staffing_cooldown > 0.0
 
+    _render_facility_choices(rank2)
+
     _flow_button.visible = not rank2
     _inbound_button.visible = not rank2
     _outbound_button.visible = not rank2
@@ -280,6 +340,47 @@ func _render_progression() -> void:
             (_upgrade_buttons[kind] as Button).visible = not rank2
     if _upgrade_buttons.has(&"forklift"):
         (_upgrade_buttons[&"forklift"] as Button).visible = not sim.forklift_unlocked
+
+
+func _render_facility_choices(rank2: bool) -> void:
+    if _facility_header == null:
+        return
+
+    _facility_header.visible = rank2
+    if not rank2:
+        for zone_label in _facility_zone_labels.values():
+            (zone_label as Label).visible = false
+        for facility_button in _facility_buttons.values():
+            (facility_button as Button).visible = false
+        return
+
+    _facility_header.text = "拡張ゾーン  %d / 3" % sim.expansion_zones_completed()
+    var groups := {
+        "intake": ["ZONE A  入荷", [&"double_dock", &"buffer_yard"]],
+        "storage": ["ZONE B  保管", [&"fast_pick_rack", &"high_density_rack"]],
+        "packing": ["ZONE C  梱包", [&"parallel_pack", &"fast_pack_cell"]],
+    }
+    for group in groups:
+        var data: Array = groups[group]
+        var selected := sim.selected_facility_for_group(String(group))
+        var zone_label: Label = _facility_zone_labels[group]
+        zone_label.visible = true
+        zone_label.text = String(data[0]) + ("  ｜ 採用済み" if not selected.is_empty() else "  ｜ どちらか1つ")
+        var kinds: Array = data[1]
+        for kind_variant in kinds:
+            var kind := StringName(kind_variant)
+            var button: Button = _facility_buttons[String(kind)]
+            var info := sim.facility_info(kind)
+            var chosen := selected == String(kind)
+            button.visible = true
+            button.disabled = not selected.is_empty() or sim.money < sim.facility_cost(kind)
+            button.text = "%s%s\n%s  ｜ ¥%s" % [
+                "✓ " if chosen else "",
+                String(info.get("label", String(kind))),
+                String(info.get("effect", "")),
+                _format_number(sim.facility_cost(kind)),
+            ]
+            _apply_button_style(button, chosen)
 
 
 func _find_upgrade_list(node: Node) -> VBoxContainer:
