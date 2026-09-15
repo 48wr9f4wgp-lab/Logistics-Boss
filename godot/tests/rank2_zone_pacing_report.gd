@@ -19,30 +19,30 @@ func _init() -> void:
         },
     }
 
-    for group in report.values():
-        for metrics in (group as Dictionary).values():
-            assert(int((metrics as Dictionary).get("shipments", 0)) > 0, "every Rank 2 facility scenario must preserve real shipment flow")
-
     print("RANK2_ZONE_PACING_REPORT %s" % JSON.stringify(report))
+
+    for group_name in report:
+        var group: Dictionary = report[group_name]
+        for case_name in group:
+            var metrics: Dictionary = group[case_name]
+            if int(metrics.get("shipments", 0)) <= 0:
+                push_error("Rank 2 facility scenario stopped real shipment flow: %s/%s" % [group_name, case_name])
+                quit(1)
+                return
+
     print("Godot Rank 2 zone pacing report passed")
     quit(0)
 
 
 func _run_case(kind: StringName, staffing: String, seconds: float) -> Dictionary:
     var sim := _prepared_rank2(staffing)
-    var inbound_arrivals := 0
-    var facility_shipments := 0
-    sim.event_emitted.connect(func(event: Dictionary):
-        match String(event.get("type", "")):
-            "inbound_arrival":
-                inbound_arrivals += 1
-            "shipment":
-                facility_shipments += 1
-    )
+    var events: Array[Dictionary] = []
+    sim.event_emitted.connect(func(event: Dictionary): events.append(event))
 
     var purchase := sim.purchase_facility(kind)
     assert(bool(purchase.get("ok", false)), "%s must purchase in pacing report" % String(kind))
 
+    var start_shipped := sim.shipped
     var samples := 0
     var inbound_sum := 0.0
     var rack_sum := 0.0
@@ -66,6 +66,12 @@ func _run_case(kind: StringName, staffing: String, seconds: float) -> Dictionary
         bottlenecks[key] = int(bottlenecks.get(key, 0)) + 1
         samples += 1
 
+    var inbound_arrivals := 0
+    for event in events:
+        if String(event.get("type", "")) == "inbound_arrival":
+            inbound_arrivals += 1
+
+    var facility_shipments := sim.shipped - start_shipped
     return {
         "shipments": facility_shipments,
         "shipments_per_min": snappedf(float(facility_shipments) * 60.0 / seconds, 0.1),
