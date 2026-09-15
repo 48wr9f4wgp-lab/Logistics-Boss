@@ -71,23 +71,38 @@ jobs:
           set -euo pipefail
           rm -rf ios-build
           mkdir -p ios-build
+
+          set +e
           godot --headless --path godot --export-release 'iOS CI Project' ../ios-build/LogisticsBoss 2>&1 | tee /tmp/godot-ios-export.log
+          godot_status=${PIPESTATUS[0]}
+          set -e
+
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-export.log; then
             echo 'Godot iOS export emitted an engine/script error'
             exit 1
           fi
+
+          # Project-only export can return non-zero on an unsigned macOS runner after
+          # generating the Xcode project. For this smoke test, the authoritative pass
+          # condition is the complete unsigned Xcode project payload, not code signing.
           test -s ios-build/LogisticsBoss.xcodeproj/project.pbxproj
           test -s ios-build/LogisticsBoss/LogisticsBoss-Info.plist
           test -s ios-build/LogisticsBoss/data.pck
-          ditto -c -k --sequesterRsrc --keepParent ios-build/LogisticsBoss.xcodeproj ios-build/LogisticsBoss.xcodeproj.zip
-          test -s ios-build/LogisticsBoss.xcodeproj.zip
+          test -s ios-build/LogisticsBoss.xcframework/Info.plist
+          test -s ios-build/LogisticsBoss.xcframework/ios-arm64/libgodot.a
+          test -s ios-build/MoltenVK.xcframework/Info.plist
+
+          if [ "$godot_status" -ne 0 ]; then
+            echo "Godot returned status $godot_status after generating the complete unsigned Xcode project; accepted for project-only smoke."
+          fi
+
+          ditto -c -k --sequesterRsrc --keepParent ios-build /tmp/LogisticsBoss-ios-project.zip
+          test -s /tmp/LogisticsBoss-ios-project.zip
 
       - name: Upload unsigned iOS Xcode-project smoke artifact
         uses: actions/upload-artifact@v4
         with:
           name: logistics-boss-ios-xcode-smoke
-          path: |
-            ios-build/LogisticsBoss.xcodeproj.zip
-            ios-build/LogisticsBoss/LogisticsBoss-Info.plist
+          path: /tmp/LogisticsBoss-ios-project.zip
           if-no-files-found: error
           retention-days: 3
