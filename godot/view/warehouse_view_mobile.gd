@@ -5,11 +5,16 @@ const MOBILE_MOUSE_ORBIT_SENSITIVITY := Vector2(0.0042, 0.0032)
 const MOBILE_TOUCH_ORBIT_SENSITIVITY := Vector2(0.0041, 0.0033)
 const MOBILE_PINCH_ZOOM_SENSITIVITY := 0.014
 const MOBILE_CAMERA_POSITION_SMOOTHING := 16.0
+const MOBILE_CAMERA_FOV_SMOOTHING := 10.0
 const MOBILE_INPUT_DEADZONE := 1.2
 const MOBILE_MAX_DRAG_STEP := 26.0
 const MOBILE_MAX_PINCH_STEP := 36.0
 const MOBILE_DRAG_FILTER_WEIGHT := 0.78
 const MOBILE_PINCH_FILTER_WEIGHT := 0.75
+const MOBILE_MIN_DISTANCE := 14.0
+const MOBILE_MAX_DISTANCE := 25.0
+const MOBILE_NEAR_FOV := 44.0
+const MOBILE_FAR_FOV := 34.0
 
 var _filtered_touch_drag := Vector2.ZERO
 var _filtered_pinch_delta := 0.0
@@ -18,9 +23,9 @@ var _filtered_pinch_delta := 0.0
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventMouseButton:
         if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
-            _camera_distance = maxf(12.0, _camera_distance - 0.8)
+            _camera_distance = maxf(MOBILE_MIN_DISTANCE, _camera_distance - 0.8)
         elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
-            _camera_distance = minf(25.0, _camera_distance + 0.8)
+            _camera_distance = minf(MOBILE_MAX_DISTANCE, _camera_distance + 0.8)
 
     if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
         var mouse_drag: Vector2 = event.relative.limit_length(MOBILE_MAX_DRAG_STEP)
@@ -71,8 +76,8 @@ func _unhandled_input(event: InputEvent) -> void:
                 _filtered_pinch_delta = lerpf(_filtered_pinch_delta, pinch_delta, MOBILE_PINCH_FILTER_WEIGHT)
                 _camera_distance = clampf(
                     _camera_distance - _filtered_pinch_delta * MOBILE_PINCH_ZOOM_SENSITIVITY,
-                    12.0,
-                    25.0
+                    MOBILE_MIN_DISTANCE,
+                    MOBILE_MAX_DISTANCE
                 )
             _last_pinch_distance = distance
 
@@ -81,7 +86,16 @@ func _update_camera(delta: float) -> void:
     if _camera == null:
         return
 
-    var target := Vector3(0.0, 0.85, 0.25)
+    var zoom_t := clampf(
+        (_camera_distance - MOBILE_MIN_DISTANCE) / (MOBILE_MAX_DISTANCE - MOBILE_MIN_DISTANCE),
+        0.0,
+        1.0
+    )
+    var near_target := Vector3(0.0, 1.20, 0.10)
+    var far_target := Vector3(0.0, 0.85, 0.25)
+    var target := near_target.lerp(far_target, zoom_t)
+    var desired_fov := lerpf(MOBILE_NEAR_FOV, MOBILE_FAR_FOV, zoom_t)
+
     var horizontal := cos(_orbit_pitch) * _camera_distance
     var height := -sin(_orbit_pitch) * _camera_distance
     var desired_position := target + Vector3(
@@ -92,6 +106,7 @@ func _update_camera(delta: float) -> void:
 
     if not _camera_pose_initialized:
         _camera.global_position = desired_position
+        _camera.fov = desired_fov
         _camera_pose_initialized = true
     else:
         var smoothing_weight := 1.0 - exp(-MOBILE_CAMERA_POSITION_SMOOTHING * maxf(delta, 0.0))
@@ -99,5 +114,7 @@ func _update_camera(delta: float) -> void:
             desired_position,
             clampf(smoothing_weight, 0.0, 1.0)
         )
+        var fov_weight := 1.0 - exp(-MOBILE_CAMERA_FOV_SMOOTHING * maxf(delta, 0.0))
+        _camera.fov = lerpf(_camera.fov, desired_fov, clampf(fov_weight, 0.0, 1.0))
 
     _camera.look_at(target, Vector3.UP)
