@@ -2,7 +2,7 @@ name: Logistics Boss Godot Preview Pages
 
 on:
   push:
-    branches: [port/godot-vertical-slice]
+    branches: [main]
     paths:
       - 'godot/**'
       - '.github/workflows/godot-preview-pages.yml'
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout Godot port
+      - name: Checkout canonical Godot source
         uses: actions/checkout@v4
 
       - name: Set up Godot
@@ -30,7 +30,7 @@ jobs:
           use-dotnet: false
           include-templates: true
 
-      - name: Export Godot Web preview
+      - name: Export Godot Web engineering preview
         shell: bash
         run: |
           set -euo pipefail
@@ -41,7 +41,7 @@ jobs:
           test -s /tmp/godot-web/index.wasm
           test -s /tmp/godot-web/index.pck
 
-      - name: Checkout canonical main site
+      - name: Checkout Pages branch state
         uses: actions/checkout@v4
         with:
           ref: main
@@ -65,5 +65,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Publish Godot web preview"
+          git commit -m "Publish Godot web engineering preview"
           git push origin HEAD:main
