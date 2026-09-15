@@ -1,5 +1,6 @@
 extends "res://domain/workload_warehouse_sim.gd"
 
+var inbound_limit_bonus: int = 0
 var store_cycle_multiplier: float = 1.0
 var pick_cycle_multiplier: float = 1.0
 var ship_cycle_multiplier: float = 1.0
@@ -17,12 +18,14 @@ var _crossdock_remaining: float = 0.0
 
 
 func configure_candidate(
+    receiving_bonus: int,
     store_multiplier: float,
     pick_multiplier: float,
     ship_multiplier: float,
     retrieval_cycle: float,
     direct_crossdock_cycle: float
 ) -> void:
+    inbound_limit_bonus = maxi(0, receiving_bonus)
     store_cycle_multiplier = clampf(store_multiplier, 0.35, 1.0)
     pick_cycle_multiplier = clampf(pick_multiplier, 0.35, 1.0)
     ship_cycle_multiplier = clampf(ship_multiplier, 0.35, 1.0)
@@ -45,6 +48,10 @@ func step(real_dt: float) -> void:
         return
     _update_autonomous_retrieval(dt)
     _update_crossdock(dt)
+
+
+func _current_inbound_limit() -> int:
+    return super._current_inbound_limit() + inbound_limit_bonus
 
 
 func _start_task(worker: Dictionary, task: int) -> void:
