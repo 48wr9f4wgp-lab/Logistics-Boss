@@ -31,6 +31,16 @@ func _init() -> void:
     assert(hud._rank3_panel.visible, "late Rank 2 must show the Rank 3 readiness target")
     assert(not hud._receiving_annex_button.visible, "Rank 2 must not expose the Rank 3 purchase before promotion")
     assert(hud._rank3_status.text.contains("解禁条件"), "Rank 2 readiness panel must explain the Rank 3 gate")
+    assert(not hud._rank3_status.text.contains("契約"), "Rank 3 readiness must not show contracts as mandatory")
+    assert(hud._rank3_status.text.contains("設備資産"), "Rank 3 readiness must show equipment asset progress")
+    assert(hud._rank3_status.text.contains("200,000"), "Rank 3 readiness must show the canonical asset target")
+    assert(hud._rank3_status.text.contains("出荷ペース"), "Rank 3 readiness must show live throughput progress")
+
+    hud.bind_sim(sim)
+    hud._render_progression()
+    hud._render_rank3()
+    assert(hud._rank3_panel.visible, "Rank 3 panel must remain visible after promotion")
+    assert(hud._rank3_status.text.contains("次の成長投資"), "Rank 3 promoted UI must remain intact")
 
     print("Godot Rank 3 UI smoke passed")
     quit(0)
