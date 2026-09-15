@@ -19,6 +19,14 @@ const MINT := Color(0.27, 0.92, 0.68)
 const WARM := Color(1.0, 0.72, 0.42)
 const PARCEL := Color(0.78, 0.52, 0.25)
 
+const MOUSE_ORBIT_SENSITIVITY := Vector2(0.0040, 0.0030)
+const TOUCH_ORBIT_SENSITIVITY := Vector2(0.0032, 0.0026)
+const PINCH_ZOOM_SENSITIVITY := 0.012
+const CAMERA_POSITION_SMOOTHING := 10.0
+const INPUT_DEADZONE := 0.75
+const MAX_DRAG_STEP := 36.0
+const MAX_PINCH_STEP := 48.0
+
 var sim: WarehouseSim
 
 var _camera: Camera3D
@@ -40,6 +48,7 @@ var _orbit_pitch := -0.70
 var _camera_distance := 18.0
 var _touches: Dictionary = {}
 var _last_pinch_distance := 0.0
+var _camera_pose_initialized := false
 
 
 func bind_sim(next_sim: WarehouseSim) -> void:
@@ -52,14 +61,14 @@ func _ready() -> void:
     _build_camera()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
     if sim == null:
         return
 
     _sync_workers()
     _sync_rack_geometry()
     _sync_box_counts()
-    _update_camera()
+    _update_camera(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -70,12 +79,20 @@ func _unhandled_input(event: InputEvent) -> void:
             _camera_distance = minf(25.0, _camera_distance + 0.8)
 
     if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
-        _orbit_yaw -= event.relative.x * 0.007
-        _orbit_pitch = clampf(_orbit_pitch - event.relative.y * 0.005, -0.98, -0.48)
+        var mouse_drag := event.relative.limit_length(MAX_DRAG_STEP)
+        if mouse_drag.length() >= INPUT_DEADZONE:
+            _orbit_yaw -= mouse_drag.x * MOUSE_ORBIT_SENSITIVITY.x
+            _orbit_pitch = clampf(
+                _orbit_pitch - mouse_drag.y * MOUSE_ORBIT_SENSITIVITY.y,
+                -0.98,
+                -0.48
+            )
 
     if event is InputEventScreenTouch:
         if event.pressed:
             _touches[event.index] = event.position
+            if _touches.size() >= 2:
+                _last_pinch_distance = 0.0
         else:
             _touches.erase(event.index)
             _last_pinch_distance = 0.0
@@ -83,16 +100,27 @@ func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventScreenDrag:
         _touches[event.index] = event.position
         if _touches.size() == 1:
-            _orbit_yaw -= event.relative.x * 0.0075
-            _orbit_pitch = clampf(_orbit_pitch - event.relative.y * 0.0055, -0.98, -0.48)
+            var touch_drag := event.relative.limit_length(MAX_DRAG_STEP)
+            if touch_drag.length() >= INPUT_DEADZONE:
+                _orbit_yaw -= touch_drag.x * TOUCH_ORBIT_SENSITIVITY.x
+                _orbit_pitch = clampf(
+                    _orbit_pitch - touch_drag.y * TOUCH_ORBIT_SENSITIVITY.y,
+                    -0.98,
+                    -0.48
+                )
         elif _touches.size() >= 2:
             var ids := _touches.keys()
             var a: Vector2 = _touches[ids[0]]
             var b: Vector2 = _touches[ids[1]]
             var distance := a.distance_to(b)
             if _last_pinch_distance > 0.0:
+                var pinch_delta := clampf(
+                    distance - _last_pinch_distance,
+                    -MAX_PINCH_STEP,
+                    MAX_PINCH_STEP
+                )
                 _camera_distance = clampf(
-                    _camera_distance - (distance - _last_pinch_distance) * 0.022,
+                    _camera_distance - pinch_delta * PINCH_ZOOM_SENSITIVITY,
                     12.0,
                     25.0
                 )
@@ -314,18 +342,29 @@ func _sync_box_counts() -> void:
         _rebuild_boxes(_packed_boxes, mini(sim.packed_queue, 10), Vector3(4.45, 0.36, 1.15), Vector2(5, 2), Color(0.84, 0.61, 0.31))
 
 
-func _update_camera() -> void:
+func _update_camera(delta: float) -> void:
     if _camera == null:
         return
 
     var target := Vector3(0.0, 0.85, 0.25)
     var horizontal := cos(_orbit_pitch) * _camera_distance
     var height := -sin(_orbit_pitch) * _camera_distance
-    _camera.global_position = target + Vector3(
+    var desired_position := target + Vector3(
         sin(_orbit_yaw) * horizontal,
         height,
         cos(_orbit_yaw) * horizontal
     )
+
+    if not _camera_pose_initialized:
+        _camera.global_position = desired_position
+        _camera_pose_initialized = true
+    else:
+        var smoothing_weight := 1.0 - exp(-CAMERA_POSITION_SMOOTHING * maxf(delta, 0.0))
+        _camera.global_position = _camera.global_position.lerp(
+            desired_position,
+            clampf(smoothing_weight, 0.0, 1.0)
+        )
+
     _camera.look_at(target, Vector3.UP)
 
 
