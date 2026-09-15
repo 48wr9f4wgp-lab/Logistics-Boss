@@ -77,11 +77,11 @@ func _render_rank3() -> void:
 
     var readiness: Dictionary = sim.call("rank3_readiness")
     if rank < 3:
-        _rank3_status.text = "RANK 3 解禁条件\n拡張 %d/%d  ｜ 契約 %d/%d  ｜ 出荷 %.1f/%.1f分" % [
+        _rank3_status.text = "RANK 3 解禁条件\n拡張ゾーン %d/%d  ｜ 設備資産 ¥%s/¥%s  ｜ 出荷ペース %.1f/%.1f分" % [
             int(readiness.get("zones", 0)),
             int(readiness.get("zones_required", 3)),
-            int(readiness.get("contracts", 0)),
-            int(readiness.get("contracts_required", 8)),
+            _format_number(int(readiness.get("assets", 0))),
+            _format_number(int(readiness.get("assets_required", 200000))),
             float(readiness.get("throughput", 0.0)),
             float(readiness.get("throughput_required", 6.0)),
         ]
