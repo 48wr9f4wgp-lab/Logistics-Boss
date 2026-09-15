@@ -1,0 +1,60 @@
+name: Logistics Boss Godot Preview Pages
+
+on:
+  push:
+    branches: [port/godot-vertical-slice]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/godot-preview-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: godot-preview-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Build combined site
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf site godot-web
+          mkdir -p site godot-web
+          cp -R docs/. site/
+          godot --headless --path godot --export-release Web ../godot-web/index.html
+          mkdir -p site/godot-preview
+          cp -R godot-web/. site/godot-preview/
+          touch site/.nojekyll
+          test -s site/index.html
+          test -s site/godot-preview/index.html
+          test -s site/godot-preview/index.wasm
+          test -s site/godot-preview/index.pck
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
