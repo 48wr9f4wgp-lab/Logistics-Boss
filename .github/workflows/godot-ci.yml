@@ -38,6 +38,9 @@ jobs:
       - name: Domain simulation smoke
         run: godot --headless --path godot --script res://tests/sim_smoke.gd
 
+      - name: Economy pacing report
+        run: godot --headless --path godot --script res://tests/economy_pacing_report.gd
+
       - name: Japanese font glyph smoke
         run: godot --headless --path godot --script res://tests/font_smoke.gd
 
