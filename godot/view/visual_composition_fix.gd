@@ -1,6 +1,11 @@
 extends Node3D
 class_name WarehouseVisualCompositionFix
 
+const BASE_FOV := 32.5
+const OVERVIEW_FOV := 38.5
+const OVERVIEW_START_DISTANCE := 20.5
+const OVERVIEW_MAX_DISTANCE := 25.0
+
 var warehouse_view: WarehouseView
 
 
@@ -12,10 +17,31 @@ func bind(view: WarehouseView) -> void:
     call_deferred("_apply_composition")
 
 
+func _process(_delta: float) -> void:
+    if warehouse_view == null:
+        return
+
+    var camera := get_viewport().get_camera_3d()
+    if camera == null:
+        return
+
+    # Preserve the approved normal framing, but let the current pinch limit act
+    # as a true overview on portrait phones. Widening only near max distance is
+    # equivalent to moving the camera farther away without making the normal
+    # play view smaller.
+    var overview_t := clampf(
+        (warehouse_view._camera_distance - OVERVIEW_START_DISTANCE)
+        / (OVERVIEW_MAX_DISTANCE - OVERVIEW_START_DISTANCE),
+        0.0,
+        1.0
+    )
+    camera.fov = lerpf(BASE_FOV, OVERVIEW_FOV, smoothstep(0.0, 1.0, overview_t))
+
+
 func _apply_composition() -> void:
     var camera := get_viewport().get_camera_3d()
     if camera != null:
-        camera.fov = 32.5
+        camera.fov = BASE_FOV
 
     _reduce_foreground_structure()
     _deemphasize_truck()
@@ -32,12 +58,10 @@ func _reduce_foreground_structure() -> void:
 func _tune_structure_recursive(node: Node) -> void:
     if node is Node3D:
         var n := node as Node3D
-        # LOGISTICS BOSS is played as an open-top cutaway. Overhead trusses and
-        # emissive roof bars were repeatedly crossing the portrait camera and
-        # hiding workers, racks and parcels. Keep the back wall, columns and
-        # utility run for warehouse identity, but never let roof geometry block
-        # the readable gameplay floor.
-        if n.name == "RoofTruss" or n.name == "RoofLight":
+        # LOGISTICS BOSS uses an open-top cutaway. Anything that can become a
+        # large foreground slab or cross the portrait camera is removed from the
+        # gameplay view; the back wall and columns still carry warehouse identity.
+        if n.name == "RoofTruss" or n.name == "RoofLight" or n.name == "LeftWall":
             n.visible = false
 
     for child in node.get_children():
