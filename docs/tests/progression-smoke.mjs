@@ -24,7 +24,11 @@ assert(investedCapital(fresh.state.upgrades) === 1000, 'rack level 1 must count 
 assert(totalAssetValue(650, fresh.state.upgrades) === 1650, 'total assets must include cash plus equipment assets');
 fresh.state.upgrades.rack = 0;
 assert(currentUnitRevenue(fresh.state.upgrades) === 120, 'fresh commercial value must remain 120 per shipment');
-assert(commercialTierForAssets(8000).saleValue === 200, 'mechanized tier must raise shipment value');
+assert(commercialTierForAssets(8000).saleValue === 450, 'mechanized tier must raise shipment value to tuned pacing baseline');
+assert(commercialTierForAssets(40000).saleValue === 1500, '40k commercial tier must support active capital pacing');
+assert(commercialTierForAssets(200000).saleValue === 2600, '200k commercial tier must support active capital pacing');
+assert(commercialTierForAssets(500000).saleValue === 4200, '500k commercial tier must bridge toward million-yen automation without trivializing it');
+assert(commercialTierForAssets(1000000).saleValue > commercialTierForAssets(500000).saleValue, 'commercial value must continue increasing after one million assets');
 
 const migrated = createSimulation({
   schema_version: 2,
