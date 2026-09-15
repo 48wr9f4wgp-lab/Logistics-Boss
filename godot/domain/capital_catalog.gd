@@ -1,7 +1,7 @@
 extends RefCounted
 class_name CapitalCatalog
 
-const FORKLIFT_COST := 12000
+const FORKLIFT_COST := 20000
 
 
 func is_known(kind: StringName) -> bool:
@@ -26,7 +26,7 @@ func cost(
         &"packing":
             return int(4500 * pow(2.0, pack_level))
         &"forklift":
-            return FORKLIFT_COST if not forklift_unlocked else FORKLIFT_COST
+            return FORKLIFT_COST
         _:
             return 999999999
 
