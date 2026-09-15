@@ -2,6 +2,7 @@ extends SceneTree
 
 const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
 const FtueCoachScript = preload("res://ui/ftue_coach.gd")
+const FeedbackHudScript = preload("res://ui/game_hud_feedback.gd")
 
 
 func _init() -> void:
@@ -74,7 +75,60 @@ func _run() -> void:
         _fail("experienced saves must not be forced back through FTUE")
         return
 
+    var hud: FeedbackGameHud = FeedbackHudScript.new()
+    get_root().add_child(hud)
+    await process_frame
+    hud.bind_sim(sim)
+    await process_frame
+
+    var regressed := {
+        "type": "measurement_completed",
+        "before": {
+            "shipments_per_min": 50.4,
+            "inbound_queue": 0.3,
+            "packing_queue": 2.6,
+        },
+        "after": {
+            "shipments_per_min": 38.5,
+            "inbound_queue": 0.2,
+            "packing_queue": 2.4,
+        },
+    }
+    var regressed_feedback: Dictionary = hud.measurement_feedback(regressed)
+    if String(regressed_feedback.get("state", "")) != "regressed":
+        _fail("material shipment decline must be classified as regressed")
+        return
+    if not String(regressed_feedback.get("text", "")).contains("要再判断"):
+        _fail("regressed result must give the player an explicit judgment")
+        return
+    if not String(regressed_feedback.get("text", "")).contains("-11.9"):
+        _fail("regressed result must show shipment delta")
+        return
+    if not String(regressed_feedback.get("next_action", "")).begins_with("次:"):
+        _fail("measurement result must give a next action")
+        return
+
+    var improved := regressed.duplicate(true)
+    improved["before"]["shipments_per_min"] = 20.0
+    improved["after"]["shipments_per_min"] = 26.0
+    if String(hud.measurement_feedback(improved).get("state", "")) != "improved":
+        _fail("material shipment increase must be classified as improved")
+        return
+
+    var flat := regressed.duplicate(true)
+    flat["before"]["shipments_per_min"] = 20.0
+    flat["after"]["shipments_per_min"] = 20.4
+    if String(hud.measurement_feedback(flat).get("state", "")) != "flat":
+        _fail("small measurement noise must be classified as flat")
+        return
+
+    hud._on_sim_event(regressed)
+    if hud._measurement_label == null or not hud._measurement_label.text.contains("要再判断"):
+        _fail("completed measurement event must render actionable feedback in the HUD")
+        return
+
+    hud.queue_free()
     host.queue_free()
     await process_frame
-    print("Godot FTUE core loop smoke passed")
+    print("Godot FTUE core loop and investment feedback smoke passed")
     quit(0)
