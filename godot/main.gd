@@ -9,7 +9,7 @@ const ForkliftAutomationViewScript = preload("res://view/forklift_automation_vie
 const Rank2FacilityViewScript = preload("res://view/rank2_facility_view.gd")
 const Rank3ReceivingAnnexViewScript = preload("res://view/rank3_receiving_annex_view.gd")
 const Rank3RoutingHubViewScript = preload("res://view/rank3_routing_hub_view.gd")
-const GameHudScript = preload("res://ui/game_hud_ftue.gd")
+const GameHudScript = preload("res://ui/game_hud_feedback.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 
 var sim: WarehouseSim
