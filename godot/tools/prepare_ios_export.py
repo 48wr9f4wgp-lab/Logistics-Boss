@@ -34,7 +34,7 @@ def _render_ios_preset(index: int, team_id: str, bundle_id: str, preset_name: st
     name = _escape_cfg(preset_name)
     team = _escape_cfg(team_id)
     bundle = _escape_cfg(bundle_id)
-    return f'''\n[preset.{index}]\n\nname="{name}"\nplatform="iOS"\nrunnable=false\nadvanced_options=true\ndedicated_server=false\ncustom_features=""\nexport_filter="all_resources"\ninclude_filter=""\nexclude_filter=""\nexport_path="../ios-build/LogisticsBoss.zip"\npatches=PackedStringArray()\nencryption_include_filters=""\nencryption_exclude_filters=""\nseed=0\nencrypt_pck=false\nencrypt_directory=false\nscript_export_mode=2\n\n[preset.{index}.options]\n\ncustom_template/debug=""\ncustom_template/release=""\narchitectures/arm64=true\napplication/app_store_team_id="{team}"\napplication/export_method_debug=1\napplication/code_sign_identity_debug=""\napplication/code_sign_identity_release=""\napplication/provisioning_profile_specifier_debug=""\napplication/provisioning_profile_specifier_release=""\napplication/export_method_release=0\napplication/bundle_identifier="{bundle}"\napplication/signature=""\napplication/short_version="0.1.0"\napplication/version="1"\napplication/additional_plist_content=""\napplication/icon_interpolation=4\napplication/export_project_only=true\napplication/delete_old_export_files_unconditionally=true\n'''
+    return f'''\n[preset.{index}]\n\nname="{name}"\nplatform="iOS"\nrunnable=false\nadvanced_options=true\ndedicated_server=false\ncustom_features=""\nexport_filter="all_resources"\ninclude_filter=""\nexclude_filter=""\nexport_path="../ios-build/LogisticsBoss"\npatches=PackedStringArray()\nencryption_include_filters=""\nencryption_exclude_filters=""\nseed=0\nencrypt_pck=false\nencrypt_directory=false\nscript_export_mode=2\n\n[preset.{index}.options]\n\ncustom_template/debug=""\ncustom_template/release=""\narchitectures/arm64=true\napplication/app_store_team_id="{team}"\napplication/export_method_debug=1\napplication/code_sign_identity_debug=""\napplication/code_sign_identity_release=""\napplication/provisioning_profile_specifier_debug=""\napplication/provisioning_profile_specifier_release=""\napplication/export_method_release=0\napplication/bundle_identifier="{bundle}"\napplication/signature=""\napplication/short_version="0.1.0"\napplication/version="1"\napplication/additional_plist_content=""\napplication/icon_interpolation=4\napplication/export_project_only=true\napplication/delete_old_export_files_unconditionally=true\n'''
 
 
 def generate(base_path: Path, output_path: Path, team_id: str, bundle_id: str, preset_name: str) -> int:
@@ -81,6 +81,7 @@ def _self_test() -> int:
         assert 'application/app_store_team_id="ABCDE12XYZ"' in text
         assert 'application/bundle_identifier="com.example.logistics-boss-ci"' in text
         assert 'application/export_project_only=true' in text
+        assert 'export_path="../ios-build/LogisticsBoss"' in text
         assert 'progressive_web_app/enabled=false' in text
 
         duplicate = generate(output, root / "duplicate.cfg", "ABCDE12XYZ", "com.example.test", "iOS Duplicate")
