@@ -2,20 +2,21 @@
 
 Updated: 2026-09-15 JST
 Repository: `48wr9f4wgp-lab/Logistics-Boss`
-Canonical branch: `main`
-Current gameplay baseline: `8e0ffc9af23f5270c26259bd9a43a52774433746`
+Canonical production baseline: GitHub `main`
+Active migration branch: `port/godot-vertical-slice`
 
 ## 0. Canonical source order
 
-For every development decision, use this order:
+For current development decisions use:
 
-1. Current `main` implementation.
-2. This `HANDOFF.md` for latest title-specific state and immediate task.
-3. `RANK3_FULFILLMENT_CENTER.md`, `CAPITAL_PACING_V1.md`, `CAPITAL_EXPANSION_V2.md`, `CAPITAL_EXPANSION_V1.md`, current UX/benchmark addenda.
-4. `GDD_LOGISTICS_BOSS.md`.
-5. Project-level `GAME_DEV_MASTER_RULES v1.3`.
+1. Current user instruction.
+2. This `HANDOFF.md` and `TECH_DECISION_GODOT_MIGRATION_2026-09-15.md` while the Godot migration branch is active.
+3. Current `main` Web implementation as the behavioral / balance / rollback reference.
+4. `RANK3_FULFILLMENT_CENTER.md`, `CAPITAL_PACING_V1.md`, `CAPITAL_EXPANSION_V2.md`, current UX / benchmark addenda.
+5. `GDD_LOGISTICS_BOSS.md` except where later title-specific decisions supersede stale FTUE / technology language.
+6. Project-level `GAME_DEV_MASTER_RULES v1.3`.
 
-Older FTUE/GDD language that prescribes a single path is stale. Do **not** restore mandatory contracts, “今やること” rails, Director correct-answer buttons, severity-driven panel opening, or MutationObserver state guards.
+Do not restore stale mandatory-contract FTUE, Director one-tap answers, severity-driven panel opening, MutationObserver ownership guards, or a single prescribed progression path.
 
 Current product rule: **the game diagnoses state and consequences; the player chooses the solution.**
 
@@ -25,231 +26,203 @@ Logistics Boss is a mobile-first 3D logistics management / automation-observer g
 
 Canonical loop:
 
-`observe → find bottleneck → choose investment / operating decision → autonomous 3D logistics changes → measure Before/After → a new bottleneck emerges → reinvest at larger scale`
+`observe flow → find bottleneck → choose investment / operating decision → autonomous logistics changes → measure Before/After → a new bottleneck emerges → reinvest at larger scale`
 
 Player fantasy is operating and capital allocation, not manual parcel carrying or avatar driving.
 
 Finished-product priorities:
 - visible autonomous logistics;
 - meaningful capital escalation;
-- multiple viable operating/investment paths;
+- multiple viable operating / investment paths;
 - measurable consequences including negative tradeoffs;
 - bottlenecks that move when solved;
 - clear mobile UX while keeping the facility visually primary.
 
 Current stage: Functional Build / deeper Vertical Slice maturation. **Not release-ready.**
 
-## 2. Technology / deployment
+## 2. Technology decision — GODOT MIGRATION ACTIVE
 
+On 2026-09-15 the user explicitly chose to continue development in Godot.
+
+The migration is deliberate and reversible:
+- Godot 4.7.x Standard + GDScript;
+- GL Compatibility renderer for mobile/Web compatibility;
+- Godot project lives under `/godot` during the migration gate;
+- current Web build under `/docs` remains intact and deployable;
+- Web is the reference implementation for proven simulation behavior, pacing, Capital systems, Rank 3 routing and iPhone findings;
+- do **not** delete or rewrite the Web baseline until the Godot slice wins the migration gate.
+
+Why the decision changed from older “do not migrate engine” wording:
+- product risk is no longer primarily discovering the core loop;
+- future value depends increasingly on scene hierarchy, autonomous 3D motion, facility growth, VFX/audio/haptics, mobile interaction and native packaging;
+- the existing DOM + Three.js management surface was still accumulating readability / responsibility cost on iPhone;
+- the user explicitly approved Godot migration.
+
+`TECH_DECISION_GODOT_MIGRATION_2026-09-15.md` is the title-specific ADR for this transition.
+
+## 3. Web baseline — preserve as rollback/reference
+
+Current Web stack:
 - static HTML/CSS/vanilla JavaScript ES modules;
 - Three.js `0.186.0`;
 - Rapier compat `0.20.0`;
-- GitHub Actions static/regression QA;
 - GitHub Pages from `main/docs`;
-- iPhone Safari / Home Screen web app is primary real-device target;
-- localStorage save key `logistics_boss_save`;
-- save schema `3`.
+- Web save key `logistics_boss_save`, schema `3`.
 
-Do not migrate engine without a concrete performance/native requirement.
+The latest Web gameplay includes:
+- free-form Rank 1;
+- Rank 2 staffing + structural zones;
+- Capital automation, workforce, hall expansion, truck waves and AS/RS;
+- measured capital pacing;
+- persisted Rank 3 Fulfillment Center;
+- Carrier Routing with Balanced / Express / Consolidated tradeoffs;
+- real routing events and 3D routing visualization;
+- mobile management readability pass after real-iPhone QA.
 
-## 3. Architecture ownership
+Web money/revenue remains owned by `docs/src/sim.js`; UI and visuals must not become alternate economy writers.
 
-- `docs/src/sim.js` — authoritative simulation/economy, parcel lifecycle, workers, automation, revenue, facility rank, routing boundary, save/load.
-- `docs/src/scene.js` — core Three.js warehouse view and orchestration of visual modules.
-- `docs/src/ui.js` — HUD, Director, policies/contracts, Rank 2 controls. Director state remains single-owner here.
-- `docs/src/freedom.js` — free-form Rank 1 progression.
-- `docs/src/capital-model.js` / `capital.js` — Capital definitions, economy tiers, purchases, 25s investment Before/After.
-- `docs/src/rank3-model.js` / `rank3.js` — Rank 3 readiness model and readiness presentation.
-- `docs/src/routing-model.js` — Carrier Routing package definitions/economics.
-- `docs/src/routing.js` — Rank 3 routing management UI and 25s route-switch measurement.
-- `docs/src/routing-visual.js` — Rank 3 Routing Hub, carrier lanes and real-event dispatch visualization.
-- `docs/src/asrs-visual.js` — AS/RS visual module.
-- `docs/src/ergonomics.js` — mobile sheet ergonomics only; must not overwrite primary HUD metrics.
-- `docs/tests/` — progression, Director/HUD stability, Capital, pacing and Rank 3 regression coverage.
+## 4. Active Godot branch
 
-Removed debt that must stay removed:
-- `docs/src/insight-stability.js`;
-- `docs/src/ftue2.js`;
-- duplicated top-HUD writers;
-- one-shot routing/promotion codemod scripts/workflows after their use.
+Branch: `port/godot-vertical-slice`
+Draft PR: #20
 
-## 4. Closed P0 interaction issues
+Initial architecture:
+- `godot/domain/warehouse_sim.gd` — authoritative deterministic logistics/economy state;
+- `godot/view/warehouse_view.gd` — low-poly 3D facility, workers, parcels and touch camera;
+- `godot/ui/game_hud.gd` — portrait-first HUD, policy/speed controls and management sheet;
+- `godot/persistence/save_store.gd` — Godot-specific versioned save / backup;
+- `godot/main.gd` — composition root only;
+- `godot/tests/sim_smoke.gd` — headless domain smoke once a Godot executable is available.
 
-### Director / optional-contract flicker — CLOSED on iPhone
-`ui.js` owns Director presentation/open state. Severity changes do not auto-open it. Contracts are optional.
+Current Godot slice code contains:
+- inbound generation;
+- order generation;
+- 3 autonomous workers;
+- real STORE / PICK / SHIP tasks;
+- separate packing stage;
+- outbound-completion-only revenue;
+- BALANCED / INBOUND / SHIP policy switching;
+- pause / 1x / 2x / 4x;
+- hire worker, rack capacity, worker speed and packing investments;
+- visible workers and carried parcels;
+- visible rack growth from rack investment;
+- visible inbound / rack / outbound parcel counts;
+- bottleneck label;
+- one-finger orbit + two-finger pinch zoom;
+- autosave with temp file + backup fallback.
 
-### Top HUD `出荷ペース` flicker — CLOSED on iPhone
-`ui.js` is the single writer for the primary throughput metric. Ergonomics no longer rewrites it.
+### Godot verification status
 
-Do not reintroduce multi-writer UI state.
+Verified:
+- repository structure exists;
+- Web regression suites still pass on the migration branch;
+- domain/economy ownership is separated in the new code;
+- migration is isolated from existing `/docs` gameplay.
 
-## 5. Current gameplay progression
+Not yet verified:
+- GDScript compile in Godot 4.7.2;
+- headless `godot/tests/sim_smoke.gd` execution;
+- scene launch;
+- worker animation / camera behavior in-engine;
+- Japanese font fallback;
+- performance;
+- Web export;
+- iPhone behavior.
 
-### Rank 1 — Small Depot
-- free-form Warehouse rating;
-- rating can grow through shipment volume, throughput, stable operation and optional contracts;
-- contracts are never mandatory;
-- target rating 8.
+**Do not call the Godot slice functional or visually complete until those checks pass.**
 
-### Rank 2 — Warehouse
-- five-worker base operation;
-- staffing presets;
-- three one-of-two structural zones: intake, storage, packing;
-- real simulation + visible 3D facility effects;
-- Before/After facility impact.
+The current ChatGPT execution environment does not contain a Godot executable. The draft PR intentionally remains unmerged for this reason.
 
-### Rank 3 — Fulfillment Center
-Rank 3 is now a real persisted facility rank.
+## 5. Godot vertical-slice migration gate
 
-Readiness is path-agnostic and requires:
-1. all three Rank 2 structural zones;
-2. invested Capital `>= ¥200,000`;
-3. measured throughput `>= 6 shipments/min`.
+Godot becomes the production baseline only after all of the following are demonstrated:
 
-**Contracts are not part of Rank 3 readiness.** A deterministic regression proves promotion with zero completed contracts.
+1. `inbound → storage → pick → pack → outbound → revenue` runs continuously.
+2. Three or more autonomous workers visibly execute actual simulation tasks.
+3. Policy choice changes task priority within seconds.
+4. A natural bottleneck appears without scripted fake congestion.
+5. At least one investment removes or shifts that bottleneck.
+6. Investment creates both a real domain change and a visible 3D change.
+7. Revenue is awarded only from successful outbound completion.
+8. Mobile portrait UI leaves the facility visually dominant.
+9. Touch orbit / pinch and pause / 1x / 2x / 4x are usable.
+10. Versioned save/load restores progression safely.
+11. Godot Web export runs on iPhone.
+12. The Godot slice is at least equal to the Web baseline on clarity, interaction feel, performance and development maintainability.
 
-On readiness, `sim.js` promotes Rank 2 → Rank 3, emits the rank-up event, serializes rank 3 and restores it through schema 3.
+Until this gate passes, `main/docs` remains the safe rollback product.
 
-## 6. Capital Expansion v2 — implemented layers
+## 6. Port order after the gate
 
-### Phase 1 — Automation
-- Forklift Fleet: inbound → rack;
-- AGV Pick Fleet: rack → packing;
-- Automatic Sorter: packed downstream handling.
+Do not immediately recreate every Web feature.
 
-### Phase 2 — Workforce + Property
-- `現場チーム増員`: each level adds one real worker and visible 3D staff;
-- `物流ホール拡張`: real rack/receiving capacity and visible HALL 2–4 growth.
+Port in this order:
+1. Core slice quality: movement, queue readability, game feel, mobile controls.
+2. Director as diagnostic-only state explanation.
+3. Rank 1 free progression.
+4. Rank 2 staffing and one-of-two structural zones.
+5. Capital measurement framework.
+6. Forklift / AGV / sorter automation.
+7. Workforce + hall growth.
+8. Truck waves.
+9. AS/RS.
+10. Rank 3 promotion and Carrier Routing.
+11. Audio / haptics / VFX / accessibility / analytics / performance gates.
 
-### Phase 3 — Truck Dock / Truck Waves
-- real truck approach/arrival/unload/depart cycle;
-- visible dock/truck behavior;
-- inbound arrives in waves instead of a constant stream once active.
-
-### Phase 4 — AS/RS automated warehouse
-- real automated storage/retrieval behavior;
-- capacity and transfer effects;
-- visible high-bay/stacker-crane operation.
-
-Every major Capital category must continue to satisfy:
+Every major investment must still satisfy the four-condition gate:
 1. visible 3D change;
-2. real logistics behavior/capacity change;
-3. Before/After measurement;
-4. potential to expose another bottleneck.
+2. real logistics behavior or capacity change;
+3. measurable Before/After;
+4. ability to create or reveal another bottleneck.
 
-## 7. Capital Pacing v1
+## 7. Preserved design decisions
 
-Mid-game capital pacing was measured through deterministic real simulation and rebalanced to avoid long passive money waits.
+- Contracts are optional.
+- Director diagnoses; it does not choose the solution.
+- Player decisions are low-frequency operating / capital decisions, not avatar micromanagement.
+- No permanent “correct route” at Rank 3.
+- Negative Before/After results are allowed and should be shown honestly.
+- Resource states must not accidentally make the game impossible to continue.
+- Decorative automation detached from real events is not acceptable.
+- Save formats remain versioned and engine-specific until an explicit migration is designed.
+- New Godot UI should be redesigned as game UI, not a pixel copy of the Web DOM.
 
-Current audited milestone windows are approximately:
+## 8. Capital / balance reference from Web
+
+Use Web numbers as **reference**, not automatic Godot constants, until Godot throughput is measured.
+
+Web mid-game pacing was audited into roughly:
 - 8.5 min;
 - 12.0 min;
 - 11.1 min;
-- 7.5 min.
+- 7.5 min;
 
-CI guards the intended `7–15 minute` band for the audited capital steps. Do not casually change commercial shipment values, Capital costs or throughput multipliers without rerunning pacing regression.
+for the tested capital milestones, with a desired 7–15 minute band.
 
-## 8. Rank 3 Carrier Routing — current main
+Do not transplant those values blindly if Godot task cadence differs. First match the perceived loop, then rerun deterministic pacing in the Godot domain model.
 
-Merged through PR #17 at gameplay baseline `8e0ffc9af23f5270c26259bd9a43a52774433746`.
+## 9. Immediate next actions
 
-Rank 3 changes the real downstream flow to:
+1. Open branch / PR #20 in a real Godot 4.7.2 environment.
+2. Run project import / script compile.
+3. Fix every parser/runtime error before visual work.
+4. Run:
+   `godot --headless --path godot --script tests/sim_smoke.gd`
+5. Launch desktop scene and verify real worker flow + revenue ownership.
+6. Tune initial camera framing and mobile UI only after it actually runs.
+7. Create Web export preset and export only after the native/editor slice is stable.
+8. Deploy the Godot Web slice separately from current production Pages; do not overwrite `/docs` yet.
+9. Verify on iPhone.
+10. Only then decide whether Godot becomes canonical production implementation and merge the migration PR.
 
-`packing → packed → outbound staging / Routing Hub → carrier dispatch → shipment revenue`
+## 10. Non-negotiable engineering rules
 
-Workers and Automatic Sorter **cannot bypass routing** at Rank 3.
-
-### Balanced Parcel
-- dispatch interval: 4.2s;
-- batch 1;
-- revenue multiplier 1.00x.
-
-### Express Dispatch
-- dispatch interval: 1.8s;
-- batch 1;
-- revenue multiplier 0.82x;
-- clears downstream faster at lower unit margin.
-
-### Consolidated Linehaul
-- dispatch interval: 7.5s;
-- minimum/batch 3;
-- revenue multiplier 1.22x;
-- higher unit margin but can accumulate outbound staging.
-
-There is deliberately **no permanent correct route**.
-
-### Measurement
-After a route switch, `routing.js` measures a 25-second Before/After using real shipment events:
-- shipments/min;
-- packed/outbound queue;
-- open orders;
-- revenue/min.
-
-Negative deltas are shown rather than hidden.
-
-### 3D
-`routing-visual.js` adds:
-- a visible Routing Hub near outbound;
-- three carrier lanes/gates;
-- selected-route lighting/signage;
-- route-specific cadence indication;
-- parcel movement triggered only by real `route_dispatch` events.
-
-## 9. Verification state
-
-For Rank 3 / Carrier Routing:
-- branch Static QA: success;
-- branch Capital Pacing: success;
-- branch Rank 3 readiness/promotion/routing/integration: success;
-- PR #17 merged to main;
-- main Static QA: success;
-- main Capital Pacing: success;
-- main Rank 3 readiness/promotion/routing/integration: success;
-- GitHub Pages build: success;
-- GitHub Pages deploy: verify final status before claiming deployed if this handoff is read during the active deploy window.
-
-Still **not verified on real iPhone**:
-- Rank 3 management-sheet layout/readability;
-- three routing buttons at phone width;
-- Routing Hub/gate readability at current camera scale;
-- real dispatch parcel animation visibility;
-- route switch + 25s report interaction feel.
-
-Do not call Rank 3 visually complete until that device check passes.
-
-## 10. Known risks / design watchpoints
-
-- Express must not become universally optimal merely because throughput dominates revenue tradeoff.
-- Consolidated must not become a passive-wait trap; batching should create a decision, not dead time with no recovery.
-- Routing queue is intentionally a new downstream bottleneck candidate; Director/readability may need a follow-up if players cannot distinguish packed vs routing congestion.
-- `sim.js`, `scene.js`, `ui.js` remain large. Continue extracting new responsibilities into modules rather than broad rewrites.
-- Save schema persists progression/routing mode, not transient parcel queues; this matches current save architecture.
-- No backend/analytics yet; balance still needs real-session observation.
-- Build/test success is not equivalent to iPhone UX success.
-
-## 11. Immediate next order
-
-1. **Real iPhone Rank 3 verification** on deployed Pages:
-   - reach/load Rank 3;
-   - open management sheet and verify Carrier Routing panel fits/readable;
-   - switch Balanced → Express → Consolidated;
-   - confirm selected lane changes visibly in 3D;
-   - confirm actual dispatch parcels use the selected lane;
-   - let one 25s report finish and confirm all four metrics are readable.
-2. Fix any P0/P1 device/readability issue before adding another major system.
-3. If device verification is clean, run a Rank 3 balance/play-feel pass using real-session observations, especially Express vs Consolidated opportunity cost and outbound queue readability.
-4. Only after the one-center Rank 3 loop is proven fun/readable should campus / second-center scope be reconsidered.
-
-## 12. Non-negotiable rules
-
-- GitHub `main` is canonical.
-- Never claim untested visual/device behavior is finished.
-- Contracts remain optional.
-- Director diagnoses; it does not choose the solution.
-- No MutationObserver band-aids for ownership bugs.
-- Capital growth must remain visible and behaviorally real.
-- Money/revenue mutation stays in simulation domain.
-- New automation must not create fake decorative movement detached from real events.
-- Avoid resource states that unintentionally make the game impossible to continue.
-- Preserve save compatibility unless an explicit migration is implemented and tested.
-- After meaningful changes: syntax/build → automated behavior tests → regression → Pages → device verification where required.
+- GitHub is the canonical shared baseline.
+- Large migration changes stay on branch/PR until verified.
+- Never claim uncompiled code works.
+- Never claim device visuals are complete without device verification.
+- Domain simulation owns money, parcel lifecycle and progression mutations.
+- Rendering/UI consume state and events; they do not create revenue independently.
+- Avoid new God scripts becoming monoliths; extract responsibilities before feature growth.
+- Preserve the Web baseline until the migration gate passes.
+- After meaningful changes: compile/build → automated behavior test → visual/behavior verify → regression → device check where required.
