@@ -16,6 +16,7 @@ const CANDIDATES := {
         "pick_multiplier": 1.0,
         "ship_multiplier": 1.0,
         "retrieval_cycle": 0.0,
+        "crossdock_cycle": 0.0,
         "assumption": "late Rank 2 baseline",
     },
     "pick_to_light": {
@@ -23,6 +24,7 @@ const CANDIDATES := {
         "pick_multiplier": 0.85,
         "ship_multiplier": 1.0,
         "retrieval_cycle": 0.0,
+        "crossdock_cycle": 0.0,
         "assumption": "15% shorter human PICK cycle",
     },
     "amr_tote_runner": {
@@ -30,6 +32,7 @@ const CANDIDATES := {
         "pick_multiplier": 0.70,
         "ship_multiplier": 1.0,
         "retrieval_cycle": 0.0,
+        "crossdock_cycle": 0.0,
         "assumption": "30% shorter human PICK cycle by removing travel",
     },
     "automated_retrieval_cell": {
@@ -37,6 +40,7 @@ const CANDIDATES := {
         "pick_multiplier": 1.0,
         "ship_multiplier": 1.0,
         "retrieval_cycle": 4.5,
+        "crossdock_cycle": 0.0,
         "assumption": "one independent rack-to-pack retrieval every 4.5s",
     },
     "scan_sort_assist": {
@@ -44,6 +48,7 @@ const CANDIDATES := {
         "pick_multiplier": 1.0,
         "ship_multiplier": 0.85,
         "retrieval_cycle": 0.0,
+        "crossdock_cycle": 0.0,
         "assumption": "15% shorter human SHIP cycle through scan/sort assist",
     },
     "auto_sorter_lane": {
@@ -51,6 +56,7 @@ const CANDIDATES := {
         "pick_multiplier": 1.0,
         "ship_multiplier": 0.70,
         "retrieval_cycle": 0.0,
+        "crossdock_cycle": 0.0,
         "assumption": "30% shorter human SHIP cycle through automated sortation",
     },
     "putaway_assist": {
@@ -58,6 +64,7 @@ const CANDIDATES := {
         "pick_multiplier": 1.0,
         "ship_multiplier": 1.0,
         "retrieval_cycle": 0.0,
+        "crossdock_cycle": 0.0,
         "assumption": "30% shorter human STORE cycle through guided putaway",
     },
     "asrs_flow_cell": {
@@ -65,7 +72,16 @@ const CANDIDATES := {
         "pick_multiplier": 0.70,
         "ship_multiplier": 1.0,
         "retrieval_cycle": 0.0,
+        "crossdock_cycle": 0.0,
         "assumption": "30% shorter STORE and PICK cycles as an ASRS flow sensitivity",
+    },
+    "crossdock_express_lane": {
+        "store_multiplier": 1.0,
+        "pick_multiplier": 1.0,
+        "ship_multiplier": 1.0,
+        "retrieval_cycle": 0.0,
+        "crossdock_cycle": 4.5,
+        "assumption": "one real inbound parcel + one open order bypass rack/PICK to packing every 4.5s when both exist",
     },
 }
 
@@ -117,6 +133,11 @@ func _init() -> void:
             return
         if not _require(int(retrieval.get("autonomous_retrieval_completions", 0)) > 0, "%s retrieval candidate must complete automation" % storage_label):
             return
+        var crossdock: Dictionary = cases["crossdock_express_lane"]
+        if not _require(int(crossdock.get("crossdock_starts", 0)) > 0, "%s cross-dock candidate must route real inbound/orders" % storage_label):
+            return
+        if not _require(int(crossdock.get("crossdock_completions", 0)) > 0, "%s cross-dock candidate must complete direct flow" % storage_label):
+            return
 
     print("Godot Rank 3 intervention scout passed")
     quit(0)
@@ -128,7 +149,8 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
         float(candidate.get("store_multiplier", 1.0)),
         float(candidate.get("pick_multiplier", 1.0)),
         float(candidate.get("ship_multiplier", 1.0)),
-        float(candidate.get("retrieval_cycle", 0.0))
+        float(candidate.get("retrieval_cycle", 0.0)),
+        float(candidate.get("crossdock_cycle", 0.0))
     )
 
     var start_shipped: int = int(sim.shipped)
@@ -221,6 +243,8 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
         "ship_tasks_started": int(event_counts.get("ship_started", 0)),
         "autonomous_retrieval_starts": int(sim.autonomous_retrieval_starts),
         "autonomous_retrieval_completions": int(sim.autonomous_retrieval_completions),
+        "crossdock_starts": int(sim.crossdock_starts),
+        "crossdock_completions": int(sim.crossdock_completions),
         "switches": switches,
         "bottleneck_distribution": bottleneck_counts,
         "dominant_bottleneck": _dominant_key(bottleneck_counts),
@@ -236,7 +260,16 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
 func _compare_against_control(cases: Dictionary) -> Dictionary:
     var control: Dictionary = cases["control"]
     var comparison: Dictionary = {}
-    for candidate_label in ["pick_to_light", "amr_tote_runner", "automated_retrieval_cell", "scan_sort_assist", "auto_sorter_lane", "putaway_assist", "asrs_flow_cell"]:
+    for candidate_label in [
+        "pick_to_light",
+        "amr_tote_runner",
+        "automated_retrieval_cell",
+        "scan_sort_assist",
+        "auto_sorter_lane",
+        "putaway_assist",
+        "asrs_flow_cell",
+        "crossdock_express_lane",
+    ]:
         var result: Dictionary = cases[candidate_label]
         comparison[candidate_label] = {
             "shipment_delta": int(result.get("shipments", 0)) - int(control.get("shipments", 0)),
