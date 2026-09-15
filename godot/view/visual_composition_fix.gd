@@ -32,16 +32,13 @@ func _reduce_foreground_structure() -> void:
 func _tune_structure_recursive(node: Node) -> void:
     if node is Node3D:
         var n := node as Node3D
-        if n.name == "RoofTruss" and n.global_position.z > 1.0:
+        # LOGISTICS BOSS is played as an open-top cutaway. Overhead trusses and
+        # emissive roof bars were repeatedly crossing the portrait camera and
+        # hiding workers, racks and parcels. Keep the back wall, columns and
+        # utility run for warehouse identity, but never let roof geometry block
+        # the readable gameplay floor.
+        if n.name == "RoofTruss" or n.name == "RoofLight":
             n.visible = false
-        elif n.name == "RoofLight" and n.global_position.z > 1.0:
-            n.visible = false
-        elif n.name == "RoofLight" and n is MeshInstance3D:
-            var mesh_node := n as MeshInstance3D
-            var mat := mesh_node.material_override as StandardMaterial3D
-            if mat != null:
-                mat.albedo_color = Color(0.46, 0.63, 0.68)
-                mat.roughness = 0.62
 
     for child in node.get_children():
         _tune_structure_recursive(child)
