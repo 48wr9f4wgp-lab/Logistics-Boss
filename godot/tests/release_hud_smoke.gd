@@ -25,8 +25,8 @@ func _run() -> void:
         _fail("fresh release HUD must expose current FTUE step")
         return
 
-    if hud._sheet.anchor_top > 0.34:
-        _fail("mobile management sheet must use more vertical screen area to reduce excessive scrolling")
+    if hud._sheet.anchor_top > 0.31:
+        _fail("mobile management sheet must use enough vertical screen area to reduce excessive scrolling")
         return
     if not hud._sheet.clip_contents:
         _fail("mobile management sheet must clip descendants instead of overflowing the viewport")
@@ -53,8 +53,18 @@ func _run() -> void:
     if contract_button.mouse_filter != Control.MOUSE_FILTER_PASS:
         _fail("management buttons must pass touch drags to the ScrollContainer")
         return
-    if contract_button.autowrap_mode == TextServer.AUTOWRAP_OFF or not contract_button.clip_text:
+    if contract_button.autowrap_mode == TextServer.AUTOWRAP_OFF:
         _fail("management button copy must wrap within the available mobile width")
+        return
+    if contract_button.clip_text:
+        _fail("wrapped management copy must remain fully readable instead of being clipped")
+        return
+    if contract_button.custom_minimum_size.y < 88.0:
+        _fail("contract controls must reserve enough height for wrapped mobile copy")
+        return
+
+    if hud._receiving_annex_button == null or hud._receiving_annex_button.custom_minimum_size.y < 84.0:
+        _fail("Rank 3 investment controls must reserve enough vertical space for multi-line copy")
         return
 
     var analytics: LogisticsAnalytics = AnalyticsScript.new()
