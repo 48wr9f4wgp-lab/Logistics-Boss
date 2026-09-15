@@ -102,6 +102,16 @@ jobs:
             exit 1
           fi
 
+      - name: Rank 3 post-routing supply frontier scout
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --script res://tests/rank3_post_routing_supply_frontier.gd 2>&1 | tee /tmp/rank3-post-routing-supply-frontier.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/rank3-post-routing-supply-frontier.log; then
+            echo 'Rank 3 post-routing supply frontier emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Rank 2 facility UI smoke
         run: godot --headless --path godot --script res://tests/rank2_facility_ui_smoke.gd
 
