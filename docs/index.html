@@ -66,7 +66,7 @@
           <button type="button" data-policy="ship">出庫</button>
         </div>
         <div id="opsMiniSummary" class="opsMiniSummary" aria-live="polite">
-          <strong id="opsCrew">人員 —</strong><span id="opsWeakness">弱点 —</span><span id="opsNext">NEXT —</span>
+          <strong id="opsCrew">人員 —</strong><span id="opsWeakness">弱点 —</span><span id="rank3OpsNext">NEXT —</span>
         </div>
         <button id="quickSpeedBtn" class="quickSpeed" type="button" aria-label="時間速度を切り替え">1×</button>
         <button id="flowBtn" class="miniUtility" type="button" aria-pressed="false">FLOW</button>
@@ -126,9 +126,9 @@
         <div id="facilityImpact" class="facilityImpact rank2Only" hidden></div>
         <div id="nextStagePanel" class="nextStagePanel rank2Only" aria-label="次の施設段階">
           <div class="nextStageHead"><small>NEXT STAGE</small><strong>Fulfillment Center</strong></div>
-          <div class="nextStageGoals"><span id="goalZones">区画 0/3</span><span id="goalContracts">契約 0/8</span><span id="goalThroughput">出荷 0/6分</span></div>
-          <div class="nextStageBar"><i id="nextStageBar"></i></div>
-          <small id="nextStageHint">3条件を満たすと自動化設計の準備完了</small>
+          <div class="nextStageGoals"><span id="rank3GoalZones">区画 0/3</span><span id="rank3GoalAssets">設備 ¥0/¥200,000</span><span id="rank3GoalThroughput">出荷 0/6分</span></div>
+          <div class="nextStageBar"><i id="rank3StageBar"></i></div>
+          <small id="rank3StageHint">区画・設備資産・実出荷の3条件でFulfillment Centerへ</small>
         </div>
 
         <div class="legacyNotice rank2Only">数値Lvアップは廃止。Rank 2以降は人員配置と拡張区画で物流構造を変える。</div>
