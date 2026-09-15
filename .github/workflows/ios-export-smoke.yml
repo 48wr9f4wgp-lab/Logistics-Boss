@@ -72,10 +72,13 @@ jobs:
           rm -rf ios-build
           mkdir -p ios-build
 
-          set +e
-          godot --headless --path godot --export-release 'iOS CI Project' ../ios-build/LogisticsBoss 2>&1 | tee /tmp/godot-ios-export.log
-          godot_status=${PIPESTATUS[0]}
-          set -e
+          godot_status=0
+          if godot --headless --path godot --export-release 'iOS CI Project' ../ios-build/LogisticsBoss > /tmp/godot-ios-export.log 2>&1; then
+            godot_status=0
+          else
+            godot_status=$?
+          fi
+          cat /tmp/godot-ios-export.log
 
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-export.log; then
             echo 'Godot iOS export emitted an engine/script error'
