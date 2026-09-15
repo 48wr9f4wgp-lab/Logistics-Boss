@@ -10,7 +10,7 @@
     "performance": "none",
     "release": "none"
   },
-  "next": "Rank 2の3つの拡張ゾーンを実物流・3D変化つきで実装する",
-  "note": "Godot Web PreviewはiPhone実機でカメラ・日本語・視認性を確認済み。native iOS/Android実機、Analytics、Performance、Release QAは未着手。",
+  "next": "Rank 2拡張ゾーンをiPhone Previewで確認し、各二択の有効な運用文脈を追加検証する",
+  "note": "Rank 2の契約・物流評価・5人編成・3ゾーン二択・Before/After・3D設備はGodot実装済み。CIではDomain/UI/3D/Runtime/Web Exportまで検証する。新しいRank 2 UI/設備のiPhone実機確認、native iOS/Android、Analytics、Performance、Release QAは未完了。",
   "updated_at": "2026-09-15"
 }
