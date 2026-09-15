@@ -10,7 +10,7 @@
     "performance": "none",
     "release": "none"
   },
-  "next": "Rank 2に予告可能な入荷・注文・出荷の負荷波を実装し、人員配置が状況依存の判断になることを検証する",
-  "note": "3ゾーン完成後の40シナリオ計測で出荷強化1/2/2が8/8構成の定常最適となった。AGVを先に足さず、時間変動する物流負荷でReceiving/Picking/Shippingを使い分ける運用ゲーム性を先に成立させる。High Density構成ではPICK/注文滞留が残るためAGVは後続候補として根拠あり。新Rank 2 UI/設備のiPhone実機確認、native iOS/Android、Analytics、Performance、Release QAは未完了。",
+  "next": "Rank 3 / Fulfillment CenterのVertical Sliceを、Rank 2負荷波後のPICK・注文滞留を再計測して定義する。AGVは計測で必要性が出た場合だけ採用する",
+  "note": "Rank 2の予告可能な負荷波を実装。35秒予告→50秒ピークの入荷・注文・出荷サイクル、Save Schema v4、モバイルHUD、実物流への到着/受注倍率を追加した。全5人員配置に計測上の用途があり、2サイクル510秒で予告追従198出荷/¥99,000、固定Shipping195/¥97,500、固定Balanced169/¥84,500。Branch CIはParse/Domain/各Pacing/UI/3D/Font/Full Runtime/Web Exportまで全PASS。新しい負荷HUDと最新Rank 2 UI/設備のiPhone Preview確認、native iOS/Android、Analytics、Performance、Release QAは未完了。",
   "updated_at": "2026-09-15"
 }
