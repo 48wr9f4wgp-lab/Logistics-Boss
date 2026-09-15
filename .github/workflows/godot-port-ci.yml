@@ -1,0 +1,32 @@
+name: Logistics Boss Godot Port CI
+
+on:
+  push:
+    branches: [port/godot-vertical-slice]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/godot-port-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  godot-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+      - name: Godot version
+        run: godot --version
+      - name: Parse/import project
+        run: godot --headless --path godot --editor --quit
+      - name: Domain simulation smoke
+        run: godot --headless --path godot --script res://tests/sim_smoke.gd
