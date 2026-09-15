@@ -6,20 +6,30 @@ const JAPANESE_UI_FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
 var _measurement_panel: PanelContainer
 var _measurement_label: Label
 var _measurement_timer := 0.0
+var _progression_panel: PanelContainer
+var _progression_label: Label
+var _contract_status: Label
+var _contract_buttons: Array[Button] = []
+var _staffing_label: Label
+var _staffing_grid: GridContainer
+var _staffing_buttons: Dictionary = {}
 
 
 func _ready() -> void:
     super._ready()
     _append_forklift_upgrade()
+    _build_progression_section()
     _build_measurement_banner()
     _tune_mobile_hud()
     _apply_japanese_font_recursive(self)
     _replace_static_copy_recursive(self)
+    _render_progression()
 
 
 func _process(delta: float) -> void:
     super._process(delta)
     _sync_transient_overlay_positions()
+    _render_progression()
     if _measurement_timer > 0.0:
         _measurement_timer -= delta
         if _measurement_timer <= 0.0 and _measurement_panel != null:
@@ -31,8 +41,6 @@ func _copy(jp: String, _en: String) -> String:
 
 
 func _bottleneck_text(info: Dictionary) -> String:
-    # Use UI-owned Japanese copy rather than leaking the domain's mixed-language
-    # diagnostic label into the player-facing HUD.
     match String(info.get("key", "stable")):
         "inbound":
             return "搬入口が混雑"
@@ -74,6 +82,18 @@ func _on_sim_event(event: Dictionary) -> void:
                 float(after.get("packing_queue", 0.0)),
             ]
             _show_measurement_status(text, 8.0)
+        "contract_completed":
+            _show_toast("契約達成  +¥%s / 評価+%d" % [
+                _format_number(int(event.get("cash", 0))),
+                int(event.get("rating", 0)),
+            ])
+        "contract_failed":
+            _show_toast("契約失敗  %s" % String(event.get("title", "")))
+        "rank_up":
+            _show_toast("RANK 2  WAREHOUSE 解禁")
+            _toast_timer = 4.0
+        "staffing_changed":
+            _show_toast("人員配置  %s" % String(event.get("label", "")))
 
 
 func _append_forklift_upgrade() -> void:
@@ -92,6 +112,174 @@ func _append_forklift_upgrade() -> void:
     button.pressed.connect(func(): _buy(&"forklift"))
     list.add_child(button)
     _upgrade_buttons[&"forklift"] = button
+
+
+func _build_progression_section() -> void:
+    var list := _find_upgrade_list(_sheet)
+    if list == null:
+        return
+
+    _progression_panel = PanelContainer.new()
+    _progression_panel.add_theme_stylebox_override(
+        "panel",
+        _panel_style(Color(0.020, 0.058, 0.075, 0.985), Color(0.22, 0.62, 0.78, 0.92), 14)
+    )
+    list.add_child(_progression_panel)
+    list.move_child(_progression_panel, 0)
+
+    var column := VBoxContainer.new()
+    column.add_theme_constant_override("separation", 8)
+    _progression_panel.add_child(column)
+
+    _progression_label = Label.new()
+    _progression_label.add_theme_font_size_override("font_size", 14)
+    _progression_label.add_theme_color_override("font_color", Color(0.82, 0.96, 1.0))
+    column.add_child(_progression_label)
+
+    _contract_status = Label.new()
+    _contract_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _contract_status.add_theme_font_size_override("font_size", 11)
+    _contract_status.add_theme_color_override("font_color", Color(0.62, 0.76, 0.83))
+    column.add_child(_contract_status)
+
+    for index in 3:
+        var contract_button := Button.new()
+        contract_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        contract_button.custom_minimum_size = Vector2(0, 62)
+        contract_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+        contract_button.add_theme_font_size_override("font_size", 12)
+        _apply_button_style(contract_button, false)
+        contract_button.pressed.connect(_choose_contract_slot.bind(index))
+        column.add_child(contract_button)
+        _contract_buttons.append(contract_button)
+
+    _staffing_label = Label.new()
+    _staffing_label.add_theme_font_size_override("font_size", 12)
+    _staffing_label.add_theme_color_override("font_color", Color(0.72, 0.92, 0.82))
+    _staffing_label.visible = false
+    column.add_child(_staffing_label)
+
+    _staffing_grid = GridContainer.new()
+    _staffing_grid.columns = 2
+    _staffing_grid.add_theme_constant_override("h_separation", 6)
+    _staffing_grid.add_theme_constant_override("v_separation", 6)
+    _staffing_grid.visible = false
+    column.add_child(_staffing_grid)
+
+    var plans := [
+        ["receiving", "受入強化 3/1/1"],
+        ["balanced", "均衡 2/2/1"],
+        ["picking", "ピック強化 1/3/1"],
+        ["dock", "両端強化 2/1/2"],
+        ["shipping", "出荷強化 1/2/2"],
+    ]
+    for entry in plans:
+        var plan := String(entry[0])
+        var button := Button.new()
+        button.text = String(entry[1])
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.custom_minimum_size = Vector2(0, 48)
+        button.add_theme_font_size_override("font_size", 10)
+        _apply_button_style(button, false)
+        button.pressed.connect(_select_staffing_plan.bind(plan))
+        _staffing_grid.add_child(button)
+        _staffing_buttons[plan] = button
+
+
+func _choose_contract_slot(index: int) -> void:
+    if sim == null or index < 0 or index >= sim.contract_offers.size():
+        return
+    var offer: Dictionary = sim.contract_offers[index]
+    var result := sim.choose_contract(int(offer.get("id", -1)))
+    if bool(result.get("ok", false)):
+        _show_toast("契約開始  %s" % String(offer.get("title", "")))
+    else:
+        _show_toast("契約を開始できない")
+
+
+func _select_staffing_plan(plan: String) -> void:
+    if sim == null:
+        return
+    var result := sim.set_staffing_plan(plan)
+    if bool(result.get("ok", false)):
+        return
+    match String(result.get("reason", "")):
+        "cooldown":
+            _show_toast("配置替えまであと%d秒" % ceili(float(result.get("remaining", 0.0))))
+        "same":
+            _show_toast("現在の人員配置です")
+        _:
+            _show_toast("人員配置を変更できない")
+
+
+func _render_progression() -> void:
+    if sim == null or _progression_panel == null:
+        return
+
+    if _manage_button != null:
+        _manage_button.text = "閉じる" if _sheet != null and _sheet.visible else "管理"
+
+    var rank2 := sim.facility_rank >= 2
+    _progression_label.text = (
+        "RANK 2  WAREHOUSE  ｜ 評価 %d  ｜ 契約 %d件" % [sim.logistics_rating, sim.completed_contracts]
+        if rank2
+        else "RANK 1  SMALL DEPOT  ｜ 物流評価 %d / 8" % sim.logistics_rating
+    )
+
+    if not sim.active_contract.is_empty():
+        var active: Dictionary = sim.active_contract
+        _contract_status.text = "契約中｜%s\n%s  %.0f/%.0f  残%d秒" % [
+            String(active.get("title", "契約")),
+            String(active.get("description", "")),
+            float(active.get("progress", 0.0)),
+            float(active.get("target", 0.0)),
+            ceili(float(active.get("remaining", 0.0))),
+        ]
+        for button in _contract_buttons:
+            button.visible = false
+    else:
+        _contract_status.text = "契約を1つ選択。達成すると資金・RP・物流評価を獲得。"
+        for index in _contract_buttons.size():
+            var button := _contract_buttons[index]
+            if index >= sim.contract_offers.size():
+                button.visible = false
+                continue
+            var offer: Dictionary = sim.contract_offers[index]
+            button.visible = true
+            button.disabled = false
+            button.text = "%s\n%s  ｜ +¥%s / +%dRP / 評価+%d" % [
+                String(offer.get("title", "契約")),
+                String(offer.get("description", "")),
+                _format_number(int(offer.get("reward_cash", 0))),
+                int(offer.get("reward_rp", 0)),
+                int(offer.get("reward_rating", 0)),
+            ]
+
+    _staffing_label.visible = rank2
+    _staffing_grid.visible = rank2
+    if rank2:
+        var summary := sim.staffing_summary()
+        var cooldown := ceili(sim.staffing_cooldown)
+        _staffing_label.text = "人員配置  入庫%d / ピック%d / 出荷%d%s" % [
+            int(summary.get("store", 0)),
+            int(summary.get("pick", 0)),
+            int(summary.get("ship", 0)),
+            "  ｜ 変更まで%d秒" % cooldown if cooldown > 0 else "  ｜ 変更可能",
+        ]
+        for plan in _staffing_buttons:
+            var staffing_button: Button = _staffing_buttons[plan]
+            _apply_button_style(staffing_button, String(plan) == sim.staffing_plan)
+            staffing_button.disabled = sim.staffing_cooldown > 0.0
+
+    _flow_button.visible = not rank2
+    _inbound_button.visible = not rank2
+    _outbound_button.visible = not rank2
+
+    for kind in [&"worker", &"rack", &"speed", &"packing"]:
+        if _upgrade_buttons.has(kind):
+            (_upgrade_buttons[kind] as Button).visible = not rank2
+    if _upgrade_buttons.has(&"forklift"):
+        (_upgrade_buttons[&"forklift"] as Button).visible = not sim.forklift_unlocked
 
 
 func _find_upgrade_list(node: Node) -> VBoxContainer:
@@ -132,8 +320,6 @@ func _build_measurement_banner() -> void:
 
 
 func _tune_mobile_hud() -> void:
-    # Keep the main controls clear of the iPhone home indicator and reduce the
-    # shipment toast so it confirms flow without covering the warehouse action.
     var dock := _find_bottom_dock()
     if dock != null:
         dock.offset_top = -100.0
@@ -217,6 +403,8 @@ func _replace_static_copy_recursive(node: Node) -> void:
                     label.text = "物流を読み、育てる"
                 "Bottleneck Director":
                     label.text = "詰まり分析"
+                "事業投資":
+                    label.text = "事業管理"
         elif child is Button:
             var button := child as Button
             if button.text == "FLOW":

@@ -63,10 +63,13 @@ func _init() -> void:
     var legacy := sim.save_data()
     legacy["schema_version"] = 1
     legacy.erase("forklift_unlocked")
+    for key in ["logistics_rating", "facility_rank", "completed_contracts", "contract_offers", "active_contract", "next_contract_id", "staffing_plan", "staffing_cooldown"]:
+        legacy.erase(key)
     var migrated: WarehouseSim = WarehouseSimScript.new()
-    assert(migrated.load_data(legacy), "schema 1 saves must migrate into schema 2")
-    assert(int(migrated.save_data().get("schema_version", -1)) == 2, "migrated save must write schema 2")
+    assert(migrated.load_data(legacy), "schema 1 saves must migrate into schema 3")
+    assert(int(migrated.save_data().get("schema_version", -1)) == 3, "migrated save must write schema 3")
     assert(not migrated.forklift_unlocked, "legacy saves must default forklift automation to locked")
+    assert(migrated.facility_rank == 1 and migrated.logistics_rating == 0, "legacy saves must not invent Rank 2 progression")
 
     print("Godot warehouse simulation smoke passed")
     quit(0)
