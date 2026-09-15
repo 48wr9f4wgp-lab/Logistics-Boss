@@ -44,7 +44,7 @@ func _run_case(storage_kind: StringName, annex_owned: bool) -> Dictionary:
     var sim = _prepared_rank3(storage_kind, annex_owned)
     var start_shipped := int(sim.shipped)
     var start_money := int(sim.money)
-    var inbound_arrivals := 0
+    var observed := {"inbound_arrivals": 0}
     var order_sum := 0.0
     var inbound_sum := 0.0
     var packing_sum := 0.0
@@ -55,7 +55,7 @@ func _run_case(storage_kind: StringName, annex_owned: bool) -> Dictionary:
 
     sim.event_emitted.connect(func(event: Dictionary):
         if String(event.get("type", "")) == "inbound_arrival":
-            inbound_arrivals += 1
+            observed["inbound_arrivals"] = int(observed.get("inbound_arrivals", 0)) + 1
     )
 
     var samples := 0
@@ -86,7 +86,7 @@ func _run_case(storage_kind: StringName, annex_owned: bool) -> Dictionary:
         "shipments": shipments,
         "revenue": int(sim.money) - start_money,
         "shipments_per_min": snappedf(float(shipments) / (CYCLE_SECONDS / 60.0), 0.1),
-        "inbound_arrivals": inbound_arrivals,
+        "inbound_arrivals": int(observed.get("inbound_arrivals", 0)),
         "inbound_limit": int(sim._current_inbound_limit()),
         "inbound_avg": snappedf(inbound_sum / divisor, 0.01),
         "orders_avg": snappedf(order_sum / divisor, 0.01),
