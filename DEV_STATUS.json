@@ -2,15 +2,15 @@
   "schema": 1,
   "phase": "主要機能実装",
   "checks": {
-    "boot": "warn",
-    "test": "warn",
-    "device": "none",
-    "save": "none",
+    "boot": "pass",
+    "test": "pass",
+    "device": "warn",
+    "save": "pass",
     "analytics": "none",
     "performance": "none",
     "release": "none"
   },
-  "next": "現行Godotビルドの起動と主要ループを確認する",
-  "note": "主要機能実装段階として管理。品質確認段階とはみなさない。",
+  "next": "Rank 2の3つの拡張ゾーンを実物流・3D変化つきで実装する",
+  "note": "Godot Web PreviewはiPhone実機でカメラ・日本語・視認性を確認済み。native iOS/Android実機、Analytics、Performance、Release QAは未着手。",
   "updated_at": "2026-09-15"
 }
