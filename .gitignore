@@ -1,0 +1,9 @@
+# Godot generated/imported files
+.godot/
+**/.godot/
+.import/
+**/.import/
+
+# Godot export outputs
+build/
+exports/
