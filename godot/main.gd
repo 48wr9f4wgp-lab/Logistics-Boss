@@ -5,6 +5,7 @@ const WarehouseViewScript = preload("res://view/warehouse_view.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
 const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")
 const WarehouseVisualCompositionFixScript = preload("res://view/visual_composition_fix.gd")
+const ForkliftAutomationViewScript = preload("res://view/forklift_automation_view.gd")
 const GameHudScript = preload("res://ui/game_hud_ja.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 
@@ -25,6 +26,10 @@ func _ready() -> void:
     var visual_pass_2: WarehouseVisualPass2 = WarehouseVisualPass2Script.new()
     view.add_child(visual_pass_2)
     visual_pass_2.bind_view(view)
+
+    var forklift_automation: ForkliftAutomationView = ForkliftAutomationViewScript.new()
+    view.add_child(forklift_automation)
+    forklift_automation.bind(view, sim)
 
     var hud: GameHud = GameHudScript.new()
     add_child(hud)

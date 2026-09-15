@@ -3,12 +3,16 @@ class_name WarehouseSim
 
 signal event_emitted(event: Dictionary)
 
-const SAVE_SCHEMA := 1
+const CapitalCatalogScript = preload("res://domain/capital_catalog.gd")
+const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
+
+const SAVE_SCHEMA := 2
 const BASE_SHIPMENT_VALUE := 500
 const INBOUND_INTERVAL := 4.0
 const ORDER_INTERVAL := 5.0
 const INBOUND_LIMIT := 14
 const ORDER_LIMIT := 18
+const FORKLIFT_CYCLE := 3.2
 
 enum Policy {
     BALANCED,
@@ -40,18 +44,25 @@ var pack_time_multiplier: float = 1.0
 var rack_level: int = 0
 var speed_level: int = 0
 var pack_level: int = 0
+var forklift_unlocked: bool = false
+var forklift_active: bool = false
+var forklift_progress: float = 0.0
 
 var policy: int = Policy.BALANCED
 var time_scale: float = 1.0
 var sim_time: float = 0.0
+var last_measurement: Dictionary = {}
 
 var _inbound_timer: float = 2.0
 var _order_timer: float = 3.0
 var _packing_active: bool = false
 var _packing_remaining: float = 0.0
 var _packing_duration: float = 0.0
+var _forklift_remaining: float = 0.0
 var _shipment_times: Array[float] = []
 var workers: Array[Dictionary] = []
+var _capital: CapitalCatalog = CapitalCatalogScript.new()
+var _measurement: FlowMeasurement = FlowMeasurementScript.new()
 
 
 func _init() -> void:
@@ -66,9 +77,15 @@ func step(real_dt: float) -> void:
     sim_time += dt
     _spawn_flow(dt)
     _update_packing(dt)
+    _update_forklift(dt)
     _update_workers(dt)
     _assign_idle_workers()
     _prune_shipment_window()
+
+    _measurement.record_state(sim_time, dt, inbound_queue, packing_queue, packed_queue)
+    for result in _measurement.collect_completed(sim_time):
+        last_measurement = result
+        _emit("measurement_completed", result)
 
 
 func set_policy(next_policy: int) -> void:
@@ -83,54 +100,44 @@ func set_time_scale(next_scale: float) -> void:
 
 
 func upgrade_cost(kind: StringName) -> int:
-    match kind:
-        &"worker":
-            return int(3500 * pow(2.0, max(0, worker_count - 3)))
-        &"rack":
-            return int(2500 * pow(2.0, rack_level))
-        &"speed":
-            return int(4000 * pow(2.0, speed_level))
-        &"packing":
-            return int(4500 * pow(2.0, pack_level))
-        _:
-            return 999999999
+    return _capital.cost(kind, worker_count, rack_level, speed_level, pack_level, forklift_unlocked)
 
 
 func purchase_upgrade(kind: StringName) -> Dictionary:
+    if not _capital.is_known(kind):
+        return {"ok": false, "reason": "unknown", "cost": 0}
+
     var cost := upgrade_cost(kind)
+    if _capital.is_maxed(kind, worker_count, rack_level, speed_level, pack_level, forklift_unlocked):
+        return {"ok": false, "reason": "max", "cost": cost}
     if money < cost:
         return {"ok": false, "reason": "funds", "cost": cost}
 
+    money -= cost
     match kind:
         &"worker":
-            if worker_count >= 7:
-                return {"ok": false, "reason": "max", "cost": cost}
-            money -= cost
             worker_count += 1
             _sync_worker_roster()
         &"rack":
-            if rack_level >= 4:
-                return {"ok": false, "reason": "max", "cost": cost}
-            money -= cost
             rack_level += 1
             rack_capacity += 4
         &"speed":
-            if speed_level >= 4:
-                return {"ok": false, "reason": "max", "cost": cost}
-            money -= cost
             speed_level += 1
             worker_speed *= 1.15
         &"packing":
-            if pack_level >= 4:
-                return {"ok": false, "reason": "max", "cost": cost}
-            money -= cost
             pack_level += 1
             pack_time_multiplier *= 0.85
-        _:
-            return {"ok": false, "reason": "unknown", "cost": cost}
+        &"forklift":
+            forklift_unlocked = true
 
-    _emit("upgrade_purchased", {"kind": String(kind), "cost": cost})
-    return {"ok": true, "cost": cost}
+    var before := _measurement.begin_investment(kind, cost, sim_time)
+    _emit("upgrade_purchased", {
+        "kind": String(kind),
+        "cost": cost,
+        "measurement_window": FlowMeasurement.WINDOW_SECONDS,
+        "before": before,
+    })
+    return {"ok": true, "cost": cost, "measurement_window": FlowMeasurement.WINDOW_SECONDS}
 
 
 func bottleneck() -> Dictionary:
@@ -170,11 +177,15 @@ func snapshot() -> Dictionary:
         "rack_level": rack_level,
         "speed_level": speed_level,
         "pack_level": pack_level,
+        "forklift_unlocked": forklift_unlocked,
+        "forklift_active": forklift_active,
+        "forklift_progress": forklift_progress,
         "policy": int(policy),
         "time_scale": time_scale,
         "sim_time": sim_time,
         "bottleneck": bottleneck(),
         "throughput_per_minute": throughput_per_minute(),
+        "last_measurement": last_measurement,
     }
 
 
@@ -196,12 +207,14 @@ func save_data() -> Dictionary:
         "rack_level": rack_level,
         "speed_level": speed_level,
         "pack_level": pack_level,
+        "forklift_unlocked": forklift_unlocked,
         "policy": int(policy),
     }
 
 
 func load_data(data: Dictionary) -> bool:
-    if int(data.get("schema_version", -1)) != SAVE_SCHEMA:
+    var source_schema := int(data.get("schema_version", -1))
+    if source_schema != 1 and source_schema != SAVE_SCHEMA:
         return false
 
     money = maxi(0, int(data.get("money", money)))
@@ -219,9 +232,16 @@ func load_data(data: Dictionary) -> bool:
     rack_level = clampi(int(data.get("rack_level", rack_level)), 0, 4)
     speed_level = clampi(int(data.get("speed_level", speed_level)), 0, 4)
     pack_level = clampi(int(data.get("pack_level", pack_level)), 0, 4)
+    forklift_unlocked = bool(data.get("forklift_unlocked", false))
     policy = clampi(int(data.get("policy", policy)), Policy.BALANCED, Policy.SHIP)
+
+    forklift_active = false
+    forklift_progress = 0.0
+    _forklift_remaining = 0.0
     _sync_worker_roster()
-    _emit("save_loaded", {})
+    if source_schema == 1:
+        _emit("save_migrated", {"from_schema": 1, "to_schema": SAVE_SCHEMA})
+    _emit("save_loaded", {"schema_version": SAVE_SCHEMA})
     return true
 
 
@@ -259,6 +279,37 @@ func _update_packing(dt: float) -> void:
         _emit("packing_complete", {"packed_queue": packed_queue})
 
 
+func _update_forklift(dt: float) -> void:
+    if not forklift_unlocked:
+        forklift_active = false
+        forklift_progress = 0.0
+        _forklift_remaining = 0.0
+        return
+
+    if forklift_active:
+        _forklift_remaining = maxf(0.0, _forklift_remaining - dt)
+        forklift_progress = clampf(1.0 - _forklift_remaining / FORKLIFT_CYCLE, 0.0, 1.0)
+        if _forklift_remaining <= 0.0:
+            forklift_active = false
+            forklift_progress = 0.0
+            rack_stock = mini(rack_capacity, rack_stock + 1)
+            _emit("forklift_stored", {"rack_stock": rack_stock})
+
+    if forklift_active:
+        return
+
+    if inbound_queue <= 0:
+        return
+    if rack_stock + _reserved_store_slots() >= rack_capacity:
+        return
+
+    inbound_queue -= 1
+    forklift_active = true
+    forklift_progress = 0.0
+    _forklift_remaining = FORKLIFT_CYCLE
+    _emit("forklift_task_started", {"duration": FORKLIFT_CYCLE})
+
+
 func _update_workers(dt: float) -> void:
     for worker in workers:
         if int(worker["task"]) == Task.IDLE:
@@ -284,7 +335,7 @@ func _assign_idle_workers() -> void:
 
 
 func _choose_task() -> int:
-    var can_store := inbound_queue > 0 and rack_stock + _active_task_count(Task.STORE) < rack_capacity
+    var can_store := inbound_queue > 0 and rack_stock + _reserved_store_slots() < rack_capacity
     var can_pick := rack_stock > 0 and open_orders > 0
     var can_ship := packed_queue > 0
 
@@ -419,6 +470,10 @@ func _active_task_count(task: int) -> int:
     return count
 
 
+func _reserved_store_slots() -> int:
+    return _active_task_count(Task.STORE) + (1 if forklift_active else 0)
+
+
 func _prune_shipment_window() -> void:
     while not _shipment_times.is_empty() and sim_time - _shipment_times[0] > 60.0:
         _shipment_times.pop_front()
@@ -430,4 +485,6 @@ func _emit(type: String, extra: Dictionary) -> void:
         "at": sim_time,
     }
     event.merge(extra, true)
+    if type == "shipment":
+        _measurement.record_shipment(sim_time, int(event.get("value", 0)))
     event_emitted.emit(event)
