@@ -38,6 +38,9 @@ jobs:
       - name: Domain simulation smoke
         run: godot --headless --path godot --script res://tests/sim_smoke.gd
 
+      - name: Flow measurement open-orders smoke
+        run: godot --headless --path godot --script res://tests/flow_measurement_open_orders_smoke.gd
+
       - name: Economy pacing report
         run: godot --headless --path godot --script res://tests/economy_pacing_report.gd
 
