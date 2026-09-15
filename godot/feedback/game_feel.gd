@@ -3,6 +3,7 @@ class_name LogisticsGameFeel
 
 const MIX_RATE := 22050
 const MAX_SAMPLE := 32767.0
+const SHIPMENT_HAPTIC_EVERY := 5
 
 var sim: WarehouseSim
 var audio_enabled := true
@@ -10,6 +11,7 @@ var haptics_enabled := true
 var feedback_count := 0
 
 var _player: AudioStreamPlayer
+var _shipment_feedback_count := 0
 
 
 func _ready() -> void:
@@ -30,7 +32,10 @@ func _on_sim_event(event: Dictionary) -> void:
     var event_type := String(event.get("type", ""))
     match event_type:
         "shipment":
-            _feedback([760.0, 940.0], 0.035, 0.11, 16)
+            _shipment_feedback_count += 1
+            _feedback([760.0, 940.0], 0.035, 0.08, 0)
+            if _shipment_feedback_count % SHIPMENT_HAPTIC_EVERY == 0:
+                _haptic(16)
         "policy_changed", "staffing_changed", "routing_changed":
             _feedback([420.0, 520.0], 0.035, 0.08, 18)
         "upgrade_purchased", "facility_purchased", "receiving_annex_purchased", "inbound_carrier_program_purchased":
@@ -56,7 +61,13 @@ func _feedback(frequencies: Array[float], segment_seconds: float, gain: float, v
     if audio_enabled and _player != null:
         _player.stream = _build_tone(frequencies, segment_seconds, gain)
         _player.play()
-    if haptics_enabled and vibration_ms > 0 and (OS.has_feature("android") or OS.has_feature("ios")):
+    _haptic(vibration_ms)
+
+
+func _haptic(vibration_ms: int) -> void:
+    if not haptics_enabled or vibration_ms <= 0:
+        return
+    if OS.has_feature("android") or OS.has_feature("ios"):
         Input.vibrate_handheld(vibration_ms)
 
 
