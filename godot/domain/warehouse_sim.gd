@@ -8,7 +8,7 @@ const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 
 const SAVE_SCHEMA := 2
 const BASE_SHIPMENT_VALUE := 500
-const INBOUND_INTERVAL := 3.0
+const INBOUND_INTERVAL := 2.8
 const ORDER_INTERVAL := 3.0
 const INBOUND_LIMIT := 14
 const ORDER_LIMIT := 18
@@ -265,7 +265,7 @@ func _update_packing(dt: float) -> void:
     if not _packing_active and packing_queue > 0:
         packing_queue -= 1
         _packing_active = true
-        _packing_duration = 4.2 * pack_time_multiplier
+        _packing_duration = 3.0 * pack_time_multiplier
         _packing_remaining = _packing_duration
         _emit("packing_started", {"duration": _packing_duration})
 
