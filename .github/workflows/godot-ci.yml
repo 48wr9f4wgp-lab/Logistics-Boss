@@ -53,6 +53,9 @@ jobs:
       - name: Rank 2 zone pacing report
         run: godot --headless --path godot --script res://tests/rank2_zone_pacing_report.gd
 
+      - name: Rank 2 facility UI smoke
+        run: godot --headless --path godot --script res://tests/rank2_facility_ui_smoke.gd
+
       - name: Rank 2 facility visual smoke
         run: godot --headless --path godot --script res://tests/rank2_facility_visual_smoke.gd
 
