@@ -54,11 +54,14 @@ func _init() -> void:
         "strategy": strategy_report,
     }))
 
-    assert(distinct_winners.size() >= 3, "workload waves must create at least three situational staffing winners across representative facility contexts")
+    if not _require(distinct_winners.size() >= 3, "workload waves must create at least three situational staffing winners across representative facility contexts"):
+        return
     var adaptive: Dictionary = strategy_report["adaptive"]
     var fixed_shipping: Dictionary = strategy_report["fixed_shipping"]
-    assert(int(adaptive.get("shipments", 0)) > 0, "adaptive workload strategy must keep real shipments flowing")
-    assert(float(adaptive.get("queue_pressure", INF)) < float(fixed_shipping.get("queue_pressure", INF)), "forecast-driven staffing must materially reduce accumulated queue pressure versus always shipping")
+    if not _require(int(adaptive.get("shipments", 0)) > 0, "adaptive workload strategy must keep real shipments flowing"):
+        return
+    if not _require(float(adaptive.get("queue_pressure", INF)) < float(fixed_shipping.get("queue_pressure", INF)), "forecast-driven staffing must materially reduce accumulated queue pressure versus always shipping"):
+        return
 
     print("Godot Rank 2 workload wave pacing report passed")
     quit(0)
@@ -232,3 +235,11 @@ func _prepared_rank2(profile: String, plan: String, clock: float) -> WorkloadWar
     sim.packed_queue = 4
     sim.open_orders = 6
     return sim
+
+
+func _require(condition: bool, message: String) -> bool:
+    if condition:
+        return true
+    push_error(message)
+    quit(1)
+    return false
