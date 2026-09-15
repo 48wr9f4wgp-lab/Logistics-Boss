@@ -80,6 +80,9 @@ jobs:
       - name: Rank 3 post-Annex frontier
         run: godot --headless --path godot --script res://tests/rank3_post_annex_frontier.gd
 
+      - name: Rank 3 receiving orchestration scout
+        run: godot --headless --path godot --script res://tests/rank3_receiving_orchestration_scout.gd
+
       - name: Rank 2 facility UI smoke
         run: godot --headless --path godot --script res://tests/rank2_facility_ui_smoke.gd
 
