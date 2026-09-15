@@ -25,13 +25,76 @@ func _init() -> void:
         var group: Dictionary = report[group_name]
         for case_name in group:
             var metrics: Dictionary = group[case_name]
-            if int(metrics.get("shipments", 0)) <= 0:
-                push_error("Rank 2 facility scenario stopped real shipment flow: %s/%s" % [group_name, case_name])
-                quit(1)
+            if not _require(
+                int(metrics.get("shipments", 0)) > 0,
+                "Rank 2 facility scenario stopped real shipment flow: %s/%s" % [group_name, case_name]
+            ):
                 return
+
+    if not _validate_tradeoffs(report):
+        return
 
     print("Godot Rank 2 zone pacing report passed")
     quit(0)
+
+
+func _validate_tradeoffs(report: Dictionary) -> bool:
+    var intake: Dictionary = report["intake"]
+    var double_dock: Dictionary = intake["double_dock"]
+    var buffer_yard: Dictionary = intake["buffer_yard"]
+    if not _require(
+        float(double_dock.get("inbound_interval", 999.0)) < float(buffer_yard.get("inbound_interval", 0.0)),
+        "Double Dock must create the faster source cadence"
+    ):
+        return false
+    if not _require(
+        int(buffer_yard.get("inbound_capacity", 0)) > int(double_dock.get("inbound_capacity", 0)),
+        "Buffer Yard must provide the larger surge buffer"
+    ):
+        return false
+    if not _require(
+        int(buffer_yard.get("inbound_arrivals", 0)) > int(double_dock.get("inbound_arrivals", 0)),
+        "congested intake scenario must demonstrate Buffer Yard absorbing more actual arrivals"
+    ):
+        return false
+
+    var storage: Dictionary = report["storage"]
+    var fast_pick: Dictionary = storage["fast_pick_rack"]
+    var high_density: Dictionary = storage["high_density_rack"]
+    if not _require(
+        int(high_density.get("rack_capacity", 0)) > int(fast_pick.get("rack_capacity", 0)),
+        "High Density Rack must preserve a real capacity advantage"
+    ):
+        return false
+    if not _require(
+        float(fast_pick.get("packing_avg", 0.0)) > float(high_density.get("packing_avg", 0.0)),
+        "demand-heavy storage scenario must show Fast Pick feeding the downstream pack queue more aggressively"
+    ):
+        return false
+
+    var packing: Dictionary = report["packing"]
+    var parallel_pack: Dictionary = packing["parallel_pack"]
+    var fast_cell: Dictionary = packing["fast_pack_cell"]
+    if not _require(
+        int(parallel_pack.get("packing_capacity", 0)) > int(fast_cell.get("packing_capacity", 0)),
+        "Parallel Pack must retain the concurrency advantage"
+    ):
+        return false
+    if not _require(
+        float(fast_cell.get("packing_duration", 999.0)) < float(parallel_pack.get("packing_duration", 0.0)),
+        "Fast Pack Cell must retain the per-box latency advantage"
+    ):
+        return false
+
+    return true
+
+
+func _require(condition: bool, message: String) -> bool:
+    if condition:
+        return true
+    push_error(message)
+    quit(1)
+    return false
 
 
 func _run_case(kind: StringName, staffing: String, seconds: float) -> Dictionary:
