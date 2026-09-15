@@ -16,6 +16,10 @@ func _fail(message: String) -> void:
 
 
 func _run() -> void:
+    _verify_release_preflight()
+    if get_tree() == null:
+        return
+
     var host := Node.new()
     get_root().add_child(host)
     var sim = SimScript.new()
@@ -61,3 +65,62 @@ func _run() -> void:
     await process_frame
     print("Godot release services smoke passed")
     quit(0)
+
+
+func _verify_release_preflight() -> void:
+    if int(ProjectSettings.get_setting("display/window/size/viewport_width", 0)) != 390:
+        _fail("release reference viewport width must remain 390")
+        return
+    if int(ProjectSettings.get_setting("display/window/size/viewport_height", 0)) != 844:
+        _fail("release reference viewport height must remain 844")
+        return
+    if String(ProjectSettings.get_setting("display/window/stretch/mode", "")) != "canvas_items":
+        _fail("mobile release must keep canvas_items stretch mode")
+        return
+    if String(ProjectSettings.get_setting("display/window/stretch/aspect", "")) != "expand":
+        _fail("mobile release must keep expand stretch aspect")
+        return
+    if int(ProjectSettings.get_setting("display/window/handheld/orientation", -1)) != 1:
+        _fail("mobile release must remain portrait")
+        return
+    if String(ProjectSettings.get_setting("rendering/renderer/rendering_method", "")) != "gl_compatibility":
+        _fail("release renderer must remain GL Compatibility")
+        return
+
+    for required_path in [
+        "res://icon.svg",
+        "res://assets/fonts/MPLUS1p-Regular.ttf",
+        "res://persistence/save_store.gd",
+        "res://ui/game_hud_mobile.gd",
+        "res://view/warehouse_view_mobile.gd",
+    ]:
+        if not FileAccess.file_exists(required_path):
+            _fail("release asset/script missing: %s" % required_path)
+            return
+
+    var presets := ConfigFile.new()
+    var load_error := presets.load("res://export_presets.cfg")
+    if load_error != OK:
+        _fail("export presets must be readable")
+        return
+
+    var release_presets: Array[String] = []
+    for section_variant in presets.get_sections():
+        var section := String(section_variant)
+        if section.begins_with("preset.") and not section.ends_with(".options"):
+            release_presets.append(section)
+    if release_presets.size() != 1:
+        _fail("before native identifiers are supplied, repository must contain only the Web engineering-preview preset")
+        return
+    if String(presets.get_value("preset.0", "name", "")) != "Web":
+        _fail("engineering-preview export preset must remain named Web")
+        return
+    if String(presets.get_value("preset.0", "platform", "")) != "Web":
+        _fail("engineering-preview preset must target Web")
+        return
+    if bool(presets.get_value("preset.0", "runnable", false)) != true:
+        _fail("Web engineering-preview preset must remain runnable")
+        return
+    if bool(presets.get_value("preset.0.options", "progressive_web_app/enabled", true)):
+        _fail("Web build is an engineering preview, not the production PWA target")
+        return
