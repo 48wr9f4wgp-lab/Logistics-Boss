@@ -34,7 +34,7 @@ jobs:
         run: |
           rm -rf godot-web
           mkdir -p godot-web
-          godot --headless --path godot --export-release Web ../godot-web/index.html
+          godot --verbose --headless --path godot --export-release Web ../godot-web/index.html
           test -s godot-web/index.html
           test -s godot-web/index.wasm
           test -s godot-web/index.pck
