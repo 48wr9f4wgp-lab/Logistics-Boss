@@ -72,13 +72,37 @@ jobs:
           rm -rf ios-build
           mkdir -p ios-build
 
-          godot_status=0
-          if godot --headless --path godot --export-release 'iOS CI Project' ../ios-build/LogisticsBoss > /tmp/godot-ios-export.log 2>&1; then
-            godot_status=0
-          else
-            godot_status=$?
-          fi
-          cat /tmp/godot-ios-export.log
+          # Run Godot through Python so its known non-zero project-only status cannot
+          # trip GitHub Actions' shell-level errexit before we inspect the generated files.
+          python3 - <<'PY'
+          import pathlib
+          import subprocess
+
+          command = [
+              "godot",
+              "--headless",
+              "--path",
+              "godot",
+              "--export-release",
+              "iOS CI Project",
+              "../ios-build/LogisticsBoss",
+          ]
+          result = subprocess.run(
+              command,
+              stdout=subprocess.PIPE,
+              stderr=subprocess.STDOUT,
+              text=True,
+              check=False,
+          )
+          log_path = pathlib.Path("/tmp/godot-ios-export.log")
+          log_path.write_text(result.stdout, encoding="utf-8")
+          pathlib.Path("/tmp/godot-ios-status.txt").write_text(
+              str(result.returncode), encoding="utf-8"
+          )
+          print(result.stdout, end="")
+          PY
+
+          godot_status="$(cat /tmp/godot-ios-status.txt)"
 
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-export.log; then
             echo 'Godot iOS export emitted an engine/script error'
