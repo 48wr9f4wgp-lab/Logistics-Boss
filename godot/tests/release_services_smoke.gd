@@ -18,6 +18,8 @@ func _fail(message: String) -> void:
 func _run() -> void:
     if not _verify_release_preflight():
         return
+    if not _verify_native_release_tooling():
+        return
 
     var host := Node.new()
     get_root().add_child(host)
@@ -123,5 +125,33 @@ func _verify_release_preflight() -> bool:
     if bool(presets.get_value("preset.0.options", "progressive_web_app/enabled", true)):
         _fail("Web build is an engineering preview, not the production PWA target")
         return false
+
+    return true
+
+
+func _verify_native_release_tooling() -> bool:
+    for required_path in [
+        "res://tools/native_release_inputs.py",
+        "res://native_release_inputs.example.env",
+    ]:
+        if not FileAccess.file_exists(required_path):
+            _fail("native release tooling missing: %s" % required_path)
+            return false
+
+    # GitHub Actions executes this smoke on Linux with Python available. The
+    # validator self-test uses only synthetic identifiers and never needs real
+    # signing material or production secrets.
+    if OS.has_feature("linux"):
+        var validator_path := ProjectSettings.globalize_path("res://tools/native_release_inputs.py")
+        var validator_output: Array = []
+        var validator_exit := OS.execute(
+            "python3",
+            PackedStringArray([validator_path, "--self-test"]),
+            validator_output,
+            true
+        )
+        if validator_exit != 0:
+            _fail("native release input validator self-test failed: %s" % str(validator_output))
+            return false
 
     return true
