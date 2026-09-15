@@ -96,13 +96,13 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
     var rack_full_seconds := 0.0
     var samples := 0
     var switches := 0
-    var pick_tasks_started := 0
+    var event_counts := {"pick_started": 0}
     var last_phase_id := ""
     var bottleneck_counts: Dictionary = {}
 
     sim.event_emitted.connect(func(event: Dictionary):
         if String(event.get("type", "")) == "worker_task_started" and int(event.get("task", -1)) == PICK_TASK:
-            pick_tasks_started += 1
+            event_counts["pick_started"] = int(event_counts.get("pick_started", 0)) + 1
     )
 
     for _i in int(ceil(CYCLE_SECONDS / STEP_SECONDS)):
@@ -157,7 +157,7 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
         "pick_starved_seconds": snappedf(pick_starved_seconds, 0.01),
         "order_cap_seconds": snappedf(order_cap_seconds, 0.01),
         "rack_full_seconds": snappedf(rack_full_seconds, 0.01),
-        "pick_tasks_started": pick_tasks_started,
+        "pick_tasks_started": int(event_counts.get("pick_started", 0)),
         "autonomous_retrieval_starts": int(sim.autonomous_retrieval_starts),
         "autonomous_retrieval_completions": int(sim.autonomous_retrieval_completions),
         "switches": switches,
