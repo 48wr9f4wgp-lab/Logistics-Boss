@@ -92,11 +92,21 @@ jobs:
       - name: Rank 3 Carrier Routing pacing report
         run: godot --headless --path godot --script res://tests/rank3_carrier_routing_pacing_report.gd
 
+      - name: Runtime startup smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 30s godot --headless --path godot --script res://tests/runtime_startup_smoke.gd 2>&1 | tee /tmp/runtime-startup-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/runtime-startup-smoke.log; then
+            echo 'Runtime startup smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Rank 3 inbound carrier program smoke
         shell: bash
         run: |
           set -euo pipefail
-          godot --headless --path godot --script res://tests/rank3_inbound_carrier_smoke.gd 2>&1 | tee /tmp/rank3-inbound-carrier-smoke.log
+          timeout 30s godot --headless --path godot --script res://tests/rank3_inbound_carrier_smoke.gd 2>&1 | tee /tmp/rank3-inbound-carrier-smoke.log
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/rank3-inbound-carrier-smoke.log; then
             echo 'Rank 3 inbound carrier program smoke emitted an engine/script error'
             exit 1
