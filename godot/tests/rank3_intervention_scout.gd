@@ -79,8 +79,8 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
         float(candidate.get("retrieval_cycle", 0.0))
     )
 
-    var start_shipped := sim.shipped
-    var start_money := sim.money
+    var start_shipped: int = int(sim.shipped)
+    var start_money: int = int(sim.money)
     var order_sum := 0.0
     var inbound_sum := 0.0
     var rack_sum := 0.0
@@ -122,16 +122,16 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
         rack_sum += float(sim.rack_stock)
         packing_sum += float(sim.packing_queue)
         packed_sum += float(sim.packed_queue)
-        max_orders = maxi(max_orders, sim.open_orders)
-        max_inbound = maxi(max_inbound, sim.inbound_queue)
-        max_rack = maxi(max_rack, sim.rack_stock)
-        max_packing = maxi(max_packing, sim.packing_queue)
-        max_packed = maxi(max_packed, sim.packed_queue)
-        if sim.open_orders > 0 and sim.rack_stock <= 0:
+        max_orders = maxi(max_orders, int(sim.open_orders))
+        max_inbound = maxi(max_inbound, int(sim.inbound_queue))
+        max_rack = maxi(max_rack, int(sim.rack_stock))
+        max_packing = maxi(max_packing, int(sim.packing_queue))
+        max_packed = maxi(max_packed, int(sim.packed_queue))
+        if int(sim.open_orders) > 0 and int(sim.rack_stock) <= 0:
             pick_starved_seconds += STEP_SECONDS
-        if sim.open_orders >= 18:
+        if int(sim.open_orders) >= 18:
             order_cap_seconds += STEP_SECONDS
-        if sim.rack_stock >= sim.rack_capacity:
+        if int(sim.rack_stock) >= int(sim.rack_capacity):
             rack_full_seconds += STEP_SECONDS
         var bottleneck_key := String(sim.bottleneck().get("key", "stable"))
         bottleneck_counts[bottleneck_key] = int(bottleneck_counts.get(bottleneck_key, 0)) + 1
@@ -140,9 +140,9 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
     var divisor := maxf(1.0, float(samples))
     return {
         "storage": String(storage_kind),
-        "shipments": sim.shipped - start_shipped,
-        "revenue": sim.money - start_money,
-        "shipments_per_min": snappedf(float(sim.shipped - start_shipped) / (CYCLE_SECONDS / 60.0), 0.1),
+        "shipments": int(sim.shipped) - start_shipped,
+        "revenue": int(sim.money) - start_money,
+        "shipments_per_min": snappedf(float(int(sim.shipped) - start_shipped) / (CYCLE_SECONDS / 60.0), 0.1),
         "orders_avg": snappedf(order_sum / divisor, 0.01),
         "inbound_avg": snappedf(inbound_sum / divisor, 0.01),
         "rack_avg": snappedf(rack_sum / divisor, 0.01),
@@ -153,22 +153,22 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
         "max_rack": max_rack,
         "max_packing": max_packing,
         "max_packed": max_packed,
-        "rack_capacity": sim.rack_capacity,
+        "rack_capacity": int(sim.rack_capacity),
         "pick_starved_seconds": snappedf(pick_starved_seconds, 0.01),
         "order_cap_seconds": snappedf(order_cap_seconds, 0.01),
         "rack_full_seconds": snappedf(rack_full_seconds, 0.01),
         "pick_tasks_started": pick_tasks_started,
-        "autonomous_retrieval_starts": sim.autonomous_retrieval_starts,
-        "autonomous_retrieval_completions": sim.autonomous_retrieval_completions,
+        "autonomous_retrieval_starts": int(sim.autonomous_retrieval_starts),
+        "autonomous_retrieval_completions": int(sim.autonomous_retrieval_completions),
         "switches": switches,
         "bottleneck_distribution": bottleneck_counts,
         "dominant_bottleneck": _dominant_key(bottleneck_counts),
         "ending_bottleneck": String(sim.bottleneck().get("key", "stable")),
-        "ending_orders": sim.open_orders,
-        "ending_inbound": sim.inbound_queue,
-        "ending_rack": sim.rack_stock,
-        "ending_packing": sim.packing_queue,
-        "ending_packed": sim.packed_queue,
+        "ending_orders": int(sim.open_orders),
+        "ending_inbound": int(sim.inbound_queue),
+        "ending_rack": int(sim.rack_stock),
+        "ending_packing": int(sim.packing_queue),
+        "ending_packed": int(sim.packed_queue),
     }
 
 
@@ -229,7 +229,7 @@ func _prepared_rank2(storage_kind: StringName):
         assert(bool(purchase.get("ok", false)), "%s must purchase in Rank 3 intervention scout" % String(kind))
 
     sim.inbound_queue = 6
-    sim.rack_stock = mini(sim.rack_capacity, 10)
+    sim.rack_stock = mini(int(sim.rack_capacity), 10)
     sim.packing_queue = 3
     sim.packed_queue = 4
     sim.open_orders = 6
