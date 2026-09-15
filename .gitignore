@@ -7,3 +7,12 @@
 # Godot export outputs
 build/
 exports/
+
+# Native release inputs / signing material
+# Real production identifiers and credentials stay local or in CI secret storage.
+godot/.native-release.env
+*.keystore
+*.jks
+*.p12
+*.p8
+*.mobileprovision
