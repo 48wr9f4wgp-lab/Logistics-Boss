@@ -4,6 +4,7 @@ const CandidateSimScript = preload("res://tests/rank3_candidate_sim.gd")
 const STEP_SECONDS := 0.1
 const CYCLE_SECONDS := 510.0
 const PICK_TASK := 2
+const SHIP_TASK := 3
 const STORAGE_OPTIONS := {
     "fast_pick_rack": &"fast_pick_rack",
     "high_density_rack": &"high_density_rack",
@@ -11,23 +12,39 @@ const STORAGE_OPTIONS := {
 const CANDIDATES := {
     "control": {
         "pick_multiplier": 1.0,
+        "ship_multiplier": 1.0,
         "retrieval_cycle": 0.0,
         "assumption": "late Rank 2 baseline",
     },
     "pick_to_light": {
         "pick_multiplier": 0.85,
+        "ship_multiplier": 1.0,
         "retrieval_cycle": 0.0,
         "assumption": "15% shorter human PICK cycle",
     },
     "amr_tote_runner": {
         "pick_multiplier": 0.70,
+        "ship_multiplier": 1.0,
         "retrieval_cycle": 0.0,
         "assumption": "30% shorter human PICK cycle by removing travel",
     },
     "automated_retrieval_cell": {
         "pick_multiplier": 1.0,
+        "ship_multiplier": 1.0,
         "retrieval_cycle": 4.5,
         "assumption": "one independent rack-to-pack retrieval every 4.5s",
+    },
+    "scan_sort_assist": {
+        "pick_multiplier": 1.0,
+        "ship_multiplier": 0.85,
+        "retrieval_cycle": 0.0,
+        "assumption": "15% shorter human SHIP cycle through scan/sort assist",
+    },
+    "auto_sorter_lane": {
+        "pick_multiplier": 1.0,
+        "ship_multiplier": 0.70,
+        "retrieval_cycle": 0.0,
+        "assumption": "30% shorter human SHIP cycle through automated sortation",
     },
 }
 
@@ -58,9 +75,15 @@ func _init() -> void:
             return
         if not _require(int(control.get("pick_tasks_started", 0)) > 0, "%s control must exercise real worker PICK tasks" % storage_label):
             return
+        if not _require(int(control.get("ship_tasks_started", 0)) > 0, "%s control must exercise real worker SHIP tasks" % storage_label):
+            return
         for candidate_label in ["pick_to_light", "amr_tote_runner"]:
-            var result: Dictionary = cases[candidate_label]
-            if not _require(int(result.get("pick_tasks_started", 0)) > 0, "%s / %s must exercise worker PICK" % [storage_label, candidate_label]):
+            var pick_result: Dictionary = cases[candidate_label]
+            if not _require(int(pick_result.get("pick_tasks_started", 0)) > 0, "%s / %s must exercise worker PICK" % [storage_label, candidate_label]):
+                return
+        for candidate_label in ["scan_sort_assist", "auto_sorter_lane"]:
+            var ship_result: Dictionary = cases[candidate_label]
+            if not _require(int(ship_result.get("ship_tasks_started", 0)) > 0, "%s / %s must exercise authoritative worker SHIP" % [storage_label, candidate_label]):
                 return
         var retrieval: Dictionary = cases["automated_retrieval_cell"]
         if not _require(int(retrieval.get("autonomous_retrieval_starts", 0)) > 0, "%s retrieval candidate must execute automation" % storage_label):
@@ -76,6 +99,7 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
     var sim = _prepared_rank2(storage_kind)
     sim.configure_candidate(
         float(candidate.get("pick_multiplier", 1.0)),
+        float(candidate.get("ship_multiplier", 1.0)),
         float(candidate.get("retrieval_cycle", 0.0))
     )
 
@@ -96,13 +120,18 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
     var rack_full_seconds := 0.0
     var samples := 0
     var switches := 0
-    var event_counts := {"pick_started": 0}
+    var event_counts := {"pick_started": 0, "ship_started": 0}
     var last_phase_id := ""
     var bottleneck_counts: Dictionary = {}
 
     sim.event_emitted.connect(func(event: Dictionary):
-        if String(event.get("type", "")) == "worker_task_started" and int(event.get("task", -1)) == PICK_TASK:
+        if String(event.get("type", "")) != "worker_task_started":
+            return
+        var task := int(event.get("task", -1))
+        if task == PICK_TASK:
             event_counts["pick_started"] = int(event_counts.get("pick_started", 0)) + 1
+        elif task == SHIP_TASK:
+            event_counts["ship_started"] = int(event_counts.get("ship_started", 0)) + 1
     )
 
     for _i in int(ceil(CYCLE_SECONDS / STEP_SECONDS)):
@@ -158,6 +187,7 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
         "order_cap_seconds": snappedf(order_cap_seconds, 0.01),
         "rack_full_seconds": snappedf(rack_full_seconds, 0.01),
         "pick_tasks_started": int(event_counts.get("pick_started", 0)),
+        "ship_tasks_started": int(event_counts.get("ship_started", 0)),
         "autonomous_retrieval_starts": int(sim.autonomous_retrieval_starts),
         "autonomous_retrieval_completions": int(sim.autonomous_retrieval_completions),
         "switches": switches,
@@ -175,7 +205,7 @@ func _run_case(storage_kind: StringName, candidate: Dictionary) -> Dictionary:
 func _compare_against_control(cases: Dictionary) -> Dictionary:
     var control: Dictionary = cases["control"]
     var comparison: Dictionary = {}
-    for candidate_label in ["pick_to_light", "amr_tote_runner", "automated_retrieval_cell"]:
+    for candidate_label in ["pick_to_light", "amr_tote_runner", "automated_retrieval_cell", "scan_sort_assist", "auto_sorter_lane"]:
         var result: Dictionary = cases[candidate_label]
         comparison[candidate_label] = {
             "shipment_delta": int(result.get("shipments", 0)) - int(control.get("shipments", 0)),
