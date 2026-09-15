@@ -18,12 +18,12 @@ var _crossdock_remaining: float = 0.0
 
 
 func configure_candidate(
-    receiving_bonus: int,
     store_multiplier: float,
     pick_multiplier: float,
     ship_multiplier: float,
     retrieval_cycle: float,
-    direct_crossdock_cycle: float
+    direct_crossdock_cycle: float,
+    receiving_bonus: int = 0
 ) -> void:
     inbound_limit_bonus = maxi(0, receiving_bonus)
     store_cycle_multiplier = clampf(store_multiplier, 0.35, 1.0)
