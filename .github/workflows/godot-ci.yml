@@ -41,6 +41,9 @@ jobs:
       - name: Economy pacing report
         run: godot --headless --path godot --script res://tests/economy_pacing_report.gd
 
+      - name: Rank 2 readiness scout
+        run: godot --headless --path godot --script res://tests/rank2_readiness_scout.gd
+
       - name: Japanese font glyph smoke
         run: godot --headless --path godot --script res://tests/font_smoke.gd
 
