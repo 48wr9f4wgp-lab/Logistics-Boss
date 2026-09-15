@@ -53,6 +53,7 @@ jobs:
             --preset-name 'iOS CI Project'
           grep -q 'name="iOS CI Project"' godot/export_presets.cfg
           grep -q 'application/export_project_only=true' godot/export_presets.cfg
+          grep -q 'export_path="../ios-build/LogisticsBoss"' godot/export_presets.cfg
 
       - name: Parse/import project on macOS
         shell: bash
@@ -70,19 +71,23 @@ jobs:
           set -euo pipefail
           rm -rf ios-build
           mkdir -p ios-build
-          godot --headless --path godot --export-release 'iOS CI Project' ../ios-build/LogisticsBoss.zip 2>&1 | tee /tmp/godot-ios-export.log
+          godot --headless --path godot --export-release 'iOS CI Project' ../ios-build/LogisticsBoss 2>&1 | tee /tmp/godot-ios-export.log
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-export.log; then
             echo 'Godot iOS export emitted an engine/script error'
             exit 1
           fi
-          test -s ios-build/LogisticsBoss.zip
-          unzip -l ios-build/LogisticsBoss.zip | tee /tmp/logistics-boss-ios-zip.txt
-          grep -E '\.xcodeproj/project\.pbxproj' /tmp/logistics-boss-ios-zip.txt
+          test -s ios-build/LogisticsBoss.xcodeproj/project.pbxproj
+          test -s ios-build/LogisticsBoss/LogisticsBoss-Info.plist
+          test -s ios-build/LogisticsBoss/data.pck
+          ditto -c -k --sequesterRsrc --keepParent ios-build/LogisticsBoss.xcodeproj ios-build/LogisticsBoss.xcodeproj.zip
+          test -s ios-build/LogisticsBoss.xcodeproj.zip
 
       - name: Upload unsigned iOS Xcode-project smoke artifact
         uses: actions/upload-artifact@v4
         with:
           name: logistics-boss-ios-xcode-smoke
-          path: ios-build/LogisticsBoss.zip
+          path: |
+            ios-build/LogisticsBoss.xcodeproj.zip
+            ios-build/LogisticsBoss/LogisticsBoss-Info.plist
           if-no-files-found: error
           retention-days: 3
