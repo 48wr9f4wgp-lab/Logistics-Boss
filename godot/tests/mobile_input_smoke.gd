@@ -70,8 +70,20 @@ func _run() -> void:
     if is_equal_approx(before_distance, view._camera_distance):
         _fail("two-finger gesture must change camera distance")
         return
-    if view._camera_distance < 12.0 or view._camera_distance > 25.0:
-        _fail("pinch zoom must remain inside camera distance bounds")
+    if view._camera_distance < MobileWarehouseView.MOBILE_MIN_DISTANCE or view._camera_distance > MobileWarehouseView.MOBILE_MAX_DISTANCE:
+        _fail("pinch zoom must remain inside mobile camera distance bounds")
+        return
+
+    view._camera_distance = MobileWarehouseView.MOBILE_MIN_DISTANCE
+    view._update_camera(1.0)
+    if view._camera.fov < 40.0:
+        _fail("near mobile zoom must widen FOV so the warehouse does not become tunnel-like")
+        return
+
+    view._camera_distance = MobileWarehouseView.MOBILE_MAX_DISTANCE
+    view._update_camera(1.0)
+    if view._camera.fov > 36.0:
+        _fail("far mobile view should return toward the composed overview FOV")
         return
 
     for index in [0, 1]:
