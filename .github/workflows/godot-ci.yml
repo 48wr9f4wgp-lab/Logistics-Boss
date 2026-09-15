@@ -86,6 +86,12 @@ jobs:
       - name: Rank 3 receiving orchestration scout
         run: godot --headless --path godot --script res://tests/rank3_receiving_orchestration_scout.gd
 
+      - name: Rank 3 Carrier Routing smoke
+        run: godot --headless --path godot --script res://tests/rank3_carrier_routing_smoke.gd
+
+      - name: Rank 3 Carrier Routing pacing report
+        run: godot --headless --path godot --script res://tests/rank3_carrier_routing_pacing_report.gd
+
       - name: Rank 2 facility UI smoke
         run: godot --headless --path godot --script res://tests/rank2_facility_ui_smoke.gd
 
