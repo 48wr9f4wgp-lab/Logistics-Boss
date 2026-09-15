@@ -1,7 +1,8 @@
 extends "res://ui/game_hud.gd"
 class_name JapaneseGameHud
 
-var _jp_system_font: SystemFont
+const JAPANESE_UI_FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
+
 var _measurement_panel: PanelContainer
 var _measurement_label: Label
 var _measurement_timer := 0.0
@@ -11,15 +12,6 @@ func _ready() -> void:
     super._ready()
     _append_forklift_upgrade()
     _build_measurement_banner()
-
-    _jp_system_font = SystemFont.new()
-    _jp_system_font.font_names = PackedStringArray([
-        "Hiragino Sans",
-        "Yu Gothic",
-        "Noto Sans CJK JP",
-        "sans-serif",
-    ])
-    _jp_system_font.allow_system_fallback = true
     _apply_japanese_font_recursive(self)
     _replace_static_copy_recursive(self)
 
@@ -163,5 +155,5 @@ func _replace_static_copy_recursive(node: Node) -> void:
 func _apply_japanese_font_recursive(node: Node) -> void:
     for child in node.get_children():
         if child is Control:
-            (child as Control).add_theme_font_override("font", _jp_system_font)
+            (child as Control).add_theme_font_override("font", JAPANESE_UI_FONT)
         _apply_japanese_font_recursive(child)
