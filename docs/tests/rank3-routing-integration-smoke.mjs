@@ -8,6 +8,7 @@ const routingUi = read('../src/routing.js');
 const routingVisual = read('../src/routing-visual.js');
 const routingModel = read('../src/routing-model.js');
 const css = read('../routing.css');
+const capitalCss = read('../capital.css');
 
 assert.match(main, /bindCarrierRouting/);
 assert.match(main, /routing\.update\(dt\)/);
@@ -20,6 +21,9 @@ assert.match(routingUi, /packed/);
 assert.match(routingUi, /orders/);
 assert.match(routingUi, /revenuePerMinute/);
 assert.match(routingUi, /Carrier Routing/);
+assert.match(routingUi, /dock\.prepend\(panel\)/, 'Rank 3 routing should lead the management sheet');
+assert.match(routingUi, /routingCurrent.*aria-live/);
+assert.match(routingUi, /nodes\.current\.innerHTML/);
 assert.doesNotMatch(routingUi, /recommended|おすすめ|正解/);
 
 assert.match(scene, /createRoutingVisual/);
@@ -38,5 +42,9 @@ assert.match(routingModel, /express/);
 assert.match(routingModel, /consolidated/);
 assert.match(css, /carrierRoutingPanel/);
 assert.match(css, /routingChoices/);
+assert.match(css, /@media\(max-width:430px\)/);
+assert.match(css, /\.routingChoice strong\{font-size:13px\}/, 'mobile route names must remain readable');
+assert.match(capitalCss, /\.capitalBuy:disabled\{opacity:\.74\}/, 'unaffordable capital cards must stay readable');
+assert.match(capitalCss, /\.capitalBuy\[data-locked="true"\]\{opacity:\.56\}/, 'locked cards should remain distinguishable from unaffordable cards');
 
 console.log('Rank 3 routing integration smoke passed');

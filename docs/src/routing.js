@@ -27,14 +27,13 @@ export function bindCarrierRouting(sim) {
       <div><small>FULFILLMENT ROUTING</small><strong>Carrier Routing</strong></div>
       <span id="routingBadge" class="routingBadge">BALANCED</span>
     </div>
-    <div id="routingCurrent" class="routingCurrent">Balanced Parcel</div>
+    <div id="routingCurrent" class="routingCurrent" aria-live="polite"><strong>Balanced Parcel</strong><span>標準間隔・標準単価</span><b>運転データを取得中</b></div>
     <div id="routingChoices" class="routingChoices" aria-label="配送ルート"></div>
     <div id="routingReport" class="routingReport" hidden></div>
     <small class="routingHint">出荷速度と1箱あたりの収益が変わる。結果を見て運用方針を切り替える。</small>`;
 
-  const nextStage = document.getElementById('nextStagePanel');
-  if (nextStage) nextStage.insertAdjacentElement('afterend', panel);
-  else dock.appendChild(panel);
+  // Rank 3's active operating decision should be the first thing the player sees in Management.
+  dock.prepend(panel);
 
   const nodes = {
     badge: panel.querySelector('#routingBadge'),
@@ -169,7 +168,7 @@ export function bindCarrierRouting(sim) {
     const def = routingPackage(mode);
     nodes.badge.textContent = def.shortLabel;
     nodes.badge.dataset.mode = mode;
-    nodes.current.textContent = `${def.label} · ${def.summary} · 現在 ${sim.state.metrics.perMinute || 0}/分 · ${yen(sim.state.metrics.revenuePerMinute || 0)}/分`;
+    nodes.current.innerHTML = `<strong>${def.label}</strong><span>${def.summary}</span><b>出荷 ${sim.state.metrics.perMinute || 0}/分 · 売上 ${yen(sim.state.metrics.revenuePerMinute || 0)}/分</b>`;
     for (const [key, button] of buttons) {
       const selected = key === mode;
       button.classList.toggle('active', selected);
