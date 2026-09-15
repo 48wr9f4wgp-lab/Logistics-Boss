@@ -5,7 +5,7 @@ const WarehouseViewScript = preload("res://view/warehouse_view.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
 const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")
 const WarehouseVisualCompositionFixScript = preload("res://view/visual_composition_fix.gd")
-const GameHudScript = preload("res://ui/game_hud.gd")
+const GameHudScript = preload("res://ui/game_hud_ja.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 
 var sim: WarehouseSim
