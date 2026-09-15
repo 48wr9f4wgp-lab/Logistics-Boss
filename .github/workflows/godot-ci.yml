@@ -56,6 +56,12 @@ jobs:
       - name: Rank 2 post-zone frontier
         run: godot --headless --path godot --script res://tests/rank2_post_zone_frontier.gd
 
+      - name: Rank 2 workload wave smoke
+        run: godot --headless --path godot --script res://tests/workload_wave_smoke.gd
+
+      - name: Rank 2 workload wave pacing report
+        run: godot --headless --path godot --script res://tests/workload_wave_pacing_report.gd
+
       - name: Rank 2 facility UI smoke
         run: godot --headless --path godot --script res://tests/rank2_facility_ui_smoke.gd
 
