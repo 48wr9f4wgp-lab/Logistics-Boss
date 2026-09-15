@@ -31,10 +31,10 @@ func _rebuild_if_needed(force: bool) -> void:
     if sim == null or _visual_root == null:
         return
 
-    var signature := "%d|%s" % [
-        int(sim.facility_rank),
-        str(bool(sim.get("receiving_annex_unlocked"))) if "receiving_annex_unlocked" in sim else "false",
-    ]
+    var annex_owned := false
+    if sim.has_method("receiving_annex_info"):
+        annex_owned = bool(sim.get("receiving_annex_unlocked"))
+    var signature := "%d|%s" % [int(sim.facility_rank), str(annex_owned)]
     if not force and signature == _last_signature:
         return
     _last_signature = signature
@@ -46,7 +46,7 @@ func _rebuild_if_needed(force: bool) -> void:
         return
 
     _build_fulfillment_center_mark()
-    if "receiving_annex_unlocked" in sim and bool(sim.get("receiving_annex_unlocked")):
+    if annex_owned:
         _build_receiving_annex()
 
 
