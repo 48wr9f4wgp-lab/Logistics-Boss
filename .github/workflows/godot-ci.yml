@@ -71,11 +71,23 @@ jobs:
       - name: Rank 3 intake growth scout
         run: godot --headless --path godot --script res://tests/rank3_intake_growth_scout.gd
 
+      - name: Rank 3 Receiving Annex smoke
+        run: godot --headless --path godot --script res://tests/rank3_receiving_annex_smoke.gd
+
+      - name: Rank 3 Receiving Annex pacing report
+        run: godot --headless --path godot --script res://tests/rank3_receiving_annex_pacing_report.gd
+
       - name: Rank 2 facility UI smoke
         run: godot --headless --path godot --script res://tests/rank2_facility_ui_smoke.gd
 
+      - name: Rank 3 UI smoke
+        run: godot --headless --path godot --script res://tests/rank3_ui_smoke.gd
+
       - name: Rank 2 facility visual smoke
         run: godot --headless --path godot --script res://tests/rank2_facility_visual_smoke.gd
+
+      - name: Rank 3 visual smoke
+        run: godot --headless --path godot --script res://tests/rank3_visual_smoke.gd
 
       - name: Japanese font glyph smoke
         run: godot --headless --path godot --script res://tests/font_smoke.gd
