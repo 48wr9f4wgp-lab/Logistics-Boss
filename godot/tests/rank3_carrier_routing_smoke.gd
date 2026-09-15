@@ -43,7 +43,7 @@ func _test_route_tradeoffs() -> void:
     var balanced = _rank3_sim("balanced")
     balanced.packed_queue = 1
     var balanced_worker := _worker()
-    var balanced_money := balanced.money
+    var balanced_money: int = int(balanced.money)
     balanced._start_task(balanced_worker, WarehouseSimScript.Task.SHIP)
     var balanced_duration := float(balanced_worker.get("duration", 0.0))
     balanced._complete_task(balanced_worker)
@@ -53,7 +53,7 @@ func _test_route_tradeoffs() -> void:
     var express = _rank3_sim("express")
     express.packed_queue = 1
     var express_worker := _worker()
-    var express_money := express.money
+    var express_money: int = int(express.money)
     express._start_task(express_worker, WarehouseSimScript.Task.SHIP)
     var express_duration := float(express_worker.get("duration", 0.0))
     express._complete_task(express_worker)
@@ -74,8 +74,8 @@ func _test_consolidated_gate_and_exact_batch_economics() -> void:
 
     sim.packed_queue = 4
     assert(sim._routing_can_dispatch(), "Consolidated Linehaul must dispatch at the batch threshold")
-    var money_before := sim.money
-    var shipped_before := sim.shipped
+    var money_before: int = int(sim.money)
+    var shipped_before: int = int(sim.shipped)
     sim._start_task(ship_worker, WarehouseSimScript.Task.SHIP)
     assert(sim.packed_queue == 0, "Consolidated Linehaul must reserve the complete batch at task start")
     assert(int(ship_worker.get("routing_batch", 0)) == 4, "Consolidated task must freeze a four-parcel batch")
@@ -89,7 +89,7 @@ func _test_inflight_route_is_frozen() -> void:
     var sim = _rank3_sim("express")
     sim.packed_queue = 5
     var worker := _worker()
-    var money_before := sim.money
+    var money_before: int = int(sim.money)
     sim._start_task(worker, WarehouseSimScript.Task.SHIP)
     assert(String(worker.get("routing_mode", "")) == "express", "SHIP task must capture its route when work starts")
     assert(bool(sim.set_routing_mode("consolidated").get("ok", false)), "route must remain switchable while a prior dispatch is in flight")
