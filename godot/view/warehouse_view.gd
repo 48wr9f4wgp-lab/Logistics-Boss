@@ -79,7 +79,8 @@ func _unhandled_input(event: InputEvent) -> void:
             _camera_distance = minf(25.0, _camera_distance + 0.8)
 
     if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
-        var mouse_drag := event.relative.limit_length(MAX_DRAG_STEP)
+        var mouse_drag: Vector2 = event.relative
+        mouse_drag = mouse_drag.limit_length(MAX_DRAG_STEP)
         if mouse_drag.length() >= INPUT_DEADZONE:
             _orbit_yaw -= mouse_drag.x * MOUSE_ORBIT_SENSITIVITY.x
             _orbit_pitch = clampf(
@@ -100,7 +101,8 @@ func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventScreenDrag:
         _touches[event.index] = event.position
         if _touches.size() == 1:
-            var touch_drag := event.relative.limit_length(MAX_DRAG_STEP)
+            var touch_drag: Vector2 = event.relative
+            touch_drag = touch_drag.limit_length(MAX_DRAG_STEP)
             if touch_drag.length() >= INPUT_DEADZONE:
                 _orbit_yaw -= touch_drag.x * TOUCH_ORBIT_SENSITIVITY.x
                 _orbit_pitch = clampf(
