@@ -40,7 +40,7 @@ export function bindRank3Readiness(sim) {
     if (el.bar) el.bar.style.width = `${rank3Active ? 100 : (r.score / 3) * 100}%`;
     if (el.hint) {
       el.hint.textContent = rank3Active
-        ? 'Fulfillment Center 稼働中 · Carrier Routingを準備中'
+        ? 'Fulfillment Center 稼働中 · Carrier Routingで出荷方針を切替可能'
         : r.ready
           ? 'Fulfillment Center 昇格条件クリア · 契約は不要'
           : '区画・設備資産・実出荷の3条件でFulfillment Centerへ';

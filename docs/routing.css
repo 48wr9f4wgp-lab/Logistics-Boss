@@ -1,0 +1,18 @@
+.carrierRoutingPanel{margin:14px 0 4px;padding:13px;border:1px solid rgba(103,215,255,.2);border-radius:14px;background:rgba(8,18,25,.88);box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.carrierRoutingPanel[hidden]{display:none!important}
+.routingHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.routingHead>div{display:grid;gap:2px}.routingHead small{font-size:9px;letter-spacing:.13em;color:#84a8ba}.routingHead strong{font-size:15px;color:#f2f8fb}
+.routingBadge{padding:5px 8px;border-radius:999px;border:1px solid rgba(103,215,255,.3);background:rgba(83,181,221,.12);font-size:9px;font-weight:900;letter-spacing:.09em;color:#b9ebff}
+.routingBadge[data-mode="express"]{border-color:rgba(255,196,99,.38);background:rgba(255,177,62,.12);color:#ffe0a6}
+.routingBadge[data-mode="consolidated"]{border-color:rgba(154,233,177,.36);background:rgba(80,192,120,.12);color:#c9f6d5}
+.routingCurrent{padding:9px 10px;margin-bottom:9px;border-radius:10px;background:rgba(255,255,255,.045);font-size:11px;font-weight:750;line-height:1.35;color:#dcebf2}
+.routingChoices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.routingChoice{min-height:70px;padding:9px 7px;border:1px solid rgba(255,255,255,.09);border-radius:11px;background:rgba(255,255,255,.035);color:#dbe8ee;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:5px}
+.routingChoice strong{font-size:11px;line-height:1.15}.routingChoice span{font-size:9px;line-height:1.25;color:#90a9b5}.routingChoice.active{border-color:rgba(104,218,255,.52);background:rgba(72,176,217,.13);box-shadow:inset 0 0 0 1px rgba(104,218,255,.09)}
+.routingChoice:disabled{opacity:1}.routingChoice:not(:disabled):active{transform:translateY(1px)}
+.routingReport{margin-top:10px;padding:10px;border-radius:11px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.07)}
+.routingReport>strong{display:block;font-size:11px;color:#f0f8fb;margin-bottom:4px}.routingReport p{margin:0 0 8px;font-size:9px;line-height:1.35;color:#95aab4}
+.routingReportGrid,.routingCompare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.routingReportGrid span,.routingCompare span{padding:7px;border-radius:8px;background:rgba(255,255,255,.045);font-size:9px;color:#a9bbc4}
+.routingCompare span{display:grid;gap:2px}.routingCompare b{font-size:10px;color:#eef7fa}.routingCompare em{font-style:normal;font-weight:800;color:#8bd5f1}
+.routingHint{display:block;margin-top:8px;color:#78919d;font-size:9px;line-height:1.35}
+@media(max-width:430px){.routingChoices{grid-template-columns:1fr}.routingChoice{min-height:52px}.routingReportGrid,.routingCompare{grid-template-columns:1fr 1fr}}
