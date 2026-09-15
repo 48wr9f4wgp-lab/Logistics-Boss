@@ -109,6 +109,16 @@ jobs:
             exit 1
           fi
 
+      - name: FTUE core loop smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 30s godot --headless --path godot --script res://tests/ftue_core_loop_smoke.gd 2>&1 | tee /tmp/ftue-core-loop-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/ftue-core-loop-smoke.log; then
+            echo 'FTUE core loop smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Rank 3 inbound carrier program smoke
         shell: bash
         run: |
