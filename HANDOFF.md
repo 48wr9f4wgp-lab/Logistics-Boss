@@ -1,352 +1,268 @@
-# Logistics Boss — Development Handoff
+# LOGISTICS BOSS — Development Handoff
 
 Updated: 2026-09-15 JST
 Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 Canonical engine: **Godot 4.7.2 Standard + GDScript**
-Current stage: Functional Build / vertical-slice maturation. **Not release-ready.**
+Current stage: **Functional Build / Vertical Slice maturation**. Not release-ready.
 
-## Canonical source order
+## 1. Canonical source order
 
-For current decisions use, in order:
+Use, in order:
+1. current explicit user instruction;
+2. current `main` implementation under `/godot`;
+3. this `HANDOFF.md`;
+4. title-specific ADR / GDD / Art Bible / confirmed specs;
+5. project-level `GAME_DEV_MASTER_RULES`.
 
-1. Current explicit user instruction.
-2. Current `main` implementation under `/godot`.
-3. This `HANDOFF.md`.
-4. `TECH_DECISION_GODOT_MIGRATION_2026-09-15.md`.
-5. `VISUAL_NORTH_STAR_GODOT.md`.
-6. Later title-specific specs such as `RANK3_FULFILLMENT_CENTER.md`, `CAPITAL_PACING_V1.md`, `CAPITAL_EXPANSION_V2.md`, benchmark / UX addenda.
-7. `GDD_LOGISTICS_BOSS.md` except where superseded by later title-specific decisions.
-8. Project-level `GAME_DEV_MASTER_RULES v1.3`.
+`/docs/**` old Three.js/DOM gameplay is legacy reference only. Do not add new production gameplay there.
 
-If documentation conflicts with current Godot code, current Godot code wins. The old `/docs` Three.js/DOM implementation is **legacy reference only** and is not a compatibility target.
+## 2. Product / core loop
 
-## 1. Product purpose / finished form
-
-Logistics Boss is a mobile-first 3D logistics-management / automation-observer game.
+LOGISTICS BOSS is a portrait mobile 3D logistics-management / automation-observer game.
 
 Canonical loop:
 
-`observe flow → find bottleneck → choose investment / operating decision → autonomous logistics reacts → measure result → new bottleneck emerges → reinvest at larger scale`
+`物流を観察 → ボトルネック発見 → 投資 / 運用判断 → 作業員・設備が自律反応 → 出荷量 / 収益 / 詰まりが変化 → 結果測定 → より大きな再投資`
 
-Player fantasy:
-- operate and grow a logistics center;
-- allocate capital and operating priorities;
-- watch workers/machines/goods physically react;
-- solve bottlenecks without manually carrying parcels or driving vehicles.
+The player is the logistics-center owner / operations manager. Manual parcel carrying or forklift driving is not the main loop.
 
-Finished-product quality target includes:
-- visible autonomous logistics;
-- strong game feel when goods move / ship / upgrade;
-- FTUE that teaches observation and consequence, not one prescribed correct answer;
-- compact mobile UI with the 3D facility visually dominant;
-- visible facility growth from investment;
-- progression, save, audio, VFX, haptics, analytics, performance and QA suitable for public release.
+Finished-form requirements include:
+- physical flow: inbound → storage → pick → pack → ship;
+- autonomous workers / forklifts / AGV / sorter / ASRS / trucks;
+- visible facility growth;
+- solving one bottleneck reveals another;
+- diagnosis shows what is bad but does not prescribe what to buy;
+- measurable Before/After for major investments;
+- FTUE, progression, save, audio, VFX, haptics, analytics, performance and QA before public release.
 
-## 2. Technology / libraries / external services
+## 3. Technology / delivery
 
 Production:
 - Godot `4.7.2` Standard;
 - GDScript;
-- GL Compatibility renderer;
-- portrait-first viewport `390x844`;
-- native iOS / Android are the intended production targets.
+- GL Compatibility;
+- portrait-first `390x844`;
+- native iOS / Android final targets.
 
 Engineering preview only:
 - Godot Web export;
-- GitHub Pages preview under `/godot-preview/`;
-- preview URL: `https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/`.
+- `https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/`.
 
-Repository / CI:
-- GitHub is canonical source control;
-- `.github/workflows/godot-ci.yml` is the canonical CI;
-- `.github/workflows/godot-preview-pages.yml` exports and publishes the engineering preview.
+GitHub:
+- `.github/workflows/godot-ci.yml` — parse/import, domain smoke, economy pacing, Japanese glyph smoke, visual readability smoke, full-scene runtime, Web export;
+- `.github/workflows/godot-preview-pages.yml` — preview export/publish.
 
-No production backend, DB, API, auth provider, SDK service or environment variables currently exist.
+No production backend, DB, auth, cloud save, analytics SDK, crash reporting, IAP, Store integration or environment variables yet.
 
-## 3. Major structure / important files
+## 4. Important production files
 
-Production Godot:
-- `godot/project.godot` — Godot config; main scene and icon binding.
+- `godot/project.godot` — project config / icon / viewport.
 - `godot/scenes/main.tscn` — root scene.
-- `godot/main.gd` — composition root; creates sim/view/HUD/save; autosaves every 10s.
-- `godot/domain/warehouse_sim.gd` — **authoritative domain/economy owner**.
-- `godot/view/warehouse_view.gd` — base 3D facility, workers, parcels, touch orbit/pinch camera.
-- `godot/view/visual_pass_2.gd` — warehouse density / equipment / industrial dressing.
-- `godot/view/visual_pass_3.gd` — hero packing cell, emissive accents, rack cargo detail, vehicle readability.
-- `godot/view/visual_composition_fix.gd` — real-iPhone composition correction after foreground truck/truss/camera issues.
-- `godot/ui/game_hud.gd` — reusable base HUD implementation; contains historical Web fallback behavior but is **not loaded directly** by main.
-- `godot/ui/game_hud_ja.gd` — **currently loaded canonical HUD**; subclasses base HUD and forces Japanese copy / CJK system-font fallback.
-- `godot/persistence/save_store.gd` — versioned JSON save, temp write, backup fallback.
-- `godot/tests/sim_smoke.gd` — deterministic domain smoke.
-- `godot/export_presets.cfg` — Web engineering-preview export preset.
-- `godot/icon.svg` — current canonical app icon asset.
+- `godot/main.gd` — composition root; creates sim/view/HUD/save; autosaves.
+- `godot/domain/warehouse_sim.gd` — **authoritative logistics/economy owner**.
+- `godot/domain/capital_catalog.gd` — investment types / cost / max state.
+- `godot/domain/flow_measurement.gd` — 25-second Before/After domain measurement.
+- `godot/view/warehouse_view.gd` — base facility / workers / parcels / camera.
+- `godot/view/forklift_automation_view.gd` — real Forklift Automation presentation driven by domain state.
+- `godot/view/visual_pass_2.gd`, `visual_pass_3.gd` — industrial presentation layers.
+- `godot/view/visual_composition_fix.gd` — real-device composition/readability correction; currently enforces open-top cutaway by hiding obstructive roof trusses/lights.
+- `godot/ui/game_hud.gd` — reusable base HUD, not loaded directly.
+- `godot/ui/game_hud_ja.gd` — **canonical active Japanese HUD**.
+- `godot/assets/fonts/MPLUS1p-Regular.ttf` — embedded Japanese UI font; OFL license stored beside it.
+- `godot/persistence/save_store.gd` — atomic JSON save + backup fallback.
+- `godot/tests/sim_smoke.gd` — domain smoke.
+- `godot/tests/economy_pacing_report.gd` — deterministic balance regression / report.
+- `godot/tests/font_smoke.gd` — Japanese glyph coverage.
+- `godot/tests/visual_readability_smoke.gd` — open-top / obstruction regression.
+- `godot/icon.svg` — current canonical icon.
 
-Product / design docs:
-- `VISUAL_NORTH_STAR_GODOT.md` — approved visual target.
-- `TECH_DECISION_GODOT_MIGRATION_2026-09-15.md` — Godot canonicalization ADR.
-- `HANDOFF.md` — current operational handoff.
+## 5. Current domain implementation
 
-Legacy reference only:
-- `/docs/**` — old Three.js/DOM build. Do not add new gameplay there.
+New-game defaults after Economy Balance v1:
+- money: `¥5,000`;
+- workers: `3`;
+- rack capacity: `8`;
+- inbound cadence: `2.8s`;
+- order cadence: `3.0s`;
+- shipment value: `¥500`;
+- RP: +1 every 5 completed shipments;
+- packing base time: `3.0s`.
 
-## 4. Implemented functions
+Tasks:
+- STORE: inbound → rack;
+- PICK: rack → packing;
+- packing: independent processing stage;
+- SHIP: packed → outbound;
+- revenue only on real shipment completion.
 
-Current Godot domain implementation:
-- starting money `¥8,000`;
-- inbound generation every 4s;
-- order generation every 5s;
-- 3 starting autonomous workers;
-- STORE task: inbound → rack;
-- PICK task: rack → packing queue;
-- separate packing stage;
-- SHIP task: packed queue → outbound;
-- revenue only on real shipment completion (`BASE_SHIPMENT_VALUE = 500`);
-- 1 RP every 5 completed shipments;
-- rolling shipment-rate measurement;
-- natural bottleneck diagnosis for inbound/rack/packing/outbound/orders;
-- BALANCED / INBOUND / SHIP operating policies;
-- pause / 1x / 2x / 4x;
-- investments:
-  - worker hire, max 7 workers;
-  - rack expansion, +4 capacity per level, max 4;
-  - worker speed, +15% multiplicative per level, max 4;
-  - packing module, ~15% faster per level, max 4;
-- save schema `1`;
-- autosave / backup restore.
+Policies / speed:
+- BALANCED / INBOUND / SHIP;
+- Pause / 1x / 2x / 4x.
 
-Current 3D / interaction:
-- elevated isometric warehouse;
-- inbound, storage, packing, outbound zones;
-- autonomous workers visibly move between real task source/target positions;
-- visible carried parcels / queue state;
-- rack geometry grows with rack investment;
-- forklifts / AGV / truck / conveyors / industrial dressing are present visually;
-- one-finger orbit;
-- two-finger pinch zoom;
-- dark navy warehouse, warm task lights, cyan/orange accent language;
-- Visual Pass 1–3 plus device composition correction.
+Standard investments:
+- worker hire: `¥3,500` first, max 7 workers;
+- rack expansion: `¥2,500` first, +4 capacity, max Lv4;
+- worker speed: `¥4,000` first, ×1.15 per level, max Lv4;
+- packing: `¥4,500` first, ×0.85 time per level, max Lv4.
 
-Current HUD:
-- 資金;
-- 研究RP;
-- 出荷ペース;
-- 注文待ち;
-- 詰まり分析;
-- バランス / 入庫 / 出庫 / speed / 投資;
-- management sheet with worker/rack/speed/packing investments;
-- shipment / investment toast feedback.
+Major automation:
+- Forklift Automation: `¥20,000`, one-time;
+- executes real inbound→rack STORE throughput with `3.2s` cycle;
+- its 3D vehicle appears/moves only after unlock and follows real forklift domain activity;
+- domain reservation prevents rack overbooking.
 
-App icon:
-- `godot/project.godot` points `config/icon` to `res://icon.svg`;
-- icon direction is the user-approved 4th concept: dark navy isometric warehouse + parcels + cyan logistics path + amber upward growth arrow;
-- **important:** the repo asset is a vector recreation of the approved concept, not the original generated raster file pixel-for-pixel. If exact source-art fidelity is required later, import the original approved raster as source art and generate platform-specific icon sets from it.
+## 6. Capital measurement / balance state
 
-## 5. Current implementation work / progress
+`flow_measurement.gd` owns 25-second Before/After measurement sourced from real domain state/events.
+Metrics include:
+- shipments/min;
+- revenue/min;
+- average inbound queue;
+- average packing queue;
+- average outbound queue.
 
-Godot migration itself is complete and Godot is now canonical.
+Latest deterministic Economy Balance v1 measurements:
 
-PR #20 `Adopt Godot as the canonical Logistics Boss production baseline`:
-- merged;
-- functional migration baseline commit: `070fb9866a759a3f376cb941231a83c1a5cac3a9`.
+Clean no-investment 5-minute baseline:
+- `79` shipments;
+- `15.8 shipments/min`;
+- `¥39,500` earned;
+- ending bottleneck: **inbound**.
 
-PR #21 `Retire legacy Web CI and make Godot CI canonical`:
-- merged;
-- merge commit: `d557f486d08b8c249209f21b43fea9134b47eb05`;
-- removed old Web-only QA / pacing / Rank3 / readability workflows;
-- canonical CI is now Godot-only;
-- main Godot CI after merge completed **successfully**.
+Forklift target from clean start when saving for it:
+- price `¥20,000`;
+- affordable at about `119.1s` / `30 shipments`.
 
-GitHub Pages automation subsequently committed the latest Godot engineering-preview export to main as:
-- `524ae468b9f617d92cfdcd14f9bdcb8ece84222d` — `Publish Godot web engineering preview`.
+Same warmed-state 120-second comparisons:
+- extra worker: `31 → 41` shipments, `+10`, `+¥5,000`, bottleneck moves to packing;
+- worker speed: `31 → 36`, `+5`, `+¥2,500`;
+- Forklift: `31 → 39`, `+8`, `+¥4,000`; inbound avg `10.65 → 5.66`, next bottleneck becomes packing;
+- rack: inbound avg `10.65 → 8.43`; capacity/buffer investment, not guaranteed immediate revenue gain;
+- packing bought while inbound is the current bottleneck: no shipment gain, intentionally demonstrating that the wrong investment can be inefficient.
 
-Current visual direction has been checked on a real iPhone. Latest device-driven correction deliberately:
-- pulled the camera back / raised overview feeling;
-- reduced foreground truss obstruction;
-- visually demoted the foreground truck;
-- kept HUD and bottom navigation direction.
+Measured intended progression chain:
+- **inbound bottleneck**
+- Forklift → `+8` shipments / 120s
+- bottleneck becomes **packing**
+- Packing upgrade → `40 → 46`, `+6` / 120s
+- bottleneck returns to **stable**.
 
-No current gameplay feature is mid-commit. Next work should start from `main` on a fresh feature branch.
+`economy_pacing_report.gd` now fails CI if this core causal sequence regresses.
 
-## 6. Unimplemented / future work in priority order
+## 7. Persistence
 
-P0 / next vertical-slice depth:
-1. Port progression / Capital framework into Godot without rebuilding the old Web monolith.
-2. Add real Before/After measurement sourced from domain events.
-3. Make investment escalation materially transform the facility.
-4. Re-test early/mid-game pacing in the Godot domain model rather than copying old Web numbers.
+Save schema: **2**.
 
-P1 / automation progression:
-5. Forklift automation tied to real cargo events.
-6. AGV automation tied to real cargo events.
-7. Automatic sorter tied to real shipment flow.
-8. Workforce expansion and hall expansion with real capacity / scene changes.
-9. Truck dock / truck-wave logistics.
-10. AS/RS automated storage/retrieval.
-
-P1 / higher progression:
-11. True Rank progression in Godot.
-12. Rank 3 Fulfillment Center.
-13. Carrier Routing tradeoffs rebuilt natively in Godot.
-
-P2 / product polish:
-14. FTUE for the Godot build.
-15. Audio / music / machinery ambience / shipment feedback.
-16. VFX and motion polish.
-17. Native haptics.
-18. Accessibility / font scaling / color readability.
-19. Analytics / event taxonomy.
-20. Performance profiling and device matrix.
-21. Native iOS export/signing/install path, then Android packaging.
-22. Store assets / submission only after explicit user approval.
-
-## 7. Current bugs / technical issues
-
-Known / open:
-- visual quality is improved but still below final North Star; many assets are procedural primitives, not final production models;
-- `warehouse_view.gd` plus layered `visual_pass_2.gd`, `visual_pass_3.gd`, `visual_composition_fix.gd` is accumulating presentation layering; before much more visual complexity, consider consolidating responsibilities rather than adding Visual Pass 4/5 indefinitely;
-- `game_hud_ja.gd` relies on `SystemFont` fallback. This is appropriate for native targets but Web CJK behavior is not the typography authority;
-- `game_hud.gd` still contains English/Web fallback logic because `game_hud_ja.gd` subclasses it. Do not mistake the base file for the active product UI;
-- save schema is only version `1`; future progression expansion needs explicit migration policy before schema changes;
-- no native iOS build/signing path has been verified yet;
-- no performance budget / low-end device benchmark has been established;
-- no analytics, crash reporting or telemetry yet.
-
-Closed / verified:
-- Godot 4.7.2 import/parse succeeds;
-- deterministic sim smoke succeeds;
-- full scene runtime smoke succeeds;
-- Web engineering-preview export succeeds;
-- main Godot CI after canonicalization succeeds;
-- Godot became canonical after real iPhone visual checks.
-
-## 8. Important design decisions and reasons
-
-**Godot is canonical; old Web is legacy.**
-Reason: the product now needs scene hierarchy, animated autonomous agents, visible facility growth, VFX/audio/haptics, mobile input and native packaging. DOM + Three.js was becoming a presentation/coordination ceiling.
-
-**Domain simulation owns the economy.**
-Reason: money and parcel lifecycle must have one source of truth. UI/rendering consume state/events and must never create revenue independently.
-
-**Player solves the bottleneck; Director does not prescribe the answer.**
-Reason: the game is an operations/capital decision game, not an instruction-following checklist.
-
-**Contracts remain optional.**
-Reason: mandatory contract gates previously contradicted free-form progression.
-
-**Every major investment must pass four conditions:**
-1. visible 3D change;
-2. real logistics behavior/capacity change;
-3. measurable Before/After;
-4. can create or reveal another bottleneck.
-
-**Japanese-first production UI.**
-Reason: user readability and target product. Web preview limitations must not drive English product copy.
-
-**Visual North Star is canonical.**
-Reason: prevent incremental prototype aesthetics from becoming the final product. The target is a premium, dark industrial, stylized-isometric mobile logistics game with high readability and a warehouse-dominant composition.
-
-## 9. Rejected ideas / changes not to make
-
-Do not:
-- return production development to Three.js/DOM unless user explicitly reverses the engine decision;
-- maintain feature parity with `/docs`;
-- restore mandatory-contract FTUE;
-- make Director a one-tap “correct answer” button;
-- auto-open/close management panels from bottleneck severity;
-- use MutationObserver-style ownership hacks from the old Web implementation;
-- create a single prescribed progression path;
-- add decorative automation that is not driven by real sim state/events;
-- award money from UI/VFX/animation callbacks;
-- make players manually carry boxes or drive forklifts as the main loop;
-- add meaningless waiting or resource states that stop the player from doing anything;
-- copy old Web economy numbers blindly into Godot;
-- keep stacking ad-hoc visual pass scripts forever without refactoring scene/presentation responsibilities;
-- claim “fixed/complete” without parse/build/test/runtime/device verification as applicable.
-
-## 10. UI / UX policy
-
-Approved direction:
-- portrait mobile first;
-- warehouse is the hero; HUD must not cover the majority of the operation;
-- top four metrics: 資金 / 研究RP / 出荷ペース / 注文待ち;
-- compact diagnostic “詰まり分析” directly below metrics;
-- persistent thumb-readable bottom controls;
-- management decisions use progressive disclosure rather than dense card walls;
-- Japanese critical text must be readable at normal iPhone distance;
-- avoid 9–10px-equivalent critical text;
-- cause/effect feedback such as `出荷 +¥500` should be short and satisfying;
-- dark navy industrial environment, warm practical lights, restrained cyan tech accents, orange safety/equipment accents;
-- real-device screenshot is the acceptance gate for composition changes.
-
-Visual North Star specifics are in `VISUAL_NORTH_STAR_GODOT.md`.
-
-## 11. DB / API / auth / env / persistence
-
-There is currently:
-- no database;
-- no remote API;
-- no authentication;
-- no backend service;
-- no environment-variable dependency;
-- no cloud save;
-- no analytics SDK.
-
-Local Godot persistence:
-- primary: `user://logistics_boss_godot_save.json`;
+Primary files:
+- `user://logistics_boss_godot_save.json`;
 - temp: `user://logistics_boss_godot_save.tmp`;
-- backup: `user://logistics_boss_godot_save.bak`;
-- domain save schema: `1`.
+- backup: `user://logistics_boss_godot_save.bak`.
 
-Do not introduce external services, paid contracts, Store submission, production analytics accounts or other irreversible/external-impact actions without explicit user approval.
+Schema 1 saves migrate to schema 2; legacy saves default Forklift Automation to locked.
 
-## 12. Exact next task
+Important: Economy Balance v1 changes **new-game starting cash only**. Existing saves retain their saved money/progression. New logistics cadence / processing constants apply when the updated build runs.
 
-Start from current `main` and create a fresh feature branch for the **Godot Capital / Measurement foundation**.
+Do not reset/delete the user's save without explicit approval.
 
-Recommended first slice:
-1. inspect `warehouse_sim.gd` and extract/define a clean investment model instead of letting it grow into a monolith;
-2. add a domain-owned 25s Before/After measurement service or module using real shipment / queue / revenue events;
-3. expose result data to HUD without letting UI mutate economy;
-4. port only the first automation investment that clearly passes the four-condition gate (forklift is the leading candidate);
-5. make its purchase visibly change 3D and actually alter STORE throughput;
-6. add deterministic tests for purchase, persistence, real logistics events and revenue ownership;
-7. run Godot CI: import/parse → sim smoke → full scene runtime → engineering-preview export;
-8. only after automated green, do a real-iPhone visual/interaction check.
+## 8. Current 3D / mobile presentation
 
-Before adding more feature depth, it is also reasonable to refactor presentation layering (`visual_pass_2`, `visual_pass_3`, composition fix) into clearer facility/detail/composition responsibilities if the next visual change would otherwise create another ad-hoc pass.
+Visual direction:
+- dark navy industrial;
+- warm local task lights;
+- cyan tech accents;
+- orange safety/logistics accents;
+- stylized premium mobile isometric warehouse;
+- warehouse remains the hero behind compact HUD.
 
-## 13. Branch / commit / work state
+Real-iPhone-driven fixes already merged:
+- camera orbit sensitivity reduced and frame-rate-independent smoothing added;
+- touch deadzone and input spike clamp added;
+- pinch sensitivity reduced;
+- Japanese missing-glyph issue fixed by embedding M PLUS 1p rather than relying on `SystemFont`;
+- obstructive roof trusses / roof light bars removed from the gameplay camera, establishing an **open-top cutaway** presentation;
+- shipment toast reduced;
+- bottom dock raised above the iPhone home indicator;
+- `Warehouse安定運転` corrected to Japanese `安定運転`.
 
-Repository: `48wr9f4wgp-lab/Logistics-Boss`
-Canonical branch: `main`
+Automated visual-readability smoke verifies roof geometry cannot reappear as foreground obstruction. Final composition acceptance still requires real-device screenshots.
 
-Important recent commits:
-- `070fb9866a759a3f376cb941231a83c1a5cac3a9` — Godot adopted as canonical baseline (PR #20).
-- `d557f486d08b8c249209f21b43fea9134b47eb05` — canonical Godot CI + legacy Web CI retirement (PR #21).
-- `524ae468b9f617d92cfdcd14f9bdcb8ece84222d` — latest generated Godot Web engineering-preview publish before this handoff refresh.
+## 9. Recent merged work
 
-PR status:
-- PR #20 merged.
-- PR #21 merged.
-- no active feature PR is required to resume; create a new branch from current `main`.
+- PR #20 — Godot canonical production baseline.
+- PR #21 — Godot-only canonical CI / legacy Web CI retirement.
+- PR #22 — Capital / 25s Before-After measurement / real Forklift Automation / save schema 2.
+- PR #23 — mobile camera smoothing and sensitivity correction.
+- PR #24/#25 — reproducible embedded Japanese font + Japanese rendering regression test.
+- PR #26 — warehouse open-top visibility + portrait HUD readability corrections.
+- PR #27 — deterministic economy pacing harness.
+- PR #28 — Economy Balance v1: meaningful throughput headroom and bottleneck progression.
 
-Worktree / uncommitted state:
-- all changes performed in this ChatGPT session were committed to GitHub;
-- no known GitHub-side uncommitted changes;
-- a user's separate local PC worktree cannot be inspected from this environment, so local uncommitted changes are **unknown**, not assumed absent.
+PR #28 product commit:
+- `a2f0b1659430bae53d884eff871569918a8938f3` — `Rebalance early logistics capacity and first automation`.
 
-CI status:
-- canonical `Logistics Boss Godot CI` on main commit `d557f486...` completed **successfully**;
-- that CI verifies Godot version/setup, project import/parse, deterministic domain smoke, full-scene runtime, Web engineering-preview export and artifact generation.
+Current main also contains automated preview-publish commits; therefore the literal main HEAD may be a later bot commit than the product commit above.
 
-## Non-negotiable engineering operating rules
+After PR #28:
+- main Godot CI passed;
+- Preview Pages publish passed.
 
-- GitHub `main` is canonical.
-- Read current code before changing it.
-- Use branch/PR for meaningful implementation changes.
-- Do not claim completion without actual verification.
-- Priority order for failures: cannot launch → cannot control → cannot progress → economy/progression defect → UX/visual polish.
-- After meaningful changes: parse/build → automated test → runtime verify → regression → real-device check when visual/input behavior matters.
-- Refactor responsibilities before creating giant Godot scripts.
-- Preserve the core loop: observe → diagnose → decide → system reacts → measure → reinvest.
+## 10. Hard design / implementation rules
+
+- Domain simulation owns money, logistics state and investment effects. UI/rendering never award revenue.
+- Player solves bottlenecks; diagnostics do not prescribe the purchase.
+- Major investments must provide: visible 3D change + real logistics change + measurable Before/After + ability to reveal another bottleneck.
+- Do not add decorative automation disconnected from real sim state/events.
+- Do not make manual forklift driving / parcel carrying the main loop.
+- Do not create meaningless waits or resource dead-ends.
+- Do not blindly copy old Web economy values.
+- Do not call unverified work complete.
+- Before adding another `visual_pass_x`, consolidate/refactor presentation responsibilities instead.
+
+## 11. Known open issues / product gaps
+
+- 3D assets remain mostly procedural primitives; visual quality is below final North Star.
+- presentation is still layered across `warehouse_view`, `visual_pass_2`, `visual_pass_3`, and `visual_composition_fix`; further large visual expansion should first clarify/consolidate responsibilities.
+- rack expansion currently improves buffer pressure but can slightly reduce short-window shipments because workers may spend extra time filling the larger rack; monitor as progression grows.
+- no FTUE yet for the current Godot loop.
+- no audio / music / final VFX / haptics.
+- no true rank progression / hall expansion yet.
+- no analytics / crash reporting / telemetry.
+- no native iOS export/signing/install path verified yet; current iPhone checks use Web engineering preview.
+- no Android packaging/device matrix yet.
+- no performance budget / low-end device benchmark yet.
+
+## 12. Exact next work
+
+First gate:
+- real-iPhone check of the latest Web preview after PR #26/#28, specifically confirming the open-top warehouse no longer blocks workers/racks/parcels and the raised bottom dock/toast remain comfortable.
+
+Development can continue in parallel without resetting the user's save.
+
+Next implementation slice should be **the next real automation/progression decision based on measured post-upgrade bottlenecks**, not a decorative feature. Before choosing AGV/sorter blindly:
+1. extend the deterministic progression harness beyond Forklift → Packing;
+2. identify the next sustained bottleneck after the packing upgrade;
+3. choose the equipment whose real logistics responsibility solves that bottleneck (AGV, sorter, dock/truck, etc.);
+4. add it as a domain-owned investment/effect;
+5. connect dedicated 3D presentation to that real state;
+6. require measurable Before/After and a new downstream bottleneck;
+7. persist it with explicit schema migration if save structure changes;
+8. run full CI and then real-device verification.
+
+Before major new visual complexity, refactor presentation layering rather than creating `visual_pass_4/5/...`.
+
+## 13. Verification state
+
+Verified automated gates on current product state:
+- Godot 4.7.2 parse/import: PASS;
+- domain sim smoke: PASS;
+- deterministic economy pacing/progression: PASS;
+- Japanese glyph coverage: PASS;
+- warehouse visual readability: PASS;
+- full scene runtime smoke: PASS;
+- Web engineering-preview export: PASS;
+- Preview Pages publish: PASS.
+
+Still requires human/device acceptance:
+- latest open-top warehouse composition on iPhone;
+- final native iOS typography/input/performance once native packaging exists.
