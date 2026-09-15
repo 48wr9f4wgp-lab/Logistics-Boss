@@ -9,52 +9,61 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: godot-preview-pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: chickensoft-games/setup-godot@v2
+      - name: Checkout Godot port
+        uses: actions/checkout@v4
+
+      - name: Set up Godot
+        uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.7.2
           use-dotnet: false
           include-templates: true
-      - name: Build combined site
+
+      - name: Export Godot Web preview
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf site godot-web
-          mkdir -p site godot-web
-          cp -R docs/. site/
-          godot --headless --path godot --export-release Web ../godot-web/index.html
-          mkdir -p site/godot-preview
-          cp -R godot-web/. site/godot-preview/
-          touch site/.nojekyll
-          test -s site/index.html
-          test -s site/godot-preview/index.html
-          test -s site/godot-preview/index.wasm
-          test -s site/godot-preview/index.pck
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
+          rm -rf /tmp/godot-web
+          mkdir -p /tmp/godot-web
+          godot --headless --path godot --export-release Web /tmp/godot-web/index.html
+          test -s /tmp/godot-web/index.html
+          test -s /tmp/godot-web/index.wasm
+          test -s /tmp/godot-web/index.pck
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Checkout canonical main site
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-site
+
+      - name: Publish preview under existing Pages root
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf main-site/docs/godot-preview
+          mkdir -p main-site/docs/godot-preview
+          cp -R /tmp/godot-web/. main-site/docs/godot-preview/
+
+          cd main-site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/godot-preview
+
+          if git diff --cached --quiet; then
+            echo "Godot preview export unchanged."
+            exit 0
+          fi
+
+          git commit -m "Publish Godot web preview"
+          git push origin HEAD:main
