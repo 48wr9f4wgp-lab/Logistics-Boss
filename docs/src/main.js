@@ -4,6 +4,7 @@ import { bindUi } from './ui.js';
 import { bindFreedomProgression } from './freedom.js';
 import { bindCapitalExpansion } from './capital.js';
 import { bindErgonomics } from './ergonomics.js';
+import { bindRank3Readiness } from './rank3.js';
 
 const SAVE_KEY = 'logistics_boss_save';
 const fatal = document.getElementById('fatal');
@@ -33,6 +34,7 @@ try {
   const sim = createSimulation(loadSnapshot());
   const freedom = bindFreedomProgression(sim);
   const capital = bindCapitalExpansion(sim);
+  const rank3 = bindRank3Readiness(sim);
   const sceneView = await createSceneView(document.getElementById('game'), sim);
   const ui = bindUi(sim, sceneView);
   const ergonomics = bindErgonomics(sim, capital);
@@ -51,12 +53,14 @@ try {
     sim.update(dt);
     freedom.update(dt * sim.state.timeScale);
     capital.update(dt);
+    rank3.update(dt);
     sceneView.update(dt);
 
     uiTimer += dt;
     saveTimer += dt;
     if (uiTimer >= 0.2) {
       ui.render();
+      rank3.render();
       uiTimer = 0;
     }
     ergonomics.update(dt);
