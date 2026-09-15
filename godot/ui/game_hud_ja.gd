@@ -19,6 +19,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
     super._process(delta)
+    _sync_transient_overlay_positions()
     if _measurement_timer > 0.0:
         _measurement_timer -= delta
         if _measurement_timer <= 0.0 and _measurement_panel != null:
@@ -112,8 +113,8 @@ func _build_measurement_banner() -> void:
     _measurement_panel.anchor_right = 0.92
     _measurement_panel.anchor_top = 1.0
     _measurement_panel.anchor_bottom = 1.0
-    _measurement_panel.offset_top = -194.0
-    _measurement_panel.offset_bottom = -110.0
+    _measurement_panel.offset_top = -184.0
+    _measurement_panel.offset_bottom = -116.0
     _measurement_panel.add_theme_stylebox_override(
         "panel",
         _panel_style(Color(0.018, 0.055, 0.075, 0.97), Color(0.18, 0.72, 0.96, 0.92), 14)
@@ -140,6 +141,7 @@ func _tune_mobile_hud() -> void:
 
     if _sheet != null:
         _sheet.offset_bottom = -108.0
+        _disable_horizontal_sheet_scroll(_sheet)
 
     if _toast_panel != null:
         _toast_panel.anchor_top = 0.58
@@ -151,6 +153,39 @@ func _tune_mobile_hud() -> void:
 
     if _toast != null:
         _toast.add_theme_font_size_override("font_size", 14)
+
+    _sync_transient_overlay_positions()
+
+
+func _disable_horizontal_sheet_scroll(node: Node) -> void:
+    if node is ScrollContainer:
+        (node as ScrollContainer).horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
+    for child in node.get_children():
+        _disable_horizontal_sheet_scroll(child)
+
+
+func _sync_transient_overlay_positions() -> void:
+    var sheet_open := _sheet != null and _sheet.visible
+
+    if _toast_panel != null:
+        var toast_anchor := 0.37 if sheet_open else 0.58
+        _toast_panel.anchor_top = toast_anchor
+        _toast_panel.anchor_bottom = toast_anchor
+        _toast_panel.offset_top = -19.0
+        _toast_panel.offset_bottom = 19.0
+
+    if _measurement_panel != null:
+        if sheet_open:
+            _measurement_panel.anchor_top = 0.30
+            _measurement_panel.anchor_bottom = 0.30
+            _measurement_panel.offset_top = -28.0
+            _measurement_panel.offset_bottom = 28.0
+        else:
+            _measurement_panel.anchor_top = 1.0
+            _measurement_panel.anchor_bottom = 1.0
+            _measurement_panel.offset_top = -184.0
+            _measurement_panel.offset_bottom = -116.0
 
 
 func _find_bottom_dock() -> PanelContainer:
