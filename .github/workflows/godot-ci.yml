@@ -41,6 +41,9 @@ jobs:
       - name: Japanese font glyph smoke
         run: godot --headless --path godot --script res://tests/font_smoke.gd
 
+      - name: Warehouse visual readability smoke
+        run: godot --headless --path godot --script res://tests/visual_readability_smoke.gd
+
       - name: Full scene runtime smoke
         shell: bash
         run: |

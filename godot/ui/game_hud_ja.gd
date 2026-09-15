@@ -12,6 +12,7 @@ func _ready() -> void:
     super._ready()
     _append_forklift_upgrade()
     _build_measurement_banner()
+    _tune_mobile_hud()
     _apply_japanese_font_recursive(self)
     _replace_static_copy_recursive(self)
 
@@ -29,10 +30,8 @@ func _copy(jp: String, _en: String) -> String:
 
 
 func _bottleneck_text(info: Dictionary) -> String:
-    var label := String(info.get("label", ""))
-    if not label.is_empty():
-        return label
-
+    # Use UI-owned Japanese copy rather than leaking the domain's mixed-language
+    # diagnostic label into the player-facing HUD.
     match String(info.get("key", "stable")):
         "inbound":
             return "搬入口が混雑"
@@ -44,8 +43,11 @@ func _bottleneck_text(info: Dictionary) -> String:
             return "出荷待ちが滞留"
         "orders":
             return "注文が滞留"
-        _:
+        "stable":
             return "安定運転"
+        _:
+            var label := String(info.get("label", ""))
+            return label if not label.is_empty() else "安定運転"
 
 
 func _is_maxed(kind: StringName) -> bool:
@@ -110,8 +112,8 @@ func _build_measurement_banner() -> void:
     _measurement_panel.anchor_right = 0.92
     _measurement_panel.anchor_top = 1.0
     _measurement_panel.anchor_bottom = 1.0
-    _measurement_panel.offset_top = -186.0
-    _measurement_panel.offset_bottom = -102.0
+    _measurement_panel.offset_top = -194.0
+    _measurement_panel.offset_bottom = -110.0
     _measurement_panel.add_theme_stylebox_override(
         "panel",
         _panel_style(Color(0.018, 0.055, 0.075, 0.97), Color(0.18, 0.72, 0.96, 0.92), 14)
@@ -126,6 +128,41 @@ func _build_measurement_banner() -> void:
     _measurement_label.add_theme_font_size_override("font_size", 13)
     _measurement_label.add_theme_color_override("font_color", Color(0.90, 0.98, 1.0))
     _measurement_panel.add_child(_measurement_label)
+
+
+func _tune_mobile_hud() -> void:
+    # Keep the main controls clear of the iPhone home indicator and reduce the
+    # shipment toast so it confirms flow without covering the warehouse action.
+    var dock := _find_bottom_dock()
+    if dock != null:
+        dock.offset_top = -100.0
+        dock.offset_bottom = -22.0
+
+    if _sheet != null:
+        _sheet.offset_bottom = -108.0
+
+    if _toast_panel != null:
+        _toast_panel.anchor_top = 0.58
+        _toast_panel.anchor_bottom = 0.58
+        _toast_panel.offset_left = -82.0
+        _toast_panel.offset_right = 82.0
+        _toast_panel.offset_top = -19.0
+        _toast_panel.offset_bottom = 19.0
+
+    if _toast != null:
+        _toast.add_theme_font_size_override("font_size", 14)
+
+
+func _find_bottom_dock() -> PanelContainer:
+    for child in get_children():
+        if child is not PanelContainer:
+            continue
+        var panel := child as PanelContainer
+        if panel == _sheet or panel == _toast_panel or panel == _measurement_panel:
+            continue
+        if panel.anchor_top >= 0.99 and panel.anchor_bottom >= 0.99 and panel.offset_bottom > -40.0:
+            return panel
+    return null
 
 
 func _show_measurement_status(text: String, seconds: float) -> void:
