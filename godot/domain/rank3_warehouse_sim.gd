@@ -2,8 +2,8 @@ extends "res://domain/workload_warehouse_sim.gd"
 class_name Rank3WarehouseSim
 
 const SAVE_SCHEMA_RANK3 := 5
-const RANK3_CONTRACTS_REQUIRED := 8
 const RANK3_ZONES_REQUIRED := 3
+const RANK3_MIN_ASSETS := 200000
 const RANK3_MIN_THROUGHPUT := 6.0
 
 # Provisional first Rank 3 capital step. The capacity value comes from the
@@ -20,12 +20,38 @@ func step(real_dt: float) -> void:
         _rank_up_to_fulfillment_center()
 
 
+func equipment_asset_value() -> int:
+    var value := 0
+
+    # Value the currently owned operating asset base rather than contract
+    # history. Rank 2's granted crew is still an owned labor-capacity asset.
+    for worker_index in range(maxi(0, worker_count - 3)):
+        value += int(3500 * pow(2.0, worker_index))
+    for level in range(rack_level):
+        value += int(2500 * pow(2.0, level))
+    for level in range(speed_level):
+        value += int(4000 * pow(2.0, level))
+    for level in range(pack_level):
+        value += int(4500 * pow(2.0, level))
+    if forklift_unlocked:
+        value += CapitalCatalog.FORKLIFT_COST
+
+    for kind in _rank2_facilities.all_kinds():
+        if bool(facilities.get(String(kind), false)):
+            value += _rank2_facilities.cost(kind)
+
+    if receiving_annex_unlocked:
+        value += RECEIVING_ANNEX_COST
+    return value
+
+
 func rank3_readiness() -> Dictionary:
     var zones := expansion_zones_completed()
+    var assets := equipment_asset_value()
     var throughput := throughput_per_minute()
     var ready := facility_rank >= 3 or (
         zones >= RANK3_ZONES_REQUIRED
-        and completed_contracts >= RANK3_CONTRACTS_REQUIRED
+        and assets >= RANK3_MIN_ASSETS
         and throughput >= RANK3_MIN_THROUGHPUT
     )
     return {
@@ -33,8 +59,8 @@ func rank3_readiness() -> Dictionary:
         "rank": facility_rank,
         "zones": zones,
         "zones_required": RANK3_ZONES_REQUIRED,
-        "contracts": completed_contracts,
-        "contracts_required": RANK3_CONTRACTS_REQUIRED,
+        "assets": assets,
+        "assets_required": RANK3_MIN_ASSETS,
         "throughput": throughput,
         "throughput_required": RANK3_MIN_THROUGHPUT,
     }
@@ -86,6 +112,7 @@ func snapshot() -> Dictionary:
     data["schema_version"] = SAVE_SCHEMA_RANK3
     data["receiving_annex_unlocked"] = receiving_annex_unlocked
     data["receiving_annex_capacity_bonus"] = RECEIVING_ANNEX_CAPACITY_BONUS if receiving_annex_unlocked else 0
+    data["equipment_asset_value"] = equipment_asset_value()
     data["rank3_readiness"] = rank3_readiness()
     return data
 
