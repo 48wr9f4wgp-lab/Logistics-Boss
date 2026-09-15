@@ -10,7 +10,7 @@
     "performance": "none",
     "release": "none"
   },
-  "next": "Rank 2拡張ゾーンをiPhone Previewで確認し、各二択の有効な運用文脈を追加検証する",
-  "note": "Rank 2の契約・物流評価・5人編成・3ゾーン二択・Before/After・3D設備はGodot実装済み。CIではDomain/UI/3D/Runtime/Web Exportまで検証する。新しいRank 2 UI/設備のiPhone実機確認、native iOS/Android、Analytics、Performance、Release QAは未完了。",
+  "next": "Rank 2に予告可能な入荷・注文・出荷の負荷波を実装し、人員配置が状況依存の判断になることを検証する",
+  "note": "3ゾーン完成後の40シナリオ計測で出荷強化1/2/2が8/8構成の定常最適となった。AGVを先に足さず、時間変動する物流負荷でReceiving/Picking/Shippingを使い分ける運用ゲーム性を先に成立させる。High Density構成ではPICK/注文滞留が残るためAGVは後続候補として根拠あり。新Rank 2 UI/設備のiPhone実機確認、native iOS/Android、Analytics、Performance、Release QAは未完了。",
   "updated_at": "2026-09-15"
 }
