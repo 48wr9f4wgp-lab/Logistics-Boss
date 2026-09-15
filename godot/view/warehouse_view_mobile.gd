@@ -1,0 +1,103 @@
+extends "res://view/warehouse_view.gd"
+class_name MobileWarehouseView
+
+const MOBILE_MOUSE_ORBIT_SENSITIVITY := Vector2(0.0042, 0.0032)
+const MOBILE_TOUCH_ORBIT_SENSITIVITY := Vector2(0.0041, 0.0033)
+const MOBILE_PINCH_ZOOM_SENSITIVITY := 0.014
+const MOBILE_CAMERA_POSITION_SMOOTHING := 16.0
+const MOBILE_INPUT_DEADZONE := 1.2
+const MOBILE_MAX_DRAG_STEP := 26.0
+const MOBILE_MAX_PINCH_STEP := 36.0
+const MOBILE_DRAG_FILTER_WEIGHT := 0.78
+const MOBILE_PINCH_FILTER_WEIGHT := 0.75
+
+var _filtered_touch_drag := Vector2.ZERO
+var _filtered_pinch_delta := 0.0
+
+
+func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventMouseButton:
+        if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
+            _camera_distance = maxf(12.0, _camera_distance - 0.8)
+        elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
+            _camera_distance = minf(25.0, _camera_distance + 0.8)
+
+    if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+        var mouse_drag: Vector2 = event.relative.limit_length(MOBILE_MAX_DRAG_STEP)
+        if mouse_drag.length() >= MOBILE_INPUT_DEADZONE:
+            _orbit_yaw -= mouse_drag.x * MOBILE_MOUSE_ORBIT_SENSITIVITY.x
+            _orbit_pitch = clampf(
+                _orbit_pitch - mouse_drag.y * MOBILE_MOUSE_ORBIT_SENSITIVITY.y,
+                -0.98,
+                -0.48
+            )
+
+    if event is InputEventScreenTouch:
+        if event.pressed:
+            _touches[event.index] = event.position
+            if _touches.size() >= 2:
+                _last_pinch_distance = 0.0
+                _filtered_pinch_delta = 0.0
+        else:
+            _touches.erase(event.index)
+            _last_pinch_distance = 0.0
+            _filtered_pinch_delta = 0.0
+            if _touches.is_empty():
+                _filtered_touch_drag = Vector2.ZERO
+
+    if event is InputEventScreenDrag:
+        _touches[event.index] = event.position
+        if _touches.size() == 1:
+            var touch_drag: Vector2 = event.relative.limit_length(MOBILE_MAX_DRAG_STEP)
+            if touch_drag.length() >= MOBILE_INPUT_DEADZONE:
+                _filtered_touch_drag = _filtered_touch_drag.lerp(touch_drag, MOBILE_DRAG_FILTER_WEIGHT)
+                _orbit_yaw -= _filtered_touch_drag.x * MOBILE_TOUCH_ORBIT_SENSITIVITY.x
+                _orbit_pitch = clampf(
+                    _orbit_pitch - _filtered_touch_drag.y * MOBILE_TOUCH_ORBIT_SENSITIVITY.y,
+                    -0.98,
+                    -0.48
+                )
+        elif _touches.size() >= 2:
+            var ids := _touches.keys()
+            var a: Vector2 = _touches[ids[0]]
+            var b: Vector2 = _touches[ids[1]]
+            var distance := a.distance_to(b)
+            if _last_pinch_distance > 0.0:
+                var pinch_delta := clampf(
+                    distance - _last_pinch_distance,
+                    -MOBILE_MAX_PINCH_STEP,
+                    MOBILE_MAX_PINCH_STEP
+                )
+                _filtered_pinch_delta = lerpf(_filtered_pinch_delta, pinch_delta, MOBILE_PINCH_FILTER_WEIGHT)
+                _camera_distance = clampf(
+                    _camera_distance - _filtered_pinch_delta * MOBILE_PINCH_ZOOM_SENSITIVITY,
+                    12.0,
+                    25.0
+                )
+            _last_pinch_distance = distance
+
+
+func _update_camera(delta: float) -> void:
+    if _camera == null:
+        return
+
+    var target := Vector3(0.0, 0.85, 0.25)
+    var horizontal := cos(_orbit_pitch) * _camera_distance
+    var height := -sin(_orbit_pitch) * _camera_distance
+    var desired_position := target + Vector3(
+        sin(_orbit_yaw) * horizontal,
+        height,
+        cos(_orbit_yaw) * horizontal
+    )
+
+    if not _camera_pose_initialized:
+        _camera.global_position = desired_position
+        _camera_pose_initialized = true
+    else:
+        var smoothing_weight := 1.0 - exp(-MOBILE_CAMERA_POSITION_SMOOTHING * maxf(delta, 0.0))
+        _camera.global_position = _camera.global_position.lerp(
+            desired_position,
+            clampf(smoothing_weight, 0.0, 1.0)
+        )
+
+    _camera.look_at(target, Vector3.UP)

@@ -1,7 +1,7 @@
 extends SceneTree
 
 const SimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
-const ViewScript = preload("res://view/warehouse_view.gd")
+const ViewScript = preload("res://view/warehouse_view_mobile.gd")
 
 
 func _init() -> void:
@@ -15,7 +15,7 @@ func _fail(message: String) -> void:
 
 func _run() -> void:
     var sim = SimScript.new()
-    var view: WarehouseView = ViewScript.new()
+    var view: MobileWarehouseView = ViewScript.new()
     get_root().add_child(view)
     view.bind_sim(sim)
     await process_frame
@@ -37,6 +37,16 @@ func _run() -> void:
         return
     if view._orbit_pitch < -0.98 or view._orbit_pitch > -0.48:
         _fail("orbit pitch must stay within mobile readability bounds")
+        return
+
+    var before_huge_drag := view._orbit_yaw
+    var huge_drag := InputEventScreenDrag.new()
+    huge_drag.index = 0
+    huge_drag.position = Vector2(900.0, 260.0)
+    huge_drag.relative = Vector2(640.0, 0.0)
+    view._unhandled_input(huge_drag)
+    if absf(view._orbit_yaw - before_huge_drag) > 0.13:
+        _fail("large swipe must be rate-limited to avoid jumpy mobile camera motion")
         return
 
     var second_touch := InputEventScreenTouch.new()
