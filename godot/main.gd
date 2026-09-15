@@ -3,6 +3,7 @@ extends Node
 const WarehouseSimScript = preload("res://domain/warehouse_sim.gd")
 const WarehouseViewScript = preload("res://view/warehouse_view.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
+const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")
 const GameHudScript = preload("res://ui/game_hud.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 
@@ -27,6 +28,10 @@ func _ready() -> void:
     var hud: GameHud = GameHudScript.new()
     add_child(hud)
     hud.bind_sim(sim)
+
+    var visual_pass_3: WarehouseVisualPass3 = WarehouseVisualPass3Script.new()
+    view.add_child(visual_pass_3)
+    visual_pass_3.bind(view, hud)
 
 
 func _process(delta: float) -> void:
