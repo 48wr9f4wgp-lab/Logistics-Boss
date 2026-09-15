@@ -34,7 +34,11 @@ func _rebuild_if_needed(force: bool) -> void:
     var annex_owned := false
     if sim.has_method("receiving_annex_info"):
         annex_owned = bool(sim.get("receiving_annex_unlocked"))
-    var signature := "%d|%s" % [int(sim.facility_rank), str(annex_owned)]
+    var carrier_owned := false
+    if sim.has_method("inbound_carrier_program_info"):
+        var carrier_info: Dictionary = sim.call("inbound_carrier_program_info")
+        carrier_owned = bool(carrier_info.get("owned", false))
+    var signature := "%d|%s|%s" % [int(sim.facility_rank), str(annex_owned), str(carrier_owned)]
     if not force and signature == _last_signature:
         return
     _last_signature = signature
@@ -48,6 +52,8 @@ func _rebuild_if_needed(force: bool) -> void:
     _build_fulfillment_center_mark()
     if annex_owned:
         _build_receiving_annex()
+    if annex_owned and carrier_owned:
+        _build_inbound_carrier_program()
 
 
 func _build_fulfillment_center_mark() -> void:
@@ -80,6 +86,30 @@ func _build_receiving_annex() -> void:
     _pallet(root, Vector3(-4.05, 0.17, 5.75))
     _status_light(root, Vector3(-6.45, 1.65, 5.38), MINT)
     _status_light(root, Vector3(-4.05, 1.65, 5.38), MINT)
+
+
+func _build_inbound_carrier_program() -> void:
+    var root := _group("Rank3_InboundCarrierProgram")
+    _box(root, "CarrierScheduleBoard", Vector3(1.45, 0.62, 0.10), Vector3(-5.25, 1.62, 5.28), STEEL_LIGHT)
+    _box(root, "CarrierScheduleGlow", Vector3(1.18, 0.38, 0.04), Vector3(-5.25, 1.62, 5.21), CYAN)
+    _status_light(root, Vector3(-5.78, 1.62, 5.15), MINT)
+    _status_light(root, Vector3(-5.25, 1.62, 5.15), MINT)
+    _status_light(root, Vector3(-4.72, 1.62, 5.15), MINT)
+
+    for lane in 3:
+        var x := -6.45 + float(lane) * 1.20
+        _box(root, "CarrierLanePulse", Vector3(0.52, 0.035, 1.55), Vector3(x, 0.11, 6.28), Color(0.09, 0.35, 0.48))
+        _carrier_trailer(root, Vector3(x, 0.23, 6.62 - float(lane) * 0.22), lane)
+
+    _box(root, "CarrierFrequencyMarker", Vector3(3.55, 0.08, 0.10), Vector3(-5.25, 0.13, 7.18), AMBER)
+
+
+func _carrier_trailer(parent: Node3D, position: Vector3, lane: int) -> void:
+    _box(parent, "CarrierTrailerBody_%d" % lane, Vector3(0.72, 0.72, 1.28), position + Vector3(0.0, 0.36, 0.0), Color(0.14, 0.28, 0.34))
+    _box(parent, "CarrierTrailerAccent_%d" % lane, Vector3(0.58, 0.10, 1.02), position + Vector3(0.0, 0.47, -0.66), CYAN)
+    _box(parent, "CarrierCab_%d" % lane, Vector3(0.62, 0.58, 0.46), position + Vector3(0.0, 0.29, -0.86), STEEL_LIGHT)
+    _box(parent, "CarrierWheelL_%d" % lane, Vector3(0.13, 0.16, 0.20), position + Vector3(-0.34, 0.08, 0.28), Color(0.025, 0.03, 0.035))
+    _box(parent, "CarrierWheelR_%d" % lane, Vector3(0.13, 0.16, 0.20), position + Vector3(0.34, 0.08, 0.28), Color(0.025, 0.03, 0.035))
 
 
 func _group(group_name: String) -> Node3D:
