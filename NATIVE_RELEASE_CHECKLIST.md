@@ -20,26 +20,60 @@ Reference viewport: portrait 390×844
 - real iPhone Safari engineering-preview verification after PR #57
 - RC preflight checks for viewport, renderer, required release assets and export-preset policy
 
-## 2. External identifiers required before native export presets can be finalized
+## 2. Native release input bootstrap
+
+The repository provides:
+- `godot/native_release_inputs.example.env`
+- `godot/tools/native_release_inputs.py`
+
+Copy the example locally to `godot/.native-release.env` and fill only on the trusted development machine. The real file is gitignored.
+
+Validation command:
+
+```bash
+python3 godot/tools/native_release_inputs.py \
+  --env-file godot/.native-release.env \
+  --platform all \
+  --require-signing
+```
+
+The validator checks identifier syntax and Android signing-file presence. It never prints the Android keystore password. CI runs the validator's synthetic self-test through the existing release-services smoke, so no production credentials are required in CI.
+
+## 3. External identifiers required before native export presets can be finalized
 
 These values must not be guessed or committed as fake production identifiers.
 
 ### iOS
-- Apple Developer Team ID
-- final Bundle Identifier (reverse-DNS, unique)
+- `LOGISTICS_BOSS_IOS_TEAM_ID`: Apple Developer Team ID, 10-character Apple team code
+- `LOGISTICS_BOSS_IOS_BUNDLE_ID`: final unique reverse-DNS Bundle Identifier
 - signing/provisioning managed in Xcode / Apple Developer account
 
+Godot requires both the App Store Team ID and Bundle Identifier for iOS export. Final signing still happens with the real Apple account/certificates.
+
 ### Android
-- final application package / unique name
-- release keystore
-- release key alias
-- release credentials kept outside repository
+- `LOGISTICS_BOSS_ANDROID_PACKAGE`: final unique lowercase reverse-DNS application package
+- `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`: release keystore path
+- `GODOT_ANDROID_KEYSTORE_RELEASE_USER`: release key alias
+- `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`: release signing password
 
-Secrets/passwords belong in local export credentials / CI secret storage, never in `export_presets.cfg` or source control.
+Godot supports the three `GODOT_ANDROID_KEYSTORE_RELEASE_*` environment variables as export-time overrides, so release signing secrets do not need to be stored in `export_presets.cfg`.
 
-Until these values exist, the repository intentionally keeps only the **Web engineering-preview** export preset.
+Secrets/passwords belong in local export credentials / CI secret storage, never in source control.
 
-## 3. Native verification gate
+Until the real identifiers exist, the repository intentionally keeps only the **Web engineering-preview** export preset.
+
+## 4. Native export preset gate
+
+After the validator reports READY:
+1. add the iOS preset using the real Team ID and Bundle Identifier
+2. add the Android preset using the real package name
+3. keep Android keystore path/user/password outside source control and inject through the Godot-supported environment variables
+4. export an unsigned/Xcode project or signed build only as appropriate to the platform setup
+5. do not commit generated build products
+
+Do not insert placeholder production identifiers merely to make export commands pass.
+
+## 5. Native verification gate
 
 Run on at least one physical iPhone and one physical Android device.
 
@@ -61,7 +95,7 @@ Required pass:
 - no sustained <30 FPS on target device during representative Rank 3 scene
 - save survives app kill/relaunch
 
-## 4. Store / external-service actions requiring explicit approval
+## 6. Store / external-service actions requiring explicit approval
 
 Do not perform without user approval:
 - Apple App Store submission
@@ -71,9 +105,9 @@ Do not perform without user approval:
 - IAP / ads / monetization activation
 - production signing-key generation/rotation on behalf of the user
 
-## 5. Current RC blocker definition
+## 7. Current RC blocker definition
 
-The repository may be called **Code RC Candidate** once the RC audit CI is green.
+The repository is a **Code RC Candidate** once the RC audit CI is green.
 
 Do **not** call it **Native RC** until all of the following are complete:
 1. final iOS/Android identifiers are supplied
