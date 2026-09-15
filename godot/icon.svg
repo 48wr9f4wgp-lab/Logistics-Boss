@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#092238"/>
+      <stop offset="0.58" stop-color="#061522"/>
+      <stop offset="1" stop-color="#030a11"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b5378"/>
+      <stop offset="0.55" stop-color="#153b5a"/>
+      <stop offset="1" stop-color="#0b2237"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12334e"/>
+      <stop offset="1" stop-color="#07131f"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd866"/>
+      <stop offset="0.55" stop-color="#ffad1f"/>
+      <stop offset="1" stop-color="#ff7b00"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60edff"/>
+      <stop offset="0.55" stop-color="#16c7f3"/>
+      <stop offset="1" stop-color="#177fe0"/>
+    </linearGradient>
+    <linearGradient id="track" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0e88bc"/>
+      <stop offset="0.5" stop-color="#21d7ef"/>
+      <stop offset="1" stop-color="#ffb11d"/>
+    </linearGradient>
+    <filter id="glowC" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowA" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bg)"/>
+  <rect x="25" y="25" width="462" height="462" rx="98" fill="none" stroke="#19cfff" stroke-width="5" opacity="0.82" filter="url(#glowC)"/>
+
+  <!-- Flow ribbon behind the warehouse -->
+  <path d="M92 350 C125 403 213 425 313 404 C378 391 412 356 422 320" fill="none" stroke="#0a2637" stroke-width="40" stroke-linecap="round"/>
+  <path d="M92 350 C125 403 213 425 313 404 C378 391 412 356 422 320" fill="none" stroke="url(#track)" stroke-width="8" stroke-linecap="round" filter="url(#glowC)"/>
+  <path d="M110 364 L133 364 M158 388 L181 388 M208 402 L231 402" stroke="#65efff" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Warehouse body -->
+  <path d="M151 180 L257 116 L374 177 L374 337 L151 337 Z" fill="url(#wall)" stroke="#0e3856" stroke-width="3"/>
+  <path d="M151 180 L257 116 L374 177 L291 226 L151 180 Z" fill="url(#roof)" stroke="#43dcff" stroke-width="3"/>
+  <path d="M257 116 L374 177 L291 226 L180 175 Z" fill="#173b58" opacity="0.55"/>
+
+  <!-- Roof vents -->
+  <path d="M225 151 L278 123 L296 133 L243 162 Z" fill="#06131f" opacity="0.78"/>
+  <path d="M260 171 L312 143 L329 152 L277 182 Z" fill="#06131f" opacity="0.78"/>
+
+  <!-- Loading bay -->
+  <rect x="176" y="220" width="117" height="108" rx="6" fill="#02070b" stroke="#ff9d13" stroke-width="5"/>
+  <rect x="181" y="226" width="107" height="10" rx="5" fill="#ffb51f" filter="url(#glowA)"/>
+  <rect x="184" y="244" width="101" height="6" rx="3" fill="#16344b"/>
+
+  <!-- Packages -->
+  <g stroke="#7b4613" stroke-width="2">
+    <path d="M194 283 L224 268 L251 281 L251 316 L220 330 L194 316 Z" fill="url(#amber)"/>
+    <path d="M235 274 L264 260 L286 272 L286 307 L258 321 L235 309 Z" fill="url(#amber)"/>
+    <path d="M211 251 L239 238 L265 250 L265 282 L237 296 L211 283 Z" fill="url(#amber)"/>
+  </g>
+  <path d="M225 246 L239 239 L253 246" fill="none" stroke="#6f4117" stroke-width="5"/>
+  <path d="M208 276 L224 268 L239 275" fill="none" stroke="#6f4117" stroke-width="5"/>
+  <path d="M249 267 L264 260 L278 267" fill="none" stroke="#6f4117" stroke-width="5"/>
+
+  <!-- Growth bars -->
+  <g fill="url(#amber)" filter="url(#glowA)">
+    <rect x="317" y="282" width="14" height="26" rx="3"/>
+    <rect x="339" y="260" width="14" height="48" rx="3"/>
+    <rect x="361" y="232" width="14" height="76" rx="3"/>
+  </g>
+
+  <!-- Upward growth arrow -->
+  <path d="M316 395 C365 383 401 351 418 305 L398 311 L431 261 L458 305 L440 299 C423 355 386 400 329 420 Z" fill="url(#amber)" filter="url(#glowA)"/>
+
+  <!-- Cyan route entry -->
+  <path d="M78 326 C99 293 124 272 158 261" fill="none" stroke="#0b2739" stroke-width="34" stroke-linecap="round"/>
+  <path d="M78 326 C99 293 124 272 158 261" fill="none" stroke="url(#cyan)" stroke-width="8" stroke-linecap="round" filter="url(#glowC)"/>
+  <path d="M91 309 L110 302 M115 287 L134 280" stroke="#b9f9ff" stroke-width="8" stroke-linecap="round"/>
+</svg>

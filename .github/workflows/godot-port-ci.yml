@@ -1,0 +1,56 @@
+name: Logistics Boss Godot Port CI
+
+on:
+  push:
+    branches: [port/godot-vertical-slice]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/godot-port-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  godot-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Godot version
+        run: godot --version
+      - name: Parse/import project
+        run: godot --headless --path godot --editor --quit
+      - name: Domain simulation smoke
+        run: godot --headless --path godot --script res://tests/sim_smoke.gd
+      - name: Full scene runtime smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --quit-after 120 2>&1 | tee /tmp/godot-runtime.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-runtime.log; then
+            echo 'Godot full-scene runtime emitted an error'
+            exit 1
+          fi
+      - name: Web export
+        run: |
+          rm -rf godot-web
+          mkdir -p godot-web
+          godot --headless --path godot --export-release Web ../godot-web/index.html
+          test -s godot-web/index.html
+          test -s godot-web/index.wasm
+          test -s godot-web/index.pck
+      - name: Upload web preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: logistics-boss-godot-web-preview
+          path: godot-web
+          if-no-files-found: error
+          retention-days: 7

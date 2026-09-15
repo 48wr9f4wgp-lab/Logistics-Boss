@@ -1,0 +1,69 @@
+name: Logistics Boss Godot Preview Pages
+
+on:
+  push:
+    branches: [port/godot-vertical-slice]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/godot-preview-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: godot-preview-pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Godot port
+        uses: actions/checkout@v4
+
+      - name: Set up Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Export Godot Web preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/godot-web
+          mkdir -p /tmp/godot-web
+          godot --headless --path godot --export-release Web /tmp/godot-web/index.html
+          test -s /tmp/godot-web/index.html
+          test -s /tmp/godot-web/index.wasm
+          test -s /tmp/godot-web/index.pck
+
+      - name: Checkout canonical main site
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-site
+
+      - name: Publish preview under existing Pages root
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf main-site/docs/godot-preview
+          mkdir -p main-site/docs/godot-preview
+          cp -R /tmp/godot-web/. main-site/docs/godot-preview/
+
+          cd main-site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/godot-preview
+
+          if git diff --cached --quiet; then
+            echo "Godot preview export unchanged."
+            exit 0
+          fi
+
+          git commit -m "Publish Godot web preview"
+          git push origin HEAD:main
