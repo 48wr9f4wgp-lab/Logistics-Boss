@@ -40,8 +40,8 @@ func _assert_facility_visible(kind: StringName, expected_name: String) -> void:
     await process_frame
     await process_frame
 
-    var found := facility_view.find_child(expected_name, "Node3D", true, false)
-    assert(found != null, "%s must create a visible 3D facility structure" % String(kind))
+    var found := facility_view.find_child(expected_name, true, false)
+    assert(found is Node3D, "%s must create a visible 3D facility structure" % String(kind))
     assert(found.get_child_count() > 0, "%s visible structure must contain geometry" % String(kind))
 
     holder.queue_free()
