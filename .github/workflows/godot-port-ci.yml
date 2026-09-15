@@ -30,11 +30,20 @@ jobs:
         run: godot --headless --path godot --editor --quit
       - name: Domain simulation smoke
         run: godot --headless --path godot --script res://tests/sim_smoke.gd
+      - name: Full scene runtime smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --quit-after 120 2>&1 | tee /tmp/godot-runtime.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-runtime.log; then
+            echo 'Godot full-scene runtime emitted an error'
+            exit 1
+          fi
       - name: Web export
         run: |
           rm -rf godot-web
           mkdir -p godot-web
-          godot --verbose --headless --path godot --export-release Web ../godot-web/index.html
+          godot --headless --path godot --export-release Web ../godot-web/index.html
           test -s godot-web/index.html
           test -s godot-web/index.wasm
           test -s godot-web/index.pck
