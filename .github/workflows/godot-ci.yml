@@ -68,6 +68,9 @@ jobs:
       - name: Rank 3 intervention scout
         run: godot --headless --path godot --script res://tests/rank3_intervention_scout.gd
 
+      - name: Rank 3 intake growth scout
+        run: godot --headless --path godot --script res://tests/rank3_intake_growth_scout.gd
+
       - name: Rank 2 facility UI smoke
         run: godot --headless --path godot --script res://tests/rank2_facility_ui_smoke.gd
 
