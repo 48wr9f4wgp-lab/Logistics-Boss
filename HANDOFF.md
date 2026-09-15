@@ -127,7 +127,7 @@ Rank 2 demand context is intentionally higher than Rank 1: order interval 2.2s. 
 
 `godot/tests/rank2_zone_pacing_report.gd` runs every facility choice for 180 simulated seconds.
 
-Current measured results from the green PR gate:
+Current measured results:
 - Double Dock: 50 shipments / 16.7 per min; avg inbound 17.46; capacity 20; dominant inbound.
 - Buffer Yard: 50 / 16.7; avg inbound 15.80; capacity 28; dominant inbound.
 - Fast Pick Rack: 59 / 19.7; avg packing queue 12.65; capacity 12; dominant packing.
@@ -140,9 +140,29 @@ Interpretation:
 - Intake choices primarily trade source rate against surge capacity;
 - Storage choices trade pick speed against inventory capacity;
 - Packing choices trade concurrency against per-box latency;
-- in the current stressed scenarios, several pairs intentionally converge on the same shipment rate because the bottleneck moves to another stage. The Director must expose that downstream bottleneck rather than pretending every purchase directly raises revenue.
+- several pairs intentionally converge on the same shipment rate because the bottleneck moves to another stage. The Director must expose that downstream bottleneck rather than pretending every purchase directly raises revenue.
 
 Do not tune choices solely to force different shipment counts. Preserve meaningful trade-offs and verify them in context-specific scenarios.
+
+## Post-zone operating frontier
+
+`godot/tests/rank2_post_zone_frontier.gd` measures all 8 completed Zone A/B/C combinations × all 5 staffing presets for 240 simulated seconds each (40 scenarios).
+
+Current measured frontier:
+- best staffing preset is `shipping` (1 STORE / 2 PICK / 2 SHIP) in 8 / 8 completed facility combinations;
+- best-plan bottleneck is `stable` in 4 / 8 builds and `orders` in 4 / 8 builds;
+- fastest build: Double Dock + Fast Pick Rack + Fast Pack Cell = 29.5 shipments/min;
+- Double Dock + Fast Pick Rack + Parallel Pack = 29.3/min;
+- Double Dock + High Density Rack + either packing choice = 27.8/min, order backlog dominant;
+- Buffer Yard + Fast Pick = 25.5–25.8/min;
+- Buffer Yard + High Density = 25.5/min, order backlog dominant;
+- all completed builds remain far above the current 6 shipments/min Rank 3 readiness floor.
+
+Product interpretation is locked in `docs/RANK2_POST_ZONE_DECISION_2026-09-15.md`:
+- do not add AGV merely as the next automation tier;
+- High Density Rack creates a credible later AGV niche because its deliberate PICK slowdown leaves order backlog after full structural build-out;
+- however, the immediate design issue is that steady-state Rank 2 makes Shipping staffing the dominant answer in all 8 builds;
+- next gameplay should therefore add legible time-varying workload pressure so Receiving / Picking / Shipping allocations become situational decisions rather than decorative options.
 
 ## Save / QA state
 
@@ -159,6 +179,7 @@ CI gates now include:
 - Rank 2 entry smoke
 - Rank 2 facility smoke
 - Rank 2 zone pacing report
+- Rank 2 post-zone operating frontier
 - Rank 2 facility UI smoke
 - Rank 2 facility visual smoke
 - Japanese font glyph smoke
@@ -191,9 +212,13 @@ Current readiness intent:
 
 ## Next exact task
 
-After the Rank 2 structural PR is green and merged:
-1. verify the new Rank 2 management section and all six facility structures on iPhone Web Preview;
-2. add context-specific trade-off tests proving when each side of a zone is strategically valid, not merely different on paper;
-3. measure the post-3-zone bottleneck and decide the next system from evidence;
-4. do not add AGV automatically: current packing scenarios already push the bottleneck to outbound, so AGV must earn its place through measured value;
-5. only then define the real Rank 3 / Fulfillment Center vertical slice.
+1. Verify the new Rank 2 management section and all six facility structures on iPhone Web Preview when device feedback is available.
+2. Implement a deterministic Rank 2 workload-wave model before adding more permanent automation:
+   - inbound / receiving surge;
+   - order / picking surge;
+   - outbound / dispatch pressure;
+   - readable normal/recovery windows.
+3. Keep the 30-second staffing commitment and expose upcoming/current workload clearly so switching is a forecast/operations decision, not random punishment.
+4. Add scenario tests proving different staffing presets are optimal in different workload contexts and that no wave creates a resource dead-end.
+5. Re-measure High Density builds after workload waves; only then decide whether AGV becomes the late-Rank-2 / Rank-3 counterplay to PICK pressure.
+6. Do not claim Rank 3 / Fulfillment Center gameplay complete until its real loop, progression and presentation exist.
