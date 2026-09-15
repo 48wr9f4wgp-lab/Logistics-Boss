@@ -15,7 +15,10 @@ var receiving_annex_unlocked: bool = false
 
 
 func step(real_dt: float) -> void:
+    var measurement_dt := maxf(0.0, real_dt) * maxf(0.0, time_scale)
     super.step(real_dt)
+    if measurement_dt > 0.0:
+        _measurement.record_orders(sim_time, measurement_dt, open_orders)
     if facility_rank == 2 and _rank3_gate_satisfied():
         _rank_up_to_fulfillment_center()
 
