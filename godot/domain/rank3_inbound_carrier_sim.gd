@@ -12,7 +12,7 @@ func inbound_carrier_program_info() -> Dictionary:
     return {
         "kind": "inbound_carrier_program",
         "label": "高頻度入荷プログラム",
-        "effect": "定期入荷 +18%｜入荷間隔 x%.2f｜受入混雑リスク増" % INBOUND_CARRIER_INTERVAL_MULTIPLIER,
+        "effect": "定期入荷 +18%%｜入荷間隔 x%.2f｜受入混雑リスク増" % INBOUND_CARRIER_INTERVAL_MULTIPLIER,
         "cost": INBOUND_CARRIER_PROGRAM_COST,
         "owned": inbound_carrier_program_unlocked,
         "requires_annex": true,
