@@ -59,18 +59,12 @@ func _build_floor_density() -> void:
 
 
 func _build_ceiling_structure() -> void:
-    # A visible structural frame makes the room read as a warehouse rather than an open diorama.
-    for z in [-4.35, -2.1, 0.15, 2.4, 4.55]:
-        _box("RoofTruss", Vector3(14.4, 0.13, 0.13), Vector3(0.0, 4.15, z), STEEL)
-        _box("RoofLight", Vector3(3.2, 0.055, 0.10), Vector3(-2.3, 4.02, z + 0.05), Color(0.78, 0.88, 0.91))
-        _box("RoofLight", Vector3(3.2, 0.055, 0.10), Vector3(2.3, 4.02, z + 0.05), Color(0.78, 0.88, 0.91))
-
+    # Canonical mobile presentation is an open-top cutaway. Do not generate
+    # trusses, roof lights or utility bars above the playable floor: even when
+    # hidden later they can reappear through lifecycle/cached-preview edge cases
+    # and they destroy parcel/worker readability in portrait framing.
     for x in [-6.9, -4.55, -2.2, 0.15, 2.5, 4.85, 7.0]:
         _box("WallColumn", Vector3(0.16, 4.0, 0.20), Vector3(x, 2.0, -4.72), STEEL)
-
-    # A pair of overhead cable/utility runs creates depth in the upper half of the screen.
-    _box("UtilityRun", Vector3(11.9, 0.10, 0.12), Vector3(0.1, 3.72, -4.25), Color(0.12, 0.19, 0.22))
-    _box_emissive("UtilityGlow", Vector3(8.4, 0.025, 0.035), Vector3(0.1, 3.66, -4.16), CYAN, 1.65)
 
 
 func _build_storage_detail() -> void:

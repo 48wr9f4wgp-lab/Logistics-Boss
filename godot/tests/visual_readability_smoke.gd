@@ -24,12 +24,10 @@ func _init() -> void:
     await process_frame
 
     var roof_nodes := view.find_children("Roof*", "Node3D", true, false)
-    var checked := 0
-    for node in roof_nodes:
-        if node.name == "RoofTruss" or node.name == "RoofLight":
-            checked += 1
-            assert(not (node as Node3D).visible, "overhead roof geometry must not obscure gameplay")
+    assert(roof_nodes.is_empty(), "open-top warehouse must not generate roof trusses or roof lights")
 
-    assert(checked > 0, "readability smoke must inspect generated roof geometry")
+    var utility_nodes := view.find_children("Utility*", "Node3D", true, false)
+    assert(utility_nodes.is_empty(), "open-top warehouse must not generate overhead utility bars")
+
     print("Godot warehouse visual readability smoke passed")
     quit(0)
