@@ -1,6 +1,7 @@
 extends "res://domain/workload_warehouse_sim.gd"
 
 var pick_cycle_multiplier: float = 1.0
+var ship_cycle_multiplier: float = 1.0
 var autonomous_retrieval_cycle: float = 0.0
 var autonomous_retrieval_starts: int = 0
 var autonomous_retrieval_completions: int = 0
@@ -9,8 +10,9 @@ var _autonomous_retrieval_active: bool = false
 var _autonomous_retrieval_remaining: float = 0.0
 
 
-func configure_candidate(pick_multiplier: float, retrieval_cycle: float) -> void:
+func configure_candidate(pick_multiplier: float, ship_multiplier: float, retrieval_cycle: float) -> void:
     pick_cycle_multiplier = clampf(pick_multiplier, 0.35, 1.0)
+    ship_cycle_multiplier = clampf(ship_multiplier, 0.35, 1.0)
     autonomous_retrieval_cycle = maxf(0.0, retrieval_cycle)
     autonomous_retrieval_starts = 0
     autonomous_retrieval_completions = 0
@@ -27,10 +29,17 @@ func step(real_dt: float) -> void:
 
 func _start_task(worker: Dictionary, task: int) -> void:
     super._start_task(worker, task)
-    if task != Task.PICK or pick_cycle_multiplier >= 0.999:
+
+    var cycle_multiplier := 1.0
+    if task == Task.PICK:
+        cycle_multiplier = pick_cycle_multiplier
+    elif task == Task.SHIP:
+        cycle_multiplier = ship_cycle_multiplier
+
+    if cycle_multiplier >= 0.999:
         return
 
-    var adjusted_duration := maxf(0.05, float(worker.get("duration", 0.0)) * pick_cycle_multiplier)
+    var adjusted_duration := maxf(0.05, float(worker.get("duration", 0.0)) * cycle_multiplier)
     worker["duration"] = adjusted_duration
     worker["remaining"] = adjusted_duration
     worker["progress"] = 0.0
