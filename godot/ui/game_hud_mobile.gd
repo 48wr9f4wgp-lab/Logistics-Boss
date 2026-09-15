@@ -1,11 +1,19 @@
 extends "res://ui/game_hud_release.gd"
 class_name MobileGameHud
 
-const MOBILE_SHEET_TOP := 0.30
+const MOBILE_SHEET_TOP := 0.26
 const MOBILE_SHEET_SIDE_MARGIN := 12.0
 const MOBILE_SHEET_BOTTOM := -108.0
+const MOBILE_SCROLL_DRAG_THRESHOLD := 6.0
+const MOBILE_SCROLL_SPEED := 1.15
+const MOBILE_SCROLL_BOTTOM_PADDING := 40.0
 
 var _mobile_layout_width := -1.0
+var _mobile_scroll: ScrollContainer
+var _mobile_scroll_touch_index := -1
+var _mobile_scroll_drag_distance := 0.0
+var _mobile_mouse_scroll_active := false
+var _mobile_mouse_drag_distance := 0.0
 
 
 func _ready() -> void:
@@ -20,6 +28,74 @@ func _process(delta: float) -> void:
     _apply_mobile_management_layout(false)
     _apply_mobile_progression_copy()
     _apply_mobile_rank3_compaction()
+
+
+func _input(event: InputEvent) -> void:
+    if _sheet == null or not _sheet.visible or _mobile_scroll == null:
+        _reset_mobile_scroll_gesture()
+        return
+
+    var scroll_rect := _mobile_scroll.get_global_rect()
+
+    if event is InputEventScreenTouch:
+        var touch := event as InputEventScreenTouch
+        if touch.pressed:
+            if _mobile_scroll_touch_index < 0 and scroll_rect.has_point(touch.position):
+                _mobile_scroll_touch_index = touch.index
+                _mobile_scroll_drag_distance = 0.0
+        elif touch.index == _mobile_scroll_touch_index:
+            _mobile_scroll_touch_index = -1
+            _mobile_scroll_drag_distance = 0.0
+        return
+
+    if event is InputEventScreenDrag:
+        var drag := event as InputEventScreenDrag
+        if drag.index != _mobile_scroll_touch_index:
+            return
+        _mobile_scroll_drag_distance += absf(drag.relative.y)
+        if _mobile_scroll_drag_distance >= MOBILE_SCROLL_DRAG_THRESHOLD:
+            _scroll_management_by(drag.relative.y)
+        return
+
+    # Web exports can present touch as emulated mouse input depending on browser/runtime settings.
+    # Keep an independent mouse-drag fallback so the management sheet remains usable on iOS Safari.
+    if event is InputEventMouseButton:
+        var mouse_button := event as InputEventMouseButton
+        if mouse_button.button_index != MOUSE_BUTTON_LEFT or _mobile_scroll_touch_index >= 0:
+            return
+        if mouse_button.pressed:
+            _mobile_mouse_scroll_active = scroll_rect.has_point(mouse_button.position)
+            _mobile_mouse_drag_distance = 0.0
+        else:
+            _mobile_mouse_scroll_active = false
+            _mobile_mouse_drag_distance = 0.0
+        return
+
+    if event is InputEventMouseMotion:
+        var motion := event as InputEventMouseMotion
+        if not _mobile_mouse_scroll_active or _mobile_scroll_touch_index >= 0:
+            return
+        if (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
+            _mobile_mouse_scroll_active = false
+            _mobile_mouse_drag_distance = 0.0
+            return
+        _mobile_mouse_drag_distance += absf(motion.relative.y)
+        if _mobile_mouse_drag_distance >= MOBILE_SCROLL_DRAG_THRESHOLD:
+            _scroll_management_by(motion.relative.y)
+
+
+func _scroll_management_by(pointer_delta_y: float) -> void:
+    if _mobile_scroll == null:
+        return
+    var next_scroll := _mobile_scroll.scroll_vertical - int(round(pointer_delta_y * MOBILE_SCROLL_SPEED))
+    _mobile_scroll.scroll_vertical = maxi(0, next_scroll)
+
+
+func _reset_mobile_scroll_gesture() -> void:
+    _mobile_scroll_touch_index = -1
+    _mobile_scroll_drag_distance = 0.0
+    _mobile_mouse_scroll_active = false
+    _mobile_mouse_drag_distance = 0.0
 
 
 func _apply_mobile_management_layout(force: bool) -> void:
@@ -38,21 +114,27 @@ func _apply_mobile_management_layout(force: bool) -> void:
     _sheet.clip_contents = true
     _sheet.mouse_filter = Control.MOUSE_FILTER_STOP
 
+    _mobile_scroll = null
     _configure_scroll_containers(_sheet)
     _configure_known_mobile_controls()
     _tune_section_spacing(_progression_panel, 12)
     _tune_section_spacing(_rank3_panel, 10)
+    _ensure_scroll_bottom_padding()
 
 
 func _configure_scroll_containers(node: Node) -> void:
     if node is ScrollContainer:
         var scroll := node as ScrollContainer
+        if _mobile_scroll == null:
+            _mobile_scroll = scroll
         scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
         scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
         scroll.scroll_hint_mode = ScrollContainer.SCROLL_HINT_MODE_ALL
         scroll.follow_focus = true
         scroll.clip_contents = true
+        scroll.scroll_deadzone = int(MOBILE_SCROLL_DRAG_THRESHOLD)
         scroll.scroll_vertical_custom_step = 96.0
+        scroll.mouse_filter = Control.MOUSE_FILTER_STOP
         _configure_scroll_content(scroll)
         return
 
@@ -70,6 +152,7 @@ func _configure_scroll_content(node: Node) -> void:
         var label := node as Label
         label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         label.clip_text = false
+        label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     elif node is Button:
         var button := node as Button
         button.clip_text = false
@@ -103,11 +186,25 @@ func _configure_known_mobile_controls() -> void:
     if _routing_summary != null:
         _routing_summary.custom_minimum_size = Vector2(0, 42)
     if _routing_select != null:
-        _routing_select.custom_minimum_size = Vector2(0, 50)
+        _routing_select.custom_minimum_size = Vector2(0, 54)
+        _routing_select.mouse_filter = Control.MOUSE_FILTER_PASS
     if _receiving_annex_button != null:
         _receiving_annex_button.custom_minimum_size = Vector2(0, 88)
     if _inbound_carrier_button != null:
         _inbound_carrier_button.custom_minimum_size = Vector2(0, 88)
+
+
+func _ensure_scroll_bottom_padding() -> void:
+    var list := _find_upgrade_list(_sheet)
+    if list == null:
+        return
+    var spacer := list.get_node_or_null("MobileBottomSpacer") as Control
+    if spacer == null:
+        spacer = Control.new()
+        spacer.name = "MobileBottomSpacer"
+        spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        list.add_child(spacer)
+    spacer.custom_minimum_size = Vector2(0, MOBILE_SCROLL_BOTTOM_PADDING)
 
 
 func _tune_section_spacing(panel: PanelContainer, separation: int) -> void:
@@ -123,7 +220,7 @@ func _apply_mobile_rank3_compaction() -> void:
         return
 
     # At Rank 3 the three Rank 2 facility choices are historical state, not active decisions.
-    # Collapse them so the management sheet prioritizes contracts, staffing and current Rank 3 capital.
+    # Collapse them so the management sheet prioritizes current Rank 3 capital and live operations.
     if _facility_header != null:
         _facility_header.visible = true
         _facility_header.text = "拡張設備  3/3 導入済み"
