@@ -1,239 +1,401 @@
 # LOGISTICS BOSS — Development Handoff
 
-Updated: 2026-09-15 JST
+Last updated: 2026-09-15 JST
 
-## Canonical product
+## 1. Product / Canonical Loop
 
-- App: `LOGISTICS BOSS`
-- Repository: `48wr9f4wgp-lab/Logistics-Boss`
-- Canonical branch: `main`
-- Current work branch: `feature/rank3-carrier-routing-domain`
-- Engine: Godot 4.7.2 Standard / GDScript / GL Compatibility
-- Portrait reference: 390×844
-- Final targets: native iOS / Android
-- Godot Web export: Engineering Preview only
-- Preview: `https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/`
-- `/docs/**` Three.js implementation is legacy reference only. Do not add production gameplay there.
-- Project-wide rules follow `GAME_DEV_MASTER_RULES`; game-specific locked specifications override general rules.
+LOGISTICS BOSS is a portrait mobile 3D logistics-management game. The player is the owner / operations manager, not a manual parcel carrier or forklift driver.
 
-## Product goal / core loop
+Canonical Core Loop:
 
-`物流を観察 → ボトルネック発見 → 投資 / 運用判断 → 作業員・設備が自律反応 → 出荷量 / 収益 / 詰まりが変化 → 結果測定 → より大きな再投資`
+Observe logistics → identify bottleneck → invest / change operations → workers and equipment react autonomously → throughput / revenue / congestion change → measure results → reinvest at larger scale.
 
-The player is the logistics-center owner / operations manager, not a manual carrier or forklift driver. Finished product quality includes FTUE, progression, save, UI/UX, 3D art direction, motion/VFX, audio, haptics, analytics, performance and QA. Current state is still development / vertical-slice maturation, not Release Candidate.
+Economic state, shipment creation, money, queues, routing, and progression are Domain-authoritative. UI / View must never generate shipment revenue or fake logistics state.
 
-Every major investment should create:
-1. visible 3D change;
-2. real logistics behavior change;
-3. measurable Before / After;
-4. potential to move the bottleneck.
+Current stage: Vertical Slice / Functional Build expansion. Not Release Candidate.
 
-Economy mutation belongs to Domain. UI / 3D presentation must never invent money or shipments.
+## 2. Repository / Branch / PR
 
-## Repository state verified 2026-09-15
+Repository: `48wr9f4wgp-lab/Logistics-Boss`
 
-- Latest `main` tip: `b433f3e538f0bc696b1f09e10d6372a96a3460cc` (`Publish Godot web engineering preview`, bot commit).
-- Latest functional source merge immediately before it: `b84e798050087e3e4516a6e6f23823d080c96c2b` (`Align Rank 3 gate with optional-contract spec`, PR #43).
-- PR #43 PR-CI run `34960152012`: completed / success.
-- GitHub Pages build for `b433f3e...`: completed / success.
-- Current work branch head before this HANDOFF update: `e63d312149f31a7d4c95d8564755c27f1b712f94` (`Measure open-order effects in flow comparisons`).
-- Current work branch was created from `b84e798...`; it does not include the subsequent preview-artifact-only main commit unless merged/rebased later.
-- No PR exists yet for `feature/rank3-carrier-routing-domain`.
+Canonical branch: `main`
 
-## Architecture / important files
+Feature branch: `feature/rank3-carrier-routing-domain`
 
-- `godot/main.gd` — composition root; instantiates Rank3 simulation, 3D views, HUD and save store; autosave every 10s.
-- `godot/domain/warehouse_sim.gd` — authoritative Rank 1/2 economy, parcel flow, workers, contracts, facilities.
-- `godot/domain/workload_warehouse_sim.gd` — deterministic Rank 2 workload waves, schema-v4 extension.
-- `godot/domain/rank3_warehouse_sim.gd` — Rank 3 Fulfillment Center, schema-v5, Rank 3 gate, Receiving Annex.
-- `godot/domain/flow_measurement.gd` — 25s Before/After metrics; currently modified on work branch for open-order measurement and is incomplete as described below.
-- `godot/domain/capital_catalog.gd` — Rank 1 capital prices / max levels.
-- `godot/domain/rank2_facility_catalog.gd` — six mutually-exclusive Rank 2 structural choices.
-- `godot/domain/progression_system.gd` — contracts / Rank 2 staffing.
-- `godot/domain/workload_wave_model.gd` — forecast / peak cycle.
-- `godot/view/warehouse_view.gd` — base 3D warehouse, workers, parcels, touch orbit / pinch camera.
-- `godot/view/forklift_automation_view.gd` — real-event-driven forklift visual.
-- `godot/view/rank2_facility_view.gd` — Rank 2 facility visuals.
-- `godot/view/rank3_receiving_annex_view.gd` — Fulfillment Center marker + Receiving Annex 3D expansion.
-- `godot/view/visual_pass_2.gd`, `visual_pass_3.gd`, `visual_composition_fix.gd` — existing presentation layers; avoid adding more pass files without responsibility cleanup.
-- `godot/ui/game_hud_ja.gd` — Japanese HUD base with embedded M PLUS 1p font.
-- `godot/ui/game_hud_waves.gd` — Rank 2 workload-wave UI.
-- `godot/ui/game_hud_rank3.gd` — Rank 3 readiness / Receiving Annex management UI.
-- `godot/persistence/save_store.gd` — local JSON save / backup.
-- `.github/workflows/godot-ci.yml` — parse, domain/pacing/scout/UI/visual/runtime/Web-export CI.
-- `.github/workflows/godot-preview-pages.yml` — Engineering Preview publish flow.
-- `RANK3_FULFILLMENT_CENTER.md` — title-specific Rank 3 design target; currently specifies Carrier Routing packages as the next operating layer.
+PR: `#44 Rank 3 Carrier Routing vertical slice`
 
-## Implemented gameplay
+GitHub state verified before this handoff refresh:
 
-### Rank 1
-- Start cash ¥5,000, 3 workers, rack 8.
-- Real flow: inbound → storage → pick → pack → ship.
-- Shipment value ¥500; RP +1 every 5 real shipments.
-- Policies BALANCED / INBOUND / SHIP; Pause / 1x / 2x / 4x.
-- Investments: worker, rack, worker speed, packing, forklift.
-- Forklift is authoritative automation, not fake animation.
-- 25s Before/After measurement exists.
+- `main`: `b433f3e538f0bc696b1f09e10d6372a96a3460cc`
+  - preview-bot commit only
+- latest functional main before PR #44: `b84e798050087e3e4516a6e6f23823d080c96c2b`
+- latest verified feature code before this handoff refresh: `a83e2b7f4749b11a26484cc002602ffe89eff7af`
+- PR #44 mergeability: clean / mergeable
+- PR CI run `34965362629` / run #106: success
+  - Parse/import
+  - Rank 1/2 regressions
+  - Rank 3 Receiving Annex regressions
+  - open-orders measurement smoke
+  - Carrier Routing smoke
+  - Carrier Routing pacing
+  - Rank 3 UI smoke
+  - Rank 3 visual smoke
+  - Full Scene Runtime
+  - Web export
+  - Preview artifact upload
 
-### Rank 2
-- Logistics Rating 8 promotes to Warehouse.
-- Crew minimum 5.
-- Five staffing presets with 30 simulated-second reassignment lock.
-- Three one-of-two structural zones:
-  - Intake: Double Dock vs Buffer Yard.
-  - Storage: Fast Pick Rack vs High Density Rack.
-  - Packing: Parallel Pack Line vs Fast Pack Cell.
-- All six choices affect authoritative simulation and visible 3D.
-- Deterministic workload cycle creates forecasted inbound, order and dispatch pressure; good play is proactive staffing.
-- Save/workload state persists through schema v4 inherited by Rank 3.
+If this file is later read from `main`, first re-check GitHub because PR #44 may already have been merged and preview bot may have advanced `main`.
 
-### Rank 3 currently on `main`
-- `Rank3WarehouseSim` and `Rank3GameHud` are live runtime classes.
-- Save schema v5.
-- Receiving Annex (`受入増設棟`) exists as a one-time Rank 3 structural investment:
-  - cost ¥24,000;
-  - authoritative inbound acceptance +14;
-  - Domain-owned cash mutation;
-  - 25s Before/After measurement;
-  - save/load persistence;
-  - visible 3D expansion.
-- PR #41 post-Annex frontier proved AMR/PICK acceleration/retrieval/sorter/STORE/ASRS-like/cross-dock candidates produced 0 authoritative shipment gain in the measured mature scenario.
-- PR #42 receiving-orchestration scout measured:
-  - Fast Pick + Annex: holding 0 = 205 shipments with 6 lost arrivals; holding 6 = 211 shipments, 0 lost, +6 shipments / +¥3,000 / +2.9%; >6 holding capacity unused.
-  - High Density + Annex: already 0 arrival loss and 211 shipments; holding capacity produced no output gain.
-  - Therefore a universal gate-staging / receiving-orchestration upgrade is not justified.
-- PR #43 fixed the canonical Rank 3 gate so contracts are optional:
-  - all 3 Rank 2 zones chosen;
-  - equipment assets >= ¥200,000;
-  - live throughput >= 6 shipments/minute.
-  - authoritative equipment asset value is calculated from owned workers/upgrades/Forklift/Rank 2 facilities (+ Annex if owned).
-  - smoke test proves promotion with `completed_contracts == 0`.
+## 3. Technology / Platform
 
-## Confirmed current bug / inconsistency
+- Godot 4.7.2 Standard
+- GDScript
+- GL Compatibility
+- portrait, 390×844 reference
+- touch orbit / pinch zoom
+- final targets: native iOS + Android
+- Godot Web export: engineering preview only
 
-`godot/ui/game_hud_rank3.gd` is stale relative to PR #43. In late Rank 2 it still renders:
-`RANK 3 解禁条件 ... 契約 x/8 ...`
-using `contracts` / `contracts_required` keys that no longer exist in `rank3_readiness()`.
-Because `.get()` defaults are used, CI did not fail and the UI can misleadingly show `契約 0/8` even though contracts are now optional.
+Engineering preview:
 
-This must be corrected before calling Rank 3 progression UX coherent. Desired UI is structural zones + equipment assets + throughput, not mandatory contracts.
-
-## Current work branch — exact incomplete state
-
-Branch: `feature/rank3-carrier-routing-domain`
-
-Goal: begin the title-specific Rank 3 **Carrier Routing Layer** from `RANK3_FULFILLMENT_CENTER.md`:
-- Balanced Parcel;
-- Express Dispatch;
-- Consolidated Linehaul;
-- real dispatch/economy tradeoffs;
-- route changes measured with shipments/min, packed queue, open orders, revenue/min;
-- later add management UI + event-driven Routing Hub/gates in 3D.
-
-Only one code change is currently committed on this branch before this handoff:
-`godot/domain/flow_measurement.gd` at commit `e63d312149f31a7d4c95d8564755c27f1b712f94`.
-
-That change adds an optional `orders` argument to `record_state()` and adds `open_orders` to Before/After metrics/deltas.
-
-IMPORTANT: this is **not complete**. Existing `WarehouseSim.step()` still calls `record_state(...)` without passing `open_orders`, so the new metric currently samples the default `0`. It is not yet valid for Carrier Routing measurement. The branch has not been CI-validated and must not be merged in this state.
-
-An attempted follow-up design to add a separate `record_orders()` sample path was started in-chat but was interrupted before the GitHub write completed. Repository verification shows branch head is still `e63d312...`; therefore that attempted follow-up is **not present** in GitHub and must not be assumed.
-
-No Carrier Routing Domain state, routing mode, dispatch gating, revenue multiplier, save schema update, routing UI, Routing Hub view, tests, PR or Preview deployment has been implemented yet.
-
-## Rank 3 design target / reason
-
-`RANK3_FULFILLMENT_CENTER.md` defines the next operating layer as Carrier Routing rather than another generic speed upgrade. The intended tradeoff is:
-- Balanced Parcel: neutral reference.
-- Express Dispatch: faster outbound clearance, lower margin.
-- Consolidated Linehaul: batched dispatch, higher margin, more packed-WIP risk.
-
-Reason: prior scouts repeatedly showed that blindly speeding internal PICK/STORE/SHIP stages often moves WIP without increasing authoritative shipment/revenue output. Routing introduces a new decision surface after packing where throughput, queueing and margin can trade off instead of adding another cosmetic equipment tier.
-
-Receiving Annex remains implemented code and should not be deleted merely to match the newer routing target; actual code is canonical until a deliberate migration changes it.
-
-## UI / visual decisions locked from device verification
-
-- Portrait mobile-first; 3D warehouse remains the hero.
-- Dark navy industrial palette, cyan tech accent, amber/orange safety/logistics accent.
-- Warehouse uses an open-top/cutaway presentation; roof/truss occlusion was removed after real-device feedback.
-- Camera touch orbit sensitivity/smoothing and max zoom-out were tuned and accepted on iPhone.
-- Left foreground wall occlusion was removed for overview readability.
-- Embedded `MPLUS1p-Regular.ttf` is the cross-platform Japanese UI font; do not return to SystemFont for Web/Android portability.
-- Management UI should not cover the warehouse unnecessarily; avoid new permanent top-level HUD clusters.
-- `出荷 +¥500` toast was compacted and management overlay collisions addressed.
-- Routing selection, when implemented, belongs in existing management UI with one compact current-route summary.
-
-## Rejected / avoid
-
-- Do not return production gameplay to legacy Three.js `/docs`.
-- Do not make manual forklift driving / parcel carrying the core loop.
-- Do not let UI or 3D code generate revenue or mutate authoritative economy.
-- Do not fake automation with decorative motion disconnected from Domain events.
-- Do not add AGV/AMR, sorter, ASRS/retrieval or cross-dock merely because they are thematic; measured mature scenarios produced zero end-to-end gain before/after Annex.
-- Do not add a universal receiving-holding upgrade based on PR #42; High Density did not need it and Fast Pick gain was only 2.9%.
-- Do not restore mandatory contracts to Rank 3; PR #43 explicitly removed that stale gate.
-- Do not add `visual_pass_4/5/...` as patch layers instead of clarifying responsibilities.
-- Do not call fixes complete without build/test/runtime verification and, for mobile UX, real-device confirmation.
-
-## External services / data
-
-- No production DB.
-- No backend API.
-- No auth/account system.
-- No cloud save.
-- No analytics/crash reporting currently wired.
-- No IAP/store integration.
-- No required environment variables or secrets for current game runtime.
-- GitHub Actions + GitHub Pages are used for CI and Engineering Preview deployment.
-
-## Build / test / deploy
-
-CI uses Godot 4.7.2 and currently runs:
-- `godot --headless --path godot --editor --quit`
-- domain simulation smoke;
-- economy pacing;
-- Rank 2 readiness/entry/facility/zone/frontier tests;
-- workload wave tests;
-- Rank 3 readiness/intervention/intake/Receiving Annex/post-Annex/receiving-orchestration tests;
-- Rank 2/3 UI and visual smoke;
-- Japanese font smoke;
-- warehouse readability smoke;
-- full-scene headless runtime;
-- Web Engineering Preview export;
-- preview artifact upload.
-
-Preview URL remains:
 `https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/`
 
-Web is Engineering Preview only; final target remains native iOS/Android.
+No production backend / DB / auth / cloud save / IAP / analytics / crash reporting yet.
 
-## Immediate next task
+Persistence is local JSON through `godot/persistence/save_store.gd`.
 
-1. Re-read GitHub `main` and `feature/rank3-carrier-routing-domain` before writing code; do not trust chat state blindly.
-2. Fix `godot/ui/game_hud_rank3.gd` so Rank 3 readiness shows `拡張ゾーン / 設備資産 / 出荷ペース` and no mandatory contract count. Extend `rank3_ui_smoke.gd` to assert that contract gating text is absent and asset threshold text/progress is present.
-3. Repair the partial open-orders measurement work. Preferred minimal path: keep `FlowMeasurement.record_state(...)` backward-compatible or add a dedicated order sample API, but ensure `WarehouseSim.step()` actually records authoritative `open_orders`. Add a deterministic smoke assertion that open-order Before/After is non-zero when a seeded backlog exists.
-4. Only after the above is green, implement Carrier Routing in `rank3_warehouse_sim.gd` with a new save schema (expected v6 unless a better migration design is justified): route mode state, switching API, authoritative SHIP gating/cadence/value, no duplicate shipment revenue, and route-change measurement.
-5. Add deterministic tests proving all three route modes produce materially different outcomes and at least one throughput-vs-margin / queue tradeoff. Tune multipliers from measured results, not aesthetics.
-6. Then add routing controls to `game_hud_rank3.gd` and an event-driven Routing Hub/gates view near outbound; wire through `main.gd` only after Domain tests are stable.
-7. Run full CI → open PR for the feature branch → merge only when green → verify post-merge CI/Pages → perform iPhone verification before declaring Rank 3 routing visually complete.
+## 4. Current Save Schema
 
-Likely files for the immediate task:
-- `godot/ui/game_hud_rank3.gd`
-- `godot/tests/rank3_ui_smoke.gd`
-- `godot/domain/flow_measurement.gd`
+Current Rank 3 schema: **v6**.
+
+v6 adds persistent Carrier Routing state:
+
+- `active_routing_mode`
+
+Migration behavior:
+
+- v5 Rank 3 saves preserve Receiving Annex ownership
+- pre-v6 saves default Carrier Routing safely to `Balanced Parcel`
+- existing schema migration smoke remains green
+
+## 5. Rank 3 Gate — Current Canonical
+
+Rank 3 / Fulfillment Center requirements:
+
+- Rank 2 expansion zones: 3 / 3
+- equipment asset value: >= ¥200,000
+- live throughput: >= 6 shipments/min
+
+Contracts are **optional** and are not a Rank 3 gate.
+
+`godot/ui/game_hud_rank3.gd` was fixed in PR #44 so late Rank 2 now shows:
+
+- 拡張ゾーン x/3
+- 設備資産 ¥x / ¥200,000
+- 出荷ペース x / 6.0分
+
+The stale mandatory `契約 x/8` unlock display is removed.
+
+## 6. Receiving Annex
+
+Still implemented and authoritative.
+
+- one-time Rank 3 investment
+- cost: ¥24,000
+- inbound acceptance capacity: +14
+- 25s Before / After measurement
+- Save / Load
+- visible 3D
+
+Prior research remains valid:
+
+- universal receiving holding buffer was rejected because it only improved Fast Pick path and was redundant for High Density path
+- AGV / AMR / Sorter / ASRS / Cross-dock were not adopted as automatic next upgrades because measured shipment delta was 0 in prior scouts
+
+## 7. open_orders Measurement — Completed in PR #44
+
+`godot/domain/flow_measurement.gd`
+
+Current behavior:
+
+- retains backward-compatible optional `orders` in `record_state()`
+- adds dedicated `record_orders(at, dt, orders)` sampling
+- calculates authoritative `open_orders` average
+- exposes `open_orders_sampled_seconds`
+- includes `open_orders` delta in Before / After results
+
+`godot/domain/rank3_warehouse_sim.gd` records authoritative Domain `open_orders` every active simulation tick.
+
+Focused test:
+
+`godot/tests/flow_measurement_open_orders_smoke.gd`
+
+It verifies:
+
+- non-zero seeded backlog baseline
+- non-zero after-window
+- correct backlog delta
+- legacy `record_state(..., orders)` compatibility
+
+## 8. Carrier Routing — Implemented in PR #44
+
+Domain file:
+
+`godot/domain/rank3_warehouse_sim.gd`
+
+Authoritative state:
+
+`active_routing_mode`
+
+Routes:
+
+### Balanced Parcel
+
+- route key: `balanced`
+- batch: 1 parcel
+- dispatch duration: 3.0s before worker-speed scaling
+- value: ¥500 / parcel
+- reference / neutral state
+
+### Express Dispatch
+
+- route key: `express`
+- batch: 1 parcel
+- dispatch duration: 1.65s before worker-speed scaling
+- value: ¥410 / parcel
+- tradeoff: faster outbound clearance, lower margin
+
+### Consolidated Linehaul
+
+- route key: `consolidated`
+- batch threshold: 4 parcels
+- dispatch duration: 6.8s before worker-speed scaling
+- value: ¥620 / parcel
+- tradeoff: higher parcel value / batch efficiency, but packed inventory waits until the batch threshold
+
+Public APIs:
+
+- `routing_modes()`
+- `routing_profile(mode)`
+- `routing_summary()`
+- `set_routing_mode(next_mode)`
+
+Route changes start a 25s Before / After measurement.
+
+### Important shipment-authority behavior
+
+Rank 3 SHIP tasks freeze at task start:
+
+- routing mode
+- batch size
+- unit value
+
+This prevents an in-flight shipment from being repriced if the player switches route before task completion.
+
+Consolidated dispatch reserves all 4 packed parcels at task start.
+
+Completion updates authoritative Domain exactly once:
+
+- shipped count
+- money
+- shipment timestamps
+- RP crossings
+- measurement shipment count
+
+Focused smoke verifies no duplicate revenue / shipment and that routing can move a bottleneck from outbound to another queue.
+
+## 9. Carrier Routing UI
+
+File:
+
+`godot/ui/game_hud_rank3.gd`
+
+Carrier Routing is inside the existing Rank 3 management sheet, not a new permanent top-level HUD cluster.
+
+Current controls:
+
+- compact current-route summary
+- 3-option `OptionButton`
+  - Balanced Parcel
+  - Express Dispatch
+  - Consolidated Linehaul
+
+Rank 2 hides routing controls.
+
+Route selection calls Domain `set_routing_mode()`.
+
+`routing_changed` displays 25s measurement feedback.
+
+Focused coverage:
+
+`godot/tests/rank3_ui_smoke.gd`
+
+## 10. Carrier Routing 3D Presentation
+
+New file:
+
+`godot/view/rank3_routing_hub_view.gd`
+
+Wired in:
+
+`godot/main.gd`
+
+Visible route states:
+
+- `RoutingHub_Balanced`
+  - standard two-lane treatment / neutral carrier
+- `RoutingHub_Express`
+  - cyan fast lane / arrows / compact express carrier
+- `RoutingHub_Consolidated`
+  - amber batch lanes / four staged pallets / larger carrier
+
+The routing hub is an explicit responsibility-specific View file; do not create `visual_pass_4`, `visual_pass_5`, etc.
+
+Focused coverage:
+
+`godot/tests/rank3_visual_smoke.gd`
+
+The automated visual smoke confirms each route creates a distinct 3D state. **This is not a substitute for final iPhone visual review.**
+
+## 11. Routing Pacing / Tradeoff Regression
+
+Focused report:
+
+`godot/tests/rank3_carrier_routing_pacing_report.gd`
+
+Deterministic assertions currently green:
+
+- Express clears a sustained packed backlog faster than Balanced
+- Express revenue per parcel is lower than Balanced
+- Consolidated revenue per parcel is higher than Balanced
+- Consolidated provides batch efficiency when enough packed inventory exists
+- Consolidated creates higher packed-inventory pressure under slow trickle supply
+- route revenue equals authoritative shipped parcels × route unit value; no duplicate revenue
+
+This test is meant to protect the tradeoff shape, not declare the final economy permanently balanced.
+
+## 12. Key Tests Added / Strengthened in PR #44
+
+- `godot/tests/flow_measurement_open_orders_smoke.gd`
+- `godot/tests/rank3_carrier_routing_smoke.gd`
+- `godot/tests/rank3_carrier_routing_pacing_report.gd`
+- `godot/tests/rank3_ui_smoke.gd` strengthened
+- `godot/tests/rank3_visual_smoke.gd` strengthened
+- `godot/tests/rank3_receiving_annex_smoke.gd` updated for schema v6
+
+`.github/workflows/godot-ci.yml` now gates the new routing / measurement tests.
+
+## 13. Existing Architecture That Must Remain
+
+Runtime / composition:
+
+- `godot/main.gd`
+
+Domain:
+
 - `godot/domain/warehouse_sim.gd`
-- later `godot/domain/rank3_warehouse_sim.gd`
-- later new focused routing view/test files plus `godot/main.gd`
-- `.github/workflows/godot-ci.yml` when new routing tests are added.
+- `godot/domain/workload_warehouse_sim.gd`
+- `godot/domain/rank3_warehouse_sim.gd`
+- `godot/domain/flow_measurement.gd`
+- `godot/domain/capital_catalog.gd`
+- `godot/domain/rank2_facility_catalog.gd`
+- `godot/domain/progression_system.gd`
+- `godot/domain/workload_wave_model.gd`
 
-Completion criteria for the next implementation slice:
-- Rank 3 readiness UI exactly matches optional-contract gate.
-- Open-order measurement uses authoritative values, not defaults.
-- Parse/domain/UI tests pass.
-- Carrier routing Domain has three saved modes with real dispatch/revenue behavior.
-- Route switching cannot duplicate shipments/revenue.
-- All three modes show measured, meaningfully different consequences.
-- Existing Rank 1/2/Receiving Annex regressions stay green.
-- Full-scene runtime and Web export pass.
-- UI/3D routing polish is not called complete until iPhone Preview is checked.
+View:
+
+- `godot/view/warehouse_view.gd`
+- `godot/view/forklift_automation_view.gd`
+- `godot/view/rank2_facility_view.gd`
+- `godot/view/rank3_receiving_annex_view.gd`
+- `godot/view/rank3_routing_hub_view.gd`
+- existing visual pass 2 / 3 / composition-fix only
+
+UI:
+
+- `godot/ui/game_hud_ja.gd`
+- `godot/ui/game_hud_waves.gd`
+- `godot/ui/game_hud_rank3.gd`
+
+Embedded Japanese font:
+
+- `godot/assets/fonts/MPLUS1p-Regular.ttf`
+
+Persistence:
+
+- `godot/persistence/save_store.gd`
+
+## 14. Visual Direction
+
+North Star:
+
+- Dark Navy Industrial
+- Cyan Tech Accent
+- Amber / Orange Safety Accent
+- warm local lights
+- stylized premium mobile
+- warehouse remains the screen focal point
+
+Confirmed prior device improvements that must not regress:
+
+- open-top / cutaway visibility
+- no obstructive roof / ceiling truss
+- reduced left foreground wall obstruction
+- wider max zoom-out
+- smoother / less sensitive touch orbit
+- stable pinch
+- small shipment toast
+- bottom safe-area fixes
+- embedded Japanese font
+
+Do not return to SystemFont dependency for Japanese.
+
+## 15. Explicit Rejections / Avoid
+
+Do not:
+
+- move production gameplay back to Three.js `/docs`
+- add gameplay to `/docs`
+- make manual forklift driving the core loop
+- make manual parcel carrying the core loop
+- generate money or shipment state from UI / View
+- add fake automation animation disconnected from Domain
+- add AGV / Sorter / ASRS / Cross-dock without measured gameplay value
+- restore mandatory Rank 3 contracts
+- restore obstructive roof / truss
+- create endless visual_pass_N files
+- call unverified behavior fixed / complete
+
+## 16. CI / Release Flow
+
+Required sequence:
+
+branch → PR → CI green → merge to `main` → post-merge main CI green → Pages engineering preview success.
+
+Do not treat Web preview as native iOS / Android release validation.
+
+## 17. Immediate Next Action
+
+First re-check GitHub state.
+
+If PR #44 is still open:
+
+1. confirm latest-head CI green
+2. mark PR ready
+3. merge only while green / clean
+4. confirm `main` CI green
+5. confirm GitHub Pages preview workflow success
+6. verify preview availability
+
+If PR #44 is already merged:
+
+- do not reimplement Carrier Routing
+- verify post-merge CI / preview state first
+- next product-quality gate is iPhone real-device review of Carrier Routing UI / 3D readability and touch ergonomics
+- after device review, continue Rank 3 design based on measured bottleneck frontier rather than adding themed automation blindly
+
+## 18. Completion Language
+
+Carrier Routing can be called **automated-verified Vertical Slice** only after latest PR CI + post-merge CI are green.
+
+Do not call final UI / 3D product quality complete until iPhone real-device verification is performed.
