@@ -3,6 +3,8 @@ class_name Rank3GameHud
 
 var _rank3_panel: PanelContainer
 var _rank3_status: Label
+var _routing_summary: Label
+var _routing_select: OptionButton
 var _receiving_annex_button: Button
 
 
@@ -28,6 +30,9 @@ func _on_sim_event(event: Dictionary) -> void:
         "receiving_annex_purchased":
             _show_measurement_status("受入増設棟の効果を計測中\n前25秒 → 後25秒", 30.0)
             _show_toast("受入増設棟  稼働開始")
+        "routing_changed":
+            _show_measurement_status("配送ルートの効果を計測中\n前25秒 → 後25秒", 30.0)
+            _show_toast("配送変更  %s" % String(event.get("label", "")))
 
 
 func _build_rank3_section() -> void:
@@ -53,6 +58,26 @@ func _build_rank3_section() -> void:
     _rank3_status.add_theme_color_override("font_color", Color(1.0, 0.84, 0.62))
     column.add_child(_rank3_status)
 
+    _routing_summary = Label.new()
+    _routing_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _routing_summary.add_theme_font_size_override("font_size", 11)
+    _routing_summary.add_theme_color_override("font_color", Color(0.72, 0.91, 1.0))
+    column.add_child(_routing_summary)
+
+    _routing_select = OptionButton.new()
+    _routing_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    _routing_select.custom_minimum_size = Vector2(0, 44)
+    _routing_select.add_theme_font_size_override("font_size", 11)
+    _routing_select.add_item("Balanced Parcel")
+    _routing_select.set_item_metadata(0, "balanced")
+    _routing_select.add_item("Express Dispatch")
+    _routing_select.set_item_metadata(1, "express")
+    _routing_select.add_item("Consolidated Linehaul")
+    _routing_select.set_item_metadata(2, "consolidated")
+    _apply_button_style(_routing_select, false)
+    _routing_select.item_selected.connect(_select_routing_mode)
+    column.add_child(_routing_select)
+
     _receiving_annex_button = Button.new()
     _receiving_annex_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     _receiving_annex_button.custom_minimum_size = Vector2(0, 68)
@@ -64,7 +89,14 @@ func _build_rank3_section() -> void:
 
 
 func _render_rank3() -> void:
-    if sim == null or _rank3_panel == null or _rank3_status == null or _receiving_annex_button == null:
+    if (
+        sim == null
+        or _rank3_panel == null
+        or _rank3_status == null
+        or _routing_summary == null
+        or _routing_select == null
+        or _receiving_annex_button == null
+    ):
         return
     if not sim.has_method("rank3_readiness"):
         _rank3_panel.visible = false
@@ -85,6 +117,8 @@ func _render_rank3() -> void:
             float(readiness.get("throughput", 0.0)),
             float(readiness.get("throughput_required", 6.0)),
         ]
+        _routing_summary.visible = false
+        _routing_select.visible = false
         _receiving_annex_button.visible = false
         return
 
@@ -93,8 +127,23 @@ func _render_rank3() -> void:
         sim.completed_contracts,
     ]
     _rank3_status.text = "FULFILLMENT CENTER  次の成長投資"
-    _receiving_annex_button.visible = true
 
+    _routing_summary.visible = sim.has_method("routing_summary")
+    _routing_select.visible = sim.has_method("routing_summary")
+    if _routing_select.visible:
+        var routing: Dictionary = sim.call("routing_summary")
+        var mode := String(routing.get("mode", "balanced"))
+        _routing_summary.text = "配送: %s  ｜ %d個 / ¥%s" % [
+            String(routing.get("label", "Balanced Parcel")),
+            int(routing.get("batch_size", 1)),
+            _format_number(int(routing.get("unit_value", 500))),
+        ]
+        for index in range(_routing_select.item_count):
+            if String(_routing_select.get_item_metadata(index)) == mode:
+                _routing_select.select(index)
+                break
+
+    _receiving_annex_button.visible = true
     var info: Dictionary = sim.call("receiving_annex_info")
     var owned := bool(info.get("owned", false))
     var cost := int(info.get("cost", 0))
@@ -106,6 +155,24 @@ func _render_rank3() -> void:
         _format_number(cost),
     ]
     _apply_button_style(_receiving_annex_button, owned)
+
+
+func _select_routing_mode(index: int) -> void:
+    if sim == null or not sim.has_method("set_routing_mode"):
+        return
+    if index < 0 or index >= _routing_select.item_count:
+        return
+    var mode := String(_routing_select.get_item_metadata(index))
+    var result: Dictionary = sim.call("set_routing_mode", mode)
+    if bool(result.get("ok", false)) or String(result.get("reason", "")) == "same":
+        return
+    match String(result.get("reason", "")):
+        "rank":
+            _show_toast("RANK 3で配送ルート解禁")
+        "unknown":
+            _show_toast("選択できない配送ルート")
+        _:
+            _show_toast("配送ルートを変更できない")
 
 
 func _purchase_receiving_annex() -> void:
