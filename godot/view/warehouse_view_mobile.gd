@@ -12,12 +12,24 @@ const MOBILE_MAX_PINCH_STEP := 36.0
 const MOBILE_DRAG_FILTER_WEIGHT := 0.78
 const MOBILE_PINCH_FILTER_WEIGHT := 0.75
 const MOBILE_MIN_DISTANCE := 14.0
-const MOBILE_MAX_DISTANCE := 25.0
-const MOBILE_NEAR_FOV := 44.0
-const MOBILE_FAR_FOV := 34.0
+const MOBILE_MAX_DISTANCE := 32.0
+const MOBILE_DEFAULT_DISTANCE := 21.5
+const MOBILE_NEAR_FOV := 52.0
+const MOBILE_FAR_FOV := 46.0
 
 var _filtered_touch_drag := Vector2.ZERO
 var _filtered_pinch_delta := 0.0
+
+
+func _ready() -> void:
+    super._ready()
+    _camera_distance = clampf(maxf(_camera_distance, MOBILE_DEFAULT_DISTANCE), MOBILE_MIN_DISTANCE, MOBILE_MAX_DISTANCE)
+    if _camera != null:
+        # Portrait gameplay needs a stable horizontal field of view. KEEP_WIDTH prevents
+        # tall phone aspect ratios from collapsing the warehouse into a narrow tunnel.
+        _camera.keep_aspect = Camera3D.KEEP_WIDTH
+        _camera.fov = _desired_mobile_fov()
+        _camera_pose_initialized = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -82,6 +94,15 @@ func _unhandled_input(event: InputEvent) -> void:
             _last_pinch_distance = distance
 
 
+func _desired_mobile_fov() -> float:
+    var zoom_t := clampf(
+        (_camera_distance - MOBILE_MIN_DISTANCE) / (MOBILE_MAX_DISTANCE - MOBILE_MIN_DISTANCE),
+        0.0,
+        1.0
+    )
+    return lerpf(MOBILE_NEAR_FOV, MOBILE_FAR_FOV, zoom_t)
+
+
 func _update_camera(delta: float) -> void:
     if _camera == null:
         return
@@ -92,9 +113,9 @@ func _update_camera(delta: float) -> void:
         1.0
     )
     var near_target := Vector3(0.0, 1.20, 0.10)
-    var far_target := Vector3(0.0, 0.85, 0.25)
+    var far_target := Vector3(0.0, 0.72, 0.05)
     var target := near_target.lerp(far_target, zoom_t)
-    var desired_fov := lerpf(MOBILE_NEAR_FOV, MOBILE_FAR_FOV, zoom_t)
+    var desired_fov := _desired_mobile_fov()
 
     var horizontal := cos(_orbit_pitch) * _camera_distance
     var height := -sin(_orbit_pitch) * _camera_distance
