@@ -13,6 +13,7 @@ const STORAGE_OPTIONS := {
 
 func _init() -> void:
     var storage_results: Dictionary = {}
+    var control_loss_branch_count := 0
     for storage_label in STORAGE_OPTIONS.keys():
         var storage_kind: StringName = STORAGE_OPTIONS[storage_label]
         var cases: Dictionary = {}
@@ -21,16 +22,25 @@ func _init() -> void:
         storage_results[storage_label] = cases
 
         var control: Dictionary = cases["0"]
-        if not _require(int(control.get("lost_inbound", 0)) > 0, "%s control must prove peak inbound loss exists after Annex" % storage_label):
+        if not _require(int(control.get("potential_inbound", 0)) > 0, "%s control must receive scheduled inbound demand" % storage_label):
             return
+        if not _require(int(control.get("facility_entries", 0)) <= int(control.get("potential_inbound", 0)), "%s control cannot admit more parcels than scheduled" % storage_label):
+            return
+        if int(control.get("lost_inbound", 0)) > 0:
+            control_loss_branch_count += 1
+
         for capacity in [6, 12, 18]:
             var candidate: Dictionary = cases[str(capacity)]
             if not _require(int(candidate.get("potential_inbound", 0)) == int(control.get("potential_inbound", 0)), "%s holding case must preserve scheduled arrival demand" % storage_label):
                 return
             if not _require(int(candidate.get("lost_inbound", 0)) <= int(control.get("lost_inbound", 0)), "%s holding must not increase lost arrivals" % storage_label):
                 return
+            if not _require(int(candidate.get("facility_entries", 0)) <= int(candidate.get("potential_inbound", 0)), "%s holding cannot create parcels" % storage_label):
+                return
 
     var recommendation := _recommend_capacity(storage_results)
+    recommendation["control_loss_branch_count"] = control_loss_branch_count
+    recommendation["universal_module_required"] = control_loss_branch_count == STORAGE_OPTIONS.size()
     print("RANK3_RECEIVING_ORCHESTRATION_SCOUT %s" % JSON.stringify({
         "cycle_seconds": CYCLE_SECONDS,
         "receiving_annex_bonus": RECEIVING_BONUS,
@@ -72,18 +82,23 @@ func _run_case(storage_kind: StringName, holding_capacity: int) -> Dictionary:
 
     var shipments := int(sim.shipped) - start_shipped
     var divisor := maxf(1.0, float(samples))
+    var potential := int(sim.potential_inbound_arrivals)
+    var entries := int(sim.direct_inbound_entries + sim.released_inbound_arrivals)
+    var lost := int(sim.lost_inbound_arrivals)
     return {
         "storage": String(storage_kind),
         "holding_capacity": holding_capacity,
         "shipments": shipments,
         "shipments_per_min": snappedf(float(shipments) / (CYCLE_SECONDS / 60.0), 0.1),
         "revenue": int(sim.money) - start_money,
-        "potential_inbound": int(sim.potential_inbound_arrivals),
+        "potential_inbound": potential,
         "direct_entries": int(sim.direct_inbound_entries),
         "held_arrivals": int(sim.held_inbound_arrivals),
         "released_arrivals": int(sim.released_inbound_arrivals),
-        "facility_entries": int(sim.direct_inbound_entries + sim.released_inbound_arrivals),
-        "lost_inbound": int(sim.lost_inbound_arrivals),
+        "facility_entries": entries,
+        "lost_inbound": lost,
+        "loss_rate": snappedf(float(lost) / maxf(1.0, float(potential)), 0.001),
+        "entry_rate": snappedf(float(entries) / maxf(1.0, float(potential)), 0.001),
         "ending_holding": int(sim.holding_queue),
         "max_holding": int(sim.max_holding_queue),
         "holding_avg": snappedf(holding_sum / divisor, 0.01),
