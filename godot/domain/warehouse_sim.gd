@@ -5,8 +5,9 @@ signal event_emitted(event: Dictionary)
 
 const CapitalCatalogScript = preload("res://domain/capital_catalog.gd")
 const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
+const ProgressionSystemScript = preload("res://domain/progression_system.gd")
 
-const SAVE_SCHEMA := 2
+const SAVE_SCHEMA := 3
 const BASE_SHIPMENT_VALUE := 500
 const INBOUND_INTERVAL := 2.8
 const ORDER_INTERVAL := 3.0
@@ -29,6 +30,14 @@ enum Task {
 
 var money: int = 5000
 var research_rp: int = 0
+var logistics_rating: int = 0
+var facility_rank: int = 1
+var completed_contracts: int = 0
+var contract_offers: Array[Dictionary] = []
+var active_contract: Dictionary = {}
+var staffing_plan: String = "balanced"
+var staffing_cooldown: float = 0.0
+
 var inbound_queue: int = 4
 var rack_stock: int = 2
 var packing_queue: int = 0
@@ -59,14 +68,18 @@ var _packing_active: bool = false
 var _packing_remaining: float = 0.0
 var _packing_duration: float = 0.0
 var _forklift_remaining: float = 0.0
+var _contract_offer_cooldown: float = 0.0
+var _next_contract_id: int = 1
 var _shipment_times: Array[float] = []
 var workers: Array[Dictionary] = []
 var _capital: CapitalCatalog = CapitalCatalogScript.new()
 var _measurement: FlowMeasurement = FlowMeasurementScript.new()
+var _progression: LogisticsProgression = ProgressionSystemScript.new()
 
 
 func _init() -> void:
     _sync_worker_roster()
+    _refresh_contract_offers()
 
 
 func step(real_dt: float) -> void:
@@ -75,12 +88,14 @@ func step(real_dt: float) -> void:
         return
 
     sim_time += dt
+    staffing_cooldown = maxf(0.0, staffing_cooldown - dt)
     _spawn_flow(dt)
     _update_packing(dt)
     _update_forklift(dt)
     _update_workers(dt)
     _assign_idle_workers()
     _prune_shipment_window()
+    _update_progression(dt)
 
     _measurement.record_state(sim_time, dt, inbound_queue, packing_queue, packed_queue)
     for result in _measurement.collect_completed(sim_time):
@@ -93,6 +108,55 @@ func set_policy(next_policy: int) -> void:
         return
     policy = next_policy
     _emit("policy_changed", {"policy": int(policy)})
+
+
+func set_staffing_plan(next_plan: String) -> Dictionary:
+    if facility_rank < 2:
+        return {"ok": false, "reason": "rank"}
+    if next_plan not in ["receiving", "balanced", "picking", "dock", "shipping"]:
+        return {"ok": false, "reason": "unknown"}
+    if staffing_cooldown > 0.0:
+        return {"ok": false, "reason": "cooldown", "remaining": staffing_cooldown}
+    if staffing_plan == next_plan:
+        return {"ok": false, "reason": "same"}
+
+    staffing_plan = next_plan
+    staffing_cooldown = LogisticsProgression.STAFFING_COOLDOWN_SECONDS
+    _apply_staffing_plan()
+    _emit("staffing_changed", {
+        "plan": staffing_plan,
+        "label": _progression.staffing_label(staffing_plan),
+        "cooldown": staffing_cooldown,
+    })
+    return {"ok": true, "cooldown": staffing_cooldown}
+
+
+func staffing_summary() -> Dictionary:
+    var summary := {"store": 0, "pick": 0, "ship": 0, "idle": 0, "total": workers.size()}
+    for worker in workers:
+        var role := String(worker.get("role", ""))
+        if summary.has(role):
+            summary[role] = int(summary[role]) + 1
+        else:
+            summary["idle"] = int(summary["idle"]) + 1
+    return summary
+
+
+func choose_contract(contract_id: int) -> Dictionary:
+    if not active_contract.is_empty():
+        return {"ok": false, "reason": "active"}
+
+    for offer in contract_offers:
+        if int(offer.get("id", -1)) != contract_id:
+            continue
+        active_contract = _progression.start_contract(offer, shipped)
+        contract_offers.clear()
+        _emit("contract_started", {
+            "id": contract_id,
+            "title": String(active_contract.get("title", "契約")),
+        })
+        return {"ok": true}
+    return {"ok": false, "reason": "missing"}
 
 
 func set_time_scale(next_scale: float) -> void:
@@ -164,6 +228,13 @@ func snapshot() -> Dictionary:
         "schema_version": SAVE_SCHEMA,
         "money": money,
         "research_rp": research_rp,
+        "logistics_rating": logistics_rating,
+        "facility_rank": facility_rank,
+        "completed_contracts": completed_contracts,
+        "contract_offers": contract_offers.duplicate(true),
+        "active_contract": active_contract.duplicate(true),
+        "staffing_plan": staffing_plan,
+        "staffing_cooldown": staffing_cooldown,
         "inbound_queue": inbound_queue,
         "rack_stock": rack_stock,
         "packing_queue": packing_queue,
@@ -194,6 +265,14 @@ func save_data() -> Dictionary:
         "schema_version": SAVE_SCHEMA,
         "money": money,
         "research_rp": research_rp,
+        "logistics_rating": logistics_rating,
+        "facility_rank": facility_rank,
+        "completed_contracts": completed_contracts,
+        "contract_offers": contract_offers.duplicate(true),
+        "active_contract": active_contract.duplicate(true),
+        "next_contract_id": _next_contract_id,
+        "staffing_plan": staffing_plan,
+        "staffing_cooldown": staffing_cooldown,
         "inbound_queue": inbound_queue,
         "rack_stock": rack_stock,
         "packing_queue": packing_queue,
@@ -214,7 +293,7 @@ func save_data() -> Dictionary:
 
 func load_data(data: Dictionary) -> bool:
     var source_schema := int(data.get("schema_version", -1))
-    if source_schema != 1 and source_schema != SAVE_SCHEMA:
+    if source_schema < 1 or source_schema > SAVE_SCHEMA:
         return false
 
     money = maxi(0, int(data.get("money", money)))
@@ -235,12 +314,40 @@ func load_data(data: Dictionary) -> bool:
     forklift_unlocked = bool(data.get("forklift_unlocked", false))
     policy = clampi(int(data.get("policy", policy)), Policy.BALANCED, Policy.SHIP)
 
+    logistics_rating = maxi(0, int(data.get("logistics_rating", 0))) if source_schema >= 3 else 0
+    facility_rank = clampi(int(data.get("facility_rank", 1)), 1, 2) if source_schema >= 3 else 1
+    completed_contracts = maxi(0, int(data.get("completed_contracts", 0))) if source_schema >= 3 else 0
+    staffing_plan = String(data.get("staffing_plan", "balanced")) if source_schema >= 3 else "balanced"
+    staffing_cooldown = maxf(0.0, float(data.get("staffing_cooldown", 0.0))) if source_schema >= 3 else 0.0
+    _next_contract_id = maxi(1, int(data.get("next_contract_id", 1))) if source_schema >= 3 else 1
+
+    contract_offers.clear()
+    if source_schema >= 3:
+        var saved_offers: Variant = data.get("contract_offers", [])
+        if saved_offers is Array:
+            for item in saved_offers:
+                if item is Dictionary:
+                    contract_offers.append((item as Dictionary).duplicate(true))
+        var saved_active: Variant = data.get("active_contract", {})
+        active_contract = (saved_active as Dictionary).duplicate(true) if saved_active is Dictionary else {}
+    else:
+        active_contract = {}
+
     forklift_active = false
     forklift_progress = 0.0
     _forklift_remaining = 0.0
+    _contract_offer_cooldown = 0.0
+    if facility_rank >= 2:
+        worker_count = maxi(5, worker_count)
+        policy = Policy.BALANCED
     _sync_worker_roster()
-    if source_schema == 1:
-        _emit("save_migrated", {"from_schema": 1, "to_schema": SAVE_SCHEMA})
+    if facility_rank >= 2:
+        _apply_staffing_plan()
+    if active_contract.is_empty() and contract_offers.is_empty():
+        _refresh_contract_offers()
+
+    if source_schema < SAVE_SCHEMA:
+        _emit("save_migrated", {"from_schema": source_schema, "to_schema": SAVE_SCHEMA})
     _emit("save_loaded", {"schema_version": SAVE_SCHEMA})
     return true
 
@@ -328,10 +435,27 @@ func _assign_idle_workers() -> void:
         if int(worker["task"]) != Task.IDLE:
             continue
 
-        var task := _choose_task()
+        var task := _choose_task_for_worker(worker)
         if task == Task.IDLE:
             continue
         _start_task(worker, task)
+
+
+func _choose_task_for_worker(worker: Dictionary) -> int:
+    if facility_rank < 2:
+        return _choose_task()
+
+    var can_store := inbound_queue > 0 and rack_stock + _reserved_store_slots() < rack_capacity
+    var can_pick := rack_stock > 0 and open_orders > 0
+    var can_ship := packed_queue > 0
+    match String(worker.get("role", "")):
+        "store":
+            return Task.STORE if can_store else Task.IDLE
+        "pick":
+            return Task.PICK if can_pick else Task.IDLE
+        "ship":
+            return Task.SHIP if can_ship else Task.IDLE
+    return Task.IDLE
 
 
 func _choose_task() -> int:
@@ -446,6 +570,86 @@ func _complete_task(worker: Dictionary) -> void:
     worker["progress"] = 0.0
 
 
+func _update_progression(dt: float) -> void:
+    if active_contract.is_empty():
+        if contract_offers.is_empty():
+            _contract_offer_cooldown = maxf(0.0, _contract_offer_cooldown - dt)
+            if _contract_offer_cooldown <= 0.0:
+                _refresh_contract_offers()
+        return
+
+    var result := _progression.advance_contract(
+        active_contract,
+        dt,
+        shipped,
+        inbound_queue,
+        throughput_per_minute()
+    )
+    active_contract = (result.get("contract", {}) as Dictionary).duplicate(true)
+    if bool(result.get("success", false)):
+        _finish_contract(true)
+    elif bool(result.get("failed", false)):
+        _finish_contract(false)
+
+
+func _finish_contract(success: bool) -> void:
+    var finished: Dictionary = active_contract.duplicate(true)
+    if success:
+        var reward_cash := maxi(0, int(finished.get("reward_cash", 0)))
+        var reward_rp := maxi(0, int(finished.get("reward_rp", 0)))
+        var reward_rating := maxi(0, int(finished.get("reward_rating", 0)))
+        money += reward_cash
+        research_rp += reward_rp
+        logistics_rating += reward_rating
+        completed_contracts += 1
+        _emit("contract_completed", {
+            "title": String(finished.get("title", "契約")),
+            "cash": reward_cash,
+            "rp": reward_rp,
+            "rating": reward_rating,
+            "logistics_rating": logistics_rating,
+        })
+        if facility_rank < 2 and logistics_rating >= LogisticsProgression.RANK2_RATING:
+            _rank_up_to_warehouse()
+    else:
+        _emit("contract_failed", {"title": String(finished.get("title", "契約"))})
+
+    active_contract.clear()
+    contract_offers.clear()
+    _contract_offer_cooldown = 4.0
+
+
+func _rank_up_to_warehouse() -> void:
+    facility_rank = 2
+    worker_count = maxi(worker_count, 5)
+    staffing_plan = "balanced"
+    staffing_cooldown = 0.0
+    policy = Policy.BALANCED
+    _sync_worker_roster()
+    _apply_staffing_plan()
+    _emit("rank_up", {
+        "rank": facility_rank,
+        "name": "Warehouse",
+        "worker_count": worker_count,
+    })
+
+
+func _refresh_contract_offers() -> void:
+    contract_offers = _progression.generate_offers(_next_contract_id)
+    _next_contract_id += contract_offers.size()
+    _emit("contract_offers", {"count": contract_offers.size()})
+
+
+func _apply_staffing_plan() -> void:
+    if facility_rank < 2:
+        return
+    var roles := _progression.staffing_roles(staffing_plan)
+    if roles.is_empty():
+        return
+    for index in workers.size():
+        workers[index]["role"] = roles[index % roles.size()]
+
+
 func _sync_worker_roster() -> void:
     while workers.size() < worker_count:
         workers.append({
@@ -456,10 +660,14 @@ func _sync_worker_roster() -> void:
             "duration": 0.0,
             "remaining": 0.0,
             "progress": 0.0,
+            "role": "",
         })
 
     while workers.size() > worker_count:
         workers.pop_back()
+
+    if facility_rank >= 2:
+        _apply_staffing_plan()
 
 
 func _active_task_count(task: int) -> int:
