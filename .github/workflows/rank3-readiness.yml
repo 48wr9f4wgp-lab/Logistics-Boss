@@ -25,3 +25,5 @@ jobs:
         run: node docs/tests/rank3-promotion-smoke.mjs
       - name: Rank 3 authoritative Carrier Routing
         run: node docs/tests/rank3-routing-smoke.mjs
+      - name: Rank 3 Routing UI and 3D integration
+        run: node docs/tests/rank3-routing-integration-smoke.mjs
