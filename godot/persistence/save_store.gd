@@ -36,12 +36,14 @@ func save_sim(sim: WarehouseSim) -> bool:
 
 
 func load_into(sim: WarehouseSim) -> bool:
-    var data := _read_json(SAVE_PATH)
-    if data.is_empty():
-        data = _read_json(BACKUP_PATH)
-    if data.is_empty():
+    var primary := _read_json(SAVE_PATH)
+    if not primary.is_empty() and sim.load_data(primary):
+        return true
+
+    var backup := _read_json(BACKUP_PATH)
+    if backup.is_empty():
         return false
-    return sim.load_data(data)
+    return sim.load_data(backup)
 
 
 func _read_json(path: String) -> Dictionary:
