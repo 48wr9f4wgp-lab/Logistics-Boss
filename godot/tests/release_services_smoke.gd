@@ -16,8 +16,7 @@ func _fail(message: String) -> void:
 
 
 func _run() -> void:
-    _verify_release_preflight()
-    if get_tree() == null:
+    if not _verify_release_preflight():
         return
 
     var host := Node.new()
@@ -67,25 +66,25 @@ func _run() -> void:
     quit(0)
 
 
-func _verify_release_preflight() -> void:
+func _verify_release_preflight() -> bool:
     if int(ProjectSettings.get_setting("display/window/size/viewport_width", 0)) != 390:
         _fail("release reference viewport width must remain 390")
-        return
+        return false
     if int(ProjectSettings.get_setting("display/window/size/viewport_height", 0)) != 844:
         _fail("release reference viewport height must remain 844")
-        return
+        return false
     if String(ProjectSettings.get_setting("display/window/stretch/mode", "")) != "canvas_items":
         _fail("mobile release must keep canvas_items stretch mode")
-        return
+        return false
     if String(ProjectSettings.get_setting("display/window/stretch/aspect", "")) != "expand":
         _fail("mobile release must keep expand stretch aspect")
-        return
+        return false
     if int(ProjectSettings.get_setting("display/window/handheld/orientation", -1)) != 1:
         _fail("mobile release must remain portrait")
-        return
+        return false
     if String(ProjectSettings.get_setting("rendering/renderer/rendering_method", "")) != "gl_compatibility":
         _fail("release renderer must remain GL Compatibility")
-        return
+        return false
 
     for required_path in [
         "res://icon.svg",
@@ -96,13 +95,13 @@ func _verify_release_preflight() -> void:
     ]:
         if not FileAccess.file_exists(required_path):
             _fail("release asset/script missing: %s" % required_path)
-            return
+            return false
 
     var presets := ConfigFile.new()
     var load_error := presets.load("res://export_presets.cfg")
     if load_error != OK:
         _fail("export presets must be readable")
-        return
+        return false
 
     var release_presets: Array[String] = []
     for section_variant in presets.get_sections():
@@ -111,16 +110,18 @@ func _verify_release_preflight() -> void:
             release_presets.append(section)
     if release_presets.size() != 1:
         _fail("before native identifiers are supplied, repository must contain only the Web engineering-preview preset")
-        return
+        return false
     if String(presets.get_value("preset.0", "name", "")) != "Web":
         _fail("engineering-preview export preset must remain named Web")
-        return
+        return false
     if String(presets.get_value("preset.0", "platform", "")) != "Web":
         _fail("engineering-preview preset must target Web")
-        return
-    if bool(presets.get_value("preset.0", "runnable", false)) != true:
+        return false
+    if not bool(presets.get_value("preset.0", "runnable", false)):
         _fail("Web engineering-preview preset must remain runnable")
-        return
+        return false
     if bool(presets.get_value("preset.0.options", "progressive_web_app/enabled", true)):
         _fail("Web build is an engineering preview, not the production PWA target")
-        return
+        return false
+
+    return true
