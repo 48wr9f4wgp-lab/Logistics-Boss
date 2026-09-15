@@ -1,6 +1,6 @@
 # LOGISTICS BOSS — Development Handoff
 
-Last updated: 2026-09-15 JST
+Last updated: 2026-09-16 JST
 
 ## 1. Product / Canonical Loop
 
@@ -12,68 +12,64 @@ Canonical Core Loop:
 
 Economic state, shipment creation, money, queues, routing, and progression are Domain-authoritative. UI / View must never generate shipment revenue or fake logistics state.
 
-Current stage: **RC candidate preparation**. Not Native RC yet.
+Current stage: **code-level RC candidate audit**. Not Native RC yet.
 
-## 2. Repository / Current Sprint
+## 2. Repository / Technology
 
 Repository: `48wr9f4wgp-lab/Logistics-Boss`
-
 Canonical branch: `main`
+Engine: Godot 4.7.2 Standard / GDScript / GL Compatibility
+Reference viewport: portrait 390×844
+Final targets: native iOS + Android
+Godot Web export: engineering preview only
 
-Production-readiness branch: `rc/production-readiness-sprint`
-
-Open PR: **#54 Production readiness sprint: game feel, telemetry, recovery and RC QA**
-
-PR target:
-- consolidate remaining product-quality work into one sprint
-- stop one-fix-at-a-time PR churn
-- reach a code-level RC candidate before native signing/device QA
-
-## 3. Technology / Platform
-
-- Godot 4.7.2 Standard
-- GDScript
-- GL Compatibility
-- portrait 390×844 reference
-- touch orbit / pinch zoom
-- final targets: native iOS + Android
-- Godot Web export: engineering preview only
-
-Engineering preview:
-
+Preview:
 `https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/`
 
 No production backend / DB / auth / cloud save / IAP / ads / external analytics / crash provider is connected.
 
-## 4. Current Save Schema
+## 3. Current Verified State
 
-Current schema: **v7**.
+Merged production-readiness work:
+- PR #54: game feel, provider-neutral analytics, runtime health, save recovery, soak tests, release checklist
+- PR #55: first mobile sheet/camera correction
+- PR #56: Rank 3 management layout and close-zoom framing correction
+- PR #57: reliable iOS/Web touch scrolling and true portrait overview framing
 
-v7 includes:
-- Rank 3 Carrier Routing
-- Receiving Annex ownership
-- High-frequency inbound carrier program ownership
+Real iPhone Safari verification after PR #57 confirmed:
+- runtime launches correctly
+- warehouse can be viewed as an operational whole at max zoom-out
+- Rank 3 management UI is readable
+- management content scrolls vertically on touch
+- no right-edge overflow in the verified management state
+
+These results close the previous Web/mobile P0 UX blockers. They do **not** replace native iOS/Android QA.
+
+## 4. Save / Lifecycle
+
+Current save schema: **v7**.
 
 Persistence:
 - `godot/persistence/save_store.gd`
-- primary JSON save
-- previous committed save retained as `.bak`
-- production-readiness sprint adds fallback to backup when primary JSON is syntactically valid but semantically unloadable (for example unsupported schema)
+- primary JSON save plus backup recovery
+- semantic-invalid primary can fall back to backup
+- autosave every 10 seconds
+- save on close / application pause
 
-## 5. Rank 1
+FTUE completion is persisted separately so experienced saves are not forced through onboarding again.
 
-Core flow:
-Inbound → Store → Rack → Pick → Pack → Ship.
+## 5. Rank 1 — Small Depot
 
 Initial state:
 - ¥5,000
 - 3 workers
 - rack capacity 8
 
-Rank 1 controls:
-- Balance
-- Inbound
-- Ship
+Flow:
+Inbound → Store → Rack → Pick → Pack → Ship
+
+Controls:
+- BALANCED / INBOUND / SHIP
 - Pause / 1× / 2× / 4×
 
 Capital:
@@ -84,14 +80,13 @@ Capital:
 - forklift automation
 
 Fresh-save FTUE teaches:
-1. observe bottleneck
+1. observe a bottleneck
 2. change operating policy
 3. open management
-4. invest and read Before/After measurement
+4. invest
+5. read measured Before/After result
 
-FTUE completion is persisted separately and experienced saves are not forced through it again.
-
-## 6. Rank 2 Warehouse
+## 6. Rank 2 — Warehouse
 
 Rank 2 begins at Logistics Rating 8 and grants a five-person base crew.
 
@@ -104,41 +99,29 @@ Staffing presets:
 
 Reassignment lock: 30 simulated seconds.
 
-Fixed expansion zones, one-of-two per zone:
+Fixed one-of-two expansion zones:
+- Zone A Intake: Double Dock / Buffer Yard
+- Zone B Storage: Fast Pick Rack / High Density Rack
+- Zone C Packing: Parallel Pack / Fast Pack Cell
 
-Zone A Intake:
-- Double Dock
-- Buffer Yard
+Deterministic workload waves create forecast → surge / window cycles so the player can reposition staff before pressure arrives.
 
-Zone B Storage:
-- Fast Pick Rack
-- High Density Rack
-
-Zone C Packing:
-- Parallel Pack
-- Fast Pack Cell
-
-Workload waves are deterministic and forecastable:
-- inbound forecast / surge
-- order forecast / surge
-- dispatch forecast / window
-
-## 7. Rank 3 Fulfillment Center
+## 7. Rank 3 — Fulfillment Center
 
 Canonical Rank 3 gate:
-- all 3 Rank 2 zones
+- all 3 Rank 2 expansion zones
 - equipment assets >= ¥200,000
 - live throughput >= 6 shipments/min
 
-Contracts are optional and are not a Rank 3 gate.
+Contracts are optional and are **not** a Rank 3 gate.
 
 ### Receiving Annex
 - one-time
 - ¥24,000
 - inbound acceptance +14
-- 25s Before/After
-- save/load
 - visible 3D
+- measured Before/After
+- schema-v7 persistence
 
 ### Carrier Routing
 Balanced Parcel:
@@ -156,7 +139,7 @@ Consolidated Linehaul:
 - dispatch 6.8s
 - ¥620 / parcel
 
-Routing state is Domain-authoritative and frozen into SHIP tasks at task start so route changes cannot reprice in-flight shipments.
+Routing is Domain-authoritative and frozen into SHIP tasks at task start.
 
 ### High-frequency inbound carrier program
 - one-time
@@ -164,92 +147,55 @@ Routing state is Domain-authoritative and frozen into SHIP tasks at task start s
 - ¥30,000
 - scheduled inbound interval ×0.85
 - counted in equipment assets
-- schema v7 persistence
-- visible 3D state on Receiving Annex
+- visible 3D state
+- schema-v7 persistence
 
-Research showed scheduled inbound cadence is the first post-routing lever that materially increases shipments; prior AGV / sorter / ASRS-style candidates did not automatically earn production adoption.
+## 8. Measurement / Game Feel / Telemetry
 
-## 8. Measurement / Player Feedback
+Canonical major-capital measurement: 25s Before / 25s After.
 
-Canonical capital measurement: 25s Before / 25s After.
-
-Investment result UI now classifies:
+Investment result UI classifies:
 - 改善
 - 横ばい
 - 要再判断
 
-Display hierarchy:
-1. judgment + shipment delta
-2. operational context
-3. next action
+Game feel:
+- procedural feedback audio baseline
+- `Input.vibrate_handheld` hooks for native haptics
+- shipment feedback throttled to avoid spam
 
-Release HUD adds compact actionable bottleneck guidance without adding another permanent HUD layer.
+Telemetry:
+- provider-neutral local event layer only
+- no external transmission
+- events cover session, FTUE, policy/staffing, contracts, investments, routing, rank-up, measurement results and sampled shipment milestones
 
-## 9. Production-Readiness Services in PR #54
+Runtime health samples average FPS, minimum FPS and low-FPS ratio. Native performance remains unverified until physical-device builds exist.
 
-### Game feel
-`godot/feedback/game_feel.gd`
+## 9. RC QA Coverage
 
-- procedural short feedback tones; no external audio asset dependency
-- native haptic hooks through `Input.vibrate_handheld`
-- shipment haptics throttled to avoid high-throughput vibration spam
-- stronger feedback for investment / contract / Rank Up
+CI covers:
+- parse/import
+- Rank 1/2/3 Domain smoke and pacing
+- Rank 2/3 UI and 3D smoke
+- runtime startup
+- FTUE core loop
+- release services
+- mobile input / camera framing
+- management touch scrolling
+- save recovery
+- long-running Rank 1 / Rank 3 soak
+- Japanese font glyphs
+- visual readability
+- full-scene runtime
+- Web engineering-preview export
 
-### Analytics foundation
-`godot/telemetry/analytics_service.gd`
+The RC audit additionally guards release project settings and prevents fake native production presets from being committed before real identifiers are supplied.
 
-Provider-neutral local event layer. It does **not** transmit user data externally.
-
-Instrumented events include:
-- session start / suspend
-- FTUE step / complete / skip
-- policy and staffing changes
-- contracts
-- investments
-- routing
-- facility rank-up
-- investment measurement results
-- sampled shipment milestones
-
-An external analytics provider can be attached later through a callable provider adapter after explicit approval.
-
-### Runtime health
-`godot/telemetry/runtime_health.gd`
-
-Samples:
-- average FPS
-- minimum FPS
-- low-FPS seconds / ratio
-
-Physical-device performance remains unverified until native builds exist.
-
-## 10. RC QA Added in PR #54
-
-New coverage:
-- `release_services_smoke.gd`
-- `release_hud_smoke.gd`
-- `mobile_input_smoke.gd`
-- `save_recovery_smoke.gd`
-- `release_candidate_soak.gd`
-
-Soak targets:
-- fresh Rank 1 autonomous shipping
-- save / restore and resumed shipping
-- synthetic mature Rank 3
-- Balanced / Express / Consolidated routes
-- non-negative queues/economy
-- schema-v7 late-game save / restore
-- resumed Rank 3 shipping after restore
-
-Existing CI still includes Rank 1/2/3 Domain, pacing, UI, 3D, font, full-scene runtime, and Web export coverage.
-
-## 11. Native Release Blockers
+## 10. Current Native Blockers
 
 See `NATIVE_RELEASE_CHECKLIST.md`.
 
-Do not guess production identifiers.
-
-Required before final export presets / signed builds:
+Required before final native export presets / signed builds:
 
 ### iOS
 - Apple Developer Team ID
@@ -257,35 +203,29 @@ Required before final export presets / signed builds:
 - Xcode signing/provisioning
 
 ### Android
-- final package identifier
-- release keystore / alias
-- signing credentials outside repository
+- final application package identifier
+- release keystore
+- key alias
+- signing credentials stored outside source control
 
-Final Native RC also requires a physical iPhone and Android pass for:
-- cold launch
-- FTUE
-- save/relaunch
-- background/resume
-- Safe Area
-- touch orbit/pinch
-- audio/haptics
-- sustained performance
+Final Native RC requires at least one physical iPhone and one physical Android pass for cold launch, FTUE, save/relaunch, background/resume, safe areas, touch orbit/pinch, audio/haptics and sustained Rank 3 performance.
 
-## 12. External Actions Requiring Explicit Approval
+## 11. External Actions Requiring Explicit Approval
 
 Do not perform automatically:
-- App Store / Google Play submission
-- paid developer-account purchase
-- external analytics/crash provider activation
+- App Store submission
+- Google Play submission
+- paid developer-account purchase or renewal
+- external analytics/crash provider activation or data upload
 - IAP / ads / monetization activation
-- production signing-key operations
+- production signing-key generation/rotation on behalf of the user
 
-## 13. Immediate Next Gate
+## 12. Immediate Next Gate
 
-1. Let PR #54 CI finish.
-2. If failed, inspect exact failing step once and repair the consolidated branch.
-3. When green, merge PR #54.
-4. Verify Web Preview regression once.
-5. Then collect native identifiers/signing inputs and move to signed iOS/Android builds.
-
-Do not call this Native RC until physical-device native verification is complete.
+1. Keep the code-level RC audit branch green.
+2. Merge only after CI passes.
+3. Do one Web Preview regression check if the audit changes runtime code or UI.
+4. Then collect native identifiers/signing inputs.
+5. Create native export presets and signed builds.
+6. Run physical iPhone + Android QA.
+7. Only then declare **Native RC**.
