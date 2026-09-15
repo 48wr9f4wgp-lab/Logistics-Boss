@@ -1,7 +1,7 @@
 extends Node
 
 const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
-const WarehouseViewScript = preload("res://view/warehouse_view.gd")
+const WarehouseViewScript = preload("res://view/warehouse_view_mobile.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
 const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")
 const WarehouseVisualCompositionFixScript = preload("res://view/visual_composition_fix.gd")
@@ -9,7 +9,7 @@ const ForkliftAutomationViewScript = preload("res://view/forklift_automation_vie
 const Rank2FacilityViewScript = preload("res://view/rank2_facility_view.gd")
 const Rank3ReceivingAnnexViewScript = preload("res://view/rank3_receiving_annex_view.gd")
 const Rank3RoutingHubViewScript = preload("res://view/rank3_routing_hub_view.gd")
-const GameHudScript = preload("res://ui/game_hud_release.gd")
+const GameHudScript = preload("res://ui/game_hud_mobile.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 const GameFeelScript = preload("res://feedback/game_feel.gd")
 const AnalyticsScript = preload("res://telemetry/analytics_service.gd")
