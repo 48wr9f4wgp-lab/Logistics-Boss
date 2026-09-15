@@ -1,5 +1,6 @@
 extends "res://domain/workload_warehouse_sim.gd"
 
+var store_cycle_multiplier: float = 1.0
 var pick_cycle_multiplier: float = 1.0
 var ship_cycle_multiplier: float = 1.0
 var autonomous_retrieval_cycle: float = 0.0
@@ -10,7 +11,8 @@ var _autonomous_retrieval_active: bool = false
 var _autonomous_retrieval_remaining: float = 0.0
 
 
-func configure_candidate(pick_multiplier: float, ship_multiplier: float, retrieval_cycle: float) -> void:
+func configure_candidate(store_multiplier: float, pick_multiplier: float, ship_multiplier: float, retrieval_cycle: float) -> void:
+    store_cycle_multiplier = clampf(store_multiplier, 0.35, 1.0)
     pick_cycle_multiplier = clampf(pick_multiplier, 0.35, 1.0)
     ship_cycle_multiplier = clampf(ship_multiplier, 0.35, 1.0)
     autonomous_retrieval_cycle = maxf(0.0, retrieval_cycle)
@@ -31,7 +33,9 @@ func _start_task(worker: Dictionary, task: int) -> void:
     super._start_task(worker, task)
 
     var cycle_multiplier := 1.0
-    if task == Task.PICK:
+    if task == Task.STORE:
+        cycle_multiplier = store_cycle_multiplier
+    elif task == Task.PICK:
         cycle_multiplier = pick_cycle_multiplier
     elif task == Task.SHIP:
         cycle_multiplier = ship_cycle_multiplier
