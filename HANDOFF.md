@@ -30,9 +30,10 @@ Economy mutation belongs to Domain. UI / 3D presentation must never invent shipm
 
 ## Current architecture
 
-- `godot/main.gd` — composition root / save wiring; runtime uses workload-aware Rank 2 simulation and HUD.
+- `godot/main.gd` — composition root / save wiring; current Rank 3 branch runtime uses `Rank3WarehouseSim` and `Rank3GameHud`.
 - `godot/domain/warehouse_sim.gd` — authoritative Rank 1/2 economy, parcel flow, workers, contracts, structural effects.
-- `godot/domain/workload_warehouse_sim.gd` — workload-wave extension and schema-v4 state.
+- `godot/domain/workload_warehouse_sim.gd` — Rank 2 workload-wave extension and schema-v4 state.
+- `godot/domain/rank3_warehouse_sim.gd` — focused Rank 3 Fulfillment Center layer, schema-v5 migration, promotion gate and Receiving Annex state/effect.
 - `godot/domain/workload_wave_model.gd` — deterministic forecast / peak cycle.
 - `godot/domain/capital_catalog.gd` — Rank 1 investments.
 - `godot/domain/flow_measurement.gd` — 25-second Before / After measurement.
@@ -41,9 +42,11 @@ Economy mutation belongs to Domain. UI / 3D presentation must never invent shipm
 - `godot/view/warehouse_view.gd` — base 3D warehouse / workers / parcels / touch camera.
 - `godot/view/forklift_automation_view.gd` — event-driven forklift visual.
 - `godot/view/rank2_facility_view.gd` — visible Rank 2 structures.
+- `godot/view/rank3_receiving_annex_view.gd` — visible Fulfillment Center marker and purchased Receiving Annex expansion.
 - `godot/view/visual_pass_2.gd`, `visual_pass_3.gd`, `visual_composition_fix.gd` — presentation layers; do not add pass files casually.
-- `godot/ui/game_hud_ja.gd` — canonical Japanese mobile HUD.
+- `godot/ui/game_hud_ja.gd` — Japanese mobile HUD foundation.
 - `godot/ui/game_hud_waves.gd` — workload forecast / peak UI.
+- `godot/ui/game_hud_rank3.gd` — Rank 3 readiness and Receiving Annex management.
 - `godot/persistence/save_store.gd` — local JSON save / backup.
 
 ## Rank 1 baseline
@@ -114,97 +117,95 @@ Measured full-cycle strategy over 510 simulated seconds:
 
 All five staffing presets have at least one measured niche. “Always Shipping” is no longer the sole economic answer.
 
-## Rank 3 scouting — completed measurement
+## Rank 3 scouting decision
 
-Rank 3 is **not implemented in production yet**. Current code only has readiness/scouting tests. Never claim Rank 3 complete from these tests.
+PR #39 measured the mature late-Rank-2 workload before production Rank 3 implementation.
 
-### Storage-path readiness
+Internal-process sensitivity candidates — PICK assist, AMR-style PICK acceleration, autonomous rack→pack retrieval, SHIP acceleration/sorter, STORE acceleration, combined STORE+PICK acceleration and real cross-dock — all produced **0 authoritative shipment and revenue delta** in the mature 510s scenario. They moved WIP location but did not increase end-to-end output.
 
-Under the mature workload cycle, with Buffer Yard + Fast Pack Cell and adaptive staffing:
+The decisive measured constraint was peak inbound acceptance. A +14 Receiving Annex sensitivity increased real accepted arrivals, shipments and revenue on both storage branches:
+- Fast Pick: 191→205 shipments, +¥7,000.
+- High Density: 199→211 shipments, +¥6,000.
+
+Therefore **Receiving Annex / Overflow Intake Expansion** was selected as the first production Rank 3 step. AGV / sorter / ASRS / cross-dock remain deferred until post-Annex measurements create a real downstream constraint.
+
+## Rank 3 Fulfillment Center vertical slice — implemented on PR #40 branch
+
+Rank 3 is now a real gameplay layer on the feature branch; it is not a release-complete game or RC.
+
+Promotion gate:
+- all 3 Rank 2 expansion zones committed;
+- 8 completed contracts;
+- at least 6 recent shipments/minute.
+
+When the live gate is satisfied, the Domain promotes Warehouse → **Rank 3 Fulfillment Center** and emits a real `rank_up` event. The promotion creates visible facility evolution; it is not a badge-only gate.
+
+### Receiving Annex
+
+Production implementation:
+- player-facing name: `受入増設棟`;
+- one-time Rank 3 structural investment;
+- price: **¥24,000** for this vertical slice;
+- authoritative effect: inbound acceptance capacity **+14**;
+- purchase charges Domain money once;
+- starts the standard 25s Before / After measurement;
+- state persists in save schema v5;
+- visible 3D receiving expansion appears only after ownership;
+- Japanese management UI exposes readiness before Rank 3 and the purchase after promotion.
+
+The ¥24,000 price is accepted for the current vertical slice, not permanently frozen against later economy balancing. At late-Rank-2 / Rank-3 flow the facility produces roughly ¥11k–¥12k gross shipment revenue per simulated minute, so the purchase is a short-term capital goal rather than a dead-end wait.
+
+### Production pacing measurement
+
+`godot/tests/rank3_receiving_annex_pacing_report.gd` runs the actual production `Rank3WarehouseSim` for 510 simulated seconds with forecast-driven staffing, Buffer Yard + Fast Pack Cell, and both storage branches.
 
 Fast Pick Rack:
-- 191 shipments / ¥95,500 / 22.5/min
-- avg orders 9.77
-- PICK starts 185
-- pick-starved 268.3s
+- control: 169 accepted inbound / 191 shipments / ¥95,500 / 22.5/min;
+- Annex: 183 accepted inbound / 205 shipments / ¥102,500 / 24.1/min;
+- delta: **+14 shipments / +¥7,000 / +7.3% throughput**;
+- ending bottleneck: orders.
 
 High Density Rack:
-- 199 shipments / ¥99,500 / 23.4/min
-- avg orders 8.49
-- PICK starts 193
-- pick-starved 168.4s
+- control: 177 accepted inbound / 199 shipments / ¥99,500 / 23.4/min;
+- Annex: 189 accepted inbound / 211 shipments / ¥105,500 / 24.8/min;
+- delta: **+12 shipments / +¥6,000 / +6.0% throughput**;
+- ending orders improve 18→9;
+- ending bottleneck: orders.
 
-High Density wins by +8 shipments / +¥4,000. It does not need AGV as a rescue patch.
+Acceptance gate requires >5% throughput gain on both storage branches. Current implementation passes.
 
-### Internal intervention scout
-
-Test-only sensitivity candidates were measured on both storage branches:
-- PICK -15%
-- PICK -30% / AMR-style travel reduction
-- independent rack→pack retrieval every 4.5s
-- SHIP -15%
-- SHIP -30% / sorter-style acceleration
-- STORE -30%
-- combined STORE + PICK -30%
-- real inbound+order cross-dock bypass to packing every 4.5s
-
-Result: **all produced 0 authoritative shipment delta and 0 revenue delta** in the 510s mature scenario. They move queue/WIP shape but do not raise end-to-end throughput. Cross-dock is therefore not selected as the first Rank 3 module.
-
-### Intake growth scout
-
-The decisive measured constraint is peak inbound acceptance. `WarehouseSim._spawn_flow()` only accepts an arrival when the inbound queue is below the current limit; mature Buffer Yard scenarios hit that cap.
-
-Test-only Receiving Annex sensitivity: +14 inbound capacity.
-
-Fast Pick:
-- control: 169 accepted inbound / 191 shipments / ¥95,500 / 22.5/min / avg orders 9.77
-- Annex: 183 accepted inbound / 205 shipments / ¥102,500 / 24.1/min / avg orders 7.78
-- delta: **+14 real shipments / +¥7,000**
-
-High Density:
-- control: 177 accepted inbound / 199 shipments / ¥99,500 / 23.4/min / avg orders 8.49 / ending orders 18
-- Annex: 189 accepted inbound / 211 shipments / ¥105,500 / 24.8/min / avg orders 5.71 / ending orders 9
-- delta: **+12 real shipments / +¥6,000**
-
-Annex + cross-dock gives no shipment gain beyond Annex alone and worsens the High Density end-state backlog.
-
-### Rank 3 product decision
-
-**Receiving Annex / Overflow Intake Expansion is selected as the first production Rank 3 vertical-slice candidate.**
-
-Why:
-- first tested intervention that raises authoritative shipments and revenue on both storage branches;
-- captures peak arrivals that were previously not accepted;
-- preserves the prior storage decision: High Density remains ahead after Annex (211 vs 205 shipments);
-- creates a visible facility-growth opportunity suitable for Warehouse → Fulfillment Center;
-- added volume can create a later downstream bottleneck, giving AGV / sorter / ASRS a measured reason to exist instead of feature-count ambition.
-
-The test value **+14 capacity is not final production balance**. Cost and capacity must be tuned from affordability / pacing measurements before lock.
+Important next-design implication: after Annex, the visible end-state pressure moves toward **orders / downstream processing**, so the next Rank 3 module must be selected from a fresh post-Annex frontier. Do not automatically add AGV merely because it is thematically attractive.
 
 ## Save / QA state
 
-- Production save schema: v4.
-- schema 1/2/3 migrate forward.
-- workload clock / phase survives save/load.
-- Rank 2 rank, contracts, staffing and all six facility choices persist.
-- storage-capacity effects are not double-applied on reload.
+Current Rank 3 branch save schema: **v5**.
+- schemas 1/2/3/4 migrate forward;
+- schema-v4 Rank 2 saves do not invent Rank 3 or Annex ownership;
+- Rank 3 facility rank persists;
+- Receiving Annex ownership/effect persists;
+- +14 capacity does not double-apply on reload;
+- workload clock / phase survives the inherited schema-v4 layer.
 
-CI now gates:
-- parse/import
-- Domain simulation smoke
-- economy pacing
-- Rank 2 readiness / entry / facility / zone / frontier tests
-- workload-wave smoke and pacing
-- Rank 3 readiness scout
-- Rank 3 intervention scout
-- Rank 3 intake-growth scout
-- Rank 2 UI / visual smoke
-- Japanese font glyph smoke
-- visual readability
-- full-scene runtime
-- Web Engineering Preview export / artifact
+PR #40 CI gates include and are green for:
+- parse/import;
+- Domain simulation smoke;
+- economy pacing;
+- Rank 2 readiness / entry / facility / zone / frontier;
+- workload-wave smoke / pacing;
+- Rank 3 readiness scout;
+- Rank 3 intervention scout;
+- Rank 3 intake-growth scout;
+- Rank 3 Receiving Annex domain smoke;
+- Rank 3 production pacing report;
+- Rank 2 UI / visual regression;
+- Rank 3 UI smoke;
+- Rank 3 visual smoke;
+- Japanese font glyph smoke;
+- warehouse readability smoke;
+- full-scene runtime;
+- Web Engineering Preview export / artifact.
 
-PR #39 branch CI is green through all gates, including the two new Rank 3 scouts, runtime and Web export.
+Green PR run: `34954021712` at branch head `59c1061a66a71955a5c733e3202a67100874f8be` before this handoff-only update.
 
 ## Real-device state
 
@@ -215,27 +216,20 @@ Previously verified on iPhone Web Preview:
 - warehouse cutaway / max zoom-out readable;
 - management scrollbar / overlay collisions addressed.
 
-Still worth fresh iPhone verification on the latest combined production build:
-- workload forecast / peak banner hierarchy;
-- Rank 2 zone UI and six 3D structures.
+Still requires fresh iPhone Preview verification after PR #40 is merged/published:
+- Rank 3 readiness panel hierarchy;
+- Fulfillment Center promotion marker;
+- Receiving Annex footprint/readability on portrait viewport;
+- Annex purchase feedback / Before-After banner;
+- existing workload banner and Rank 2 zone UI in the combined build.
 
 Web Preview verification is not native iOS / Android certification.
 
-## Rank 3 boundary and readiness intent
-
-Rank 3 production still needs a real domain state, save migration, gameplay effect, UI and visible facility growth.
-
-Current readiness intent:
-- all 3 Rank 2 zones selected;
-- 8 completed contracts;
-- at least 6 shipments/minute.
-
 ## Next exact task
 
-1. Merge PR #39 measurement infrastructure after green CI.
-2. Implement a real Rank 3 / Fulfillment Center foundation without overloading `warehouse_sim.gd`; prefer a focused layer extending `WorkloadWarehouseSim` if clean.
-3. Add save schema v5 migration and real Rank 3 promotion state; do not fake progression with a badge.
-4. Implement Receiving Annex as an authoritative Rank 3 structural purchase/effect, with cost/capacity tuned by pacing rather than blindly locking the +14 scout value.
-5. Add visible 3D Annex growth, Japanese mobile management UI and Before / After feedback. Do not add `visual_pass_4` just to place it.
-6. Verify build → automated tests → full runtime → Web export → iPhone Preview. Only then treat the Rank 3 vertical slice as functional.
-7. Re-measure the new downstream bottleneck before deciding whether AGV, sorter, ASRS or another automation is next.
+1. Re-run PR #40 CI after this handoff update; merge only if all gates remain green.
+2. Publish the merged Web Engineering Preview and verify Rank 3 UI / Annex visually on iPhone. Do not call visual polish complete before device feedback.
+3. Build a deterministic **post-Annex Rank 3 frontier** that measures where the new 6–7% volume gain accumulates under both storage branches and workload phases.
+4. Select the next Rank 3 investment only from that measured pressure. Candidate families may include AMR/AGV, sorter, ASRS/retrieval or demand/dispatch improvements, but prior zero-delta scouts are not sufficient evidence after Annex changes the flow.
+5. Keep each next investment tied to visible facility growth, real Domain behavior and Before / After measurement.
+6. After the Rank 3 loop has at least one meaningful downstream follow-up decision, move toward FTUE / retention / presentation / audio-haptics / analytics / performance / QA passes before any release-candidate claim.
