@@ -9,7 +9,7 @@ var _shipment_events: Array[Dictionary] = []
 var _active_measurements: Array[Dictionary] = []
 
 
-func record_state(at: float, dt: float, inbound: int, packing: int, outbound: int) -> void:
+func record_state(at: float, dt: float, inbound: int, packing: int, outbound: int, orders: int = 0) -> void:
     if dt <= 0.0:
         return
     _state_samples.append({
@@ -18,6 +18,7 @@ func record_state(at: float, dt: float, inbound: int, packing: int, outbound: in
         "inbound": inbound,
         "packing": packing,
         "outbound": outbound,
+        "orders": orders,
     })
     _prune(at)
 
@@ -62,6 +63,7 @@ func collect_completed(at: float) -> Array[Dictionary]:
                 "inbound_queue": float(after.get("inbound_queue", 0.0)) - float(before.get("inbound_queue", 0.0)),
                 "packing_queue": float(after.get("packing_queue", 0.0)) - float(before.get("packing_queue", 0.0)),
                 "outbound_queue": float(after.get("outbound_queue", 0.0)) - float(before.get("outbound_queue", 0.0)),
+                "open_orders": float(after.get("open_orders", 0.0)) - float(before.get("open_orders", 0.0)),
             },
         })
 
@@ -83,6 +85,7 @@ func _metrics(start_at: float, end_at: float) -> Dictionary:
     var weighted_inbound := 0.0
     var weighted_packing := 0.0
     var weighted_outbound := 0.0
+    var weighted_orders := 0.0
     var sampled_duration := 0.0
 
     for sample in _state_samples:
@@ -94,6 +97,7 @@ func _metrics(start_at: float, end_at: float) -> Dictionary:
         weighted_inbound += float(sample.get("inbound", 0)) * sample_dt
         weighted_packing += float(sample.get("packing", 0)) * sample_dt
         weighted_outbound += float(sample.get("outbound", 0)) * sample_dt
+        weighted_orders += float(sample.get("orders", 0)) * sample_dt
 
     var rate_duration := maxf(0.001, minf(requested_duration, sampled_duration if sampled_duration > 0.0 else requested_duration))
     var average_duration := maxf(0.001, sampled_duration)
@@ -109,6 +113,7 @@ func _metrics(start_at: float, end_at: float) -> Dictionary:
         "inbound_queue": weighted_inbound / average_duration if sampled_duration > 0.0 else 0.0,
         "packing_queue": weighted_packing / average_duration if sampled_duration > 0.0 else 0.0,
         "outbound_queue": weighted_outbound / average_duration if sampled_duration > 0.0 else 0.0,
+        "open_orders": weighted_orders / average_duration if sampled_duration > 0.0 else 0.0,
     }
 
 
