@@ -33,7 +33,14 @@ jobs:
         run: godot --version
 
       - name: Parse/import project
-        run: godot --headless --path godot --editor --quit
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --editor --quit 2>&1 | tee /tmp/godot-parse-import.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-parse-import.log; then
+            echo 'Godot parse/import emitted an engine/script error'
+            exit 1
+          fi
 
       - name: Domain simulation smoke
         run: godot --headless --path godot --script res://tests/sim_smoke.gd
