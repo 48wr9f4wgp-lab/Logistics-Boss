@@ -15,7 +15,7 @@ func _fail(message: String) -> void:
 func _run() -> void:
     var fresh = SimScript.new()
     fresh.set_time_scale(4.0)
-    var fresh_start := fresh.shipped
+    var fresh_start: int = int(fresh.shipped)
     _advance(fresh, 300)
     if fresh.shipped <= fresh_start:
         _fail("fresh Rank 1 simulation must keep shipping without manual parcel control")
@@ -30,7 +30,7 @@ func _run() -> void:
         _fail("long-running fresh save must restore")
         return
     fresh_restored.set_time_scale(4.0)
-    var restored_before := fresh_restored.shipped
+    var restored_before: int = int(fresh_restored.shipped)
     _advance(fresh_restored, 120)
     if fresh_restored.shipped <= restored_before:
         _fail("restored fresh save must resume productive logistics")
@@ -49,7 +49,7 @@ func _run() -> void:
             if not bool(route_result.get("ok", false)):
                 _fail("Rank 3 route must remain selectable during soak: %s" % String(route))
                 return
-        var segment_before := late.shipped
+        var segment_before: int = int(late.shipped)
         _advance(late, 180)
         if late.shipped <= segment_before:
             _fail("Rank 3 route must not deadlock shipment flow: %s" % String(route))
@@ -71,7 +71,7 @@ func _run() -> void:
         return
 
     late_restored.set_time_scale(4.0)
-    var final_before := late_restored.shipped
+    var final_before: int = int(late_restored.shipped)
     _advance(late_restored, 180)
     if late_restored.shipped <= final_before:
         _fail("restored Rank 3 save must continue shipping")
