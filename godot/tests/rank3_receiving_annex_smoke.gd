@@ -16,10 +16,10 @@ func _init() -> void:
     var seed := _rank2_gate_seed(sim)
     assert(sim.load_data(seed), "Rank 3 gate seed must load")
 
-    var rank3_events := 0
+    var observed := {"rank3_events": 0}
     sim.event_emitted.connect(func(event: Dictionary):
         if String(event.get("type", "")) == "rank_up" and int(event.get("rank", 0)) == 3:
-            rank3_events += 1
+            observed["rank3_events"] = int(observed.get("rank3_events", 0)) + 1
     )
 
     for _i in int(ceil(24.0 / STEP_SECONDS)):
@@ -28,7 +28,7 @@ func _init() -> void:
             break
 
     assert(int(sim.facility_rank) == 3, "completed Rank 2 structure/contracts plus live throughput must promote to Rank 3")
-    assert(rank3_events == 1, "Rank 3 promotion must emit exactly one rank_up event")
+    assert(int(observed.get("rank3_events", 0)) == 1, "Rank 3 promotion must emit exactly one rank_up event")
     assert(bool(sim.rank3_readiness().get("ready", false)), "Rank 3 readiness must remain satisfied after promotion")
 
     var before_limit := int(sim._current_inbound_limit())
