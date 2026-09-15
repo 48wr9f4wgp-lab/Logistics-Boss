@@ -35,7 +35,7 @@ func _init() -> void:
 
     view._camera_distance = 25.0
     await process_frame
-    var camera := get_viewport().get_camera_3d()
+    var camera: Camera3D = root.get_viewport().get_camera_3d()
     assert(camera != null, "overview smoke requires an active camera")
     assert(camera.fov > 38.0, "max pinch distance must widen into a true warehouse overview")
 
