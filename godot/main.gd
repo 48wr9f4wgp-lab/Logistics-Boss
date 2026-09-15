@@ -8,6 +8,7 @@ const WarehouseVisualCompositionFixScript = preload("res://view/visual_compositi
 const ForkliftAutomationViewScript = preload("res://view/forklift_automation_view.gd")
 const Rank2FacilityViewScript = preload("res://view/rank2_facility_view.gd")
 const Rank3ReceivingAnnexViewScript = preload("res://view/rank3_receiving_annex_view.gd")
+const Rank3RoutingHubViewScript = preload("res://view/rank3_routing_hub_view.gd")
 const GameHudScript = preload("res://ui/game_hud_rank3.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 
@@ -40,6 +41,10 @@ func _ready() -> void:
     var rank3_expansion: Rank3ReceivingAnnexView = Rank3ReceivingAnnexViewScript.new()
     view.add_child(rank3_expansion)
     rank3_expansion.bind(view, sim)
+
+    var rank3_routing: Rank3RoutingHubView = Rank3RoutingHubViewScript.new()
+    view.add_child(rank3_routing)
+    rank3_routing.bind(view, sim)
 
     var hud: GameHud = GameHudScript.new()
     add_child(hud)

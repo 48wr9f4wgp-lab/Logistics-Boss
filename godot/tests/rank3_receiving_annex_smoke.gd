@@ -10,7 +10,7 @@ func _init() -> void:
     assert(migration.load_data(legacy), "schema-v4 Rank 2 state must migrate into Rank 3 simulation")
     assert(int(migration.facility_rank) == 2, "schema-v4 migration must not fake Rank 3 before capital/throughput gates are met")
     assert(not bool(migration.receiving_annex_unlocked), "legacy save must not invent the Receiving Annex")
-    assert(int(migration.save_data().get("schema_version", 0)) == 5, "migrated save must write schema v5")
+    assert(int(migration.save_data().get("schema_version", 0)) == 6, "migrated save must write schema v6")
 
     var sim = Rank3WarehouseSimScript.new()
     var seed := _rank2_gate_seed(sim, true)
@@ -44,14 +44,16 @@ func _init() -> void:
     assert(not bool(sim.purchase_receiving_annex().get("ok", false)), "Receiving Annex must remain a one-time capital purchase")
 
     var saved: Dictionary = sim.save_data()
-    assert(int(saved.get("schema_version", 0)) == 5, "Rank 3 save must use schema v5")
+    assert(int(saved.get("schema_version", 0)) == 6, "Rank 3 save must use schema v6")
     assert(bool(saved.get("receiving_annex_unlocked", false)), "Rank 3 save must persist Receiving Annex ownership")
+    assert(String(saved.get("active_routing_mode", "")) == "balanced", "existing Rank 3 saves must gain a safe Balanced Parcel routing default")
 
     var restored = Rank3WarehouseSimScript.new()
-    assert(restored.load_data(saved), "schema-v5 Rank 3 save must load")
+    assert(restored.load_data(saved), "schema-v6 Rank 3 save must load")
     assert(int(restored.facility_rank) == 3, "Rank 3 facility rank must survive save/load")
     assert(bool(restored.receiving_annex_unlocked), "Receiving Annex ownership must survive save/load")
     assert(int(restored._current_inbound_limit()) == int(sim._current_inbound_limit()), "Receiving Annex capacity effect must not double-apply on reload")
+    assert(restored.active_routing_mode == "balanced", "Balanced Parcel default must survive save/load")
 
     print("Godot Rank 3 Receiving Annex smoke passed")
     quit(0)

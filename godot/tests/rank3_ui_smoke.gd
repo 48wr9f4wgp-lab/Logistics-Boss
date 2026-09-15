@@ -15,9 +15,17 @@ func _init() -> void:
 
     assert(hud._rank3_panel != null and hud._rank3_panel.visible, "Rank 3 management panel must be visible")
     assert(hud._progression_label.text.contains("RANK 3"), "Rank 3 HUD must identify Fulfillment Center progression")
+    assert(hud._routing_select.visible, "Rank 3 management sheet must expose Carrier Routing")
+    assert(hud._routing_select.item_count == 3, "Carrier Routing must expose exactly three modes")
+    assert(hud._routing_summary.text.contains("Balanced Parcel"), "Rank 3 routing summary must show the active route")
     assert(hud._receiving_annex_button.visible, "Rank 3 must expose Receiving Annex capital action")
     assert(not hud._receiving_annex_button.disabled, "funded unowned Receiving Annex must be actionable")
     assert(hud._receiving_annex_button.text.contains("受入増設棟"), "Receiving Annex card must use Japanese player-facing copy")
+
+    hud._select_routing_mode(1)
+    hud._render_rank3()
+    assert(sim.active_routing_mode == "express", "routing selector must update authoritative Domain state")
+    assert(hud._routing_summary.text.contains("Express Dispatch"), "routing summary must refresh after selection")
 
     assert(bool(sim.purchase_receiving_annex().get("ok", false)), "UI smoke must be able to purchase Receiving Annex")
     hud._render_rank3()
@@ -29,8 +37,20 @@ func _init() -> void:
     hud._render_progression()
     hud._render_rank3()
     assert(hud._rank3_panel.visible, "late Rank 2 must show the Rank 3 readiness target")
+    assert(not hud._routing_select.visible, "Rank 2 must not expose Carrier Routing before promotion")
     assert(not hud._receiving_annex_button.visible, "Rank 2 must not expose the Rank 3 purchase before promotion")
     assert(hud._rank3_status.text.contains("解禁条件"), "Rank 2 readiness panel must explain the Rank 3 gate")
+    assert(not hud._rank3_status.text.contains("契約"), "Rank 3 readiness must not show contracts as mandatory")
+    assert(hud._rank3_status.text.contains("設備資産"), "Rank 3 readiness must show equipment asset progress")
+    assert(hud._rank3_status.text.contains("200,000"), "Rank 3 readiness must show the canonical asset target")
+    assert(hud._rank3_status.text.contains("出荷ペース"), "Rank 3 readiness must show live throughput progress")
+
+    hud.bind_sim(sim)
+    hud._render_progression()
+    hud._render_rank3()
+    assert(hud._rank3_panel.visible, "Rank 3 panel must remain visible after promotion")
+    assert(hud._rank3_status.text.contains("次の成長投資"), "Rank 3 promoted UI must remain intact")
+    assert(hud._routing_select.visible, "Carrier Routing controls must remain intact after promotion")
 
     print("Godot Rank 3 UI smoke passed")
     quit(0)
@@ -39,7 +59,7 @@ func _init() -> void:
 func _rank3_sim():
     var sim = Rank3WarehouseSimScript.new()
     var data: Dictionary = sim.save_data()
-    data["schema_version"] = 5
+    data["schema_version"] = 6
     data["facility_rank"] = 3
     data["logistics_rating"] = 16
     data["completed_contracts"] = 8
@@ -47,6 +67,7 @@ func _rank3_sim():
     data["money"] = 100000
     data["staffing_plan"] = "balanced"
     data["staffing_cooldown"] = 0.0
+    data["active_routing_mode"] = "balanced"
     data["receiving_annex_unlocked"] = false
     data["rack_capacity"] = 12
     data["facilities"] = {
