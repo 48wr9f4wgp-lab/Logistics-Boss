@@ -38,6 +38,8 @@ func _init() -> void:
         return
     if not _require(int(high_density.get("rack_capacity", 0)) > int(fast_pick.get("rack_capacity", 0)), "High Density must preserve its real capacity advantage"):
         return
+    if not _require(int(fast_pick.get("pick_tasks_started", 0)) > 0 and int(high_density.get("pick_tasks_started", 0)) > 0, "readiness scout must observe real PICK task starts in both storage paths"):
+        return
 
     print("Godot Rank 3 readiness scout passed")
     quit(0)
@@ -58,12 +60,12 @@ func _run_storage_case(storage_kind: StringName) -> Dictionary:
     var rack_full_seconds := 0.0
     var samples := 0
     var switches := 0
-    var pick_tasks_started := 0
+    var event_counts := {"pick_started": 0}
     var last_phase_id := ""
 
     sim.event_emitted.connect(func(event: Dictionary):
         if String(event.get("type", "")) == "worker_task_started" and int(event.get("task", -1)) == PICK_TASK:
-            pick_tasks_started += 1
+            event_counts["pick_started"] = int(event_counts.get("pick_started", 0)) + 1
     )
 
     for _i in int(ceil(CYCLE_SECONDS / STEP_SECONDS)):
@@ -107,7 +109,7 @@ func _run_storage_case(storage_kind: StringName) -> Dictionary:
         "rack_capacity": sim.rack_capacity,
         "pick_starved_seconds": snappedf(pick_starved_seconds, 0.01),
         "rack_full_seconds": snappedf(rack_full_seconds, 0.01),
-        "pick_tasks_started": pick_tasks_started,
+        "pick_tasks_started": int(event_counts.get("pick_started", 0)),
         "switches": switches,
         "ending_orders": sim.open_orders,
         "ending_inbound": sim.inbound_queue,
