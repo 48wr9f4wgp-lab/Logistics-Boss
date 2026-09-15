@@ -12,68 +12,49 @@ Updated: 2026-09-15 JST
 - Godot Web export: Engineering Preview only
 - Preview: `https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/`
 - `/docs/**` Three.js implementation is legacy reference only. Do not add production gameplay there.
-
-Project-wide rules follow `GAME_DEV_MASTER_RULES`; title-specific locked GDD/specifications override general rules.
+- Project-wide rules follow `GAME_DEV_MASTER_RULES`; game-specific locked specifications override general rules.
 
 ## Core product loop
 
 `物流を観察 → ボトルネック発見 → 投資 / 運用判断 → 作業員・設備が自律反応 → 出荷量 / 収益 / 詰まりが変化 → 結果測定 → より大きな再投資`
 
-The player is the logistics-center owner / operations manager. Manual box carrying or forklift driving is not the core loop.
+The player is the logistics-center owner / operations manager. Manual carrying or forklift driving is not the core loop.
 
-Every major investment must satisfy all four:
+Every major investment must create:
 1. visible 3D change;
 2. real logistics behavior change;
 3. measurable Before / After;
 4. potential to move the bottleneck downstream.
 
-## Current production architecture
+Economy mutation belongs to Domain. UI / 3D presentation must never invent shipment revenue.
 
-- `godot/main.gd` — composition root / save wiring; canonical runtime currently uses workload-aware Rank 2 simulation and HUD
-- `godot/domain/warehouse_sim.gd` — authoritative base economy, parcel flow, tasks, progression and Rank 2 structural effects
-- `godot/domain/workload_warehouse_sim.gd` — Rank 2 workload-wave extension, schema-v4 state and source-cadence modifiers
-- `godot/domain/workload_wave_model.gd` — deterministic forecast / peak cycle definition
-- `godot/domain/capital_catalog.gd` — Rank 1 investment catalog / costs / limits
-- `godot/domain/flow_measurement.gd` — 25-second Before / After measurement
-- `godot/domain/progression_system.gd` — deterministic contracts and Rank 2 staffing definitions
-- `godot/domain/rank2_facility_catalog.gd` — six Rank 2 zone choices / costs / player-facing effect copy
-- `godot/view/warehouse_view.gd` — base 3D warehouse / workers / parcels / touch camera
-- `godot/view/forklift_automation_view.gd` — event-driven forklift visual
-- `godot/view/rank2_facility_view.gd` — visible 3D structures for all six Rank 2 facility choices
-- `godot/view/visual_pass_2.gd`, `visual_pass_3.gd`, `visual_composition_fix.gd` — current presentation layers; do not add pass files casually
-- `godot/ui/game_hud_ja.gd` — Japanese mobile HUD / contracts / staffing / expansion zones
-- `godot/ui/game_hud_waves.gd` — Rank 2 workload forecast / peak banner and dispatch-window progress
-- `godot/persistence/save_store.gd` — local JSON save / backup
+## Current architecture
 
-Economy mutation belongs to the Domain. UI and 3D presentation must never create shipment revenue.
+- `godot/main.gd` — composition root / save wiring; runtime uses workload-aware Rank 2 simulation and HUD.
+- `godot/domain/warehouse_sim.gd` — authoritative Rank 1/2 economy, parcel flow, workers, contracts, structural effects.
+- `godot/domain/workload_warehouse_sim.gd` — workload-wave extension and schema-v4 state.
+- `godot/domain/workload_wave_model.gd` — deterministic forecast / peak cycle.
+- `godot/domain/capital_catalog.gd` — Rank 1 investments.
+- `godot/domain/flow_measurement.gd` — 25-second Before / After measurement.
+- `godot/domain/progression_system.gd` — contracts and Rank 2 staffing.
+- `godot/domain/rank2_facility_catalog.gd` — six Rank 2 structural choices.
+- `godot/view/warehouse_view.gd` — base 3D warehouse / workers / parcels / touch camera.
+- `godot/view/forklift_automation_view.gd` — event-driven forklift visual.
+- `godot/view/rank2_facility_view.gd` — visible Rank 2 structures.
+- `godot/view/visual_pass_2.gd`, `visual_pass_3.gd`, `visual_composition_fix.gd` — presentation layers; do not add pass files casually.
+- `godot/ui/game_hud_ja.gd` — canonical Japanese mobile HUD.
+- `godot/ui/game_hud_waves.gd` — workload forecast / peak UI.
+- `godot/persistence/save_store.gd` — local JSON save / backup.
 
-## Current Rank 1 simulation baseline
+## Rank 1 baseline
 
-- Start cash: ¥5,000
-- Workers: 3
-- Rack capacity: 8
-- Inbound interval: 2.8s
-- Order interval: 3.0s
-- Base shipment value: ¥500
-- RP: +1 every 5 real shipments
-- Packing base duration: 3.0s
-- Worker investment first cost: ¥3,500
-- Rack: ¥2,500
-- Worker speed: ¥4,000
-- Packing: ¥4,500
-- Forklift Automation: ¥20,000 one-time
-
-Measured baseline:
-- 5 minutes no investment: 79 shipments = 15.8/min
-- ending dominant bottleneck: inbound
-- Forklift affordability when saving: about 119 simulated seconds / 30 shipments
-
-Representative 120s upgrade comparison after warm-up:
-- Worker: 31→41 shipments; bottleneck moves toward packing
-- Speed: 31→36
-- Forklift: 31→39; inbound queue materially drops; bottleneck moves toward packing
-- Rack: reduces inbound pressure but does not guarantee more shipments
-- Packing while inbound is dominant: no shipment gain
+- Start cash ¥5,000; 3 workers; rack 8.
+- Inbound 2.8s; orders 3.0s; packing 3.0s.
+- Shipment ¥500; RP +1 every 5 real shipments.
+- Worker ¥3,500; Rack ¥2,500; Speed ¥4,000; Packing ¥4,500; Forklift ¥20,000.
+- 5m no-investment baseline: 79 shipments = 15.8/min; dominant inbound.
+- Forklift affordability when saving: about 119 simulated seconds / 30 shipments.
+- Representative 120s effect: Worker 31→41, Speed 31→36, Forklift 31→39. Forklift moves pressure from inbound toward packing.
 
 Intended early causal chain:
 `inbound pressure → Forklift → packing pressure → Packing improvement → stable flow`
@@ -83,68 +64,40 @@ Intended early causal chain:
 Progression spine:
 `contract → cash / RP / Logistics Rating → facility rank → structural decisions`
 
-Rank 1:
-- three deterministic contract choices;
-- one active contract at a time;
-- completion awards cash, RP and +2 Logistics Rating;
-- Logistics Rating 8 promotes Small Depot → Rank 2 Warehouse;
-- four successful contracts are sufficient for the Rank 2 gate.
+- Three deterministic contract offers; one active contract.
+- Completion gives cash, RP and +2 Logistics Rating.
+- Logistics Rating 8 promotes Small Depot → Rank 2 Warehouse.
+- Four successful contracts are sufficient for the Rank 2 gate.
 
-Current contracts:
-- `速配 8件` — 8 real shipments within 75s; reward ¥2,500 / +1 RP / Rating +2
-- `搬入口クリーン` — inbound ≤6 for 24s within 90s; reward ¥2,200 / +1 RP / Rating +2
-- `高効率運転` — ≥12 shipments/min for 20s within 90s; reward ¥2,600 / +1 RP / Rating +2
-
-Rank 2 Warehouse entry:
-- base crew becomes at least 5 workers;
-- Rank 1 BALANCE / INBOUND / SHIP policy buttons disappear;
-- staffing becomes role-based with a 30-second reassignment lock;
-- presets: Receiving 3/1/1, Balanced 2/2/1, Picking 1/3/1, Dock 2/1/2, Shipping 1/2/2;
-- workers only accept tasks matching their assigned Rank 2 role;
-- repeatable Worker / Rack / Speed / Packing cards are hidden at Rank 2; already-purchased legacy effects remain active;
-- Forklift remains available if not already purchased.
+Rank 2 entry:
+- crew minimum 5;
+- Rank 1 BALANCE / INBOUND / SHIP buttons disappear;
+- role staffing with 30s reassignment lock;
+- Receiving 3/1/1, Balanced 2/2/1, Picking 1/3/1, Dock 2/1/2, Shipping 1/2/2;
+- repeatable Worker / Rack / Speed / Packing cards hidden at Rank 2; legacy effects remain;
+- Forklift remains purchasable if not already owned.
 
 ## Rank 2 structural layer
 
-Three mutually-exclusive one-of-two expansion zones are implemented as real Domain choices, mobile management actions, save state and visible 3D structures.
+Three mutually-exclusive one-of-two zones are real Domain choices, saved state, mobile actions and visible 3D structures.
 
-### Zone A — Intake
+### Intake
 - Double Dock — ¥12,000; inbound capacity +6; arrival interval ×0.78.
-- Buffer Yard — ¥10,000; inbound capacity +14; arrival cadence unchanged.
+- Buffer Yard — ¥10,000; inbound capacity +14.
 
-### Zone B — Storage
-- Fast Pick Rack — ¥13,000; storage +4; PICK duration ×0.75.
-- High Density Rack — ¥12,000; storage +12; PICK duration ×1.14.
+### Storage
+- Fast Pick Rack — ¥13,000; storage +4; PICK ×0.75.
+- High Density Rack — ¥12,000; storage +12; PICK ×1.14.
 
-### Zone C — Packing
-- Parallel Pack Line — ¥14,000; two simultaneous packing jobs; each job ×1.10 duration.
-- Fast Pack Cell — ¥13,000; one job at a time; job duration ×0.58.
+### Packing
+- Parallel Pack Line — ¥14,000; two simultaneous jobs; each ×1.10 duration.
+- Fast Pack Cell — ¥13,000; one job; duration ×0.58.
 
-Each zone locks after one choice. Each structural purchase starts the 25-second Before / After flow measurement.
-Rank 2 base demand uses a 2.2s order interval before workload-wave modifiers.
+Each purchase starts the Before / After measurement. Rank 2 base order interval is 2.2s before workload modifiers.
 
-## Rank 2 structural measurements
+## Rank 2 workload waves
 
-`godot/tests/rank2_zone_pacing_report.gd` verifies each structural option for 180 simulated seconds.
-Representative measured results before workload waves:
-- Double Dock / Buffer Yard: 16.7 shipments/min under intake-stressed context; dominant inbound.
-- Fast Pick Rack / High Density Rack: 19.7/min; bottleneck moves to packing.
-- Parallel Pack / Fast Pack Cell: 19.7/min; bottleneck moves to outbound.
-
-`godot/tests/rank2_post_zone_frontier.gd` measures all 8 completed facility combinations × all 5 staffing presets (40 scenarios).
-Steady-state result before workload waves:
-- Shipping 1/2/2 won 8 / 8 completed combinations;
-- fastest build: Double Dock + Fast Pick Rack + Fast Pack Cell = 29.5 shipments/min;
-- High Density builds retained order/PICK pressure.
-
-That dominant-strategy result is why AGV was deliberately postponed and workload variation was implemented first.
-
-## Rank 2 workload-wave layer
-
-Implemented in `WorkloadWaveModel` / `WorkloadWarehouseSim`.
-The system is deterministic and forecastable, not random punishment.
-
-Cycle:
+Cycle is deterministic and forecastable:
 1. 35s inbound forecast
 2. 50s inbound surge
 3. 35s order forecast
@@ -152,87 +105,125 @@ Cycle:
 5. 35s dispatch forecast
 6. 50s dispatch window
 
-Operational intent:
-- inbound surge batches new arrivals and reduces simultaneous order pressure;
-- order surge batches demand and eases inbound arrivals;
-- dispatch phase suppresses new flow enough to make staged outbound work meaningful;
-- the 35-second warnings are longer than the 30-second staffing reassignment lock, so the player can act before the peak rather than react after it.
+The 35s warning exceeds the 30s staffing lock, so good play is proactive.
 
-The mobile HUD shows current phase, current/next workload, remaining time and dispatch-window shipment progress.
+Measured full-cycle strategy over 510 simulated seconds:
+- adaptive forecast-driven staffing: 198 shipments / ¥99,000;
+- fixed Shipping: 195 / ¥97,500;
+- fixed Balanced: 169 / ¥84,500.
 
-### Measured staffing niches
+All five staffing presets have at least one measured niche. “Always Shipping” is no longer the sole economic answer.
 
-`godot/tests/workload_wave_pacing_report.gd` validates both flow-oriented and capacity-oriented facility profiles plus a low-stock replenishment case.
-All five Rank 2 presets have at least one measured niche:
-- Receiving — wins dedicated low-stock replenishment / heavy inbound context;
-- Balanced — wins representative inbound-surge queue control;
-- Picking — wins order-surge backlog control;
-- Dock — wins one flow-profile dispatch context through end-state clearance tie-breaking;
-- Shipping — wins the capacity-profile dispatch window.
+## Rank 3 scouting — completed measurement
 
-Measured replenishment case (12s, empty rack / heavy inbound / no orders):
-- Receiving: avg inbound 13.85, ending inbound 14, rack stock 10;
-- Balanced: avg 16.15, ending 18, rack 7;
-- Picking / Shipping: avg 18.45, ending 22, rack 4.
+Rank 3 is **not implemented in production yet**. Current code only has readiness/scouting tests. Never claim Rank 3 complete from these tests.
 
-### Full-cycle strategy comparison
+### Storage-path readiness
 
-Two full workload cycles = 510 simulated seconds, representative flow facility profile:
-- forecast-driven adaptive staffing: **198 shipments / ¥99,000**;
-- fixed Shipping: **195 / ¥97,500**;
-- fixed Balanced: **169 / ¥84,500**.
+Under the mature workload cycle, with Buffer Yard + Fast Pack Cell and adaptive staffing:
 
-Adaptive strategy switches at forecasts using the real 30s staffing lock and clears staged packed work to zero by the end of dispatch.
-This is the acceptance criterion that matters: the workload system removes “always Shipping” as the sole economic answer while preserving authoritative real shipments and revenue.
+Fast Pick Rack:
+- 191 shipments / ¥95,500 / 22.5/min
+- avg orders 9.77
+- PICK starts 185
+- pick-starved 268.3s
 
-Do not use an equal-weight sum of all queues as the only optimization target. Packed, ready-to-ship WIP intentionally accumulated ahead of dispatch is different from harmful inbound/order backlog. Validate cycle output, revenue, backlog location and end-of-window clearance together.
+High Density Rack:
+- 199 shipments / ¥99,500 / 23.4/min
+- avg orders 8.49
+- PICK starts 193
+- pick-starved 168.4s
+
+High Density wins by +8 shipments / +¥4,000. It does not need AGV as a rescue patch.
+
+### Internal intervention scout
+
+Test-only sensitivity candidates were measured on both storage branches:
+- PICK -15%
+- PICK -30% / AMR-style travel reduction
+- independent rack→pack retrieval every 4.5s
+- SHIP -15%
+- SHIP -30% / sorter-style acceleration
+- STORE -30%
+- combined STORE + PICK -30%
+- real inbound+order cross-dock bypass to packing every 4.5s
+
+Result: **all produced 0 authoritative shipment delta and 0 revenue delta** in the 510s mature scenario. They move queue/WIP shape but do not raise end-to-end throughput. Cross-dock is therefore not selected as the first Rank 3 module.
+
+### Intake growth scout
+
+The decisive measured constraint is peak inbound acceptance. `WarehouseSim._spawn_flow()` only accepts an arrival when the inbound queue is below the current limit; mature Buffer Yard scenarios hit that cap.
+
+Test-only Receiving Annex sensitivity: +14 inbound capacity.
+
+Fast Pick:
+- control: 169 accepted inbound / 191 shipments / ¥95,500 / 22.5/min / avg orders 9.77
+- Annex: 183 accepted inbound / 205 shipments / ¥102,500 / 24.1/min / avg orders 7.78
+- delta: **+14 real shipments / +¥7,000**
+
+High Density:
+- control: 177 accepted inbound / 199 shipments / ¥99,500 / 23.4/min / avg orders 8.49 / ending orders 18
+- Annex: 189 accepted inbound / 211 shipments / ¥105,500 / 24.8/min / avg orders 5.71 / ending orders 9
+- delta: **+12 real shipments / +¥6,000**
+
+Annex + cross-dock gives no shipment gain beyond Annex alone and worsens the High Density end-state backlog.
+
+### Rank 3 product decision
+
+**Receiving Annex / Overflow Intake Expansion is selected as the first production Rank 3 vertical-slice candidate.**
+
+Why:
+- first tested intervention that raises authoritative shipments and revenue on both storage branches;
+- captures peak arrivals that were previously not accepted;
+- preserves the prior storage decision: High Density remains ahead after Annex (211 vs 205 shipments);
+- creates a visible facility-growth opportunity suitable for Warehouse → Fulfillment Center;
+- added volume can create a later downstream bottleneck, giving AGV / sorter / ASRS a measured reason to exist instead of feature-count ambition.
+
+The test value **+14 capacity is not final production balance**. Cost and capacity must be tuned from affordability / pacing measurements before lock.
 
 ## Save / QA state
 
-- Save schema: v4
-- schema 1/2/3 saves migrate forward; legacy Rank 2 saves enter a safe forecast window rather than a surprise peak
-- workload clock / phase survives schema-v4 save/load
-- Rank 2 rank, contracts, staffing and all six facility choices persist
-- storage-capacity facility effects are not double-applied on reload
+- Production save schema: v4.
+- schema 1/2/3 migrate forward.
+- workload clock / phase survives save/load.
+- Rank 2 rank, contracts, staffing and all six facility choices persist.
+- storage-capacity effects are not double-applied on reload.
 
-CI gates include:
+CI now gates:
 - parse/import
-- domain simulation smoke
-- economy pacing report
-- Rank 2 readiness scout
-- Rank 2 entry smoke
-- Rank 2 facility smoke
-- Rank 2 zone pacing report
-- Rank 2 post-zone operating frontier
-- Rank 2 workload-wave smoke
-- Rank 2 workload-wave pacing report
-- Rank 2 facility UI smoke
-- Rank 2 facility visual smoke
+- Domain simulation smoke
+- economy pacing
+- Rank 2 readiness / entry / facility / zone / frontier tests
+- workload-wave smoke and pacing
+- Rank 3 readiness scout
+- Rank 3 intervention scout
+- Rank 3 intake-growth scout
+- Rank 2 UI / visual smoke
 - Japanese font glyph smoke
-- warehouse visual readability smoke
-- full-scene runtime smoke
+- visual readability
+- full-scene runtime
 - Web Engineering Preview export / artifact
 
-PR #37 branch CI is green through all gates including runtime and Web export.
+PR #39 branch CI is green through all gates, including the two new Rank 3 scouts, runtime and Web export.
 
-## Real-device findings
+## Real-device state
 
 Previously verified on iPhone Web Preview:
-- embedded Japanese font fixes Web glyph corruption;
-- touch orbit sensitivity and camera smoothing are acceptable;
-- pinch zoom is stable;
-- warehouse cutaway / max zoom-out readability is acceptable;
-- management scrollbar and overlay collisions were addressed.
+- embedded Japanese font fixes glyph corruption;
+- touch orbit sensitivity and smoothing acceptable;
+- pinch stable;
+- warehouse cutaway / max zoom-out readable;
+- management scrollbar / overlay collisions addressed.
 
-Still requiring fresh iPhone Preview verification after workload-wave publication:
-- workload forecast / peak banner readability and hierarchy;
-- Rank 2 zone UI and six 3D facility structures in the latest combined build.
+Still worth fresh iPhone verification on the latest combined production build:
+- workload forecast / peak banner hierarchy;
+- Rank 2 zone UI and six 3D structures.
 
 Web Preview verification is not native iOS / Android certification.
 
-## Rank 3 boundary
+## Rank 3 boundary and readiness intent
 
-Rank 3 remains a readiness gate until real Fulfillment Center gameplay exists. Never claim Rank 3 complete from a gate alone.
+Rank 3 production still needs a real domain state, save migration, gameplay effect, UI and visible facility growth.
 
 Current readiness intent:
 - all 3 Rank 2 zones selected;
@@ -241,8 +232,10 @@ Current readiness intent:
 
 ## Next exact task
 
-1. Merge and publish the green Rank 2 workload-wave build, then visually verify the workload banner / Rank 2 structural UI on iPhone Preview when device feedback is available.
-2. Define the real Rank 3 / Fulfillment Center vertical slice from measured late-Rank-2 pressure, not feature-count ambition.
-3. Re-measure High Density/PICK pressure under the workload-wave model and decide whether AGV belongs in that slice as a genuine counterplay tool.
-4. Rank 3 must add a new operational decision / growth step and visible facility evolution; do not ship a readiness badge as fake progression.
-5. After the Rank 3 slice is functional, proceed to FTUE / retention / presentation / audio-haptics / analytics / performance / QA passes before any release-candidate claim.
+1. Merge PR #39 measurement infrastructure after green CI.
+2. Implement a real Rank 3 / Fulfillment Center foundation without overloading `warehouse_sim.gd`; prefer a focused layer extending `WorkloadWarehouseSim` if clean.
+3. Add save schema v5 migration and real Rank 3 promotion state; do not fake progression with a badge.
+4. Implement Receiving Annex as an authoritative Rank 3 structural purchase/effect, with cost/capacity tuned by pacing rather than blindly locking the +14 scout value.
+5. Add visible 3D Annex growth, Japanese mobile management UI and Before / After feedback. Do not add `visual_pass_4` just to place it.
+6. Verify build → automated tests → full runtime → Web export → iPhone Preview. Only then treat the Rank 3 vertical slice as functional.
+7. Re-measure the new downstream bottleneck before deciding whether AGV, sorter, ASRS or another automation is next.
