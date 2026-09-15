@@ -8,8 +8,8 @@ const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 
 const SAVE_SCHEMA := 2
 const BASE_SHIPMENT_VALUE := 500
-const INBOUND_INTERVAL := 4.0
-const ORDER_INTERVAL := 5.0
+const INBOUND_INTERVAL := 3.0
+const ORDER_INTERVAL := 3.0
 const INBOUND_LIMIT := 14
 const ORDER_LIMIT := 18
 const FORKLIFT_CYCLE := 3.2
@@ -27,7 +27,7 @@ enum Task {
     SHIP,
 }
 
-var money: int = 8000
+var money: int = 5000
 var research_rp: int = 0
 var inbound_queue: int = 4
 var rack_stock: int = 2
@@ -151,7 +151,7 @@ func bottleneck() -> Dictionary:
         return {"key": "outbound", "label": "出荷待ち", "severity": 2}
     if open_orders >= 6:
         return {"key": "orders", "label": "注文待ち増加", "severity": 1}
-    return {"key": "stable", "label": "Warehouse安定運転", "severity": 0}
+    return {"key": "stable", "label": "安定運転", "severity": 0}
 
 
 func throughput_per_minute() -> float:
