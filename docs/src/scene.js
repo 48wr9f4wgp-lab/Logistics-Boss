@@ -2,6 +2,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.m
 import RAPIER from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.20.0/+esm';
 import { POS } from './sim.js';
 import { createAsrsVisual } from './asrs-visual.js';
+import { createRoutingVisual } from './routing-visual.js';
 
 const TASK_TEXTURES = new Map();
 const GEO = {
@@ -638,6 +639,7 @@ export async function createSceneView(canvas, sim) {
 
   const scene = new THREE.Scene();
   const asrsVisual = createAsrsVisual(scene, sim);
+  const routingVisual = createRoutingVisual(scene, sim);
   scene.background = new THREE.Color(0x101920);
   scene.fog = new THREE.Fog(0x101920, 23, 48);
   const camera = new THREE.PerspectiveCamera(43, innerWidth / innerHeight, 0.1, 90);
@@ -1043,6 +1045,7 @@ export async function createSceneView(canvas, sim) {
       mesh.position.z = THREE.MathUtils.lerp(mesh.position.z, b.z, Math.min(1, dt * 13));
       let c = 0xd39a59;
       if (b.phase === 'packing') c = 0xffbe4d;
+      else if (b.phase === 'routing') c = 0x6fd8ff;
       else if (b.phase === 'packed' || b.phase === 'carried_ship') c = 0x66dc96;
       const m = mesh.children[0]?.material;
       if (m) {
@@ -1184,6 +1187,7 @@ export async function createSceneView(canvas, sim) {
     flowMode = Boolean(enabled);
     grid.material.opacity = flowMode ? 0.38 : 0.28;
     flowFloorGuide.visible = flowMode;
+    routingVisual.setFlowMode(flowMode);
     if (!flowMode) for (const line of flowLines.values()) line.visible = false;
   }
 
@@ -1208,6 +1212,7 @@ export async function createSceneView(canvas, sim) {
     syncBoxes(dt);
     updateAutomationVisuals(dt);
     asrsVisual.update(dt);
+    routingVisual.update(dt);
     updateTruckVisuals(dt);
     updateFlowFloorGuide(dt);
     updateHeat();
