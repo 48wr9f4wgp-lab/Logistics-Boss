@@ -20,6 +20,13 @@ func _run() -> void:
     view.bind_sim(sim)
     await process_frame
 
+    if view._camera.keep_aspect != Camera3D.KEEP_WIDTH:
+        _fail("portrait mobile camera must preserve horizontal FOV")
+        return
+    if MobileWarehouseView.MOBILE_MAX_DISTANCE < 30.0:
+        _fail("mobile overview must allow a materially wider warehouse view")
+        return
+
     var start_yaw := view._orbit_yaw
     var touch := InputEventScreenTouch.new()
     touch.index = 0
@@ -76,14 +83,14 @@ func _run() -> void:
 
     view._camera_distance = MobileWarehouseView.MOBILE_MIN_DISTANCE
     view._update_camera(1.0)
-    if view._camera.fov < 40.0:
-        _fail("near mobile zoom must widen FOV so the warehouse does not become tunnel-like")
+    if view._camera.fov < 50.0:
+        _fail("near mobile zoom must keep a wide portrait field of view")
         return
 
     view._camera_distance = MobileWarehouseView.MOBILE_MAX_DISTANCE
     view._update_camera(1.0)
-    if view._camera.fov > 36.0:
-        _fail("far mobile view should return toward the composed overview FOV")
+    if view._camera.fov < 44.0:
+        _fail("far mobile overview must remain wide enough to read the whole warehouse")
         return
 
     for index in [0, 1]:

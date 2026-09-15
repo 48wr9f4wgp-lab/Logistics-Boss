@@ -25,8 +25,8 @@ func _run() -> void:
         _fail("fresh release HUD must expose current FTUE step")
         return
 
-    if hud._sheet.anchor_top > 0.31:
-        _fail("mobile management sheet must use enough vertical screen area to reduce excessive scrolling")
+    if hud._sheet.anchor_top > 0.27:
+        _fail("mobile management sheet must use enough vertical screen area for touch navigation")
         return
     if not hud._sheet.clip_contents:
         _fail("mobile management sheet must clip descendants instead of overflowing the viewport")
@@ -36,6 +36,9 @@ func _run() -> void:
     if scroll == null:
         _fail("mobile management sheet must contain a vertical ScrollContainer")
         return
+    if hud._mobile_scroll != scroll:
+        _fail("mobile HUD must retain the active management ScrollContainer for direct touch scrolling")
+        return
     if scroll.horizontal_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED:
         _fail("mobile management sheet must never scroll or overflow horizontally")
         return
@@ -44,6 +47,45 @@ func _run() -> void:
         return
     if scroll.scroll_hint_mode != ScrollContainer.SCROLL_HINT_MODE_ALL:
         _fail("mobile management sheet must hint that more content is available vertically")
+        return
+    if scroll.scroll_deadzone > int(MobileGameHud.MOBILE_SCROLL_DRAG_THRESHOLD):
+        _fail("management touch deadzone must stay low enough to feel responsive")
+        return
+
+    var list := hud._find_upgrade_list(hud._sheet)
+    if list == null or list.get_node_or_null("MobileBottomSpacer") == null:
+        _fail("mobile management content must include bottom padding so the last action remains reachable")
+        return
+
+    hud._sheet.visible = true
+    await process_frame
+    if scroll.get_v_scroll_bar().max_value <= scroll.size.y:
+        _fail("management content must exceed the viewport so scrolling is meaningful")
+        return
+
+    scroll.scroll_vertical = 0
+    var touch := InputEventScreenTouch.new()
+    touch.index = 7
+    touch.position = scroll.get_global_rect().get_center()
+    touch.pressed = true
+    hud._input(touch)
+
+    var drag := InputEventScreenDrag.new()
+    drag.index = 7
+    drag.position = touch.position + Vector2(0, -120)
+    drag.relative = Vector2(0, -120)
+    hud._input(drag)
+    if scroll.scroll_vertical <= 0:
+        _fail("upward touch drag must advance the management ScrollContainer")
+        return
+
+    var release := InputEventScreenTouch.new()
+    release.index = 7
+    release.position = drag.position
+    release.pressed = false
+    hud._input(release)
+    if hud._mobile_scroll_touch_index != -1:
+        _fail("management scroll touch state must reset on release")
         return
 
     if hud._contract_buttons.is_empty():
