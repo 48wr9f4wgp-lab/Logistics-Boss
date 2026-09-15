@@ -22,20 +22,57 @@ func _init() -> void:
     for kind in [&"worker", &"rack", &"speed", &"packing", &"forklift"]:
         effects[String(kind)] = _compare_upgrade(seed, kind)
     report["upgrade_effects_120s"] = effects
+    report["progression_chain"] = _progression_chain(seed)
 
     print("ECONOMY_PACING_REPORT " + JSON.stringify(report))
 
     var baseline: Dictionary = report["baseline_5m"]
     assert(int(baseline.get("shipments", 0)) > 0, "baseline economy must produce shipments")
     assert(int(baseline.get("revenue", 0)) > 0, "baseline economy must produce revenue")
+    assert(
+        float(baseline.get("shipments_per_min", 0.0)) >= 14.0
+        and float(baseline.get("shipments_per_min", 0.0)) <= 18.0,
+        "opening throughput must leave meaningful headroom without feeling stalled"
+    )
+    assert(
+        String(baseline.get("ending_bottleneck", "")) == "inbound",
+        "opening economy should expose inbound handling as the first major bottleneck"
+    )
 
     var affordability: Dictionary = report["forklift_affordability"]
-    assert(float(affordability.get("seconds", -1.0)) > 0.0, "forklift must become affordable in a finite positive time")
-    assert(float(affordability.get("seconds", 99999.0)) < 600.0, "forklift must not require excessive idle waiting")
+    var forklift_seconds := float(affordability.get("seconds", -1.0))
+    assert(forklift_seconds >= 90.0, "first large automation must not be immediately affordable")
+    assert(forklift_seconds <= 150.0, "first large automation must remain an early-session target")
 
+    var starting_capital: Dictionary = report["starting_capital"]
+    for kind in ["worker", "rack", "speed", "packing"]:
+        assert(bool((starting_capital[kind] as Dictionary).get("affordable", false)), "%s should be an opening choice" % kind)
+    assert(not bool((starting_capital["forklift"] as Dictionary).get("affordable", true)), "forklift must begin as an aspirational capital target")
+
+    var worker_effect: Dictionary = effects["worker"]
+    var speed_effect: Dictionary = effects["speed"]
+    var rack_effect: Dictionary = effects["rack"]
     var forklift_effect: Dictionary = effects["forklift"]
-    assert(bool(forklift_effect.get("purchased", false)), "forklift comparison must purchase the automation")
-    assert(int(forklift_effect.get("variant_shipments", -1)) >= 0, "forklift comparison must complete")
+    assert(int(worker_effect.get("shipment_delta", 0)) >= 5, "extra labor must materially improve the opening bottleneck")
+    assert(int(speed_effect.get("shipment_delta", 0)) >= 3, "worker speed must materially improve the opening bottleneck")
+    assert(
+        float(rack_effect.get("variant_inbound_avg", 999.0)) < float(rack_effect.get("control_inbound_avg", 0.0)),
+        "rack capacity must reduce inbound pressure even when it is not a direct revenue upgrade"
+    )
+    assert(int(forklift_effect.get("shipment_delta", 0)) >= 5, "forklift must create a material real-throughput gain")
+    assert(
+        float(forklift_effect.get("variant_inbound_avg", 999.0)) < float(forklift_effect.get("control_inbound_avg", 0.0)),
+        "forklift must reduce inbound queue pressure"
+    )
+    assert(
+        String(forklift_effect.get("variant_bottleneck", "")) == "packing",
+        "solving inbound with forklift should expose packing as the next bottleneck"
+    )
+
+    var chain: Dictionary = report["progression_chain"]
+    assert(int(chain.get("forklift_shipment_delta", 0)) >= 5, "progression chain must show forklift payoff")
+    assert(String(chain.get("after_forklift_bottleneck", "")) == "packing", "forklift must hand off pressure to packing")
+    assert(int(chain.get("packing_shipment_delta", 0)) >= 3, "packing investment must pay off after forklift creates packing pressure")
 
     print("Godot economy pacing report passed")
     quit(0)
@@ -118,6 +155,43 @@ func _compare_upgrade(seed: Dictionary, kind: StringName) -> Dictionary:
         "variant_outbound_avg": variant_metrics.get("outbound_avg", 0.0),
         "control_bottleneck": control_metrics.get("ending_bottleneck", "unknown"),
         "variant_bottleneck": variant_metrics.get("ending_bottleneck", "unknown"),
+    }
+
+
+func _progression_chain(seed: Dictionary) -> Dictionary:
+    var control: WarehouseSim = WarehouseSimScript.new()
+    var forklift: WarehouseSim = WarehouseSimScript.new()
+    assert(control.load_data(seed), "progression control seed must load")
+    assert(forklift.load_data(seed), "progression forklift seed must load")
+    control.money = 1000000
+    forklift.money = 1000000
+    assert(bool(forklift.purchase_upgrade(&"forklift").get("ok", false)), "progression forklift purchase must succeed")
+
+    var control_metrics := _sample_window(control, COMPARISON_SECONDS)
+    var forklift_metrics := _sample_window(forklift, COMPARISON_SECONDS)
+    var post_forklift_seed := forklift.save_data()
+
+    var packing_control: WarehouseSim = WarehouseSimScript.new()
+    var packing_variant: WarehouseSim = WarehouseSimScript.new()
+    assert(packing_control.load_data(post_forklift_seed), "post-forklift control seed must load")
+    assert(packing_variant.load_data(post_forklift_seed), "post-forklift packing seed must load")
+    packing_control.money = 1000000
+    packing_variant.money = 1000000
+    assert(bool(packing_variant.purchase_upgrade(&"packing").get("ok", false)), "post-forklift packing purchase must succeed")
+
+    var packing_control_metrics := _sample_window(packing_control, COMPARISON_SECONDS)
+    var packing_variant_metrics := _sample_window(packing_variant, COMPARISON_SECONDS)
+
+    return {
+        "before_bottleneck": String(control_metrics.get("ending_bottleneck", "unknown")),
+        "forklift_control_shipments": int(control_metrics.get("shipments", 0)),
+        "forklift_variant_shipments": int(forklift_metrics.get("shipments", 0)),
+        "forklift_shipment_delta": int(forklift_metrics.get("shipments", 0)) - int(control_metrics.get("shipments", 0)),
+        "after_forklift_bottleneck": String(forklift_metrics.get("ending_bottleneck", "unknown")),
+        "post_forklift_packing_control_shipments": int(packing_control_metrics.get("shipments", 0)),
+        "post_forklift_packing_variant_shipments": int(packing_variant_metrics.get("shipments", 0)),
+        "packing_shipment_delta": int(packing_variant_metrics.get("shipments", 0)) - int(packing_control_metrics.get("shipments", 0)),
+        "after_packing_bottleneck": String(packing_variant_metrics.get("ending_bottleneck", "unknown")),
     }
 
 
