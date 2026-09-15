@@ -44,6 +44,10 @@ func bind_hud(next_hud: Node) -> void:
         _hud.connect("ftue_step_changed", step_callable)
     if _hud.has_signal("ftue_completed") and not _hud.is_connected("ftue_completed", completion_callable):
         _hud.connect("ftue_completed", completion_callable)
+    if _hud.has_method("current_ftue_step"):
+        var current_step := String(_hud.call("current_ftue_step"))
+        if not current_step.is_empty():
+            record("ftue_step", {"step": current_step})
 
 
 func set_provider(next_provider: Callable) -> void:
