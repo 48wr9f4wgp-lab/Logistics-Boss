@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "phase": "主要機能実装",
+  "checks": {
+    "boot": "warn",
+    "test": "warn",
+    "device": "none",
+    "save": "none",
+    "analytics": "none",
+    "performance": "none",
+    "release": "none"
+  },
+  "next": "現行Godotビルドの起動と主要ループを確認する",
+  "note": "主要機能実装段階として管理。品質確認段階とはみなさない。",
+  "updated_at": "2026-09-15"
+}
