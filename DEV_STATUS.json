@@ -1,17 +1,21 @@
 {
-  "schema": 2,
-  "phase": "RC候補準備",
+  "schema": 3,
+  "phase": "code_rc_candidate_audit",
   "checks": {
     "boot": "pass",
-    "test": "branch_ci_pending",
-    "device": "web_ios_verified_native_pending",
-    "save": "backup_recovery_added",
+    "ci_main": "pass_through_pr57",
+    "device_web_ios": "verified_after_pr57",
+    "mobile_camera": "verified",
+    "mobile_management_scroll": "verified",
+    "save": "schema_v7_backup_recovery_pass",
     "analytics": "provider_neutral_instrumented_no_external_upload",
     "performance": "runtime_fps_monitor_added_native_measurement_pending",
-    "audio_haptics": "procedural_audio_and_native_haptic_hooks_added",
-    "release": "code_rc_candidate_branch"
+    "audio_haptics": "procedural_audio_and_native_haptic_hooks_added_native_verify_pending",
+    "native_ios": "blocked_on_identifiers_signing_and_device_qa",
+    "native_android": "blocked_on_identifiers_signing_and_device_qa",
+    "release": "code_rc_candidate"
   },
-  "next": "PR #54のproduction-readiness CIを通し、失敗箇所を一括修正する。Green後はWeb Previewでregression確認し、Apple Team ID / Bundle ID / Android package・signing情報を受け取ってsigned native buildと実機QAへ進む。",
-  "note": "RC production-readiness sprintで、Release HUDの詰まり行動提示、投資結果UI、FTUE telemetry、provider-neutral analytics、runtime FPS health、procedural game-feel audio、native haptic hooks、semantic-invalid primary saveのbackup fallback、mobile input smoke、save recovery smoke、Rank1/Rank3 soakを追加。外部Analytics/Crash/IAP/Store申請は未接続。Native iOS/Androidは署名情報と物理端末確認が必要なため未完了。",
-  "updated_at": "2026-09-15"
+  "next": "Complete the code-level RC audit and keep CI green. Then collect final iOS/Android identifiers and signing inputs, create native export presets, produce signed builds, and run physical-device native QA before declaring Native RC.",
+  "note": "PR #54 production-readiness sprint and PR #55-#57 mobile UX fixes are merged. Real iPhone Safari verification confirmed runtime startup, wide overview framing, Rank 3 management readability, and touch scrolling. Web remains an engineering preview only. External analytics/crash/IAP/ads/store actions remain unconnected and require explicit approval where applicable.",
+  "updated_at": "2026-09-16"
 }
