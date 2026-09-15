@@ -10,6 +10,7 @@ func _init() -> void:
     _test_consolidated_gate_and_exact_batch_economics()
     _test_inflight_route_is_frozen()
     _test_route_can_move_bottleneck()
+    _test_route_measurement_uses_authoritative_orders()
     print("Godot Rank 3 carrier routing smoke passed")
     quit(0)
 
@@ -114,6 +115,34 @@ func _test_route_can_move_bottleneck() -> void:
 
     assert(sim.packed_queue == 0, "Express Dispatch must be able to clear the seeded outbound queue")
     assert(String(sim.bottleneck().get("key", "")) == "orders", "clearing outbound must expose the next open-order bottleneck")
+
+
+func _test_route_measurement_uses_authoritative_orders() -> void:
+    var sim = _rank3_sim("balanced")
+    sim.inbound_queue = 0
+    sim.rack_stock = 0
+    sim.packing_queue = 0
+    sim.packed_queue = 0
+    sim.open_orders = 10
+    sim._inbound_timer = 9999.0
+    sim._order_timer = 9999.0
+
+    for _index in range(251):
+        sim.step(0.1)
+
+    var changed: Dictionary = sim.set_routing_mode("express")
+    assert(bool(changed.get("ok", false)), "route measurement scenario must switch to Express")
+    var before: Dictionary = changed.get("before", {})
+    assert(bool(before.get("baseline_complete", false)), "route switch must have a complete 25-second baseline when history exists")
+    assert(float(before.get("open_orders", 0.0)) > 9.9, "route baseline must use authoritative non-zero open_orders")
+
+    for _index in range(252):
+        sim.step(0.1)
+
+    assert(String(sim.last_measurement.get("kind", "")) == "routing_express", "route switch must complete a routing-specific Before / After measurement")
+    var after: Dictionary = sim.last_measurement.get("after", {})
+    assert(float(after.get("open_orders", 0.0)) > 9.9, "route after-window must keep sampling authoritative open_orders")
+    assert(float(after.get("open_orders_sampled_seconds", 0.0)) >= 24.0, "route after-window must contain dedicated order backlog samples")
 
 
 func _rank3_sim(route: String):
