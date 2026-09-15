@@ -23,6 +23,12 @@ func _ready() -> void:
     _bind_ftue_if_ready()
 
 
+func current_ftue_step() -> String:
+    if _ftue_coach == null or not _ftue_coach.visible:
+        return ""
+    return _ftue_coach.current_step_key()
+
+
 func _bind_ftue_if_ready() -> void:
     if _ftue_coach == null or sim == null or _manage_button == null or _sheet == null:
         return
