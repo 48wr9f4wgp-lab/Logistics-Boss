@@ -1,16 +1,17 @@
 {
-  "schema": 1,
-  "phase": "主要機能実装",
+  "schema": 2,
+  "phase": "RC候補準備",
   "checks": {
     "boot": "pass",
-    "test": "pass",
-    "device": "warn",
-    "save": "pass",
-    "analytics": "none",
-    "performance": "none",
-    "release": "none"
+    "test": "branch_ci_pending",
+    "device": "web_ios_verified_native_pending",
+    "save": "backup_recovery_added",
+    "analytics": "provider_neutral_instrumented_no_external_upload",
+    "performance": "runtime_fps_monitor_added_native_measurement_pending",
+    "audio_haptics": "procedural_audio_and_native_haptic_hooks_added",
+    "release": "code_rc_candidate_branch"
   },
-  "next": "Rank 3 / Fulfillment CenterのVertical Sliceを、Rank 2負荷波後のPICK・注文滞留を再計測して定義する。AGVは計測で必要性が出た場合だけ採用する",
-  "note": "Rank 2の予告可能な負荷波を実装。35秒予告→50秒ピークの入荷・注文・出荷サイクル、Save Schema v4、モバイルHUD、実物流への到着/受注倍率を追加した。全5人員配置に計測上の用途があり、2サイクル510秒で予告追従198出荷/¥99,000、固定Shipping195/¥97,500、固定Balanced169/¥84,500。Branch CIはParse/Domain/各Pacing/UI/3D/Font/Full Runtime/Web Exportまで全PASS。新しい負荷HUDと最新Rank 2 UI/設備のiPhone Preview確認、native iOS/Android、Analytics、Performance、Release QAは未完了。",
+  "next": "PR #54のproduction-readiness CIを通し、失敗箇所を一括修正する。Green後はWeb Previewでregression確認し、Apple Team ID / Bundle ID / Android package・signing情報を受け取ってsigned native buildと実機QAへ進む。",
+  "note": "RC production-readiness sprintで、Release HUDの詰まり行動提示、投資結果UI、FTUE telemetry、provider-neutral analytics、runtime FPS health、procedural game-feel audio、native haptic hooks、semantic-invalid primary saveのbackup fallback、mobile input smoke、save recovery smoke、Rank1/Rank3 soakを追加。外部Analytics/Crash/IAP/Store申請は未接続。Native iOS/Androidは署名情報と物理端末確認が必要なため未完了。",
   "updated_at": "2026-09-15"
 }

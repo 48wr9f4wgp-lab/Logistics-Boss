@@ -19,7 +19,7 @@ permissions:
 jobs:
   godot-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -116,6 +116,56 @@ jobs:
           timeout 30s godot --headless --path godot --script res://tests/ftue_core_loop_smoke.gd 2>&1 | tee /tmp/ftue-core-loop-smoke.log
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/ftue-core-loop-smoke.log; then
             echo 'FTUE core loop smoke emitted an engine/script error'
+            exit 1
+          fi
+
+      - name: Release services smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 30s godot --headless --path godot --script res://tests/release_services_smoke.gd 2>&1 | tee /tmp/release-services-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/release-services-smoke.log; then
+            echo 'Release services smoke emitted an engine/script error'
+            exit 1
+          fi
+
+      - name: Release HUD smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 30s godot --headless --path godot --script res://tests/release_hud_smoke.gd 2>&1 | tee /tmp/release-hud-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/release-hud-smoke.log; then
+            echo 'Release HUD smoke emitted an engine/script error'
+            exit 1
+          fi
+
+      - name: Mobile input smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 30s godot --headless --path godot --script res://tests/mobile_input_smoke.gd 2>&1 | tee /tmp/mobile-input-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/mobile-input-smoke.log; then
+            echo 'Mobile input smoke emitted an engine/script error'
+            exit 1
+          fi
+
+      - name: Save recovery smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 30s godot --headless --path godot --script res://tests/save_recovery_smoke.gd 2>&1 | tee /tmp/save-recovery-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/save-recovery-smoke.log; then
+            echo 'Save recovery smoke emitted an engine/script error'
+            exit 1
+          fi
+
+      - name: Release candidate soak
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 45s godot --headless --path godot --script res://tests/release_candidate_soak.gd 2>&1 | tee /tmp/release-candidate-soak.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/release-candidate-soak.log; then
+            echo 'Release candidate soak emitted an engine/script error'
             exit 1
           fi
 

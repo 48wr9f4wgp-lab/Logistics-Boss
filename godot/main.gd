@@ -9,11 +9,17 @@ const ForkliftAutomationViewScript = preload("res://view/forklift_automation_vie
 const Rank2FacilityViewScript = preload("res://view/rank2_facility_view.gd")
 const Rank3ReceivingAnnexViewScript = preload("res://view/rank3_receiving_annex_view.gd")
 const Rank3RoutingHubViewScript = preload("res://view/rank3_routing_hub_view.gd")
-const GameHudScript = preload("res://ui/game_hud_feedback.gd")
+const GameHudScript = preload("res://ui/game_hud_release.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
+const GameFeelScript = preload("res://feedback/game_feel.gd")
+const AnalyticsScript = preload("res://telemetry/analytics_service.gd")
+const RuntimeHealthScript = preload("res://telemetry/runtime_health.gd")
 
 var sim: WarehouseSim
 var save_store: LogisticsSaveStore
+var analytics: LogisticsAnalytics
+var runtime_health: LogisticsRuntimeHealth
+var game_feel: LogisticsGameFeel
 var _autosave_timer := 0.0
 
 
@@ -47,8 +53,7 @@ func _ready() -> void:
     rank3_routing.bind(view, sim)
 
     # Bind the authoritative simulation before the HUD enters the tree.
-    # This prevents a late _ready() failure in an optional HUD section from
-    # leaving the entire visible shell stuck on placeholder values.
+    # Optional presentation failures must never strand the visible shell on placeholders.
     var hud: GameHud = GameHudScript.new()
     hud.bind_sim(sim)
     add_child(hud)
@@ -60,6 +65,20 @@ func _ready() -> void:
     var composition_fix: WarehouseVisualCompositionFix = WarehouseVisualCompositionFixScript.new()
     view.add_child(composition_fix)
     composition_fix.bind(view)
+
+    # Release-readiness services are deliberately attached after the playable core.
+    # If an optional service regresses, simulation + HUD + 3D are already live.
+    runtime_health = RuntimeHealthScript.new()
+    add_child(runtime_health)
+
+    analytics = AnalyticsScript.new()
+    add_child(analytics)
+    analytics.bind_sim(sim)
+    analytics.bind_hud(hud)
+
+    game_feel = GameFeelScript.new()
+    add_child(game_feel)
+    game_feel.bind_sim(sim)
 
 
 func _process(delta: float) -> void:
@@ -79,3 +98,9 @@ func _notification(what: int) -> void:
     if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
         if sim != null and save_store != null:
             save_store.save_sim(sim)
+        if analytics != null:
+            analytics.record("session_suspend", {
+                "facility_rank": sim.facility_rank if sim != null else 0,
+                "total_shipped": sim.shipped if sim != null else 0,
+                "health": runtime_health.snapshot() if runtime_health != null else {},
+            })

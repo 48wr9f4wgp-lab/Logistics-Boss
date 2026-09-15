@@ -1,6 +1,9 @@
 extends PanelContainer
 class_name LogisticsFtueCoach
 
+signal step_changed(step_key: String)
+signal completed(skipped: bool)
+
 const JAPANESE_UI_FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
 const DONE_PATH := "user://logistics_boss_ftue_v1.done"
 
@@ -112,6 +115,7 @@ func bind_context(
     _bound = true
     visible = true
     _render_step()
+    step_changed.emit(current_step_key())
 
 
 func current_step_key() -> String:
@@ -179,6 +183,7 @@ func _advance_to(next_step: int) -> void:
         return
     _step = next_step
     _render_step()
+    step_changed.emit(current_step_key())
 
 
 func _complete_ftue() -> void:
@@ -188,10 +193,13 @@ func _complete_ftue() -> void:
     _complete_elapsed = 0.0
     _write_completion_marker()
     _render_step()
+    step_changed.emit(current_step_key())
+    completed.emit(false)
 
 
 func _skip() -> void:
     _write_completion_marker()
+    completed.emit(true)
     visible = false
 
 
