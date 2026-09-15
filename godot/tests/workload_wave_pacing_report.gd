@@ -12,14 +12,14 @@ const PHASE_CLOCKS := {
 
 
 func _init() -> void:
-    var report := {}
-    var winners := {}
+    var report: Dictionary = {}
+    var winners: Dictionary = {}
 
     for phase in ["inbound_surge", "order_surge", "dispatch_window"]:
         var results: Array[Dictionary] = []
         for plan in STAFFING_PLANS:
             results.append(_run_phase(phase, plan))
-        var winner := _phase_winner(phase, results)
+        var winner: Dictionary = _phase_winner(phase, results)
         report[phase] = {
             "winner": winner,
             "plans": results,
@@ -41,14 +41,14 @@ func _init() -> void:
 
 
 func _run_phase(phase: String, plan: String) -> Dictionary:
-    var sim = _prepared_rank2(plan, float(PHASE_CLOCKS[phase]))
-    var start_shipped := sim.shipped
-    var start_money := sim.money
-    var inbound_sum := 0.0
-    var orders_sum := 0.0
-    var packing_sum := 0.0
-    var outbound_sum := 0.0
-    var samples := 0
+    var sim: WorkloadWarehouseSim = _prepared_rank2(plan, float(PHASE_CLOCKS[phase]))
+    var start_shipped: int = sim.shipped
+    var start_money: int = sim.money
+    var inbound_sum: float = 0.0
+    var orders_sum: float = 0.0
+    var packing_sum: float = 0.0
+    var outbound_sum: float = 0.0
+    var samples: int = 0
 
     for _i in int(ceil(SCENARIO_SECONDS / STEP_SECONDS)):
         sim.step(STEP_SECONDS)
@@ -58,7 +58,7 @@ func _run_phase(phase: String, plan: String) -> Dictionary:
         outbound_sum += float(sim.packed_queue)
         samples += 1
 
-    var divisor := maxf(1.0, float(samples))
+    var divisor: float = maxf(1.0, float(samples))
     return {
         "staffing": plan,
         "shipments": sim.shipped - start_shipped,
@@ -84,22 +84,22 @@ func _phase_winner(phase: String, results: Array[Dictionary]) -> Dictionary:
 func _better_for_phase(phase: String, candidate: Dictionary, current: Dictionary) -> bool:
     match phase:
         "inbound_surge":
-            var candidate_pressure := float(candidate.get("inbound_avg", INF))
-            var current_pressure := float(current.get("inbound_avg", INF))
+            var candidate_pressure: float = float(candidate.get("inbound_avg", INF))
+            var current_pressure: float = float(current.get("inbound_avg", INF))
             if candidate_pressure < current_pressure - 0.01:
                 return true
             if is_equal_approx(candidate_pressure, current_pressure):
                 return int(candidate.get("shipments", 0)) > int(current.get("shipments", 0))
         "order_surge":
-            var candidate_pressure := float(candidate.get("orders_avg", INF))
-            var current_pressure := float(current.get("orders_avg", INF))
+            var candidate_pressure: float = float(candidate.get("orders_avg", INF))
+            var current_pressure: float = float(current.get("orders_avg", INF))
             if candidate_pressure < current_pressure - 0.01:
                 return true
             if is_equal_approx(candidate_pressure, current_pressure):
                 return int(candidate.get("shipments", 0)) > int(current.get("shipments", 0))
         "dispatch_window":
-            var candidate_shipments := int(candidate.get("shipments", 0))
-            var current_shipments := int(current.get("shipments", 0))
+            var candidate_shipments: int = int(candidate.get("shipments", 0))
+            var current_shipments: int = int(current.get("shipments", 0))
             if candidate_shipments > current_shipments:
                 return true
             if candidate_shipments == current_shipments:
@@ -107,9 +107,9 @@ func _better_for_phase(phase: String, candidate: Dictionary, current: Dictionary
     return false
 
 
-func _prepared_rank2(plan: String, clock: float):
-    var sim = WorkloadSimScript.new()
-    var data := sim.save_data()
+func _prepared_rank2(plan: String, clock: float) -> WorkloadWarehouseSim:
+    var sim: WorkloadWarehouseSim = WorkloadSimScript.new()
+    var data: Dictionary = sim.save_data()
     data["schema_version"] = 4
     data["facility_rank"] = 2
     data["logistics_rating"] = 16
@@ -139,7 +139,7 @@ func _prepared_rank2(plan: String, clock: float):
     assert(sim.load_data(data), "workload pacing seed must load")
 
     for kind in [&"double_dock", &"high_density_rack", &"fast_pack_cell"]:
-        var purchase := sim.purchase_facility(kind)
+        var purchase: Dictionary = sim.purchase_facility(kind)
         assert(bool(purchase.get("ok", false)), "%s must purchase in workload pacing scenario" % String(kind))
 
     sim.inbound_queue = 6
