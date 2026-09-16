@@ -1,6 +1,7 @@
 extends SceneTree
 
 const WarehouseSimScript = preload("res://domain/warehouse_sim.gd")
+const Rank3SimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
 
 
 func _init() -> void:
@@ -67,7 +68,9 @@ func _init() -> void:
     assert(migrated.logistics_rating == 0, "legacy schema 2 save must default Logistics Rating safely")
     assert(int(migrated.save_data().get("schema_version", -1)) == 3, "migrated save must write schema 3")
 
-    print("Godot Rank 2 entry smoke passed")
+    _verify_meta_loop_to_rank3()
+
+    print("Godot Rank 2 entry and canonical meta-loop E2E smoke passed")
     quit(0)
 
 
@@ -92,3 +95,100 @@ func _complete_ship_contract(sim: WarehouseSim, expected_completed: int) -> void
         sim.step(0.1)
     if expected_completed < 4:
         assert(sim.contract_offers.size() == 3, "new contract choices must return after completion cooldown")
+
+
+func _verify_meta_loop_to_rank3() -> void:
+    var sim: Rank3InboundCarrierSim = Rank3SimScript.new()
+    var events: Array[Dictionary] = []
+    sim.event_emitted.connect(func(event: Dictionary) -> void:
+        events.append(event.duplicate(true))
+    )
+
+    var starting_money: int = sim.money
+    var starting_rp: int = sim.research_rp
+    for contract_index in 4:
+        _complete_ship_contract(sim, contract_index + 1)
+
+    assert(sim.facility_rank == 2, "meta loop must convert contract rating into the Rank 2 Warehouse")
+    assert(sim.money > starting_money, "successful contracts and live shipments must grow operating cash")
+    assert(sim.research_rp > starting_rp, "successful contracts and live shipments must grow RP")
+    assert(sim.logistics_rating >= 8, "successful contracts must grow Logistics Rating to the Rank 2 gate")
+    assert(_has_rank_event(events, 2), "meta loop must emit the authoritative Rank 2 promotion event")
+
+    _purchase_facility_with_profit(sim, &"buffer_yard")
+    _purchase_facility_with_profit(sim, &"high_density_rack")
+    _purchase_facility_with_profit(sim, &"fast_pack_cell")
+    assert(sim.expansion_zones_completed() == 3, "meta loop must complete all three structural Rank 2 expansion zones")
+
+    _purchase_upgrade_with_profit(sim, &"forklift")
+    for _index in 2:
+        _purchase_upgrade_with_profit(sim, &"worker")
+    for _index in 4:
+        _purchase_upgrade_with_profit(sim, &"rack")
+    for _index in 3:
+        _purchase_upgrade_with_profit(sim, &"speed")
+    for _index in 2:
+        _purchase_upgrade_with_profit(sim, &"packing")
+
+    assert(sim.facility_rank == 2, "Rank 3 must not unlock before the asset gate is actually satisfied")
+    assert(sim.equipment_asset_value() < Rank3WarehouseSim.RANK3_MIN_ASSETS, "pre-gate asset build must stay below the Rank 3 threshold")
+
+    _warm_until_throughput(sim, Rank3WarehouseSim.RANK3_MIN_THROUGHPUT)
+    assert(sim.throughput_per_minute() >= Rank3WarehouseSim.RANK3_MIN_THROUGHPUT, "meta loop must establish live throughput before Rank 3")
+    assert(sim.facility_rank == 2, "throughput alone must not bypass the Rank 3 capital gate")
+
+    _purchase_upgrade_with_profit(sim, &"speed")
+    assert(sim.equipment_asset_value() >= Rank3WarehouseSim.RANK3_MIN_ASSETS, "final structural investment must satisfy the Rank 3 asset gate")
+    assert(sim.facility_rank == 2, "Rank promotion must occur through the simulation gate, not directly inside purchase code")
+
+    sim.step(0.1)
+    assert(sim.facility_rank == 3, "zones + owned assets + live throughput must promote to Rank 3 Fulfillment Center")
+    assert(_has_rank_event(events, 3), "meta loop must emit the authoritative Rank 3 promotion event")
+    assert(bool(sim.rank3_readiness().get("ready", false)), "Rank 3 readiness must remain true after promotion")
+    assert(sim.routing_modes().size() == 3, "Rank 3 must open a larger-scale carrier routing decision")
+    assert(not sim.receiving_annex_info().is_empty(), "Rank 3 must open the Receiving Annex structural investment")
+
+    var pressure_seen := false
+    for _index in 1800:
+        sim.step(0.1)
+        if String(sim.bottleneck().get("key", "stable")) != "stable":
+            pressure_seen = true
+            break
+    assert(pressure_seen, "larger-scale operation must surface a new operational pressure for the next decision")
+
+
+func _purchase_facility_with_profit(sim: Rank3InboundCarrierSim, kind: StringName) -> void:
+    var cost: int = sim.facility_cost(kind)
+    _earn_until(sim, cost)
+    var result: Dictionary = sim.purchase_facility(kind)
+    assert(bool(result.get("ok", false)), "meta loop facility purchase must use earned operating cash")
+
+
+func _purchase_upgrade_with_profit(sim: Rank3InboundCarrierSim, kind: StringName) -> void:
+    var cost: int = sim.upgrade_cost(kind)
+    _earn_until(sim, cost)
+    var result: Dictionary = sim.purchase_upgrade(kind)
+    assert(bool(result.get("ok", false)), "meta loop capital purchase must use earned operating cash")
+
+
+func _earn_until(sim: Rank3InboundCarrierSim, required_cash: int) -> void:
+    for _index in 6000:
+        if sim.money >= required_cash:
+            return
+        sim.step(0.1)
+    assert(sim.money >= required_cash, "live logistics operation must be able to fund the next meta-loop investment")
+
+
+func _warm_until_throughput(sim: Rank3InboundCarrierSim, required_throughput: float) -> void:
+    for _index in 1800:
+        sim.step(0.1)
+        if sim.throughput_per_minute() >= required_throughput:
+            return
+    assert(sim.throughput_per_minute() >= required_throughput, "live Rank 2 operation must reach the Rank 3 throughput gate")
+
+
+func _has_rank_event(events: Array[Dictionary], rank: int) -> bool:
+    for event in events:
+        if String(event.get("type", "")) == "rank_up" and int(event.get("rank", -1)) == rank:
+            return true
+    return false
