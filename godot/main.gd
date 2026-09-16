@@ -4,6 +4,7 @@ const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
 const WarehouseViewScript = preload("res://view/warehouse_view_mobile.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
 const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")
+const WarehouseQueuePressureViewScript = preload("res://view/queue_pressure_view.gd")
 const WarehouseVisualCompositionFixScript = preload("res://view/visual_composition_fix.gd")
 const ForkliftAutomationViewScript = preload("res://view/forklift_automation_view.gd")
 const Rank2FacilityViewScript = preload("res://view/rank2_facility_view.gd")
@@ -61,6 +62,12 @@ func _ready() -> void:
     var visual_pass_3: WarehouseVisualPass3 = WarehouseVisualPass3Script.new()
     view.add_child(visual_pass_3)
     visual_pass_3.bind(view, hud)
+
+    # Queue pressure is presentation-only: it mirrors authoritative packing/open-order
+    # counts as capped physical density so congestion can be read directly in 3D.
+    var queue_pressure: WarehouseQueuePressureView = WarehouseQueuePressureViewScript.new()
+    view.add_child(queue_pressure)
+    queue_pressure.bind(view, sim)
 
     var composition_fix: WarehouseVisualCompositionFix = WarehouseVisualCompositionFixScript.new()
     view.add_child(composition_fix)
