@@ -107,12 +107,12 @@ jobs:
           require_file ios-build/LogisticsBoss.xcframework/ios-arm64/libgodot.a
           require_file ios-build/MoltenVK.xcframework/Info.plist
 
-          # Godot's project-only exporter may place data.pck at a template-dependent
-          # location. Require a non-empty PCK anywhere in the generated iOS payload
-          # rather than coupling the smoke test to one directory layout.
-          pck_path="$(find ios-build -type f -name data.pck -size +0c -print -quit)"
+          # Godot names the project PCK after the export target (for example,
+          # LogisticsBoss.pck), and the exact location can vary by template.
+          # Require at least one non-empty PCK anywhere in the generated payload.
+          pck_path="$(find ios-build -type f -name '*.pck' -size +0c -print -quit)"
           if [ -z "$pck_path" ]; then
-            echo 'Missing non-empty data.pck in generated iOS payload'
+            echo 'Missing non-empty *.pck in generated iOS payload'
             find ios-build -maxdepth 4 -type f -print | sort
             exit 1
           fi
