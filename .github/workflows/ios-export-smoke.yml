@@ -90,15 +90,33 @@ jobs:
             exit 1
           fi
 
+          require_file() {
+            if [ ! -s "$1" ]; then
+              echo "Missing required iOS export payload: $1"
+              find ios-build -maxdepth 4 -type f -print | sort
+              exit 1
+            fi
+          }
+
           # Godot project-only iOS export can report a non-zero process status on an
           # unsigned runner after the complete Xcode payload has been generated.
-          # The smoke-test authority is therefore the payload itself.
-          test -s ios-build/LogisticsBoss.xcodeproj/project.pbxproj
-          test -s ios-build/LogisticsBoss/LogisticsBoss-Info.plist
-          test -s ios-build/LogisticsBoss/data.pck
-          test -s ios-build/LogisticsBoss.xcframework/Info.plist
-          test -s ios-build/LogisticsBoss.xcframework/ios-arm64/libgodot.a
-          test -s ios-build/MoltenVK.xcframework/Info.plist
+          # The smoke-test authority is therefore the generated payload itself.
+          require_file ios-build/LogisticsBoss.xcodeproj/project.pbxproj
+          require_file ios-build/LogisticsBoss/LogisticsBoss-Info.plist
+          require_file ios-build/LogisticsBoss.xcframework/Info.plist
+          require_file ios-build/LogisticsBoss.xcframework/ios-arm64/libgodot.a
+          require_file ios-build/MoltenVK.xcframework/Info.plist
+
+          # Godot's project-only exporter may place data.pck at a template-dependent
+          # location. Require a non-empty PCK anywhere in the generated iOS payload
+          # rather than coupling the smoke test to one directory layout.
+          pck_path="$(find ios-build -type f -name data.pck -size +0c -print -quit)"
+          if [ -z "$pck_path" ]; then
+            echo 'Missing non-empty data.pck in generated iOS payload'
+            find ios-build -maxdepth 4 -type f -print | sort
+            exit 1
+          fi
+          echo "Validated PCK: $pck_path"
 
           echo "Godot export step outcome: ${{ steps.ios_export.outcome }}"
           ditto -c -k --sequesterRsrc --keepParent ios-build /tmp/LogisticsBoss-ios-project.zip
