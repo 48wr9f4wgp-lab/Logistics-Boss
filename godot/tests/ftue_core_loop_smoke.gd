@@ -40,6 +40,9 @@ func _run() -> void:
     if not coach.visible or coach.current_step_key() != "observe":
         _fail("fresh save must start the observation FTUE")
         return
+    if coach.offset_top > 170.0 or (coach.offset_bottom - coach.offset_top) > 68.0:
+        _fail("FTUE coach must stay compact and below the always-on HUD so it does not cover the warehouse core")
+        return
 
     coach._process(8.0)
     if coach.current_step_key() != "policy":
@@ -105,7 +108,7 @@ func _run() -> void:
         _fail("regressed result must show shipment delta")
         return
     if not String(regressed_feedback.get("next_action", "")).begins_with("次:"):
-        _fail("measurement result must give a next action")
+        _fail("measurement result must give the player a next action")
         return
     var result_lines := String(regressed_feedback.get("text", "")).split("\n")
     if result_lines.size() != 3:
