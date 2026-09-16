@@ -1,8 +1,7 @@
 extends "res://ui/game_hud_ftue.gd"
 class_name FeedbackGameHud
 
-const RESULT_IMPROVEMENT_RATIO := 0.05
-const RESULT_MIN_DELTA := 0.5
+const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 
 
 func _on_sim_event(event: Dictionary) -> void:
@@ -25,19 +24,14 @@ func _on_sim_event(event: Dictionary) -> void:
 func measurement_feedback(event: Dictionary) -> Dictionary:
     var before: Dictionary = event.get("before", {})
     var after: Dictionary = event.get("after", {})
-    var before_rate := float(before.get("shipments_per_min", 0.0))
-    var after_rate := float(after.get("shipments_per_min", 0.0))
-    var delta := after_rate - before_rate
-    var threshold := maxf(RESULT_MIN_DELTA, absf(before_rate) * RESULT_IMPROVEMENT_RATIO)
+    var verdict: Dictionary = event.get("verdict", {})
+    if verdict.is_empty():
+        verdict = FlowMeasurementScript.classify_result(before, after)
 
-    var state := "flat"
-    var headline := "横ばい"
-    if delta >= threshold:
-        state = "improved"
-        headline = "改善"
-    elif delta <= -threshold:
-        state = "regressed"
-        headline = "要再判断"
+    var state := String(verdict.get("state", "flat"))
+    var headline := String(verdict.get("headline", "横ばい"))
+    var delta := float(verdict.get("delta", 0.0))
+    var threshold := float(verdict.get("threshold", FlowMeasurement.RESULT_MIN_DELTA))
 
     var bottleneck_key := "stable"
     var bottleneck_label := "安定運転"
@@ -62,6 +56,8 @@ func measurement_feedback(event: Dictionary) -> Dictionary:
     elif bottleneck_key != "stable":
         next_action = "次: 「%s」と投資先が合っているか確認" % bottleneck_label
 
+    var before_rate := float(before.get("shipments_per_min", 0.0))
+    var after_rate := float(after.get("shipments_per_min", 0.0))
     var result_line := "%s｜出荷 %s/分（%.1f→%.1f）" % [
         headline,
         _signed_delta(delta),
