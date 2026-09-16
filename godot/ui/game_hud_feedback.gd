@@ -3,6 +3,13 @@ class_name FeedbackGameHud
 
 const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 
+var _measurement_followup_active := false
+
+
+func _process(delta: float) -> void:
+    super._process(delta)
+    _sync_measurement_followup_cta()
+
 
 func _on_sim_event(event: Dictionary) -> void:
     super._on_sim_event(event)
@@ -18,7 +25,9 @@ func _on_sim_event(event: Dictionary) -> void:
         "routing_changed",
         "inbound_carrier_program_purchased",
     ]:
+        _measurement_followup_active = false
         _style_measurement_state("measuring")
+        _sync_measurement_followup_cta()
 
 
 func measurement_feedback(event: Dictionary) -> Dictionary:
@@ -72,6 +81,7 @@ func measurement_feedback(event: Dictionary) -> Dictionary:
     ]
     var action_line := next_action.replace("次:", "次 →")
     var text := "%s\n%s\n%s" % [result_line, context_line, action_line]
+    var needs_followup := state != "improved" or bottleneck_key != "stable"
 
     return {
         "state": state,
@@ -82,13 +92,36 @@ func measurement_feedback(event: Dictionary) -> Dictionary:
         "result_line": result_line,
         "context_line": context_line,
         "next_action": next_action,
+        "bottleneck_key": bottleneck_key,
+        "needs_followup": needs_followup,
     }
 
 
 func _show_measurement_feedback(event: Dictionary) -> void:
     var feedback := measurement_feedback(event)
+    _measurement_followup_active = bool(feedback.get("needs_followup", true))
     _style_measurement_state(String(feedback.get("state", "flat")))
     _show_measurement_status(String(feedback.get("text", "")), 10.0)
+    _sync_measurement_followup_cta()
+
+
+func _sync_measurement_followup_cta() -> void:
+    if _manage_button == null:
+        return
+
+    var sheet_open := _sheet != null and _sheet.visible
+    if sheet_open and _measurement_followup_active:
+        _measurement_followup_active = false
+
+    if sheet_open:
+        _manage_button.text = "閉じる"
+        _apply_button_style(_manage_button, false)
+    elif _measurement_followup_active:
+        _manage_button.text = "次の判断"
+        _apply_button_style(_manage_button, true)
+    else:
+        _manage_button.text = "管理"
+        _apply_button_style(_manage_button, false)
 
 
 func _style_measurement_state(state: String) -> void:
