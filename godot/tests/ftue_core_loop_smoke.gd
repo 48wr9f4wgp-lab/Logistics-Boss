@@ -228,7 +228,7 @@ func _run() -> void:
     if speed_button == null or not speed_button.visible:
         _fail("E2E Rank 1 Management must expose the flow-training investment")
         return
-    var money_before := e2e_sim.money
+    var money_before: int = int(e2e_sim.money)
     speed_button.emit_signal("pressed")
     await process_frame
     if e2e_sim.money >= money_before:
