@@ -151,6 +151,44 @@ func _run() -> void:
     if hud._measurement_label.get_theme_font_size("font_size") < 12:
         _fail("completed measurement feedback must remain legible on mobile")
         return
+    if not hud._measurement_followup_active or hud._manage_button.text != "次の判断":
+        _fail("regressed measurement must promote Management into an explicit next-decision CTA")
+        return
+
+    hud._manage_button.emit_signal("pressed")
+    await process_frame
+    hud._process(0.0)
+    if not hud._sheet.visible:
+        _fail("measurement follow-up CTA must open Management")
+        return
+    if hud._measurement_followup_active or hud._manage_button.text != "閉じる":
+        _fail("opening Management must consume the measurement follow-up CTA")
+        return
+
+    hud._manage_button.emit_signal("pressed")
+    await process_frame
+    hud._process(0.0)
+    if hud._sheet.visible or hud._manage_button.text != "管理":
+        _fail("closing Management after follow-up must restore the normal control label")
+        return
+
+    sim.inbound_queue = 0
+    sim.rack_stock = 0
+    sim.packing_queue = 0
+    sim.packed_queue = 0
+    sim.open_orders = 0
+    hud._on_sim_event(improved)
+    hud._process(0.0)
+    if hud._measurement_followup_active or hud._manage_button.text != "管理":
+        _fail("improved stable flow should return the player to observation without forcing another decision")
+        return
+
+    sim.packing_queue = 3
+    hud._on_sim_event(improved)
+    hud._process(0.0)
+    if not hud._measurement_followup_active or hud._manage_button.text != "次の判断":
+        _fail("an improved result with a new bottleneck must still guide the player into the next decision")
+        return
 
     hud.queue_free()
     host.queue_free()
