@@ -1,6 +1,7 @@
 extends SceneTree
 
 const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
+const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 const WarehouseViewScript = preload("res://view/warehouse_view.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
 const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")
@@ -127,6 +128,51 @@ func _run() -> void:
     assert(investment_feedback.last_event_type == "rank_up", "rank promotion must use dedicated promotion feedback")
     assert(investment_feedback.last_half_extents.x >= 7.0 and investment_feedback.last_half_extents.y >= 4.5, "rank promotion must outline the whole facility footprint")
     assert(investment_feedback.last_lifetime > WarehouseInvestmentFeedbackView.INVESTMENT_LIFETIME, "rank promotion must feel more substantial than an ordinary purchase")
+
+    # Completed investment measurement must return to the affected physical zone,
+    # with semantic result colors shared with the HUD verdict.
+    var improved_before := {"shipments_per_min": 20.0}
+    var improved_after := {"shipments_per_min": 22.0}
+    sim.emit_signal("event_emitted", {
+        "type": "measurement_completed",
+        "kind": "packing",
+        "before": improved_before,
+        "after": improved_after,
+        "verdict": FlowMeasurementScript.classify_result(improved_before, improved_after),
+    })
+    await process_frame
+    assert(investment_feedback.last_result_state == "improved", "improved measurement must create positive in-world result feedback")
+    assert(investment_feedback.last_center.distance_to(WarehouseInvestmentFeedbackView.PACKING_CENTER) < 0.01, "packing measurement result must return to the packing zone")
+    var improved_color: Color = investment_feedback.last_color
+
+    var flat_before := {"shipments_per_min": 50.0}
+    var flat_after := {"shipments_per_min": 50.6}
+    sim.emit_signal("event_emitted", {
+        "type": "measurement_completed",
+        "kind": "facility_fast_pick_rack",
+        "before": flat_before,
+        "after": flat_after,
+        "verdict": FlowMeasurementScript.classify_result(flat_before, flat_after),
+    })
+    await process_frame
+    assert(investment_feedback.last_result_state == "flat", "flat measurement must create neutral in-world result feedback")
+    assert(investment_feedback.last_center.distance_to(WarehouseInvestmentFeedbackView.STORAGE_CENTER) < 0.01, "storage measurement result must return to storage")
+    var flat_color: Color = investment_feedback.last_color
+
+    var regressed_before := {"shipments_per_min": 20.0}
+    var regressed_after := {"shipments_per_min": 18.0}
+    sim.emit_signal("event_emitted", {
+        "type": "measurement_completed",
+        "kind": "routing_express",
+        "before": regressed_before,
+        "after": regressed_after,
+        "verdict": FlowMeasurementScript.classify_result(regressed_before, regressed_after),
+    })
+    await process_frame
+    assert(investment_feedback.last_result_state == "regressed", "regressed measurement must create cautionary in-world result feedback")
+    assert(investment_feedback.last_center.distance_to(WarehouseInvestmentFeedbackView.OUTBOUND_CENTER) < 0.01, "routing measurement result must return to outbound")
+    var regressed_color: Color = investment_feedback.last_color
+    assert(improved_color != flat_color and flat_color != regressed_color and improved_color != regressed_color, "improved, flat and regressed results must remain visually distinct")
 
     for index in range(10):
         sim.emit_signal("event_emitted", {
