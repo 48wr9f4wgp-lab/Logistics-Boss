@@ -1,21 +1,39 @@
 {
-  "schema": 3,
-  "phase": "code_rc_candidate_audit",
+  "schema": 4,
+  "phase": "code_rc_candidate_native_gate_pending",
   "checks": {
     "boot": "pass",
-    "ci_main": "pass_through_pr57",
-    "device_web_ios": "verified_after_pr57",
-    "mobile_camera": "verified",
-    "mobile_management_scroll": "verified",
-    "save": "schema_v7_backup_recovery_pass",
-    "analytics": "provider_neutral_instrumented_no_external_upload",
-    "performance": "runtime_fps_monitor_added_native_measurement_pending",
-    "audio_haptics": "procedural_audio_and_native_haptic_hooks_added_native_verify_pending",
-    "native_ios": "blocked_on_identifiers_signing_and_device_qa",
-    "native_android": "blocked_on_identifiers_signing_and_device_qa",
-    "release": "code_rc_candidate"
+    "ci_latest_verified": "godot_187_success_ios_export_27_success",
+    "core_loop_e2e": "pass_pr74",
+    "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
+    "session_resume": "pass_pr76_domain_derived_resume_brief",
+    "device_web_ios": "verified_after_pr57_not_native",
+    "mobile_camera": "verified_web_ios_and_regression_covered",
+    "mobile_management_scroll": "verified_web_ios_and_regression_covered",
+    "save": "schema_v7_primary_backup_recovery_pass",
+    "measurement_feedback": "domain_verdict_shared_by_hud_gamefeel_and_3d",
+    "visual_progression": "rank2_rank3_code_ci_covered_latest_human_render_check_pending",
+    "analytics": "provider_neutral_local_only_no_external_upload",
+    "performance": "runtime_fps_monitor_and_soak_present_native_device_measurement_pending",
+    "audio_haptics": "procedural_audio_and_native_haptic_hooks_present_native_device_verify_pending",
+    "unsigned_ios_export": "macos_xcode_route_green",
+    "native_ios": "blocked_on_final_identifiers_signing_and_physical_device_qa",
+    "native_android": "blocked_on_final_package_signing_build_route_and_physical_device_qa",
+    "release": "code_rc_candidate_not_native_rc"
   },
-  "next": "Complete the code-level RC audit and keep CI green. Then collect final iOS/Android identifiers and signing inputs, create native export presets, produce signed builds, and run physical-device native QA before declaring Native RC.",
-  "note": "PR #54 production-readiness sprint and PR #55-#57 mobile UX fixes are merged. Real iPhone Safari verification confirmed runtime startup, wide overview framing, Rank 3 management readability, and touch scrolling. Web remains an engineering preview only. External analytics/crash/IAP/ads/store actions remain unconnected and require explicit approval where applicable.",
+  "latest_feature_merge": {
+    "pr": 76,
+    "merge_commit": "2cfc8c65ca482e8597df9565c4c172bba1aede3d",
+    "title": "Restore session context for returning players"
+  },
+  "next": "Keep Code RC stable. Obtain confirmed final iOS and Android identifiers plus authorized signing inputs, produce signed native candidates, then run physical iPhone and Android QA including current visual inspection, safe-area, save/relaunch, audio/haptics, routing, and sustained Rank 3 performance before declaring Native RC.",
+  "external_actions_require_approval": [
+    "paid developer account purchase or renewal",
+    "production signing-key generation or rotation on behalf of the user",
+    "App Store submission",
+    "Google Play submission",
+    "IAP or ads activation",
+    "external analytics or crash-provider contract/upload"
+  ],
   "updated_at": "2026-09-16"
 }
