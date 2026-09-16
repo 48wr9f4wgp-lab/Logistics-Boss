@@ -1,11 +1,14 @@
 extends Node3D
 class_name WarehouseInvestmentFeedbackView
 
+const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 const CYAN := Color(0.16, 0.80, 1.0)
+const FLAT_BLUE := Color(0.40, 0.68, 0.92)
 const AMBER := Color(1.0, 0.62, 0.16)
 const MINT := Color(0.24, 0.95, 0.67)
 const RANK_CYAN := Color(0.32, 0.88, 1.0)
 const INVESTMENT_LIFETIME := 0.72
+const RESULT_LIFETIME := 0.82
 const RANK_LIFETIME := 1.08
 const MAX_ACTIVE_PULSES := 6
 
@@ -22,9 +25,11 @@ var warehouse_view: WarehouseView
 var sim: WarehouseSim
 var feedback_count := 0
 var last_event_type := ""
+var last_result_state := ""
 var last_center := Vector3.ZERO
 var last_half_extents := Vector2.ZERO
 var last_lifetime := 0.0
+var last_color := Color.TRANSPARENT
 
 var _pulse_sequence := 0
 var _active_pulses: Array[Node3D] = []
@@ -88,6 +93,22 @@ func _on_sim_event(event: Dictionary) -> void:
                 RANK_LIFETIME,
                 event_type
             )
+        "measurement_completed":
+            var before: Dictionary = event.get("before", {})
+            var after: Dictionary = event.get("after", {})
+            var verdict: Dictionary = event.get("verdict", {})
+            if verdict.is_empty():
+                verdict = FlowMeasurementScript.classify_result(before, after)
+            var result_state := String(verdict.get("state", "flat"))
+            var measurement_kind := String(event.get("kind", ""))
+            last_result_state = result_state
+            _spawn_feedback(
+                _measurement_center(measurement_kind),
+                _measurement_extent(measurement_kind),
+                _measurement_color(result_state),
+                RESULT_LIFETIME,
+                event_type
+            )
         _:
             return
 
@@ -128,6 +149,54 @@ func _facility_group_center(group: String) -> Vector3:
             return PACKING_CENTER
         _:
             return CENTER_FLOOR
+
+
+func _measurement_center(kind: String) -> Vector3:
+    match kind:
+        "worker", "speed":
+            return CENTER_FLOOR
+        "rack", "facility_fast_pick_rack", "facility_high_density_rack":
+            return STORAGE_CENTER
+        "packing", "facility_parallel_pack", "facility_fast_pack_cell":
+            return PACKING_CENTER
+        "forklift":
+            return FORKLIFT_CENTER
+        "facility_double_dock", "facility_buffer_yard":
+            return INBOUND_CENTER
+        "receiving_annex", "inbound_carrier_program":
+            return ANNEX_CENTER
+        "routing_balanced", "routing_express", "routing_consolidated":
+            return OUTBOUND_CENTER
+        _:
+            return CENTER_FLOOR
+
+
+func _measurement_extent(kind: String) -> Vector2:
+    match kind:
+        "rack", "facility_fast_pick_rack", "facility_high_density_rack":
+            return Vector2(1.65, 2.35)
+        "packing", "facility_parallel_pack", "facility_fast_pack_cell":
+            return Vector2(1.65, 1.45)
+        "facility_double_dock", "facility_buffer_yard":
+            return Vector2(1.80, 1.35)
+        "receiving_annex", "inbound_carrier_program":
+            return Vector2(2.10, 1.45)
+        "routing_balanced", "routing_express", "routing_consolidated":
+            return Vector2(1.70, 1.15)
+        "forklift":
+            return Vector2(1.25, 1.10)
+        _:
+            return Vector2(1.55, 1.15)
+
+
+func _measurement_color(state: String) -> Color:
+    match state:
+        "improved":
+            return MINT
+        "regressed":
+            return AMBER
+        _:
+            return FLAT_BLUE
 
 
 func _spawn_feedback(
@@ -189,6 +258,7 @@ func _spawn_feedback(
     last_center = center
     last_half_extents = half_extents
     last_lifetime = lifetime
+    last_color = color
 
     _active_pulses.append(pulse)
     while _active_pulses.size() > MAX_ACTIVE_PULSES:
