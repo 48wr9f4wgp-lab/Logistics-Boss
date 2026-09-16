@@ -1,6 +1,7 @@
 extends Node
 class_name LogisticsGameFeel
 
+const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 const MIX_RATE := 22050
 const MAX_SAMPLE := 32767.0
 const SHIPMENT_HAPTIC_EVERY := 5
@@ -9,6 +10,7 @@ var sim: WarehouseSim
 var audio_enabled := true
 var haptics_enabled := true
 var feedback_count := 0
+var last_measurement_state := ""
 
 var _player: AudioStreamPlayer
 var _shipment_feedback_count := 0
@@ -49,11 +51,17 @@ func _on_sim_event(event: Dictionary) -> void:
         "measurement_completed":
             var before: Dictionary = event.get("before", {})
             var after: Dictionary = event.get("after", {})
-            var delta := float(after.get("shipments_per_min", 0.0)) - float(before.get("shipments_per_min", 0.0))
-            if delta >= 0.5:
-                _feedback([560.0, 700.0], 0.045, 0.10, 22)
-            elif delta <= -0.5:
-                _feedback([280.0, 230.0], 0.055, 0.08, 28)
+            var verdict: Dictionary = event.get("verdict", {})
+            if verdict.is_empty():
+                verdict = FlowMeasurementScript.classify_result(before, after)
+            last_measurement_state = String(verdict.get("state", "flat"))
+            match last_measurement_state:
+                "improved":
+                    _feedback([560.0, 700.0, 860.0], 0.045, 0.11, 22)
+                "regressed":
+                    _feedback([280.0, 230.0], 0.055, 0.08, 28)
+                _:
+                    _feedback([430.0, 470.0], 0.035, 0.055, 8)
 
 
 func _feedback(frequencies: Array[float], segment_seconds: float, gain: float, vibration_ms: int) -> void:
