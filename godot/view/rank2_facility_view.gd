@@ -43,6 +43,12 @@ func _rebuild_if_needed(force: bool) -> void:
     if sim.facility_rank < 2:
         return
 
+    # Rank 2 must read as a facility-scale promotion before the player buys any
+    # optional zone. The rear operations spine is permanent infrastructure, not
+    # fake automation: it adds a management deck, safety rails and status board
+    # while keeping the open-top logistics floor unobstructed.
+    _build_operations_spine()
+
     if bool(sim.facilities.get("double_dock", false)):
         _build_double_dock()
     elif bool(sim.facilities.get("buffer_yard", false)):
@@ -68,6 +74,36 @@ func _facility_signature() -> String:
         sim.selected_facility_for_group("storage"),
         sim.selected_facility_for_group("packing"),
     ]
+
+
+func _build_operations_spine() -> void:
+    var root := _group("Rank2_OperationsSpine")
+
+    # A rear mezzanine changes the warehouse silhouette without crossing the
+    # portrait camera or hiding the process floor. It persists into Rank 3 so the
+    # facility visibly grows by accumulation instead of swapping one facade for another.
+    _box(root, "OpsDeck", Vector3(4.90, 0.16, 0.96), Vector3(0.0, 2.18, -4.08), STEEL_LIGHT)
+    for x in [-2.22, 2.22]:
+        _box(root, "OpsSupport", Vector3(0.14, 2.16, 0.14), Vector3(x, 1.08, -4.08), STEEL)
+
+    _box(root, "OpsFrontRail", Vector3(4.72, 0.10, 0.10), Vector3(0.0, 2.77, -3.62), CYAN)
+    _box(root, "OpsBackRail", Vector3(4.72, 0.10, 0.10), Vector3(0.0, 2.77, -4.54), STEEL)
+    for x in [-2.18, -0.72, 0.72, 2.18]:
+        _box(root, "OpsRailPost", Vector3(0.08, 0.62, 0.08), Vector3(x, 2.48, -3.62), STEEL)
+
+    _box(root, "OpsConsoleBank", Vector3(2.18, 0.52, 0.34), Vector3(0.0, 2.49, -4.15), STEEL)
+    var screen := _box(root, "OpsStatusBoard", Vector3(1.74, 0.28, 0.045), Vector3(0.0, 2.52, -3.96), CYAN)
+    var screen_material := screen.material_override as StandardMaterial3D
+    if screen_material != null:
+        screen_material.emission_enabled = true
+        screen_material.emission = CYAN
+        screen_material.emission_energy_multiplier = 1.35
+
+    # Ground stripe ties the promoted management spine back to the operating floor
+    # and remains readable at phone scale without adding another text label.
+    _box(root, "OpsFloorStripe", Vector3(5.10, 0.025, 0.10), Vector3(0.0, 0.045, -3.46), CYAN)
+    _status_light(root, Vector3(-2.05, 2.90, -3.60), MINT)
+    _status_light(root, Vector3(2.05, 2.90, -3.60), MINT)
 
 
 func _build_double_dock() -> void:
