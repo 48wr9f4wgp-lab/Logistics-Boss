@@ -30,12 +30,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
+      # ubuntu-latest already includes the Android SDK + sdkmanager. Installing
+      # through android-actions/setup-android currently requests the retired
+      # package named "tools", so use the runner SDK directly and install only
+      # the exact packages required by this export smoke.
       - name: Install Android SDK packages
         shell: bash
         run: |
           set -euo pipefail
+          test -n "${ANDROID_HOME:-}"
+          command -v sdkmanager
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager \
             "platform-tools" \
