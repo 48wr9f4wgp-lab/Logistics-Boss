@@ -12,6 +12,7 @@ const Rank2FacilityViewScript = preload("res://view/rank2_facility_view.gd")
 const Rank3ReceivingAnnexViewScript = preload("res://view/rank3_receiving_annex_view.gd")
 const Rank3RoutingHubViewScript = preload("res://view/rank3_routing_hub_view.gd")
 const GameHudScript = preload("res://ui/game_hud_mobile.gd")
+const SessionResumeBriefScript = preload("res://ui/session_resume_brief.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 const GameFeelScript = preload("res://feedback/game_feel.gd")
 const AnalyticsScript = preload("res://telemetry/analytics_service.gd")
@@ -28,7 +29,7 @@ var _autosave_timer := 0.0
 func _ready() -> void:
     sim = WarehouseSimScript.new()
     save_store = SaveStoreScript.new()
-    save_store.load_into(sim)
+    var resumed_session := save_store.load_into(sim)
 
     var view: WarehouseView = WarehouseViewScript.new()
     add_child(view)
@@ -60,6 +61,14 @@ func _ready() -> void:
     hud.bind_sim(sim)
     add_child(hud)
 
+    # Returning players get a five-second continuity brief built only from the
+    # restored Domain state. Fresh saves and active FTUE keep the onboarding band.
+    var resume_brief: LogisticsSessionResumeBrief = SessionResumeBriefScript.new()
+    hud.add_child(resume_brief)
+    var ftue_step := String(hud.call("current_ftue_step")) if hud.has_method("current_ftue_step") else ""
+    var should_show_resume := resumed_session and (ftue_step.is_empty() or ftue_step == "complete")
+    resume_brief.bind(sim, should_show_resume)
+
     var visual_pass_3: WarehouseVisualPass3 = WarehouseVisualPass3Script.new()
     view.add_child(visual_pass_3)
     visual_pass_3.bind(view, hud)
@@ -90,6 +99,12 @@ func _ready() -> void:
     add_child(analytics)
     analytics.bind_sim(sim)
     analytics.bind_hud(hud)
+    if resumed_session:
+        analytics.record("session_resume", {
+            "facility_rank": sim.facility_rank,
+            "active_contract": not sim.active_contract.is_empty(),
+            "bottleneck": String(sim.bottleneck().get("key", "stable")),
+        })
 
     game_feel = GameFeelScript.new()
     add_child(game_feel)
