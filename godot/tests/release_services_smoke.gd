@@ -1,6 +1,7 @@
 extends SceneTree
 
 const SimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
+const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 const AnalyticsScript = preload("res://telemetry/analytics_service.gd")
 const HealthScript = preload("res://telemetry/runtime_health.gd")
 const GameFeelScript = preload("res://feedback/game_feel.gd")
@@ -60,6 +61,47 @@ func _run() -> void:
     var tone: AudioStreamWAV = game_feel._build_tone([440.0, 660.0], 0.03, 0.10)
     if tone == null or tone.data.is_empty():
         _fail("procedural feedback audio must produce a valid stream")
+        return
+
+    var feedback_before := game_feel.feedback_count
+    var flat_before := {"shipments_per_min": 50.0}
+    var flat_after := {"shipments_per_min": 50.6}
+    var flat_verdict: Dictionary = FlowMeasurementScript.classify_result(flat_before, flat_after)
+    sim.emit_signal("event_emitted", {
+        "type": "measurement_completed",
+        "before": flat_before,
+        "after": flat_after,
+        "verdict": flat_verdict,
+    })
+    if game_feel.last_measurement_state != "flat":
+        _fail("game feel must use the domain verdict instead of a fixed +/-0.5 threshold")
+        return
+    if game_feel.feedback_count != feedback_before + 1:
+        _fail("flat measurement must still receive subtle neutral audio/haptic feedback")
+        return
+
+    var improved_before := {"shipments_per_min": 20.0}
+    var improved_after := {"shipments_per_min": 22.0}
+    sim.emit_signal("event_emitted", {
+        "type": "measurement_completed",
+        "before": improved_before,
+        "after": improved_after,
+        "verdict": FlowMeasurementScript.classify_result(improved_before, improved_after),
+    })
+    if game_feel.last_measurement_state != "improved":
+        _fail("improved measurement must receive positive game feel")
+        return
+
+    var regressed_before := {"shipments_per_min": 20.0}
+    var regressed_after := {"shipments_per_min": 18.0}
+    sim.emit_signal("event_emitted", {
+        "type": "measurement_completed",
+        "before": regressed_before,
+        "after": regressed_after,
+        "verdict": FlowMeasurementScript.classify_result(regressed_before, regressed_after),
+    })
+    if game_feel.last_measurement_state != "regressed":
+        _fail("regressed measurement must receive cautionary game feel")
         return
 
     host.queue_free()
