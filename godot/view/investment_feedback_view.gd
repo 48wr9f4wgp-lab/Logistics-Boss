@@ -192,7 +192,7 @@ func _spawn_feedback(
 
     _active_pulses.append(pulse)
     while _active_pulses.size() > MAX_ACTIVE_PULSES:
-        var oldest := _active_pulses.pop_front()
+        var oldest: Node3D = _active_pulses.pop_front()
         if is_instance_valid(oldest):
             oldest.queue_free()
 
