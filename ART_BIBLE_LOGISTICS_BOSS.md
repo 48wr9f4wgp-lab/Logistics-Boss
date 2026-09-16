@@ -1,6 +1,6 @@
 # LOGISTICS BOSS — Visual Implementation Art Bible
 
-Status: **Canonical visual target proposal**
+Status: **Canonical visual implementation specification**
 Last synchronized: 2026-09-16 JST
 Applies only to: **LOGISTICS BOSS**
 Related: `GDD_LOGISTICS_BOSS.md`, `GAME_DEV_MASTER_RULES.md`
