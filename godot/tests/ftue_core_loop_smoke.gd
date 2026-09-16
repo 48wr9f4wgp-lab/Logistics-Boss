@@ -190,8 +190,151 @@ func _run() -> void:
         _fail("an improved result with a new bottleneck must still guide the player into the next decision")
         return
 
+    # End-to-end regression: use a separate fresh simulation and only production
+    # controls/events. This closes observe -> decide -> invest -> measure -> decide
+    # through the real 25-second FlowMeasurement path rather than a synthetic event.
+    var e2e_sim = WarehouseSimScript.new()
+    var e2e_events: Array[Dictionary] = []
+    e2e_sim.event_emitted.connect(func(event: Dictionary):
+        e2e_events.append(event.duplicate(true))
+    )
+    e2e_sim.money += 100000
+    for _index in range(300):
+        e2e_sim.step(0.1)
+
+    var e2e_hud: ReleaseGameHud = ReleaseHudScript.new()
+    get_root().add_child(e2e_hud)
+    await process_frame
+    e2e_hud.bind_sim(e2e_sim)
+    await process_frame
+
+    _force_packing_bottleneck(e2e_sim)
+    e2e_hud._render()
+    if e2e_hud._bottleneck == null or not e2e_hud._bottleneck.text.contains("梱包"):
+        _fail("E2E core loop must begin from a readable observed bottleneck")
+        return
+
+    e2e_hud._sync_measurement_followup_cta()
+    if e2e_hud._manage_button == null or e2e_hud._manage_button.text != "管理":
+        _fail("E2E core loop must expose the normal Management decision control")
+        return
+    e2e_hud._manage_button.emit_signal("pressed")
+    await process_frame
+    if e2e_hud._sheet == null or not e2e_hud._sheet.visible:
+        _fail("E2E Management control must open the real decision surface")
+        return
+
+    var speed_button := e2e_hud._upgrade_buttons.get(&"speed") as Button
+    if speed_button == null or not speed_button.visible:
+        _fail("E2E Rank 1 Management must expose the flow-training investment")
+        return
+    var money_before: int = int(e2e_sim.money)
+    speed_button.emit_signal("pressed")
+    await process_frame
+    if e2e_sim.money >= money_before:
+        _fail("E2E investment must spend authoritative Domain cash")
+        return
+    if not _has_event(e2e_events, "upgrade_purchased", "speed"):
+        _fail("E2E investment must emit the authoritative upgrade event")
+        return
+    if e2e_hud._measurement_label == null or not e2e_hud._measurement_label.text.contains("計測中"):
+        _fail("E2E investment must immediately enter the visible measurement phase")
+        return
+
+    e2e_hud._manage_button.emit_signal("pressed")
+    await process_frame
+    if e2e_hud._sheet.visible:
+        _fail("E2E player must be able to return to warehouse observation while measuring")
+        return
+
+    for index in range(260):
+        if index >= 235:
+            _force_packing_bottleneck(e2e_sim)
+        e2e_sim.step(0.1)
+    await process_frame
+
+    var measurement: Dictionary = _latest_measurement(e2e_events, "speed")
+    if measurement.is_empty():
+        _fail("E2E real investment must complete a 25-second measurement event")
+        return
+    if absf(float(measurement.get("window_seconds", 0.0)) - 25.0) > 0.01:
+        _fail("E2E measurement must retain the canonical 25-second after-window")
+        return
+
+    var verdict: Dictionary = measurement.get("verdict", {})
+    var verdict_state := String(verdict.get("state", ""))
+    if verdict_state not in ["improved", "flat", "regressed"]:
+        _fail("E2E completed measurement must carry an authoritative verdict")
+        return
+    var verdict_headline := String(verdict.get("headline", ""))
+    if verdict_headline.is_empty():
+        _fail("E2E completed measurement must expose a player-facing judgment")
+        return
+
+    _force_packing_bottleneck(e2e_sim)
+    e2e_hud._render()
+    var e2e_feedback: Dictionary = e2e_hud.measurement_feedback(measurement)
+    if String(e2e_feedback.get("bottleneck_key", "")) != "packing":
+        _fail("E2E result must read the current authoritative packing bottleneck")
+        return
+    if not bool(e2e_feedback.get("needs_followup", false)):
+        _fail("E2E remaining bottleneck must request another operational decision")
+        return
+    if e2e_hud._measurement_panel == null or not e2e_hud._measurement_panel.visible:
+        _fail("E2E completed measurement must remain visible long enough to be read")
+        return
+    if not e2e_hud._measurement_label.text.contains(verdict_headline):
+        _fail("E2E HUD result must render the authoritative Domain verdict")
+        return
+
+    e2e_hud._sync_measurement_followup_cta()
+    if not e2e_hud._measurement_followup_active or e2e_hud._manage_button.text != "次の判断":
+        _fail("E2E measurement must close the canonical loop into the next decision CTA")
+        return
+
+    e2e_hud._manage_button.emit_signal("pressed")
+    await process_frame
+    e2e_hud._process(0.0)
+    if not e2e_hud._sheet.visible:
+        _fail("E2E next-decision CTA must reopen Management")
+        return
+    if e2e_hud._measurement_followup_active:
+        _fail("E2E opening Management must consume the follow-up CTA state")
+        return
+
+    e2e_hud._manage_button.emit_signal("pressed")
+    await process_frame
+    e2e_hud._process(0.0)
+    if e2e_hud._manage_button.text != "管理":
+        _fail("E2E acknowledged decision must return the persistent control to normal")
+        return
+
+    e2e_hud.queue_free()
     hud.queue_free()
     host.queue_free()
     await process_frame
-    print("Godot FTUE core loop and investment feedback smoke passed")
+    print("Godot FTUE and canonical core loop E2E smoke passed")
     quit(0)
+
+
+func _force_packing_bottleneck(sim) -> void:
+    sim.inbound_queue = 0
+    sim.rack_stock = 0
+    sim.packing_queue = 40
+    sim.packed_queue = 0
+    sim.open_orders = 0
+
+
+func _has_event(events: Array[Dictionary], event_type: String, kind: String) -> bool:
+    for event in events:
+        if String(event.get("type", "")) == event_type and String(event.get("kind", "")) == kind:
+            return true
+    return false
+
+
+func _latest_measurement(events: Array[Dictionary], kind: String) -> Dictionary:
+    for index in range(events.size() - 1, -1, -1):
+        var event: Dictionary = events[index]
+        if String(event.get("type", "")) == "measurement_completed" and String(event.get("kind", "")) == kind:
+            return event
+    return {}
