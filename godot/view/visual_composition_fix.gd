@@ -6,6 +6,14 @@ const OVERVIEW_FOV := 38.5
 const OVERVIEW_START_DISTANCE := 20.5
 const OVERVIEW_MAX_DISTANCE := 25.0
 
+const PREMIUM_FLOOR := Color(0.065, 0.088, 0.105)
+const PREMIUM_NAVY := Color(0.018, 0.038, 0.052)
+const PREMIUM_STEEL := Color(0.080, 0.125, 0.150)
+const INBOUND_TINT := Color(0.050, 0.145, 0.195)
+const PACK_TINT := Color(0.180, 0.105, 0.035)
+const OUTBOUND_TINT := Color(0.040, 0.145, 0.110)
+const APRON_TINT := Color(0.075, 0.095, 0.110)
+
 var warehouse_view: WarehouseView
 
 
@@ -44,6 +52,9 @@ func _apply_composition() -> void:
         camera.fov = BASE_FOV
 
     _reduce_foreground_structure()
+    _apply_north_star_environment()
+    _apply_north_star_palette()
+    _limit_dynamic_shadow_cost()
     _deemphasize_truck()
 
 
@@ -68,6 +79,88 @@ func _tune_structure_recursive(node: Node) -> void:
         _tune_structure_recursive(child)
 
 
+func _apply_north_star_environment() -> void:
+    if warehouse_view == null:
+        return
+
+    for child in warehouse_view.get_children():
+        if child is WorldEnvironment:
+            var world := child as WorldEnvironment
+            if world.environment != null:
+                # Darker industrial base with cool ambient separation. Warm station
+                # practicals remain the local focal lights, matching the Art Bible.
+                world.environment.background_color = Color(0.008, 0.018, 0.029)
+                world.environment.ambient_light_color = Color(0.16, 0.25, 0.32)
+                world.environment.ambient_light_energy = 0.50
+            return
+
+
+func _apply_north_star_palette() -> void:
+    if warehouse_view == null:
+        return
+
+    for child in warehouse_view.get_children():
+        _retint_recursive(child)
+
+
+func _retint_recursive(node: Node) -> void:
+    if node is MeshInstance3D:
+        var mesh_instance := node as MeshInstance3D
+        match str(mesh_instance.name):
+            "Floor":
+                _retint_mesh(mesh_instance, PREMIUM_FLOOR, 0.76, 0.02)
+            "BackWall", "WallColumn", "StorageEndcap":
+                _retint_mesh(mesh_instance, PREMIUM_NAVY, 0.62, 0.08)
+            "CentralAisle":
+                _retint_mesh(mesh_instance, Color(0.085, 0.115, 0.130), 0.74, 0.01)
+            "InboundPad", "InboundZone":
+                _retint_mesh(mesh_instance, INBOUND_TINT, 0.66, 0.02)
+            "PackingPad", "PackZone", "PackHeroBase":
+                _retint_mesh(mesh_instance, PACK_TINT, 0.64, 0.01)
+            "OutboundPad", "OutboundZone":
+                _retint_mesh(mesh_instance, OUTBOUND_TINT, 0.66, 0.02)
+            "TruckApron", "FloorPlate":
+                _retint_mesh(mesh_instance, APRON_TINT, 0.82, 0.01)
+            "PackTable", "PackSideTable":
+                _retint_mesh(mesh_instance, PREMIUM_STEEL, 0.50, 0.12)
+
+    for child in node.get_children():
+        _retint_recursive(child)
+
+
+func _retint_mesh(mesh_instance: MeshInstance3D, color: Color, roughness: float, metallic: float) -> void:
+    var material := mesh_instance.material_override as StandardMaterial3D
+    if material == null:
+        return
+    material.albedo_color = color
+    material.roughness = roughness
+    material.metallic = metallic
+
+
+func _limit_dynamic_shadow_cost() -> void:
+    if warehouse_view == null:
+        return
+
+    # The North Star depends on contrast and local practicals, not on many mobile
+    # shadow maps. Keep the directional key shadow, but make all point lights
+    # shadow-free so visual density can scale without consuming the phone budget.
+    for child in warehouse_view.get_children():
+        _limit_light_recursive(child)
+
+
+func _limit_light_recursive(node: Node) -> void:
+    if node is OmniLight3D:
+        var omni := node as OmniLight3D
+        omni.shadow_enabled = false
+        omni.light_energy = minf(omni.light_energy, 2.8)
+    elif node is DirectionalLight3D:
+        var directional := node as DirectionalLight3D
+        directional.shadow_enabled = true
+
+    for child in node.get_children():
+        _limit_light_recursive(child)
+
+
 func _deemphasize_truck() -> void:
     if warehouse_view == null:
         return
@@ -76,12 +169,14 @@ func _deemphasize_truck() -> void:
     if body != null:
         var body_mat := body.material_override as StandardMaterial3D
         if body_mat != null:
-            body_mat.albedo_color = Color(0.34, 0.42, 0.47)
-            body_mat.roughness = 0.62
+            body_mat.albedo_color = Color(0.30, 0.37, 0.42)
+            body_mat.roughness = 0.66
+            body_mat.metallic = 0.04
 
     var cab := warehouse_view.get_node_or_null("TruckCab") as MeshInstance3D
     if cab != null:
         var cab_mat := cab.material_override as StandardMaterial3D
         if cab_mat != null:
-            cab_mat.albedo_color = Color(0.07, 0.16, 0.24)
-            cab_mat.roughness = 0.54
+            cab_mat.albedo_color = Color(0.045, 0.115, 0.175)
+            cab_mat.roughness = 0.56
+            cab_mat.metallic = 0.08
