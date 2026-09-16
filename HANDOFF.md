@@ -2,45 +2,58 @@
 
 Last updated: 2026-09-16 JST
 
-## 1. Product / Canonical Loop
+## 1. Product / canonical intent
 
-LOGISTICS BOSS is a portrait mobile 3D logistics-management game. The player is the logistics-center owner / operations manager, not a manual parcel carrier or forklift driver.
+LOGISTICS BOSS is a portrait mobile 3D logistics-management / automation-observer game. The player is the logistics-center owner / operations manager, not a manual parcel carrier or forklift driver.
 
 Canonical Core Loop:
 
-**Observe logistics → identify bottleneck → invest / change operations → workers and equipment react autonomously → throughput / revenue / congestion change → measure results → reinvest at larger scale.**
+**Observe logistics → identify bottleneck → invest / change operations → autonomous workers/equipment react → throughput / revenue / congestion change → measure result → reinvest at larger scale.**
 
-Economic state, shipment creation, money, queues, routing, capital ownership, and progression are Domain-authoritative. UI / View must never generate shipment revenue or fake logistics state.
+Canonical Meta Loop:
 
-Current release label: **Code RC Candidate**. It is **not Native RC** yet.
+**contract / operating profit → cash + RP + Logistics Rating → larger facility rank → structural investment → new bottleneck → new operating decision → larger profit.**
 
-## 2. Repository / Current Branches
+Domain owns logistics, money, routing, contracts, progression, and measurement verdicts. UI / View must never invent shipments, revenue, ownership, or progression outcomes.
+
+Current release label: **Code RC Candidate**. It is **not Native RC**.
+
+## 2. Repository / current GitHub state
 
 Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
-Current working branch: `rc/macless-ios-export-ci`
-Open PR: **#60 — Mac-less iOS export CI: generate and verify unsigned Xcode project**
-PR base: `main`
-PR is open and mergeable, but **must not be merged while iOS Export Smoke is red**.
+Current documentation refresh branch: `docs/code-rc-state-refresh`
 
-GitHub state at handoff time:
-- `main` HEAD: `a19203ed8011d41270ada32219f94c0f185f068e` (`Publish Godot web engineering preview`), parent is PR #59 merge `c82046f81c4a7ec0331833bb7de95494d56ced1a`
-- working branch code HEAD before this handoff-doc update: `c8b2cb35d87b6a19f883403058baeb9ad1333398`
-- latest normal Godot CI on that code HEAD: run #155, **success**
-- latest iOS Export Smoke on that code HEAD: run #9, **failure**
+Latest verified feature merge before this documentation refresh:
+- PR #76 — `Restore session context for returning players`
+- merge commit: `2cfc8c65ca482e8597df9565c4c172bba1aede3d`
+- Godot CI #187: **success**
+- iOS Export Smoke #27: **success**
 
-Always re-check GitHub before continuing because this file is a snapshot, not a substitute for repository state.
+Immediately before the documentation refresh there were no open feature PRs.
 
-## 3. Technology / Runtime / External Services
+Recent QA/product milestones:
+- PR #69: authoritative physical queue density for packing/open-order pressure
+- PR #70: immediate Rank 2 physical silhouette upgrade
+- PR #71: in-world investment / rank-up feedback
+- PR #72: Domain-authoritative measurement verdict shared by HUD / audio-haptics / 3D feedback
+- PR #73: measurement result → next-decision CTA
+- PR #74: real Core Loop E2E smoke
+- PR #75: real Meta Loop E2E through Rank 3 using earned operating cash
+- PR #76: returning-session resume brief + `session_resume` local instrumentation
 
-Engine: Godot 4.7.2 Standard
-Language: GDScript
-Renderer: GL Compatibility
-Reference viewport: 390×844 portrait
-Final targets: native iOS + Android
-Godot Web export: engineering preview only
+Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
-Production runtime settings include mobile ETC2/ASTC import support (`textures/vram_compression/import_etc2_astc=true`) so Apple/mobile exports have compatible compressed textures.
+## 3. Technology / targets
+
+- Engine: Godot 4.7.2 Standard
+- Language: GDScript
+- Renderer: GL Compatibility
+- Reference viewport: 390×844 portrait
+- Final targets: native iOS + Android
+- Godot Web / GitHub Pages: engineering preview only
+- Source-controlled export preset: Web only
+- iOS smoke route: ephemeral export preset on GitHub-hosted macOS/Xcode
 
 External services currently used:
 - GitHub repository
@@ -48,91 +61,42 @@ External services currently used:
 - GitHub Pages engineering preview
 
 Not connected / not active:
-- backend
-- database
-- auth/accounts
+- backend / database / accounts
 - cloud save
-- external analytics provider or upload
-- crash provider
-- IAP
-- ads
-- App Store submission
-- Google Play submission
+- external analytics upload / crash provider
+- IAP / ads
+- App Store / Google Play submission
 
-## 4. Important Files
-
-Core / composition:
-- `godot/main.gd`
-- `godot/scenes/main.tscn`
-- `godot/project.godot`
-- `godot/export_presets.cfg`
-
-Domain:
-- `godot/domain/warehouse_sim.gd`
-- `godot/domain/workload_warehouse_sim.gd`
-- `godot/domain/rank3_warehouse_sim.gd`
-- `godot/domain/rank3_inbound_carrier_sim.gd`
-- `godot/domain/flow_measurement.gd`
-- `godot/domain/capital_catalog.gd`
-- `godot/domain/rank2_facility_catalog.gd`
-- `godot/domain/progression_system.gd`
-- `godot/domain/workload_wave_model.gd`
-
-View / 3D:
-- `godot/view/warehouse_view.gd`
-- `godot/view/warehouse_view_mobile.gd`
-- `godot/view/forklift_automation_view.gd`
-- `godot/view/rank2_facility_view.gd`
-- `godot/view/rank3_receiving_annex_view.gd`
-- `godot/view/rank3_routing_hub_view.gd`
-- `godot/view/visual_pass_2.gd`
-- `godot/view/visual_pass_3.gd`
-- `godot/view/visual_composition_fix.gd`
-
-UI / FTUE:
-- `godot/ui/game_hud.gd`
-- `godot/ui/game_hud_ja.gd`
-- `godot/ui/game_hud_waves.gd`
-- `godot/ui/game_hud_rank3.gd`
-- `godot/ui/game_hud_ftue.gd`
-- `godot/ui/game_hud_feedback.gd`
-- `godot/ui/game_hud_release.gd`
-- `godot/ui/game_hud_mobile.gd`
-- `godot/ui/ftue_coach.gd`
-
-Persistence / feedback / telemetry:
-- `godot/persistence/save_store.gd`
-- `godot/feedback/game_feel.gd`
-- `godot/telemetry/analytics_service.gd`
-- `godot/telemetry/runtime_health.gd`
-
-Release / CI:
-- `.github/workflows/godot-ci.yml`
-- `.github/workflows/godot-preview-pages.yml`
-- `.github/workflows/ios-export-smoke.yml` **(PR #60, in progress / red at handoff)**
-- `godot/tools/native_release_inputs.py`
-- `godot/tools/prepare_ios_export.py` **(PR #60)**
-- `godot/native_release_inputs.example.env`
-- `NATIVE_RELEASE_CHECKLIST.md`
-- `HANDOFF.md`
-- `DEV_STATUS.json`
-- `GDD_LOGISTICS_BOSS.md`
-- `GAME_DEV_MASTER_RULES.md`
-
-## 5. Implemented Product State
+## 4. Canonical product state
 
 ### Rank 1 — Small Depot
-Initial state: ¥5,000 / 3 workers / rack 8.
-Flow: Inbound → Store → Rack → Pick → Pack → Ship.
-Controls: BALANCED / INBOUND / SHIP / Pause / 1× / 2× / 4×.
-Capital: Worker / Rack / Worker Speed / Packing / Forklift Automation.
-Forklift automation is real Domain logistics behavior, not cosmetic animation.
 
-### FTUE
-Fresh-save onboarding teaches the core loop: observe bottleneck → change policy → open management → invest → read measured result. Completion is persisted separately from economy save data so experienced saves are not forced through FTUE again.
+Initial state: ¥5,000 / 3 workers / rack capacity 8.
+
+Flow:
+Inbound → Store → Rack → Pick → Pack → Ship.
+
+Controls:
+- BALANCED / INBOUND / SHIP
+- pause / 1× / 2× / 4×
+
+Capital:
+- Worker
+- Rack
+- Worker Speed
+- Packing
+- Forklift Automation
+
+Forklift automation is Domain-authoritative logistics behavior, not fake animation.
+
+Fresh-save FTUE teaches:
+observe → identify bottleneck → change operations → open Management → invest → read measured result.
 
 ### Rank 2 — Warehouse
-Promotion at Logistics Rating 8, minimum five-person crew.
+
+Promotion gate: Logistics Rating 8.
+Minimum crew: 5.
+
 Staffing presets:
 - Receiving 3/1/1
 - Balanced 2/2/1
@@ -141,265 +105,266 @@ Staffing presets:
 - Shipping 1/2/2
 
 Reassignment lock: 30 simulated seconds.
-Expansion zones:
-- Zone A: Double Dock / Buffer Yard
-- Zone B: Fast Pick Rack / High Density Rack
-- Zone C: Parallel Pack / Fast Pack Cell
 
-Deterministic workload waves provide forecast → surge/window cycles so anticipatory staffing is possible.
+Expansion:
+- Zone A Intake: Double Dock / Buffer Yard
+- Zone B Storage: Fast Pick Rack / High Density Rack
+- Zone C Packing: Parallel Pack / Fast Pack Cell
+
+Deterministic forecast/surge workload waves make staffing an anticipatory management decision.
+
+Rank 2 promotion itself now changes the physical facility silhouette via a permanent operations spine, before optional zone purchases.
 
 ### Rank 3 — Fulfillment Center
-Gate:
+
+Promotion gate:
 - all 3 Rank 2 expansion zones
 - equipment assets >= ¥200,000
-- live throughput >= 6 shipments/min
+- live throughput >= 6 shipments/minute
 
-Contracts are optional, not a gate.
+Contracts are optional and are not a Rank 3 gate.
 
-Receiving Annex: ¥24,000, inbound acceptance +14, visible 3D, measured, persisted.
+Receiving Annex:
+- ¥24,000
+- inbound acceptance +14
+- visible 3D
+- measured
+- persisted
 
 Carrier Routing:
 - Balanced Parcel: batch 1 / 3.0s / ¥500 per parcel
 - Express Dispatch: batch 1 / 1.65s / ¥410 per parcel
 - Consolidated Linehaul: batch 4 / 6.8s / ¥620 per parcel
 
-Routing is Domain-authoritative and frozen into SHIP tasks at task start.
+Route / batch / value are frozen at SHIP task start.
 
 High-frequency inbound carrier program:
-- requires Annex
+- Annex required
 - ¥30,000
 - scheduled inbound interval ×0.85
-- equipment asset
-- visible 3D
-- schema-v7 persistence
+- visible / persisted / Domain-authoritative
 
-### Measurement / feedback
-Major capital uses 25s Before / 25s After. Result classification: 改善 / 横ばい / 要再判断. HUD shows shipment delta, operational context and next action.
+Unvalidated AGV / sorter / ASRS systems must not be added without measured product value.
 
-### Save / recovery
-Save schema v7. Primary + backup recovery; semantic-invalid primary can fall back to backup. Autosave every 10s; save on close/pause. FTUE marker is separate.
+## 5. Measurement / feedback / continuation UX
 
-### Production-readiness baseline
-Implemented:
-- procedural feedback audio baseline
-- native haptic hooks through `Input.vibrate_handheld`
-- provider-neutral local analytics/event layer, no external transmission
-- runtime FPS health sampling
-- startup smoke
-- save recovery smoke
-- Rank 1 / Rank 3 soak and save/resume coverage
-- mobile orbit/pinch regression coverage
-- mobile management scrolling regression coverage
+Major investments use a 25s Before / 25s After measurement window.
 
-## 6. Verified UI / Mobile State
+Domain-authoritative verdicts:
+- 改善
+- 横ばい
+- 要再判断
 
-Real iPhone Safari engineering-preview verification after PR #57 confirmed:
-- runtime launches
-- max zoom-out frames the warehouse as an operational whole
-- Rank 3 management layout is readable
-- management content scrolls vertically by touch
-- prior right-edge overflow / overlap blockers are closed
+The same verdict drives:
+- HUD result copy / color / interpretation
+- audio + haptic feedback
+- in-world 3D result pulse
 
-This is Web/Safari verification only. It does not prove native iOS or Android behavior.
+Investment/rank-up feedback is short-lived emissive geometry; no dynamic-light or particle-heavy effect was added.
 
-Visual direction:
-- dark navy industrial base
-- cyan technology accent
-- amber/orange safety accent
-- warm local lighting
-- stylized premium mobile readability
-- open-top / cutaway facility
-- warehouse operation remains the visual focus
-- do not restore roof/truss geometry that obstructs logistics flow
+Measurement results can elevate the existing Management button to `次の判断` when another decision is needed. Improved + stable operation remains visually quiet.
 
-## 7. PR #60 — Current Work: Mac-less iOS Export CI
+Returning sessions now receive a short resume brief derived only from restored Domain state:
+- Rank 1: active contract / next rating milestone
+- Rank 2: Rank 3 zone / asset / throughput progress
+- Rank 3: current bottleneck + existing next growth candidate
 
-Goal: prove the first iOS native-export gate on GitHub-hosted macOS/Xcode without a local Mac and without inventing production Apple identifiers.
+Fresh saves / active FTUE do not receive the returning-player brief.
 
-Files changed by PR #60 before this HANDOFF update:
-- `.github/workflows/ios-export-smoke.yml`
-- `NATIVE_RELEASE_CHECKLIST.md`
-- `godot/project.godot`
-- `godot/tools/prepare_ios_export.py`
+No daily reward, fake login timer, offline-income system, or artificial retention mechanic has been added.
 
-Implemented on the branch:
-- ephemeral iOS export-preset generator
-- validates Team ID / Bundle ID via existing validator
-- refuses duplicate iOS target in base preset
-- keeps committed `godot/export_presets.cfg` Web-only
-- synthetic CI-only Team ID / Bundle ID
-- macOS-14 runner + Xcode + Godot 4.7.2 export templates
-- macOS parse/import of the real project
-- unsigned project-only iOS export
-- payload validation and intended Artifact upload
-- mobile ETC2/ASTC texture-import setting in `godot/project.godot`
+## 6. Save / instrumentation / runtime services
 
-Production identifiers, certificates, provisioning profiles and signing secrets are **not** committed.
+Save schema: v7.
 
-## 8. Exact Current Failure — iOS Export Smoke #9
+Persistence:
+- primary local JSON + backup
+- semantic-invalid primary can fall back to backup
+- autosave every 10s
+- save on close / pause
+- FTUE marker persisted separately from economy save
 
-Normal Godot CI #155 is green.
+Instrumentation:
+- provider-neutral local event layer
+- no external upload
+- Core / Meta Loop events, FTUE, investments, measurement results, rank-up, session start/suspend/resume are instrumented
 
-`Logistics Boss iOS Export Smoke` run #9 is red at the payload-validation step, **after Godot successfully generated the iOS Xcode project payload**.
+Runtime services:
+- procedural gameplay feedback audio baseline
+- native haptic hooks via `Input.vibrate_handheld`
+- FPS health sampling
 
-Observed generated files include:
-- `ios-build/LogisticsBoss.xcodeproj/project.pbxproj`
-- `ios-build/LogisticsBoss/LogisticsBoss-Info.plist`
-- `ios-build/LogisticsBoss.xcframework/Info.plist`
-- `ios-build/LogisticsBoss.xcframework/ios-arm64/libgodot.a`
-- `ios-build/MoltenVK.xcframework/Info.plist`
-- `ios-build/LogisticsBoss.pck`
+## 7. QA state
 
-The validator currently searches specifically for a file named `data.pck`, so it reports:
+The repository has automated coverage for:
+- parse/import
+- Domain simulation
+- economy pacing
+- flow measurement
+- Rank 1 / Rank 2 / Rank 3 progression
+- workload waves
+- Rank 2 facilities / Rank 3 Annex / routing / inbound carrier
+- Core Loop E2E
+- Meta Loop E2E through Rank 3
+- runtime startup
+- FTUE
+- release HUD / mobile management scroll
+- touch orbit + pinch
+- save recovery / migration
+- release-candidate soak
+- Japanese font glyphs
+- visual readability
+- Web engineering export
+- unsigned iOS Xcode-project export smoke
 
-`Missing non-empty data.pck in generated iOS payload`
+Core Loop E2E uses real simulation and real 25-second measurement completion.
 
-But Godot generated the project pack as **`ios-build/LogisticsBoss.pck`**. Therefore the immediate failure is the smoke-test filename assumption, not evidence that the iOS Xcode project failed to generate.
+Meta Loop E2E uses real shipment contracts and operating profit; it does not inject test cash to fund Rank 2 / Rank 3 growth.
 
-There is also a Godot warning during export:
-`Property not found: application/boot_splash/fullsize`
-This is currently a warning, not the run #9 failure. Do not hide it; assess later if it becomes relevant to native launch-screen quality.
+## 8. Visual implementation state
 
-GitHub Actions also emits a Node 20 deprecation warning for `actions/checkout@v4` being forced onto Node 24. This is not the run #9 failure.
+Canonical visual implementation spec:
+- `ART_BIBLE_LOGISTICS_BOSS.md`
 
-## 9. Immediate Next Task
+Canonical North Star asset:
+- `docs/visual/logistics_boss_visual_north_star_2026-09-16.png`
 
-**First re-check GitHub / PR #60 / current branch before editing.** Do not assume this snapshot is still current.
+Visual priorities:
+Flow readability → Interaction clarity → Bottleneck readability → Visible progression → Stable performance → Premium lighting/materials → Decorative density.
 
-If state is unchanged, fix `.github/workflows/ios-export-smoke.yml` so PCK validation accepts the actual project-pack output instead of requiring the literal filename `data.pck`.
+Must preserve:
+- open-top / cutaway warehouse
+- readable Inbound → Storage → Picking → Packing → Shipping flow
+- dark navy / cyan / amber / warm-work-light palette
+- visible bottleneck pressure
+- autonomous workers / forklift / cargo
+- physical Rank growth
+- restrained portrait HUD
 
-Likely safe condition: require at least one non-empty `*.pck` in `ios-build`, and preferably assert/print the actual path (`ios-build/LogisticsBoss.pck` on run #9). Keep the checks for `.xcodeproj`, Info.plist, `libgodot.a`, MoltenVK, and engine/script errors.
+Important validation caveat:
+- the latest visual passes are protected by code/CI visual smokes;
+- the last explicitly recorded actual rendered screenshot inspection predates the newest visual passes;
+- therefore do **not** claim latest visual changes are human visually confirmed until a current runtime capture / device pass is completed.
 
-Then:
-1. commit the CI fix to `rc/macless-ios-export-ci`
-2. let PR CI start
-3. check each new CI run at most once per conversation turn; do **not** poll in a loop
-4. if iOS smoke fails, fetch the failed job log once, diagnose, fix
-5. if normal Godot CI and iOS Export Smoke are both green, verify Artifact exists
-6. only then merge PR #60
+This caveat does not change the Code RC Candidate label, but it remains part of final device QA.
 
-## 10. PR #60 Completion Conditions
+## 9. iOS export route — proven unsigned path
 
-PR #60 is complete only when:
-- normal Godot CI is green
-- iOS Export Smoke is green
-- macOS parse/import passes
-- unsigned iOS Xcode project payload is generated
-- required Xcode/framework/PCK files are validated
-- `logistics-boss-ios-xcode-smoke` Artifact uploads successfully
-- no production Apple identifier/signing secret is committed
-- committed `godot/export_presets.cfg` remains Web-only
-- PR #60 is merged to `main`
+The previous PR #60 macOS CI issue is resolved and obsolete.
 
-Do not call the route proven until the green smoke + Artifact are actually observed.
+Current proven route:
+- GitHub-hosted macOS + Xcode
+- Godot 4.7.2 + templates
+- synthetic CI-only identifiers
+- ephemeral iOS export preset
+- unsigned Xcode project export
+- Xcode project / framework / PCK payload validation
+- `logistics-boss-ios-xcode-smoke` artifact path
 
-## 11. Native Release Inputs / Secrets
+Latest iOS Export Smoke verified above is green.
 
-The repository provides:
-- `godot/native_release_inputs.example.env`
-- `godot/tools/native_release_inputs.py`
+Production Apple identifiers / certificates / provisioning profiles are not committed.
 
-Expected variable names:
+## 10. Remaining blockers before Native RC
+
+These are now the primary blockers; do not invent or bypass them.
 
 ### iOS
-- `LOGISTICS_BOSS_IOS_TEAM_ID`
-- `LOGISTICS_BOSS_IOS_BUNDLE_ID`
+- final Apple Developer Team ID
+- final Bundle Identifier
+- authorized signing/provisioning material
+- signed iOS build / TestFlight candidate
+- physical iPhone native QA
 
 ### Android
-- `LOGISTICS_BOSS_ANDROID_PACKAGE`
-- `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`
-- `GODOT_ANDROID_KEYSTORE_RELEASE_USER`
-- `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`
+- final package ID
+- release keystore path / alias / password through secure export-time inputs
+- signed APK / AAB candidate
+- physical Android QA
 
-Do not place actual passwords, private keys, certificates or keystore secrets in chat, source control, HANDOFF, or committed env files.
+Required physical-device pass includes:
+- cold launch
+- fresh FTUE
+- existing schema-v7 load
+- kill/relaunch save survival
+- background/resume
+- safe-area / Dynamic Island / Android navigation clearance
+- orbit / pinch at edges and max zoom-out
+- Management touch scrolling / no horizontal drift
+- audio policy behavior
+- haptic behavior
+- Rank 1 → 2 → 3 reachability
+- all routing modes after save/reload
+- 10+ minute mature Rank 3 representative session
+- no sustained sub-30 FPS on target device
+- current visual inspection against the Art Bible / North Star
 
-`godot/export_presets.cfg` is intentionally Web-only in source control. Native production presets should be produced only from confirmed real identifiers, preferably ephemerally at build time.
+Do **not** call the build Native RC until both native platform gates pass.
 
-## 12. Remaining Native / Release Work — Priority Order
+## 11. External actions requiring explicit user approval
 
-P0 — Finish PR #60 and prove unsigned macOS CI export.
+Do not perform without explicit approval:
+- Apple / Google developer account purchase or paid renewal
+- production signing-key generation / rotation on the user's behalf
+- App Store submission
+- Google Play submission
+- TestFlight / Play external distribution where it creates external impact
+- IAP / ads / monetization activation
+- external analytics/crash-provider contract or data upload
 
-P0 — Obtain/confirm real iOS Apple Developer Team ID and final Bundle Identifier. Do not invent them.
+## 12. Important files
 
-P0 — Establish authorized Apple signing/provisioning in CI and produce signed iOS build/TestFlight candidate. No paid account purchase or Store action without explicit user approval.
+Canonical / design:
+- `GAME_DEV_MASTER_RULES.md`
+- `GDD_LOGISTICS_BOSS.md`
+- `ART_BIBLE_LOGISTICS_BOSS.md`
+- `docs/visual/README.md`
+- `docs/visual/logistics_boss_visual_north_star_2026-09-16.png`
 
-P0 — Physical iPhone native QA: cold launch, fresh FTUE, schema-v7 save/load, kill/relaunch, background/resume, Safe Area/Dynamic Island, touch orbit/pinch, management scroll, audio, haptics, Rank 1→2→3, routing modes, sustained Rank 3 performance.
+Runtime:
+- `godot/main.gd`
+- `godot/domain/warehouse_sim.gd`
+- `godot/domain/workload_warehouse_sim.gd`
+- `godot/domain/rank3_warehouse_sim.gd`
+- `godot/domain/rank3_inbound_carrier_sim.gd`
+- `godot/domain/flow_measurement.gd`
+- `godot/view/`
+- `godot/ui/`
+- `godot/persistence/save_store.gd`
+- `godot/feedback/game_feel.gd`
+- `godot/telemetry/analytics_service.gd`
+- `godot/telemetry/runtime_health.gd`
 
-P0 — Confirm final Android package ID and signing inputs; add Android native export route and signed APK/AAB candidate.
+Release / QA:
+- `.github/workflows/godot-ci.yml`
+- `.github/workflows/godot-preview-pages.yml`
+- `.github/workflows/ios-export-smoke.yml`
+- `godot/tools/native_release_inputs.py`
+- `godot/tools/prepare_ios_export.py`
+- `NATIVE_RELEASE_CHECKLIST.md`
+- `DEV_STATUS.json`
 
-P0 — Physical Android QA equivalent to iOS native gate.
+## 13. Development rules for the next chat
 
-P1 — Fix native-specific issues discovered by physical-device QA and repeat build → test → regression until clean.
+- Re-check GitHub before editing.
+- `main` is canonical baseline; do not infer unpushed/local state.
+- Meaningful changes should use branch → PR → CI → merge.
+- Do not repeatedly poll the same CI run.
+- If CI fails, inspect the failed log once, diagnose, then fix.
+- Never say fixed / complete without validation.
+- Boot / input / progression blockers outrank polish.
+- Do not add fake logistics or fake advanced machinery.
+- Do not grow visual-pass layer numbers indefinitely; consolidate presentation responsibilities.
+- Public release, Store submission, paid services, signing-material actions, and other external/irreversible operations require explicit approval.
 
-P1 — Declare **Native RC** only after both platform gates pass.
+## 14. Immediate next task
 
-P2 — Store metadata/assets/privacy/support/price/distribution preparation, TestFlight/Play internal testing, Store submission. These are external release actions and require explicit approval where applicable.
+Code-level product / QA work is substantially converged.
 
-## 13. Important Design Decisions / Reasons
-
-- **Godot native-first, Web preview only:** final product is native mobile; the old Three.js/PWA-first direction is superseded.
-- **Domain-authoritative economy/logistics:** prevents UI animation from manufacturing shipment/revenue state and keeps testing meaningful.
-- **Major capital must be visible + authoritative + measurable:** avoids numeric-only upgrades and keeps the management fantasy legible.
-- **Rank 2 staffing lock + deterministic forecasts:** makes staffing anticipatory management rather than twitch micromanagement.
-- **Rank 3 carrier program chosen after simulation research:** increased scheduled inbound cadence materially increased shipments; several AGV/sorter/ASRS-style or downstream candidates did not prove throughput value.
-- **Native identifiers are never guessed:** Bundle/package IDs become durable external product identity; signing material is account-owned and secret-bearing.
-- **Ephemeral native export presets:** keeps fake/secret production identity out of committed source while allowing CI export.
-- **Mac-less first iOS gate:** GitHub-hosted macOS/Xcode is used to avoid forcing a Mac purchase before the route is technically proven.
-
-## 14. Rejected / Avoided Changes
-
-Do not restore or introduce without new evidence/approval:
-- production Three.js `/docs` implementation or PWA-first path
-- manual parcel carrying / manual forklift-driving core gameplay
-- UI/View-generated money or shipments
-- fake automation visuals disconnected from Domain behavior
-- AGV / sorter / ASRS / cross-dock as automatic feature additions without measurement proving product value
-- mandatory contracts as Rank 3 gate
-- roof/truss geometry that obstructs warehouse flow
-- SystemFont for Japanese; embedded Japanese font is required
-- `visual_pass_4`, `visual_pass_5`, etc. layer proliferation; consolidate instead
-- placeholder production Bundle IDs / Android package IDs
-- signing secrets committed to repository
-- declaring fixes complete without build/test/runtime verification
-
-## 15. Build / Test / Deployment Rules
-
-Canonical development loop:
-**build → automated test → browser/device verify where applicable → regression**.
-
-Main normal CI is broad and covers startup, Domain, Rank 2/3, FTUE, mobile input, save recovery, soak, visual/font/full-scene, release services and Web export.
-
-Web engineering preview:
-`https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/`
-
-Pages success is not equivalent to native success.
-
-For CI investigation: never repeatedly poll when no state changes. Check once per user turn. If running, report/stop. If failed, fetch logs once and fix. If a new CI starts after a fix, check it once; if still running/queued, stop.
-
-## 16. Local / Uncommitted State
-
-No local working tree was available to this handoff update; development was performed directly against GitHub through repository actions. Therefore local/uncommitted files are **not inspectable**. Do not claim they are clean on an unknown local machine.
-
-GitHub branch changes are committed. At the handoff snapshot, the known unfinished work is committed on `rc/macless-ios-export-ci` and represented by open PR #60; it is not merged to `main`.
-
-## 17. Documentation State
-
-`HANDOFF.md`: exists and was updated on `rc/macless-ios-export-ci` specifically for this PR #60 handoff.
-
-`GDD_LOGISTICS_BOSS.md`: synchronized to Code RC / Godot-native direction on 2026-09-16.
-
-`NATIVE_RELEASE_CHECKLIST.md`: updated by PR #60 with Mac-less iOS bootstrap flow, but its prose describes the intended smoke behavior; the actual smoke is still red until the PCK validation bug is fixed.
-
-`DEV_STATUS.json`: exists but is stale relative to PR #60; it still describes native iOS as blocked on identifiers/signing/device QA and does not record the in-progress Mac-less export smoke. Trust current GitHub/CI state over it until refreshed.
-
-## 18. Native RC Definition
-
-Do not call LOGISTICS BOSS Native RC until all are true:
-1. final iOS/Android identifiers confirmed
-2. signed native builds produced
-3. physical iPhone QA passes
-4. physical Android QA passes
-5. safe area / lifecycle / save / touch / audio / haptic behavior verified
-6. representative Rank 3 performance has no sustained sub-30 FPS condition on target devices
-
-Store submission is a later external action, not part of the Native RC definition.
+Next priority is **Native RC preparation**, not another broad feature pass:
+1. keep main CI green and fix only concrete code-level defects found by final audit;
+2. obtain confirmed final iOS / Android identifiers and authorized signing inputs;
+3. produce signed native candidates;
+4. run physical iPhone + Android QA including current visual inspection;
+5. fix native-specific issues and rerun regression;
+6. declare Native RC only when both device gates pass.
