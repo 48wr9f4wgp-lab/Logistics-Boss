@@ -3,11 +3,36 @@ class_name FlowMeasurement
 
 const WINDOW_SECONDS := 25.0
 const HISTORY_SECONDS := 90.0
+const RESULT_IMPROVEMENT_RATIO := 0.05
+const RESULT_MIN_DELTA := 0.5
 
 var _state_samples: Array[Dictionary] = []
 var _order_samples: Array[Dictionary] = []
 var _shipment_events: Array[Dictionary] = []
 var _active_measurements: Array[Dictionary] = []
+
+
+static func classify_result(before: Dictionary, after: Dictionary) -> Dictionary:
+    var before_rate := float(before.get("shipments_per_min", 0.0))
+    var after_rate := float(after.get("shipments_per_min", 0.0))
+    var delta := after_rate - before_rate
+    var threshold := maxf(RESULT_MIN_DELTA, absf(before_rate) * RESULT_IMPROVEMENT_RATIO)
+
+    var state := "flat"
+    var headline := "横ばい"
+    if delta >= threshold:
+        state = "improved"
+        headline = "改善"
+    elif delta <= -threshold:
+        state = "regressed"
+        headline = "要再判断"
+
+    return {
+        "state": state,
+        "headline": headline,
+        "delta": delta,
+        "threshold": threshold,
+    }
 
 
 func record_state(at: float, dt: float, inbound: int, packing: int, outbound: int, orders: int = 0) -> void:
@@ -63,12 +88,14 @@ func collect_completed(at: float) -> Array[Dictionary]:
 
         var before: Dictionary = measurement.get("before", {})
         var after := _metrics(started_at, started_at + WINDOW_SECONDS)
+        var verdict: Dictionary = classify_result(before, after)
         completed.append({
             "kind": String(measurement.get("kind", "")),
             "cost": int(measurement.get("cost", 0)),
             "window_seconds": WINDOW_SECONDS,
             "before": before,
             "after": after,
+            "verdict": verdict,
             "delta": {
                 "shipments_per_min": float(after.get("shipments_per_min", 0.0)) - float(before.get("shipments_per_min", 0.0)),
                 "revenue_per_min": float(after.get("revenue_per_min", 0.0)) - float(before.get("revenue_per_min", 0.0)),
