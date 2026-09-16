@@ -8,10 +8,18 @@ const ORANGE := Color(0.97, 0.49, 0.08)
 const CYAN := Color(0.16, 0.80, 1.0)
 const MINT := Color(0.24, 0.95, 0.67)
 const WARM := Color(1.0, 0.70, 0.31)
+const ALERT := Color(1.0, 0.26, 0.08)
+const ALERT_SOFT := Color(1.0, 0.56, 0.18)
 const CARTON := Color(0.78, 0.53, 0.26)
+const SIGNAL_IDLE_ENERGY := 1.05
+const SIGNAL_WARNING_ENERGY := 3.2
+const SIGNAL_CRITICAL_ENERGY := 4.6
 
 var warehouse_view: WarehouseView
 var hud: GameHud
+var _flow_signals: Dictionary = {}
+var _last_bottleneck_key := ""
+var _last_bottleneck_severity := -1
 
 
 func bind(view: WarehouseView, game_hud: GameHud) -> void:
@@ -20,7 +28,8 @@ func bind(view: WarehouseView, game_hud: GameHud) -> void:
     warehouse_view._camera_distance = 14.85
     warehouse_view._orbit_pitch = -0.61
     warehouse_view._orbit_yaw = -0.80
-    call_deferred("_tune_camera_and_hud")
+    call_deferred("_tune_camera")
+    call_deferred("_sync_domain_bottleneck_signals")
 
 
 func _ready() -> void:
@@ -31,27 +40,18 @@ func _ready() -> void:
     _build_practical_glow()
 
 
-func _tune_camera_and_hud() -> void:
+func _process(_delta: float) -> void:
+    _sync_domain_bottleneck_signals()
+
+
+func _tune_camera() -> void:
     var camera := get_viewport().get_camera_3d()
     if camera != null:
         camera.fov = 30.25
 
-    if hud == null:
-        return
-
-    # Compact only the always-on HUD. Management sheet sizing is left untouched.
-    if hud._money != null:
-        var money_panel := hud._money.get_parent().get_parent()
-        if money_panel is Control:
-            money_panel.custom_minimum_size.y = 52.0
-        var top_row := money_panel.get_parent()
-        if top_row is Control:
-            top_row.offset_top = 42.0
-            top_row.offset_bottom = 98.0
-
-    if hud._bottleneck_panel != null:
-        hud._bottleneck_panel.offset_top = 105.0
-        hud._bottleneck_panel.offset_bottom = 146.0
+    # HUD geometry is owned by the release/mobile HUD classes. Visual passes may
+    # tune the 3D camera, materials and scene readability, but must not rewrite
+    # screen-space layout after the HUD has completed its responsive setup.
 
 
 func _build_pack_focal_cell() -> void:
@@ -131,13 +131,87 @@ func _build_vehicle_readability() -> void:
 
 
 func _build_practical_glow() -> void:
-    # Emissive practicals are deliberately localized; the scene stays industrial, not neon-arcade.
-    _emissive_box("InboundEdge", Vector3(1.95, 0.035, 0.035), Vector3(-5.25, 0.16, 1.18), CYAN, 2.4)
-    _emissive_box("PackEdge", Vector3(2.85, 0.035, 0.035), Vector3(2.55, 0.16, -1.42), WARM, 2.0)
-    _emissive_box("OutboundEdge", Vector3(2.10, 0.035, 0.035), Vector3(5.15, 0.16, 1.10), MINT, 2.4)
+    # These low-cost emissive edges are the in-world operational status layer.
+    # They mirror authoritative bottleneck state instead of inventing a second
+    # visual simulation, so the player can read the problem inside the facility.
+    _register_flow_signal(
+        "inbound",
+        _emissive_box("InboundEdge", Vector3(1.95, 0.045, 0.055), Vector3(-5.25, 0.16, 1.18), CYAN, SIGNAL_IDLE_ENERGY)
+    )
+    _register_flow_signal(
+        "rack",
+        _emissive_box("StorageEdge", Vector3(0.055, 0.045, 4.40), Vector3(-0.12, 0.16, -0.10), Color(0.35, 0.65, 0.88), SIGNAL_IDLE_ENERGY)
+    )
+    _register_flow_signal(
+        "orders",
+        _emissive_box("PickEdge", Vector3(1.45, 0.045, 0.055), Vector3(0.68, 0.16, 1.40), CYAN, SIGNAL_IDLE_ENERGY)
+    )
+    _register_flow_signal(
+        "packing",
+        _emissive_box("PackEdge", Vector3(2.85, 0.045, 0.055), Vector3(2.55, 0.16, -1.42), Color(0.58, 0.34, 0.14), SIGNAL_IDLE_ENERGY)
+    )
+    _register_flow_signal(
+        "outbound",
+        _emissive_box("OutboundEdge", Vector3(2.10, 0.045, 0.055), Vector3(5.15, 0.16, 1.10), MINT, SIGNAL_IDLE_ENERGY)
+    )
 
     _point_light(Vector3(2.55, 3.0, -0.25), WARM, 4.4, 1.55)
     _point_light(Vector3(-1.55, 3.2, -0.70), Color(0.35, 0.65, 0.88), 4.8, 0.80)
+
+
+func _register_flow_signal(key: String, mesh: MeshInstance3D) -> void:
+    _flow_signals[key] = [mesh]
+
+
+func _sync_domain_bottleneck_signals() -> void:
+    if hud == null or hud.sim == null or _flow_signals.is_empty():
+        return
+
+    var info: Dictionary = hud.sim.bottleneck()
+    var active_key := String(info.get("key", "stable"))
+    var severity := int(info.get("severity", 0))
+    if active_key == _last_bottleneck_key and severity == _last_bottleneck_severity:
+        return
+
+    for key_variant in _flow_signals.keys():
+        var key := String(key_variant)
+        var active := key == active_key and active_key != "stable"
+        var color := _base_signal_color(key)
+        var energy := SIGNAL_IDLE_ENERGY
+        if active:
+            color = ALERT if severity >= 2 else ALERT_SOFT
+            energy = SIGNAL_CRITICAL_ENERGY if severity >= 2 else SIGNAL_WARNING_ENERGY
+
+        var meshes: Array = _flow_signals[key]
+        for mesh_variant in meshes:
+            var mesh := mesh_variant as MeshInstance3D
+            if mesh == null:
+                continue
+            var material := mesh.material_override as StandardMaterial3D
+            if material == null:
+                continue
+            material.albedo_color = color
+            material.emission = color
+            material.emission_energy_multiplier = energy
+
+    _last_bottleneck_key = active_key
+    _last_bottleneck_severity = severity
+
+
+func _base_signal_color(key: String) -> Color:
+    match key:
+        "inbound":
+            return CYAN
+        "rack":
+            return Color(0.35, 0.65, 0.88)
+        "orders":
+            return CYAN
+        "packing":
+            return Color(0.58, 0.34, 0.14)
+        "outbound":
+            return MINT
+        _:
+            return Color(0.28, 0.48, 0.56)
 
 
 func _point_light(position: Vector3, color: Color, light_range: float, energy: float) -> void:
