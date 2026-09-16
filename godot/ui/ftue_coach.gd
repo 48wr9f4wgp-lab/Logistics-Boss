@@ -6,6 +6,8 @@ signal completed(skipped: bool)
 
 const JAPANESE_UI_FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
 const DONE_PATH := "user://logistics_boss_ftue_v1.done"
+const COACH_TOP := 152.0
+const COACH_BOTTOM := 214.0
 
 enum Step {
     OBSERVE,
@@ -37,25 +39,28 @@ func _ready() -> void:
     anchor_bottom = 0.0
     offset_left = 12.0
     offset_right = -12.0
-    offset_top = 228.0
-    offset_bottom = 304.0
+    # Keep onboarding directly below the always-on HUD instead of covering the
+    # center of the warehouse. At the 390x844 reference viewport the Management
+    # sheet begins around y=219, so this compact coach remains clear of both.
+    offset_top = COACH_TOP
+    offset_bottom = COACH_BOTTOM
     mouse_filter = Control.MOUSE_FILTER_STOP
     add_theme_stylebox_override("panel", _panel_style())
 
     var margin := MarginContainer.new()
-    margin.add_theme_constant_override("margin_left", 12)
-    margin.add_theme_constant_override("margin_right", 10)
-    margin.add_theme_constant_override("margin_top", 8)
-    margin.add_theme_constant_override("margin_bottom", 8)
+    margin.add_theme_constant_override("margin_left", 10)
+    margin.add_theme_constant_override("margin_right", 8)
+    margin.add_theme_constant_override("margin_top", 6)
+    margin.add_theme_constant_override("margin_bottom", 6)
     add_child(margin)
 
     var row := HBoxContainer.new()
-    row.add_theme_constant_override("separation", 10)
+    row.add_theme_constant_override("separation", 8)
     margin.add_child(row)
 
     var copy := VBoxContainer.new()
     copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    copy.add_theme_constant_override("separation", 2)
+    copy.add_theme_constant_override("separation", 1)
     row.add_child(copy)
 
     _step_label = Label.new()
@@ -73,7 +78,7 @@ func _ready() -> void:
 
     _skip_button = Button.new()
     _skip_button.text = "スキップ"
-    _skip_button.custom_minimum_size = Vector2(62, 40)
+    _skip_button.custom_minimum_size = Vector2(56, 36)
     _skip_button.add_theme_font_override("font", JAPANESE_UI_FONT)
     _skip_button.add_theme_font_size_override("font_size", 9)
     _skip_button.pressed.connect(_skip)
@@ -281,10 +286,10 @@ func _exit_tree() -> void:
 
 func _panel_style() -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
-    style.bg_color = Color(0.018, 0.045, 0.062, 0.97)
-    style.border_color = Color(1.0, 0.58, 0.20, 0.92)
+    style.bg_color = Color(0.018, 0.045, 0.062, 0.95)
+    style.border_color = Color(1.0, 0.58, 0.20, 0.76)
     style.set_border_width_all(1)
-    style.set_corner_radius_all(13)
+    style.set_corner_radius_all(11)
     style.content_margin_left = 0.0
     style.content_margin_right = 0.0
     style.content_margin_top = 0.0
