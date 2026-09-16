@@ -5,6 +5,7 @@ const WarehouseViewScript = preload("res://view/warehouse_view.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
 const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")
 const WarehouseQueuePressureViewScript = preload("res://view/queue_pressure_view.gd")
+const WarehouseInvestmentFeedbackViewScript = preload("res://view/investment_feedback_view.gd")
 const WarehouseVisualCompositionFixScript = preload("res://view/visual_composition_fix.gd")
 const MobileHudScript = preload("res://ui/game_hud_mobile.gd")
 
@@ -38,6 +39,10 @@ func _run() -> void:
     var queue_pressure: WarehouseQueuePressureView = WarehouseQueuePressureViewScript.new()
     view.add_child(queue_pressure)
     queue_pressure.bind(view, sim)
+
+    var investment_feedback: WarehouseInvestmentFeedbackView = WarehouseInvestmentFeedbackViewScript.new()
+    view.add_child(investment_feedback)
+    investment_feedback.bind(view, sim)
 
     var composition: WarehouseVisualCompositionFix = WarehouseVisualCompositionFixScript.new()
     view.add_child(composition)
@@ -84,6 +89,52 @@ func _run() -> void:
     var capped_counts: Dictionary = queue_pressure.visible_backlog_counts()
     assert(int(capped_counts.get("packing", -1)) == WarehouseQueuePressureView.PACKING_VISUAL_CAP, "packing density must stay capped for mobile performance")
     assert(int(capped_counts.get("orders", -1)) == WarehouseQueuePressureView.ORDER_VISUAL_CAP, "order density must stay capped for mobile performance")
+
+    # Investment feedback must react to authoritative Domain events at the affected
+    # physical zone. Rank promotion is intentionally broader than ordinary capital.
+    assert(investment_feedback.feedback_count == 0, "fresh runtime must not fabricate investment feedback")
+
+    sim.emit_signal("event_emitted", {
+        "type": "upgrade_purchased",
+        "kind": "packing",
+    })
+    await process_frame
+    assert(investment_feedback.feedback_count == 1, "capital purchase must create in-world visual feedback")
+    assert(investment_feedback.last_center.distance_to(WarehouseInvestmentFeedbackView.PACKING_CENTER) < 0.01, "packing investment must pulse the packing cell")
+    assert(investment_feedback.last_half_extents.x < 3.0, "ordinary capital feedback must remain local")
+
+    sim.emit_signal("event_emitted", {
+        "type": "facility_purchased",
+        "group": "storage",
+        "kind": "fast_pick_rack",
+    })
+    await process_frame
+    assert(investment_feedback.last_center.distance_to(WarehouseInvestmentFeedbackView.STORAGE_CENTER) < 0.01, "storage facility purchase must pulse storage")
+
+    sim.emit_signal("event_emitted", {
+        "type": "receiving_annex_purchased",
+        "kind": "receiving_annex",
+    })
+    await process_frame
+    assert(investment_feedback.last_center.z > 5.0, "Receiving Annex purchase must pulse the physical annex area")
+
+    sim.emit_signal("event_emitted", {
+        "type": "rank_up",
+        "rank": 3,
+        "name": "Fulfillment Center",
+    })
+    await process_frame
+    assert(investment_feedback.last_event_type == "rank_up", "rank promotion must use dedicated promotion feedback")
+    assert(investment_feedback.last_half_extents.x >= 7.0 and investment_feedback.last_half_extents.y >= 4.5, "rank promotion must outline the whole facility footprint")
+    assert(investment_feedback.last_lifetime > WarehouseInvestmentFeedbackView.INVESTMENT_LIFETIME, "rank promotion must feel more substantial than an ordinary purchase")
+
+    for index in range(10):
+        sim.emit_signal("event_emitted", {
+            "type": "upgrade_purchased",
+            "kind": "worker" if index % 2 == 0 else "speed",
+        })
+    await process_frame
+    assert(investment_feedback.active_pulse_count() <= WarehouseInvestmentFeedbackView.MAX_ACTIVE_PULSES, "rapid purchases must keep feedback node cost bounded")
 
     # The in-world status layer must mirror the authoritative domain bottleneck.
     assert(pass3._flow_signals.size() == 5, "warehouse must expose one operational signal for each bottleneck family")
