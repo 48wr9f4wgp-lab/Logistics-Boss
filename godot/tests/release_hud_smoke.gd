@@ -25,6 +25,39 @@ func _run() -> void:
         _fail("fresh release HUD must expose current FTUE step")
         return
 
+    var brand := hud._find_brand_strip()
+    if brand == null or brand.offset_bottom > 34.0:
+        _fail("release brand strip must stay compact so the warehouse remains the visual hero")
+        return
+
+    var metrics := hud._find_metric_row()
+    if metrics == null or metrics.offset_bottom > 88.0:
+        _fail("release metric row must stay within the compact top command area")
+        return
+    for metric in metrics.get_children():
+        if metric is PanelContainer and (metric as PanelContainer).custom_minimum_size.y > 50.0:
+            _fail("release metric cards must not force the top command area back to prototype height")
+            return
+
+    if hud._bottleneck_panel == null or hud._bottleneck_panel.offset_bottom > 124.0:
+        _fail("release bottleneck director must end before the compact status band")
+        return
+    if hud._ftue_coach == null:
+        _fail("fresh release HUD must build the FTUE coach")
+        return
+    if hud._ftue_coach.offset_top < hud._bottleneck_panel.offset_bottom + 4.0:
+        _fail("FTUE coach must not overlap the always-on bottleneck director")
+        return
+    if hud._ftue_coach.offset_bottom > 214.0:
+        _fail("FTUE coach must remain above the mobile Management sheet start")
+        return
+    if hud._wave_panel == null or hud._wave_panel.offset_top < hud._bottleneck_panel.offset_bottom + 4.0:
+        _fail("workload wave banner must use the compact status band below the permanent HUD")
+        return
+    if hud._wave_panel.visible:
+        _fail("workload wave banner must yield to active fresh-save onboarding")
+        return
+
     if hud._sheet.anchor_top > 0.27:
         _fail("mobile management sheet must use enough vertical screen area for touch navigation")
         return
