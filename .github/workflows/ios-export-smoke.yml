@@ -1,0 +1,132 @@
+name: Logistics Boss iOS Export Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/ios-export-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-export-smoke:
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode environment
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcode-select -p
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Godot version
+        run: godot --version
+
+      - name: Native input validator self-test
+        run: python3 godot/tools/native_release_inputs.py --self-test
+
+      - name: iOS preset generator self-test
+        run: python3 godot/tools/prepare_ios_export.py --self-test
+
+      - name: Generate ephemeral synthetic iOS preset
+        env:
+          LOGISTICS_BOSS_IOS_TEAM_ID: ABCDE12XYZ
+          LOGISTICS_BOSS_IOS_BUNDLE_ID: com.example.logistics-boss-ci
+        run: |
+          set -euo pipefail
+          cp godot/export_presets.cfg /tmp/logistics-boss-web-export-presets.cfg
+          python3 godot/tools/native_release_inputs.py --platform ios
+          python3 godot/tools/prepare_ios_export.py \
+            --base /tmp/logistics-boss-web-export-presets.cfg \
+            --output godot/export_presets.cfg \
+            --preset-name 'iOS CI Project'
+          grep -q 'name="iOS CI Project"' godot/export_presets.cfg
+          grep -q 'application/export_project_only=true' godot/export_presets.cfg
+          grep -q 'export_path="../ios-build/LogisticsBoss"' godot/export_presets.cfg
+
+      - name: Parse/import project on macOS
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --editor --quit 2>&1 | tee /tmp/godot-ios-import.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-import.log; then
+            echo 'Godot macOS parse/import emitted an engine/script error'
+            exit 1
+          fi
+
+      - name: Generate unsigned iOS Xcode project
+        id: ios_export
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          rm -rf ios-build
+          mkdir -p ios-build
+          godot --headless --path godot --export-release 'iOS CI Project' ../ios-build/LogisticsBoss 2>&1 | tee /tmp/godot-ios-export.log
+
+      - name: Validate unsigned iOS Xcode project payload
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -f /tmp/godot-ios-export.log ]; then
+            echo 'Godot iOS export log is missing'
+            exit 1
+          fi
+
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-export.log; then
+            echo 'Godot iOS export emitted an engine/script error'
+            exit 1
+          fi
+
+          require_file() {
+            if [ ! -s "$1" ]; then
+              echo "Missing required iOS export payload: $1"
+              find ios-build -maxdepth 4 -type f -print | sort
+              exit 1
+            fi
+          }
+
+          # Godot project-only iOS export can report a non-zero process status on an
+          # unsigned runner after the complete Xcode payload has been generated.
+          # The smoke-test authority is therefore the generated payload itself.
+          require_file ios-build/LogisticsBoss.xcodeproj/project.pbxproj
+          require_file ios-build/LogisticsBoss/LogisticsBoss-Info.plist
+          require_file ios-build/LogisticsBoss.xcframework/Info.plist
+          require_file ios-build/LogisticsBoss.xcframework/ios-arm64/libgodot.a
+          require_file ios-build/MoltenVK.xcframework/Info.plist
+
+          # Godot names the project PCK after the export target (for example,
+          # LogisticsBoss.pck), and the exact location can vary by template.
+          # Require at least one non-empty PCK anywhere in the generated payload.
+          pck_path="$(find ios-build -type f -name '*.pck' -size +0c -print -quit)"
+          if [ -z "$pck_path" ]; then
+            echo 'Missing non-empty *.pck in generated iOS payload'
+            find ios-build -maxdepth 4 -type f -print | sort
+            exit 1
+          fi
+          echo "Validated PCK: $pck_path"
+
+          echo "Godot export step outcome: ${{ steps.ios_export.outcome }}"
+          ditto -c -k --sequesterRsrc --keepParent ios-build /tmp/LogisticsBoss-ios-project.zip
+          test -s /tmp/LogisticsBoss-ios-project.zip
+          echo 'Unsigned iOS Xcode project payload validated.'
+
+      - name: Upload unsigned iOS Xcode-project smoke artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: logistics-boss-ios-xcode-smoke
+          path: /tmp/LogisticsBoss-ios-project.zip
+          if-no-files-found: error
+          retention-days: 3
