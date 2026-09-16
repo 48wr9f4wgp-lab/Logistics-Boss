@@ -6,7 +6,7 @@ signal completed(skipped: bool)
 
 const JAPANESE_UI_FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
 const DONE_PATH := "user://logistics_boss_ftue_v1.done"
-const COACH_TOP := 152.0
+const COACH_TOP := 156.0
 const COACH_BOTTOM := 214.0
 
 enum Step {
@@ -39,9 +39,9 @@ func _ready() -> void:
     anchor_bottom = 0.0
     offset_left = 12.0
     offset_right = -12.0
-    # Keep onboarding directly below the always-on HUD instead of covering the
-    # center of the warehouse. At the 390x844 reference viewport the Management
-    # sheet begins around y=219, so this compact coach remains clear of both.
+    # At the 390x844 reference viewport the compact release bottleneck chip ends
+    # at y=150 and the Management sheet begins around y=219. Keep onboarding in
+    # the protected gap so neither surface overlaps the warehouse core or each other.
     offset_top = COACH_TOP
     offset_bottom = COACH_BOTTOM
     mouse_filter = Control.MOUSE_FILTER_STOP

@@ -2,7 +2,7 @@ extends SceneTree
 
 const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
 const FtueCoachScript = preload("res://ui/ftue_coach.gd")
-const FeedbackHudScript = preload("res://ui/game_hud_feedback.gd")
+const ReleaseHudScript = preload("res://ui/game_hud_release.gd")
 
 
 func _init() -> void:
@@ -43,6 +43,9 @@ func _run() -> void:
     if coach.offset_top > 170.0 or (coach.offset_bottom - coach.offset_top) > 68.0:
         _fail("FTUE coach must stay compact and below the always-on HUD so it does not cover the warehouse core")
         return
+    if coach.offset_bottom > 218.0:
+        _fail("FTUE coach must stay above the mobile Management sheet at the 390x844 reference viewport")
+        return
 
     coach._process(8.0)
     if coach.current_step_key() != "policy":
@@ -78,11 +81,17 @@ func _run() -> void:
         _fail("experienced saves must not be forced back through FTUE")
         return
 
-    var hud: FeedbackGameHud = FeedbackHudScript.new()
+    var hud: ReleaseGameHud = ReleaseHudScript.new()
     get_root().add_child(hud)
     await process_frame
     hud.bind_sim(sim)
     await process_frame
+    if hud._bottleneck_panel == null:
+        _fail("release HUD must expose the bottleneck director panel")
+        return
+    if coach.offset_top < hud._bottleneck_panel.offset_bottom + 4.0:
+        _fail("FTUE coach must not overlap the release bottleneck director panel")
+        return
 
     var regressed := {
         "type": "measurement_completed",

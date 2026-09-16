@@ -4,6 +4,11 @@ class_name ReleaseGameHud
 
 func _ready() -> void:
     super._ready()
+    if _bottleneck_panel != null:
+        # The release HUD is portrait-first. Keep the single-line director chip
+        # compact so onboarding can sit between it and the Management sheet.
+        _bottleneck_panel.offset_top = 116.0
+        _bottleneck_panel.offset_bottom = 150.0
     if _bottleneck != null:
         _bottleneck.add_theme_font_size_override("font_size", 11)
 
