@@ -4,6 +4,7 @@ const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
 const WarehouseViewScript = preload("res://view/warehouse_view.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
 const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")
+const WarehouseQueuePressureViewScript = preload("res://view/queue_pressure_view.gd")
 const WarehouseVisualCompositionFixScript = preload("res://view/visual_composition_fix.gd")
 const MobileHudScript = preload("res://ui/game_hud_mobile.gd")
 
@@ -34,6 +35,10 @@ func _run() -> void:
     view.add_child(pass3)
     pass3.bind(view, hud)
 
+    var queue_pressure: WarehouseQueuePressureView = WarehouseQueuePressureViewScript.new()
+    view.add_child(queue_pressure)
+    queue_pressure.bind(view, sim)
+
     var composition: WarehouseVisualCompositionFix = WarehouseVisualCompositionFixScript.new()
     view.add_child(composition)
     composition.bind(view)
@@ -58,6 +63,27 @@ func _run() -> void:
     var money_panel := hud._money.get_parent().get_parent() as Control
     var top_row := money_panel.get_parent() as Control
     assert(top_row.offset_bottom <= 87.0, "live metric row must retain the compact release layout in full runtime composition")
+
+    # Physical queue density must mirror Domain counts rather than decorative state.
+    _set_stable(sim)
+    queue_pressure._sync_queues()
+    var stable_counts: Dictionary = queue_pressure.visible_backlog_counts()
+    assert(int(stable_counts.get("packing", -1)) == 0, "stable packing must not show a fake parcel backlog")
+    assert(int(stable_counts.get("orders", -1)) == 0, "stable order flow must not show fake pick totes")
+
+    sim.packing_queue = 7
+    sim.open_orders = 6
+    queue_pressure._sync_queues()
+    var live_counts: Dictionary = queue_pressure.visible_backlog_counts()
+    assert(int(live_counts.get("packing", -1)) == 7, "packing queue density must mirror authoritative packing backlog")
+    assert(int(live_counts.get("orders", -1)) == 6, "order tote density must mirror authoritative open orders")
+
+    sim.packing_queue = 99
+    sim.open_orders = 99
+    queue_pressure._sync_queues()
+    var capped_counts: Dictionary = queue_pressure.visible_backlog_counts()
+    assert(int(capped_counts.get("packing", -1)) == WarehouseQueuePressureView.PACKING_VISUAL_CAP, "packing density must stay capped for mobile performance")
+    assert(int(capped_counts.get("orders", -1)) == WarehouseQueuePressureView.ORDER_VISUAL_CAP, "order density must stay capped for mobile performance")
 
     # The in-world status layer must mirror the authoritative domain bottleneck.
     assert(pass3._flow_signals.size() == 5, "warehouse must expose one operational signal for each bottleneck family")
@@ -88,10 +114,13 @@ func _run() -> void:
     assert(_signal_energy(pass3, "orders") > _signal_energy(pass3, "inbound"), "open-order backlog must highlight the pick/order handoff in 3D")
 
     _set_stable(sim)
+    queue_pressure._sync_queues()
     pass3._sync_domain_bottleneck_signals()
     for key_variant in pass3._flow_signals.keys():
         var key := String(key_variant)
         assert(_signal_energy(pass3, key) <= WarehouseVisualPass3.SIGNAL_IDLE_ENERGY + 0.01, "stable operation must keep all in-world signals visually quiet")
+    var cleared_counts: Dictionary = queue_pressure.visible_backlog_counts()
+    assert(int(cleared_counts.get("packing", -1)) == 0 and int(cleared_counts.get("orders", -1)) == 0, "cleared queues must remove physical backlog density")
 
     view._camera_distance = 25.0
     await process_frame
