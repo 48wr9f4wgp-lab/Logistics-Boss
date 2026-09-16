@@ -30,24 +30,35 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # ubuntu-latest already includes the Android SDK + sdkmanager. Installing
-      # through android-actions/setup-android currently requests the retired
-      # package named "tools", so use the runner SDK directly and install the
-      # exact Godot 4.7 Android SDK set instead.
       - name: Install Android SDK packages
         shell: bash
         run: |
           set -euo pipefail
           test -n "${ANDROID_HOME:-}"
-          command -v sdkmanager
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
+
+          if [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          else
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -path '*/bin/sdkmanager' -print | sort -V | tail -n 1)"
+          fi
+          test -n "$SDKMANAGER"
+          test -x "$SDKMANAGER"
+          "$SDKMANAGER" --version
+
+          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" \
             "platform-tools" \
             "build-tools;35.0.1" \
             "platforms;android-35" \
             "cmdline-tools;latest" \
             "cmake;3.10.2.4988404" \
             "ndk;28.1.13356709"
+
+          test -x "$ANDROID_HOME/platform-tools/adb"
+          test -x "$ANDROID_HOME/build-tools/35.0.1/aapt"
+          test -d "$ANDROID_HOME/platforms/android-35"
+          test -d "$ANDROID_HOME/ndk/28.1.13356709"
+          test -d "$ANDROID_HOME/cmake/3.10.2.4988404"
 
       - uses: chickensoft-games/setup-godot@v2
         with:
