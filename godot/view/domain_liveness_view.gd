@@ -33,7 +33,7 @@ func _sync_workers() -> void:
     if workers_root == null:
         return
 
-    var visible_count := mini(workers_root.get_child_count(), sim.workers.size())
+    var visible_count: int = mini(workers_root.get_child_count(), sim.workers.size())
     for index in visible_count:
         var worker := workers_root.get_child(index) as Node3D
         if worker == null:
@@ -41,9 +41,9 @@ func _sync_workers() -> void:
         _ensure_worker_details(worker)
 
         var data: Dictionary = sim.workers[index]
-        var active := int(data.get("task", WarehouseSim.Task.IDLE)) != WarehouseSim.Task.IDLE
-        var progress := clampf(float(data.get("progress", 0.0)), 0.0, 1.0)
-        var phase := progress * TAU * 3.0 + float(index) * 0.73
+        var active: bool = int(data.get("task", WarehouseSim.Task.IDLE)) != WarehouseSim.Task.IDLE
+        var progress: float = clampf(float(data.get("progress", 0.0)), 0.0, 1.0)
+        var phase: float = progress * TAU * 3.0 + float(index) * 0.73
         _animate_worker(worker, phase, active)
 
 
@@ -70,7 +70,7 @@ func _animate_worker(worker: Node3D, phase: float, active: bool) -> void:
     var right_arm := worker.get_node_or_null("LivenessRightArm") as Node3D
     var cargo := worker.get_node_or_null("Cargo") as Node3D
 
-    var swing := sin(phase) * 0.42 if active else 0.0
+    var swing: float = sin(phase) * 0.42 if active else 0.0
     if left_arm != null:
         left_arm.rotation.x = swing
     if right_arm != null:
@@ -94,7 +94,7 @@ func _sync_forklift() -> void:
     if _beacon == null:
         return
 
-    var active := sim.forklift_unlocked and sim.forklift_active
+    var active: bool = sim.forklift_unlocked and sim.forklift_active
     _beacon.visible = active
     var material := _beacon.material_override as StandardMaterial3D
     if material != null:
@@ -118,13 +118,16 @@ func _ensure_forklift_details() -> void:
         return
 
     if _forklift.get_node_or_null("LivenessWheelFL") == null:
-        for wheel in [
-            ["LivenessWheelFL", Vector3(-0.48, 0.21, -0.34)],
-            ["LivenessWheelFR", Vector3(0.48, 0.21, -0.34)],
-            ["LivenessWheelRL", Vector3(-0.48, 0.21, 0.38)],
-            ["LivenessWheelRR", Vector3(0.48, 0.21, 0.38)],
-        ]:
-            _forklift.add_child(_box(String(wheel[0]), Vector3(0.18, 0.30, 0.26), wheel[1], WHEEL_COLOR, 0.72))
+        var wheel_specs: Array[Dictionary] = [
+            {"name": "LivenessWheelFL", "position": Vector3(-0.48, 0.21, -0.34)},
+            {"name": "LivenessWheelFR", "position": Vector3(0.48, 0.21, -0.34)},
+            {"name": "LivenessWheelRL", "position": Vector3(-0.48, 0.21, 0.38)},
+            {"name": "LivenessWheelRR", "position": Vector3(0.48, 0.21, 0.38)},
+        ]
+        for wheel: Dictionary in wheel_specs:
+            var wheel_name: String = String(wheel["name"])
+            var wheel_position: Vector3 = wheel["position"]
+            _forklift.add_child(_box(wheel_name, Vector3(0.18, 0.30, 0.26), wheel_position, WHEEL_COLOR, 0.72))
 
     _beacon = _forklift.get_node_or_null("LivenessBeacon") as MeshInstance3D
     if _beacon == null:
