@@ -29,6 +29,16 @@ jobs:
           use-dotnet: false
           include-templates: true
 
+      - name: Import project and build script cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --audio-driver Dummy --path godot --editor --quit 2>&1 | tee /tmp/visual-capture-import.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/visual-capture-import.log; then
+            echo 'Visual capture project import emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Install software-render display dependencies
         shell: bash
         run: |
@@ -46,6 +56,7 @@ jobs:
           mkdir -p visual-captures
           timeout 60s xvfb-run -a -s '-screen 0 390x844x24' \
             godot --path godot \
+            --audio-driver Dummy \
             --display-driver x11 \
             --rendering-method gl_compatibility \
             --script res://tests/rendered_visual_capture.gd \
