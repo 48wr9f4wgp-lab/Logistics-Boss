@@ -55,53 +55,54 @@ func _run() -> void:
 
 
 func _populate_stage(stage: Node, sim) -> void:
-    # Match main.gd ordering: WarehouseView enters the live tree first so its
-    # _ready() builds the base facility before presentation layers bind to it.
-    var view: WarehouseView = WarehouseViewScript.new()
+    # Keep this script independent from the editor-generated global class cache.
+    # Each runtime class is created from its explicit preload, which lets the same
+    # capture run from a clean CI checkout after import or as a standalone script.
+    var view = WarehouseViewScript.new()
     stage.add_child(view)
     view.bind_sim(sim)
 
-    var pass2: WarehouseVisualPass2 = VisualPass2Script.new()
+    var pass2 = VisualPass2Script.new()
     view.add_child(pass2)
     pass2.bind_view(view)
 
-    var forklift: ForkliftAutomationView = ForkliftAutomationScript.new()
+    var forklift = ForkliftAutomationScript.new()
     view.add_child(forklift)
     forklift.bind(view, sim)
 
-    var liveness: WarehouseDomainLivenessView = DomainLivenessScript.new()
+    var liveness = DomainLivenessScript.new()
     view.add_child(liveness)
     liveness.bind(view, sim)
 
-    var rank2: Rank2FacilityView = Rank2FacilityScript.new()
+    var rank2 = Rank2FacilityScript.new()
     view.add_child(rank2)
     rank2.bind(view, sim)
 
-    var rank3: Rank3ReceivingAnnexView = Rank3ExpansionScript.new()
+    var rank3 = Rank3ExpansionScript.new()
     view.add_child(rank3)
     rank3.bind(view, sim)
 
-    var routing: Rank3RoutingHubView = Rank3RoutingScript.new()
+    var routing = Rank3RoutingScript.new()
     view.add_child(routing)
     routing.bind(view, sim)
 
-    var hud: GameHud = HudScript.new()
+    var hud = HudScript.new()
     hud.bind_sim(sim)
     stage.add_child(hud)
 
-    var pass3: WarehouseVisualPass3 = VisualPass3Script.new()
+    var pass3 = VisualPass3Script.new()
     view.add_child(pass3)
     pass3.bind(view, hud)
 
-    var queue_pressure: WarehouseQueuePressureView = QueuePressureScript.new()
+    var queue_pressure = QueuePressureScript.new()
     view.add_child(queue_pressure)
     queue_pressure.bind(view, sim)
 
-    var investment_feedback: WarehouseInvestmentFeedbackView = InvestmentFeedbackScript.new()
+    var investment_feedback = InvestmentFeedbackScript.new()
     view.add_child(investment_feedback)
     investment_feedback.bind(view, sim)
 
-    var composition: WarehouseVisualCompositionFix = CompositionFixScript.new()
+    var composition = CompositionFixScript.new()
     view.add_child(composition)
     composition.bind(view)
 
