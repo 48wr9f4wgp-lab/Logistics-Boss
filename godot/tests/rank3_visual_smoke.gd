@@ -27,8 +27,26 @@ func _init() -> void:
 
     var rank_mark := rank3_view.find_child("Rank3_FulfillmentCenterMark", true, false)
     assert(rank_mark is Node3D, "Rank 3 promotion must create visible Fulfillment Center evolution")
-    assert(rank_mark.get_child_count() > 0, "Rank 3 facility mark must contain geometry")
+    assert(rank_mark.get_child_count() >= 15, "Rank 3 promotion must add facility-scale geometry, not only a small badge")
     assert(rank3_view.find_child("Rank3_ReceivingAnnex", true, false) == null, "unowned Receiving Annex must not render as if purchased")
+
+    # Promotion alone must be visibly larger than the Rank 2 management spine:
+    # wider site shoulders plus a taller rear control crown make Rank 3 readable
+    # before the optional Annex or carrier program are purchased.
+    var bridge := rank_mark.find_child("Rank3ControlBridge", true, false) as MeshInstance3D
+    assert(bridge != null, "Rank 3 promotion must add a rear fulfillment control bridge")
+    var bridge_mesh := bridge.mesh as BoxMesh
+    assert(bridge_mesh != null and bridge_mesh.size.x >= 7.0, "Rank 3 control bridge must be wider than the Rank 2 operations deck")
+    assert(bridge.position.y >= 3.0, "Rank 3 control bridge must create a taller facility crown")
+
+    var tower := rank_mark.find_child("Rank3ScaleTowerL", true, false) as MeshInstance3D
+    assert(tower != null, "Rank 3 promotion must add tall scale markers")
+    var tower_mesh := tower.mesh as BoxMesh
+    assert(tower_mesh != null and tower_mesh.size.y >= 3.4, "Rank 3 scale tower must create a substantial vertical silhouette")
+
+    var shoulder := rank_mark.find_child("Rank3ServiceShoulderL", true, false) as MeshInstance3D
+    assert(shoulder != null, "Rank 3 promotion must widen the visible site footprint")
+    assert(absf(shoulder.position.x) > 8.0, "Rank 3 site shoulder must extend beyond the base warehouse footprint")
 
     var routing_hub := routing_view.find_child("Rank3_RoutingHub", true, false)
     assert(routing_hub is Node3D, "Rank 3 must create a visible routing hub")
