@@ -57,6 +57,12 @@ func _assert_rank2_promotion_changes_silhouette() -> void:
     assert(deck_mesh != null and deck_mesh.size.x >= 4.8, "Rank 2 management deck must be broad enough to read at phone scale")
     assert(deck.position.y >= 2.0, "Rank 2 management deck must create a real vertical silhouette change")
 
+    var crown := spine.find_child("OpsCrownHeader", true, false) as MeshInstance3D
+    assert(crown != null, "Rank 2 must add a readable rear control crown after promotion")
+    var crown_mesh := crown.mesh as BoxMesh
+    assert(crown_mesh != null and crown_mesh.size.x >= 5.0, "Rank 2 control crown must be wide enough to separate it from Rank 1 at phone scale")
+    assert(crown.position.y >= 3.2, "Rank 2 control crown must create an unmistakable vertical step above Rank 1")
+
     sim.facility_rank = 1
     await process_frame
     await process_frame
