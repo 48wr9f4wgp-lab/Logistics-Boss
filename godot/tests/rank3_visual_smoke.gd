@@ -78,6 +78,10 @@ func _init() -> void:
     var annex := rank3_view.find_child("Rank3_ReceivingAnnex", true, false)
     assert(annex is Node3D, "purchased Receiving Annex must create visible 3D expansion")
     assert(annex.get_child_count() >= 10, "Receiving Annex visible expansion must contain substantial geometry")
+    var annex_floor := annex.find_child("AnnexFloor", true, false) as MeshInstance3D
+    assert(annex_floor != null, "Receiving Annex must include its service-side floor")
+    assert(annex_floor.position.x <= -6.5, "Receiving Annex must stay on the left service side")
+    assert(annex_floor.position.z <= 2.0, "Receiving Annex must stay out of the portrait-camera foreground")
 
     holder.queue_free()
     await process_frame
