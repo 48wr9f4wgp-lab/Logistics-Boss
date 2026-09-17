@@ -60,6 +60,82 @@ func _run() -> void:
         _fail("runtime HUD must render live money instead of placeholder")
         return
 
+    var warehouse_view: WarehouseView = null
+    for child in main.get_children():
+        if child is WarehouseView:
+            warehouse_view = child as WarehouseView
+            break
+    if warehouse_view == null:
+        _fail("runtime startup must attach the warehouse view")
+        return
+
+    var domain_liveness: WarehouseDomainLivenessView = null
+    for child in warehouse_view.get_children():
+        if child is WarehouseDomainLivenessView:
+            domain_liveness = child as WarehouseDomainLivenessView
+            break
+    if domain_liveness == null:
+        _fail("runtime startup must attach domain-driven warehouse liveness")
+        return
+
+    warehouse_view._sync_workers()
+    domain_liveness._process(0.0)
+    var workers_root := warehouse_view.get_node_or_null("Workers") as Node3D
+    if workers_root == null or workers_root.get_child_count() == 0:
+        _fail("warehouse liveness smoke requires visible authoritative workers")
+        return
+    var worker := workers_root.get_child(0) as Node3D
+    if worker == null or worker.get_node_or_null("LivenessLeftArm") == null or worker.get_node_or_null("LivenessRightArm") == null:
+        _fail("visible workers must receive readable arm silhouettes")
+        return
+    if worker.get_node_or_null("LivenessVestStripe") == null:
+        _fail("visible workers must receive phone-readable safety-vest detail")
+        return
+
+    main.sim.workers[0]["task"] = WarehouseSim.Task.STORE
+    main.sim.workers[0]["progress"] = 0.25
+    domain_liveness._process(0.016)
+    var left_arm := worker.get_node("LivenessLeftArm") as Node3D
+    if left_arm == null or absf(left_arm.rotation.x) < 0.20:
+        _fail("active authoritative worker task must drive visible walk motion")
+        return
+
+    main.sim.workers[0]["task"] = WarehouseSim.Task.IDLE
+    domain_liveness._process(0.0)
+    if absf(left_arm.rotation.x) > 0.001:
+        _fail("idle workers must not retain fake walk motion")
+        return
+
+    var forklift := warehouse_view.get_node_or_null("Forklift") as Node3D
+    if forklift == null:
+        _fail("warehouse liveness smoke requires the physical forklift")
+        return
+    var beacon := forklift.get_node_or_null("LivenessBeacon") as MeshInstance3D
+    if beacon == null:
+        _fail("forklift must receive a low-cost activity beacon")
+        return
+    if beacon.visible:
+        _fail("locked/inactive forklift must not fake an active beacon")
+        return
+
+    main.sim.forklift_unlocked = true
+    main.sim.forklift_active = true
+    main.sim.forklift_progress = 0.25
+    domain_liveness._process(0.1)
+    if not beacon.visible:
+        _fail("authoritative active forklift state must enable its activity beacon")
+        return
+    var beacon_material := beacon.material_override as StandardMaterial3D
+    if beacon_material == null or beacon_material.emission_energy_multiplier <= 1.7:
+        _fail("active forklift beacon must be visibly emissive without a dynamic light")
+        return
+
+    main.sim.forklift_active = false
+    domain_liveness._process(0.0)
+    if beacon.visible:
+        _fail("inactive forklift must return to a visually quiet state")
+        return
+
     var resume_brief: LogisticsSessionResumeBrief = null
     for child in hud.get_children():
         if child is LogisticsSessionResumeBrief:
@@ -96,7 +172,7 @@ func _run() -> void:
     main.queue_free()
     await process_frame
     _clear_runtime_save()
-    print("Godot runtime startup and returning-session brief smoke passed")
+    print("Godot runtime startup, domain liveness, and returning-session brief smoke passed")
     quit(0)
 
 
