@@ -52,6 +52,13 @@ func _init() -> void:
     assert(routing_hub is Node3D, "Rank 3 must create a visible routing hub")
     assert(routing_view.find_child("RoutingHub_Balanced", true, false) is Node3D, "Balanced Parcel must have visible 3D routing state")
 
+    # The portrait camera is front-left. Keep the Rank 3 hub on the right service
+    # side and away from the front edge so it cannot become a giant foreground slab.
+    var routing_apron := routing_hub.find_child("RoutingApron", true, false) as MeshInstance3D
+    assert(routing_apron != null, "Rank 3 routing hub must include a visible service apron")
+    assert(routing_apron.position.x >= 6.5, "Rank 3 routing hub must stay on the right service side")
+    assert(routing_apron.position.z <= 2.0, "Rank 3 routing hub must stay out of the portrait-camera foreground")
+
     assert(bool(sim.set_routing_mode("express").get("ok", false)), "visual smoke must switch to Express Dispatch")
     await process_frame
     await process_frame
@@ -71,6 +78,10 @@ func _init() -> void:
     var annex := rank3_view.find_child("Rank3_ReceivingAnnex", true, false)
     assert(annex is Node3D, "purchased Receiving Annex must create visible 3D expansion")
     assert(annex.get_child_count() >= 10, "Receiving Annex visible expansion must contain substantial geometry")
+    var annex_floor := annex.find_child("AnnexFloor", true, false) as MeshInstance3D
+    assert(annex_floor != null, "Receiving Annex must include its service-side floor")
+    assert(annex_floor.position.x <= -6.5, "Receiving Annex must stay on the left service side")
+    assert(annex_floor.position.z <= 2.0, "Receiving Annex must stay out of the portrait-camera foreground")
 
     holder.queue_free()
     await process_frame

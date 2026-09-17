@@ -9,6 +9,13 @@ const AMBER := Color(1.0, 0.68, 0.18)
 const CONCRETE := Color(0.12, 0.17, 0.20)
 const PARCEL := Color(0.76, 0.48, 0.20)
 
+# The portrait camera looks from the front-left. The original hub lived at z~5,
+# which made the Rank 3 carrier dominate the lower-right foreground. Keep the
+# routing state visible, but stage it on the right service side instead of between
+# the camera and the warehouse floor.
+const HUB_X := 7.10
+const HUB_Z := 0.45
+
 var warehouse_view: WarehouseView
 var sim: WarehouseSim
 var _visual_root: Node3D
@@ -59,40 +66,40 @@ func _rebuild_if_needed(force: bool) -> void:
 
 
 func _build_common_hub(parent: Node3D) -> void:
-    _box(parent, "RoutingApron", Vector3(4.20, 0.10, 2.45), Vector3(5.15, -0.03, 5.05), CONCRETE)
-    _box(parent, "RoutingSafetyEdge", Vector3(4.05, 0.035, 0.08), Vector3(5.15, 0.04, 6.20), AMBER)
-    _box(parent, "RoutingHeaderPostL", Vector3(0.10, 1.45, 0.10), Vector3(3.35, 0.72, 4.05), STEEL)
-    _box(parent, "RoutingHeaderPostR", Vector3(0.10, 1.45, 0.10), Vector3(6.95, 0.72, 4.05), STEEL)
-    _box(parent, "RoutingHeader", Vector3(3.70, 0.12, 0.12), Vector3(5.15, 1.42, 4.05), STEEL_LIGHT)
+    _box(parent, "RoutingApron", Vector3(4.20, 0.10, 2.45), Vector3(HUB_X, -0.03, HUB_Z), CONCRETE)
+    _box(parent, "RoutingSafetyEdge", Vector3(4.05, 0.035, 0.08), Vector3(HUB_X, 0.04, HUB_Z + 1.15), AMBER)
+    _box(parent, "RoutingHeaderPostL", Vector3(0.10, 1.45, 0.10), Vector3(HUB_X - 1.80, 0.72, HUB_Z - 1.00), STEEL)
+    _box(parent, "RoutingHeaderPostR", Vector3(0.10, 1.45, 0.10), Vector3(HUB_X + 1.80, 0.72, HUB_Z - 1.00), STEEL)
+    _box(parent, "RoutingHeader", Vector3(3.70, 0.12, 0.12), Vector3(HUB_X, 1.42, HUB_Z - 1.00), STEEL_LIGHT)
 
 
 func _build_balanced(parent: Node3D) -> void:
     var root := _group(parent, "RoutingHub_Balanced")
-    _box(root, "BalancedLaneL", Vector3(0.08, 0.03, 1.65), Vector3(4.35, 0.045, 5.00), CYAN)
-    _box(root, "BalancedLaneR", Vector3(0.08, 0.03, 1.65), Vector3(5.95, 0.045, 5.00), MINT)
-    _vehicle(root, "BalancedCarrier", Vector3(1.10, 0.58, 1.40), Vector3(5.15, 0.38, 5.25), STEEL_LIGHT, MINT)
-    _status_light(root, Vector3(5.15, 1.57, 4.00), MINT)
+    _box(root, "BalancedLaneL", Vector3(0.08, 0.03, 1.65), Vector3(HUB_X - 0.80, 0.045, HUB_Z - 0.05), CYAN)
+    _box(root, "BalancedLaneR", Vector3(0.08, 0.03, 1.65), Vector3(HUB_X + 0.80, 0.045, HUB_Z - 0.05), MINT)
+    _vehicle(root, "BalancedCarrier", Vector3(1.10, 0.58, 1.40), Vector3(HUB_X, 0.38, HUB_Z + 0.20), STEEL_LIGHT, MINT)
+    _status_light(root, Vector3(HUB_X, 1.57, HUB_Z - 1.05), MINT)
 
 
 func _build_express(parent: Node3D) -> void:
     var root := _group(parent, "RoutingHub_Express")
-    _box(root, "ExpressLane", Vector3(0.13, 0.035, 1.82), Vector3(5.15, 0.05, 5.03), CYAN)
-    for z in [4.45, 4.92, 5.39]:
-        _box(root, "ExpressArrow", Vector3(0.72, 0.04, 0.14), Vector3(5.15, 0.07, z), CYAN)
-    _vehicle(root, "ExpressCarrier", Vector3(0.92, 0.50, 1.18), Vector3(5.15, 0.34, 5.42), CYAN, AMBER)
-    _status_light(root, Vector3(5.15, 1.57, 4.00), CYAN)
+    _box(root, "ExpressLane", Vector3(0.13, 0.035, 1.82), Vector3(HUB_X, 0.05, HUB_Z - 0.02), CYAN)
+    for z_offset in [-0.58, -0.11, 0.36]:
+        _box(root, "ExpressArrow", Vector3(0.72, 0.04, 0.14), Vector3(HUB_X, 0.07, HUB_Z + z_offset), CYAN)
+    _vehicle(root, "ExpressCarrier", Vector3(0.92, 0.50, 1.18), Vector3(HUB_X, 0.34, HUB_Z + 0.37), CYAN, AMBER)
+    _status_light(root, Vector3(HUB_X, 1.57, HUB_Z - 1.05), CYAN)
 
 
 func _build_consolidated(parent: Node3D) -> void:
     var root := _group(parent, "RoutingHub_Consolidated")
-    _box(root, "ConsolidatedLaneL", Vector3(0.08, 0.03, 1.80), Vector3(4.20, 0.045, 5.02), AMBER)
-    _box(root, "ConsolidatedLaneR", Vector3(0.08, 0.03, 1.80), Vector3(6.10, 0.045, 5.02), AMBER)
+    _box(root, "ConsolidatedLaneL", Vector3(0.08, 0.03, 1.80), Vector3(HUB_X - 0.95, 0.045, HUB_Z - 0.03), AMBER)
+    _box(root, "ConsolidatedLaneR", Vector3(0.08, 0.03, 1.80), Vector3(HUB_X + 0.95, 0.045, HUB_Z - 0.03), AMBER)
     for index in range(4):
-        var x := 3.75 + float(index % 2) * 0.75
-        var z := 4.55 + float(index / 2) * 0.62
+        var x := HUB_X - 1.40 + float(index % 2) * 0.75
+        var z := HUB_Z - 0.50 + float(index / 2) * 0.62
         _pallet(root, Vector3(x, 0.12, z))
-    _vehicle(root, "ConsolidatedCarrier", Vector3(1.35, 0.68, 1.95), Vector3(5.80, 0.43, 5.18), STEEL_LIGHT, AMBER)
-    _status_light(root, Vector3(5.15, 1.57, 4.00), AMBER)
+    _vehicle(root, "ConsolidatedCarrier", Vector3(1.35, 0.68, 1.95), Vector3(HUB_X + 0.65, 0.43, HUB_Z + 0.13), STEEL_LIGHT, AMBER)
+    _status_light(root, Vector3(HUB_X, 1.57, HUB_Z - 1.05), AMBER)
 
 
 func _vehicle(parent: Node3D, prefix: String, body_size: Vector3, position: Vector3, body_color: Color, accent: Color) -> void:

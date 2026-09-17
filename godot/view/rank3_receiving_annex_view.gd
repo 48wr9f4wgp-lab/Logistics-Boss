@@ -8,6 +8,12 @@ const MINT := Color(0.27, 0.92, 0.68)
 const AMBER := Color(1.0, 0.68, 0.18)
 const CONCRETE := Color(0.13, 0.18, 0.21)
 
+# The portrait camera looks from the front-left. Keep the physical receiving
+# expansion on the left service side but away from the front edge, so its canopy
+# reads as a campus addition instead of a giant foreground roof.
+const ANNEX_X := -7.20
+const ANNEX_Z := 0.55
+
 var warehouse_view: WarehouseView
 var sim: WarehouseSim
 var _visual_root: Node3D
@@ -95,40 +101,40 @@ func _build_fulfillment_center_mark() -> void:
 
 func _build_receiving_annex() -> void:
     var root := _group("Rank3_ReceivingAnnex")
-    _box(root, "AnnexFloor", Vector3(4.15, 0.16, 2.85), Vector3(-5.25, -0.02, 6.10), CONCRETE)
-    _box(root, "AnnexSafetyEdge", Vector3(4.10, 0.06, 0.10), Vector3(-5.25, 0.08, 7.47), AMBER)
+    _box(root, "AnnexFloor", Vector3(4.15, 0.16, 2.85), Vector3(ANNEX_X, -0.02, ANNEX_Z), CONCRETE)
+    _box(root, "AnnexSafetyEdge", Vector3(4.10, 0.06, 0.10), Vector3(ANNEX_X, 0.08, ANNEX_Z + 1.37), AMBER)
 
     for lane in 3:
-        var x := -6.45 + float(lane) * 1.20
-        _box(root, "AnnexLane", Vector3(0.07, 0.025, 2.20), Vector3(x, 0.08, 6.05), CYAN)
+        var x := ANNEX_X - 1.20 + float(lane) * 1.20
+        _box(root, "AnnexLane", Vector3(0.07, 0.025, 2.20), Vector3(x, 0.08, ANNEX_Z - 0.05), CYAN)
 
-    for x in [-7.05, -3.45]:
-        _box(root, "AnnexCanopyPost", Vector3(0.14, 2.20, 0.14), Vector3(x, 1.10, 5.55), STEEL)
-        _box(root, "AnnexCanopyPost", Vector3(0.14, 2.20, 0.14), Vector3(x, 1.10, 7.05), STEEL)
-    _box(root, "AnnexRoof", Vector3(3.90, 0.16, 1.80), Vector3(-5.25, 2.22, 6.30), STEEL_LIGHT)
-    _box(root, "AnnexRoofAccent", Vector3(3.60, 0.08, 0.10), Vector3(-5.25, 2.13, 5.43), CYAN)
+    for x in [ANNEX_X - 1.80, ANNEX_X + 1.80]:
+        _box(root, "AnnexCanopyPost", Vector3(0.14, 2.20, 0.14), Vector3(x, 1.10, ANNEX_Z - 0.55), STEEL)
+        _box(root, "AnnexCanopyPost", Vector3(0.14, 2.20, 0.14), Vector3(x, 1.10, ANNEX_Z + 0.95), STEEL)
+    _box(root, "AnnexRoof", Vector3(3.90, 0.16, 1.80), Vector3(ANNEX_X, 2.22, ANNEX_Z + 0.20), STEEL_LIGHT)
+    _box(root, "AnnexRoofAccent", Vector3(3.60, 0.08, 0.10), Vector3(ANNEX_X, 2.13, ANNEX_Z - 0.67), CYAN)
 
-    _pallet(root, Vector3(-6.35, 0.17, 5.65))
-    _pallet(root, Vector3(-5.15, 0.17, 6.25))
-    _pallet(root, Vector3(-4.05, 0.17, 5.75))
-    _status_light(root, Vector3(-6.45, 1.65, 5.38), MINT)
-    _status_light(root, Vector3(-4.05, 1.65, 5.38), MINT)
+    _pallet(root, Vector3(ANNEX_X - 1.10, 0.17, ANNEX_Z - 0.45))
+    _pallet(root, Vector3(ANNEX_X + 0.10, 0.17, ANNEX_Z + 0.15))
+    _pallet(root, Vector3(ANNEX_X + 1.20, 0.17, ANNEX_Z - 0.35))
+    _status_light(root, Vector3(ANNEX_X - 1.20, 1.65, ANNEX_Z - 0.72), MINT)
+    _status_light(root, Vector3(ANNEX_X + 1.20, 1.65, ANNEX_Z - 0.72), MINT)
 
 
 func _build_inbound_carrier_program() -> void:
     var root := _group("Rank3_InboundCarrierProgram")
-    _box(root, "CarrierScheduleBoard", Vector3(1.45, 0.62, 0.10), Vector3(-5.25, 1.62, 5.28), STEEL_LIGHT)
-    _box(root, "CarrierScheduleGlow", Vector3(1.18, 0.38, 0.04), Vector3(-5.25, 1.62, 5.21), CYAN)
-    _status_light(root, Vector3(-5.78, 1.62, 5.15), MINT)
-    _status_light(root, Vector3(-5.25, 1.62, 5.15), MINT)
-    _status_light(root, Vector3(-4.72, 1.62, 5.15), MINT)
+    _box(root, "CarrierScheduleBoard", Vector3(1.45, 0.62, 0.10), Vector3(ANNEX_X, 1.62, ANNEX_Z - 0.82), STEEL_LIGHT)
+    _box(root, "CarrierScheduleGlow", Vector3(1.18, 0.38, 0.04), Vector3(ANNEX_X, 1.62, ANNEX_Z - 0.89), CYAN)
+    _status_light(root, Vector3(ANNEX_X - 0.53, 1.62, ANNEX_Z - 0.95), MINT)
+    _status_light(root, Vector3(ANNEX_X, 1.62, ANNEX_Z - 0.95), MINT)
+    _status_light(root, Vector3(ANNEX_X + 0.53, 1.62, ANNEX_Z - 0.95), MINT)
 
     for lane in 3:
-        var x := -6.45 + float(lane) * 1.20
-        _box(root, "CarrierLanePulse", Vector3(0.52, 0.035, 1.55), Vector3(x, 0.11, 6.28), Color(0.09, 0.35, 0.48))
-        _carrier_trailer(root, Vector3(x, 0.23, 6.62 - float(lane) * 0.22), lane)
+        var x := ANNEX_X - 1.20 + float(lane) * 1.20
+        _box(root, "CarrierLanePulse", Vector3(0.52, 0.035, 1.55), Vector3(x, 0.11, ANNEX_Z + 0.18), Color(0.09, 0.35, 0.48))
+        _carrier_trailer(root, Vector3(x, 0.23, ANNEX_Z + 0.52 - float(lane) * 0.22), lane)
 
-    _box(root, "CarrierFrequencyMarker", Vector3(3.55, 0.08, 0.10), Vector3(-5.25, 0.13, 7.18), AMBER)
+    _box(root, "CarrierFrequencyMarker", Vector3(3.55, 0.08, 0.10), Vector3(ANNEX_X, 0.13, ANNEX_Z + 1.08), AMBER)
 
 
 func _carrier_trailer(parent: Node3D, position: Vector3, lane: int) -> void:
