@@ -1,0 +1,68 @@
+name: Logistics Boss Rendered Visual Capture
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/visual-capture.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/visual-capture.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rendered-visual-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Install software-render display dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0
+
+      - name: Capture canonical Rank 1-3 screens
+        shell: bash
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          LOGISTICS_BOSS_CAPTURE_DIR: ${{ github.workspace }}/visual-captures
+        run: |
+          set -euo pipefail
+          mkdir -p visual-captures
+          timeout 60s xvfb-run -a -s '-screen 0 390x844x24' \
+            godot --path godot \
+            --display-driver x11 \
+            --rendering-method gl_compatibility \
+            --script res://tests/rendered_visual_capture.gd \
+            2>&1 | tee /tmp/rendered-visual-capture.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/rendered-visual-capture.log; then
+            echo 'Rendered visual capture emitted an engine/script error'
+            exit 1
+          fi
+          test -s visual-captures/rank1.png
+          test -s visual-captures/rank2.png
+          test -s visual-captures/rank3.png
+          file visual-captures/rank1.png visual-captures/rank2.png visual-captures/rank3.png
+
+      - name: Upload rendered visual captures
+        uses: actions/upload-artifact@v4
+        with:
+          name: logistics-boss-rendered-visual-captures
+          path: visual-captures/*.png
+          if-no-files-found: error
+          retention-days: 7
