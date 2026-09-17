@@ -3,7 +3,7 @@
   "phase": "code_rc_candidate_native_gate_pending",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_187_success_ios_export_27_success",
+    "ci_latest_verified": "godot_195_success_ios_export_34_success_android_export_7_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -16,9 +16,10 @@
     "analytics": "provider_neutral_local_only_no_external_upload",
     "performance": "runtime_fps_monitor_and_soak_present_native_device_measurement_pending",
     "audio_haptics": "procedural_audio_and_native_haptic_hooks_present_native_device_verify_pending",
-    "unsigned_ios_export": "macos_xcode_route_green",
-    "native_ios": "blocked_on_final_identifiers_signing_and_physical_device_qa",
-    "native_android": "blocked_on_final_package_signing_build_route_and_physical_device_qa",
+    "unsigned_ios_export": "macos_xcode_route_green_synthetic_identifiers",
+    "synthetic_android_export": "linux_apk_route_green_pr78_package_manifest_arm64_signature_zipalign_verified",
+    "native_ios": "blocked_on_final_identifiers_production_signing_and_physical_device_qa",
+    "native_android": "blocked_on_final_package_production_signing_aab_candidate_and_physical_device_qa",
     "release": "code_rc_candidate_not_native_rc"
   },
   "latest_feature_merge": {
@@ -26,7 +27,12 @@
     "merge_commit": "2cfc8c65ca482e8597df9565c4c172bba1aede3d",
     "title": "Restore session context for returning players"
   },
-  "next": "Keep Code RC stable. Obtain confirmed final iOS and Android identifiers plus authorized signing inputs, produce signed native candidates, then run physical iPhone and Android QA including current visual inspection, safe-area, save/relaunch, audio/haptics, routing, and sustained Rank 3 performance before declaring Native RC.",
+  "latest_native_bootstrap_merge": {
+    "pr": 78,
+    "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
+    "title": "Add synthetic Android native export smoke"
+  },
+  "next": "Keep Code RC stable. Obtain confirmed final iOS and Android identifiers plus authorized production signing inputs, produce signed native candidates (including Android production AAB route), then run physical iPhone and Android QA including current visual inspection, safe-area/navigation clearance, save/relaunch, audio/haptics, routing, and sustained Rank 3 performance before declaring Native RC.",
   "external_actions_require_approval": [
     "paid developer account purchase or renewal",
     "production signing-key generation or rotation on behalf of the user",
@@ -35,5 +41,5 @@
     "IAP or ads activation",
     "external analytics or crash-provider contract/upload"
   ],
-  "updated_at": "2026-09-16"
+  "updated_at": "2026-09-17"
 }
