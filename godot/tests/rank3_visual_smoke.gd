@@ -52,6 +52,13 @@ func _init() -> void:
     assert(routing_hub is Node3D, "Rank 3 must create a visible routing hub")
     assert(routing_view.find_child("RoutingHub_Balanced", true, false) is Node3D, "Balanced Parcel must have visible 3D routing state")
 
+    # The portrait camera is front-left. Keep the Rank 3 hub on the right service
+    # side and away from the front edge so it cannot become a giant foreground slab.
+    var routing_apron := routing_hub.find_child("RoutingApron", true, false) as MeshInstance3D
+    assert(routing_apron != null, "Rank 3 routing hub must include a visible service apron")
+    assert(routing_apron.position.x >= 6.5, "Rank 3 routing hub must stay on the right service side")
+    assert(routing_apron.position.z <= 2.0, "Rank 3 routing hub must stay out of the portrait-camera foreground")
+
     assert(bool(sim.set_routing_mode("express").get("ok", false)), "visual smoke must switch to Express Dispatch")
     await process_frame
     await process_frame
