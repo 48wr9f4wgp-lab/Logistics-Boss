@@ -45,7 +45,7 @@ func _rebuild_if_needed(force: bool) -> void:
 
     # Rank 2 must read as a facility-scale promotion before the player buys any
     # optional zone. The rear operations spine is permanent infrastructure, not
-    # fake automation: it adds a management deck, safety rails and status board
+    # fake automation: it adds a management deck and a restrained control crown
     # while keeping the open-top logistics floor unobstructed.
     _build_operations_spine()
 
@@ -98,6 +98,19 @@ func _build_operations_spine() -> void:
         screen_material.emission_enabled = true
         screen_material.emission = CYAN
         screen_material.emission_energy_multiplier = 1.35
+
+    # Rendered capture showed the original deck blending into the Rank 1 rear wall.
+    # A narrow control crown gives Rank 2 a readable vertical identity without
+    # becoming a roof or competing with Rank 3's much wider fulfillment bridge.
+    for x in [-2.55, 2.55]:
+        _box(root, "OpsCrownPost", Vector3(0.11, 0.70, 0.11), Vector3(x, 3.02, -4.08), STEEL)
+    _box(root, "OpsCrownHeader", Vector3(5.22, 0.13, 0.13), Vector3(0.0, 3.35, -4.08), STEEL_LIGHT)
+    var crown_glow := _box(root, "OpsCrownGlow", Vector3(4.48, 0.065, 0.050), Vector3(0.0, 3.29, -3.99), CYAN)
+    var crown_material := crown_glow.material_override as StandardMaterial3D
+    if crown_material != null:
+        crown_material.emission_enabled = true
+        crown_material.emission = CYAN
+        crown_material.emission_energy_multiplier = 1.20
 
     # Ground stripe ties the promoted management spine back to the operating floor
     # and remains readable at phone scale without adding another text label.
