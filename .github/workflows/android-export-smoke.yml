@@ -56,6 +56,7 @@ jobs:
 
           test -x "$ANDROID_HOME/platform-tools/adb"
           test -x "$ANDROID_HOME/build-tools/35.0.1/aapt"
+          test -x "$ANDROID_HOME/build-tools/35.0.1/aapt2"
           test -d "$ANDROID_HOME/platforms/android-35"
           test -d "$ANDROID_HOME/ndk/28.1.13356709"
           test -d "$ANDROID_HOME/cmake/3.10.2.4988404"
@@ -85,6 +86,8 @@ jobs:
             --package-id "$LOGISTICS_BOSS_ANDROID_PACKAGE"
           grep -F 'platform="Android"' export_presets.cfg
           grep -F "package/unique_name=\"$LOGISTICS_BOSS_ANDROID_PACKAGE\"" export_presets.cfg
+          grep -F 'package/show_in_app_library=true' export_presets.cfg
+          grep -F 'package/show_as_launcher_app=false' export_presets.cfg
 
       - name: Configure Godot Android SDK paths
         shell: bash
@@ -148,9 +151,15 @@ jobs:
           set -euo pipefail
           APK="android-build/LogisticsBoss.apk"
           BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.1"
+
           "$BUILD_TOOLS/aapt" dump badging "$APK" | tee /tmp/android-badging.txt
           grep -F "package: name='$LOGISTICS_BOSS_ANDROID_PACKAGE'" /tmp/android-badging.txt
-          grep -F 'launchable-activity:' /tmp/android-badging.txt
+
+          "$BUILD_TOOLS/aapt2" dump xmltree "$APK" --file AndroidManifest.xml | tee /tmp/android-manifest-tree.txt
+          grep -F 'GodotAppLauncher' /tmp/android-manifest-tree.txt
+          grep -F 'android.intent.action.MAIN' /tmp/android-manifest-tree.txt
+          grep -F 'android.intent.category.LAUNCHER' /tmp/android-manifest-tree.txt
+
           unzip -l "$APK" | tee /tmp/android-apk-files.txt
           grep -E 'lib/arm64-v8a/.+\.so' /tmp/android-apk-files.txt
           "$BUILD_TOOLS/apksigner" verify --verbose "$APK"
