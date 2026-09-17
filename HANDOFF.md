@@ -1,6 +1,6 @@
 # LOGISTICS BOSS — Development Handoff
 
-Last updated: 2026-09-16 JST
+Last updated: 2026-09-17 JST
 
 ## 1. Product / canonical intent
 
@@ -22,15 +22,17 @@ Current release label: **Code RC Candidate**. It is **not Native RC**.
 
 Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
-Current documentation refresh branch: `docs/code-rc-state-refresh`
 
-Latest verified feature merge before this documentation refresh:
+Latest verified native-bootstrap merge:
+- PR #78 — `Add synthetic Android native export smoke`
+- merge commit: `1661e87fc372d6b1ca4fa8b28da82f08579c69a4`
+- Godot CI #195: **success**
+- iOS Export Smoke #34: **success**
+- Android Export Smoke #7: **success**
+
+Latest product feature merge before native-bootstrap work:
 - PR #76 — `Restore session context for returning players`
 - merge commit: `2cfc8c65ca482e8597df9565c4c172bba1aede3d`
-- Godot CI #187: **success**
-- iOS Export Smoke #27: **success**
-
-Immediately before the documentation refresh there were no open feature PRs.
 
 Recent QA/product milestones:
 - PR #69: authoritative physical queue density for packing/open-order pressure
@@ -41,6 +43,7 @@ Recent QA/product milestones:
 - PR #74: real Core Loop E2E smoke
 - PR #75: real Meta Loop E2E through Rank 3 using earned operating cash
 - PR #76: returning-session resume brief + `session_resume` local instrumentation
+- PR #78: synthetic Android APK export route + package / manifest / ARM64 / signature / zip-alignment verification
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -54,6 +57,7 @@ Always re-check GitHub before editing; this document is a handoff snapshot, not 
 - Godot Web / GitHub Pages: engineering preview only
 - Source-controlled export preset: Web only
 - iOS smoke route: ephemeral export preset on GitHub-hosted macOS/Xcode
+- Android smoke route: ephemeral export preset on GitHub-hosted Linux with JDK 17 / Android SDK 35 and synthetic CI signing
 
 External services currently used:
 - GitHub repository
@@ -216,10 +220,21 @@ The repository has automated coverage for:
 - visual readability
 - Web engineering export
 - unsigned iOS Xcode-project export smoke
+- synthetic Android APK export smoke
 
 Core Loop E2E uses real simulation and real 25-second measurement completion.
 
 Meta Loop E2E uses real shipment contracts and operating profit; it does not inject test cash to fund Rank 2 / Rank 3 growth.
+
+Android Export Smoke #7 verified on the PR #78 head:
+- APK export succeeds with Godot 4.7.2
+- synthetic package ID is present in the APK
+- normal app launch path is present through the generated manifest (`MAIN` / `LAUNCHER` via Godot launcher alias)
+- ARM64 native payload is present
+- APK debug signature verifies
+- zip alignment verifies
+
+This is a technical synthetic export proof, not a production Play candidate.
 
 ## 8. Visual implementation state
 
@@ -248,9 +263,9 @@ Important validation caveat:
 
 This caveat does not change the Code RC Candidate label, but it remains part of final device QA.
 
-## 9. iOS export route — proven unsigned path
+## 9. Native export routes — proven synthetic paths
 
-The previous PR #60 macOS CI issue is resolved and obsolete.
+### iOS
 
 Current proven route:
 - GitHub-hosted macOS + Xcode
@@ -265,6 +280,24 @@ Latest iOS Export Smoke verified above is green.
 
 Production Apple identifiers / certificates / provisioning profiles are not committed.
 
+### Android
+
+Current proven route:
+- GitHub-hosted Linux
+- Godot 4.7.2 + templates
+- JDK 17
+- Android SDK 35 toolchain
+- synthetic CI-only package ID
+- ephemeral Android export preset
+- ephemeral debug keystore
+- ARM64 APK export
+- APK package / launcher manifest / native payload / signature / zip-alignment validation
+- short-lived `logistics-boss-android-apk-smoke` artifact
+
+The normal app path uses `package/show_in_app_library=true`. `package/show_as_launcher_app` remains false; that setting is not used to turn this game into an Android home/launcher application.
+
+Production Android package identity, production keystore, release signing, Play AAB candidate, and physical-device QA remain unproven.
+
 ## 10. Remaining blockers before Native RC
 
 These are now the primary blockers; do not invent or bypass them.
@@ -278,8 +311,8 @@ These are now the primary blockers; do not invent or bypass them.
 
 ### Android
 - final package ID
-- release keystore path / alias / password through secure export-time inputs
-- signed APK / AAB candidate
+- authorized production release keystore / alias / password through secure export-time inputs
+- production-signed APK / AAB candidate; Google Play delivery route still needs the release AAB path
 - physical Android QA
 
 Required physical-device pass includes:
@@ -339,8 +372,10 @@ Release / QA:
 - `.github/workflows/godot-ci.yml`
 - `.github/workflows/godot-preview-pages.yml`
 - `.github/workflows/ios-export-smoke.yml`
+- `.github/workflows/android-export-smoke.yml`
 - `godot/tools/native_release_inputs.py`
 - `godot/tools/prepare_ios_export.py`
+- `godot/tools/prepare_android_export.py`
 - `NATIVE_RELEASE_CHECKLIST.md`
 - `DEV_STATUS.json`
 
@@ -359,12 +394,12 @@ Release / QA:
 
 ## 14. Immediate next task
 
-Code-level product / QA work is substantially converged.
+Code-level product / QA work is substantially converged, and both native platforms now have a synthetic CI export path.
 
-Next priority is **Native RC preparation**, not another broad feature pass:
+Next priority is **production-signing + physical-device Native RC preparation**, not another broad feature pass:
 1. keep main CI green and fix only concrete code-level defects found by final audit;
-2. obtain confirmed final iOS / Android identifiers and authorized signing inputs;
-3. produce signed native candidates;
+2. obtain confirmed final iOS / Android identifiers and authorized production signing inputs;
+3. prepare production-signed native candidates, including the Android release AAB path;
 4. run physical iPhone + Android QA including current visual inspection;
 5. fix native-specific issues and rerun regression;
 6. declare Native RC only when both device gates pass.
