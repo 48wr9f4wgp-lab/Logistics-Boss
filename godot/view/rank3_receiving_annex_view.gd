@@ -58,12 +58,39 @@ func _rebuild_if_needed(force: bool) -> void:
 
 func _build_fulfillment_center_mark() -> void:
     var root := _group("Rank3_FulfillmentCenterMark")
+
+    # Rank 3 promotion must feel like the site itself has graduated, even before
+    # the optional Receiving Annex is purchased. Keep the active logistics floor
+    # open, but extend the campus footprint and add a taller rear control bridge
+    # above the persistent Rank 2 operations spine.
     _box(root, "Rank3Apron", Vector3(3.6, 0.055, 0.72), Vector3(-5.25, 0.01, 4.72), Color(0.075, 0.20, 0.25))
     _box(root, "Rank3Stripe", Vector3(3.3, 0.026, 0.10), Vector3(-5.25, 0.05, 4.44), CYAN)
     _box(root, "Rank3PostL", Vector3(0.11, 1.45, 0.11), Vector3(-6.75, 0.72, 4.55), STEEL)
     _box(root, "Rank3PostR", Vector3(0.11, 1.45, 0.11), Vector3(-3.75, 0.72, 4.55), STEEL)
     _box(root, "Rank3Header", Vector3(3.12, 0.16, 0.16), Vector3(-5.25, 1.42, 4.55), CYAN)
     _status_light(root, Vector3(-5.25, 1.57, 4.47), MINT)
+
+    # Narrow service shoulders expand the site silhouette beyond the Rank 1/2
+    # warehouse slab without pretending to add storage, docks or throughput.
+    _box(root, "Rank3ServiceShoulderL", Vector3(1.45, 0.08, 5.80), Vector3(-8.45, -0.03, 0.55), CONCRETE)
+    _box(root, "Rank3ServiceShoulderR", Vector3(1.45, 0.08, 5.80), Vector3(8.45, -0.03, 0.55), CONCRETE)
+    _box(root, "Rank3ShoulderEdgeL", Vector3(0.10, 0.045, 5.45), Vector3(-7.78, 0.03, 0.55), AMBER)
+    _box(root, "Rank3ShoulderEdgeR", Vector3(0.10, 0.045, 5.45), Vector3(7.78, 0.03, 0.55), AMBER)
+
+    # The control bridge is deliberately rear-mounted: it creates a strong vertical
+    # Rank 3 crown while preserving the open-top cutaway and every process lane.
+    _box(root, "Rank3ScaleTowerL", Vector3(0.20, 3.45, 0.20), Vector3(-3.55, 1.73, -4.15), STEEL)
+    _box(root, "Rank3ScaleTowerR", Vector3(0.20, 3.45, 0.20), Vector3(3.55, 1.73, -4.15), STEEL)
+    _box(root, "Rank3ControlBridge", Vector3(7.35, 0.24, 0.72), Vector3(0.0, 3.12, -4.15), STEEL_LIGHT)
+    _box(root, "Rank3ControlCrown", Vector3(7.45, 0.12, 0.12), Vector3(0.0, 3.58, -4.15), STEEL)
+    var control_glow := _box(root, "Rank3ControlGlow", Vector3(5.85, 0.11, 0.055), Vector3(0.0, 3.08, -3.77), CYAN)
+    var glow_material := control_glow.material_override as StandardMaterial3D
+    if glow_material != null:
+        glow_material.emission_enabled = true
+        glow_material.emission = CYAN
+        glow_material.emission_energy_multiplier = 1.25
+    _status_light(root, Vector3(-3.38, 3.72, -3.78), MINT)
+    _status_light(root, Vector3(3.38, 3.72, -3.78), MINT)
 
 
 func _build_receiving_annex() -> void:
