@@ -8,6 +8,7 @@ const WarehouseQueuePressureViewScript = preload("res://view/queue_pressure_view
 const WarehouseInvestmentFeedbackViewScript = preload("res://view/investment_feedback_view.gd")
 const WarehouseVisualCompositionFixScript = preload("res://view/visual_composition_fix.gd")
 const ForkliftAutomationViewScript = preload("res://view/forklift_automation_view.gd")
+const WarehouseDomainLivenessViewScript = preload("res://view/domain_liveness_view.gd")
 const Rank2FacilityViewScript = preload("res://view/rank2_facility_view.gd")
 const Rank3ReceivingAnnexViewScript = preload("res://view/rank3_receiving_annex_view.gd")
 const Rank3RoutingHubViewScript = preload("res://view/rank3_routing_hub_view.gd")
@@ -42,6 +43,12 @@ func _ready() -> void:
     var forklift_automation: ForkliftAutomationView = ForkliftAutomationViewScript.new()
     view.add_child(forklift_automation)
     forklift_automation.bind(view, sim)
+
+    # Presentation-only liveness follows the authoritative worker/forklift task state.
+    # It adds no workers, vehicles, throughput or fake automation.
+    var domain_liveness: WarehouseDomainLivenessView = WarehouseDomainLivenessViewScript.new()
+    view.add_child(domain_liveness)
+    domain_liveness.bind(view, sim)
 
     var rank2_facilities: Rank2FacilityView = Rank2FacilityViewScript.new()
     view.add_child(rank2_facilities)
