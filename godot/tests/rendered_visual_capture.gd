@@ -28,8 +28,10 @@ func _run() -> void:
 
     for rank in [1, 2, 3]:
         var sim = _make_sim(rank)
-        var stage := _build_stage(sim)
+        var stage := Node.new()
+        stage.name = "CaptureStage"
         get_root().add_child(stage)
+        _populate_stage(stage, sim)
 
         # Give the full visual stack enough frames to build geometry, apply the
         # portrait composition pass and upload its first GL frame before capture.
@@ -52,10 +54,9 @@ func _run() -> void:
     quit(0)
 
 
-func _build_stage(sim) -> Node:
-    var stage := Node.new()
-    stage.name = "CaptureStage"
-
+func _populate_stage(stage: Node, sim) -> void:
+    # Match main.gd ordering: WarehouseView enters the live tree first so its
+    # _ready() builds the base facility before presentation layers bind to it.
     var view: WarehouseView = WarehouseViewScript.new()
     stage.add_child(view)
     view.bind_sim(sim)
@@ -103,8 +104,6 @@ func _build_stage(sim) -> Node:
     var composition: WarehouseVisualCompositionFix = CompositionFixScript.new()
     view.add_child(composition)
     composition.bind(view)
-
-    return stage
 
 
 func _make_sim(rank: int):
