@@ -170,15 +170,15 @@ func _signed_delta(value: float) -> String:
 func _short_bottleneck_action(key: String) -> String:
     match key:
         "inbound":
-            return "受入強化"
+            return "INBOUND確認"
         "rack":
-            return "保管見直し"
+            return "STORAGE確認"
         "packing":
-            return "梱包強化"
+            return "PACKING確認"
         "outbound":
-            return "出荷強化"
+            return "SHIPPING確認"
         "orders":
-            return "ピック強化"
+            return "PICKING確認"
         _:
             return "観察継続"
 

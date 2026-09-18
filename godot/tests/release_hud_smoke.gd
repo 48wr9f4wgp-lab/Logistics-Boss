@@ -21,8 +21,8 @@ func _run() -> void:
     get_root().add_child(hud)
     await process_frame
 
-    if hud.current_ftue_step() != "observe":
-        _fail("fresh release HUD must expose current FTUE step")
+    if not hud.current_ftue_step().is_empty():
+        _fail("v2 mobile path must not expose the legacy Management-first FTUE")
         return
 
     var brand := hud._find_brand_strip()
@@ -38,12 +38,21 @@ func _run() -> void:
         if metric is PanelContainer and (metric as PanelContainer).custom_minimum_size.y > 50.0:
             _fail("release metric cards must not force the top command area back to prototype height")
             return
+    if hud._rp == null or hud._rp.get_parent() == null or hud._rp.get_parent().get_parent() is not PanelContainer:
+        _fail("v2 mobile HUD must retain a controllable RP metric container")
+        return
+    if (hud._rp.get_parent().get_parent() as PanelContainer).visible:
+        _fail("RP must be hidden from the primary v2 HUD until it has a clear decision role")
+        return
 
     if hud._bottleneck_panel == null or hud._bottleneck_panel.offset_bottom > 124.0:
         _fail("release bottleneck director must end before the compact status band")
         return
     if hud._ftue_coach == null:
-        _fail("fresh release HUD must build the FTUE coach")
+        _fail("mobile HUD must retain the legacy FTUE node for compatibility until Rank 1 v2 replaces it")
+        return
+    if hud._ftue_coach.visible:
+        _fail("v2 mobile path must keep the legacy Management-first FTUE hidden")
         return
     if hud._ftue_coach.offset_top < hud._bottleneck_panel.offset_bottom + 4.0:
         _fail("FTUE coach must not overlap the always-on bottleneck director")
@@ -121,6 +130,17 @@ func _run() -> void:
     if list == null or list.get_node_or_null("MobileBottomSpacer") == null:
         _fail("mobile management content must include bottom padding so the last action remains reachable")
         return
+    if hud._v2_overview_panel == null or not hud._v2_overview_panel.visible:
+        _fail("v2 Management must expose an executive Overview instead of an equipment-store landing page")
+        return
+    for legacy_button in hud._upgrade_buttons.values():
+        if (legacy_button as Button).visible:
+            _fail("normal legacy upgrades must not remain player-facing in v2 Management")
+            return
+    for facility_button in hud._facility_buttons.values():
+        if (facility_button as Button).visible:
+            _fail("Rank 2 Zone equipment must not be purchased from v2 Management")
+            return
     if hud._reset_button == null or not hud._reset_button.text.contains("リセット"):
         _fail("management sheet must expose the confirmed test-data reset control")
         return
@@ -262,18 +282,17 @@ func _run() -> void:
     analytics.bind_sim(sim)
     analytics.clear_buffer()
     analytics.bind_hud(hud)
-    if String(analytics.latest_event().get("name", "")) != "ftue_step":
-        _fail("late analytics bind must capture active FTUE step")
-        return
-    var payload: Dictionary = analytics.latest_event().get("payload", {})
-    if String(payload.get("step", "")) != "observe":
-        _fail("FTUE telemetry must report observe step")
+    if String(analytics.latest_event().get("name", "")) == "ftue_step":
+        _fail("v2 mobile path must not report the superseded Management-first FTUE as active")
         return
 
     sim.inbound_queue = 10
     hud._render()
-    if not hud._bottleneck.text.contains("受入"):
-        _fail("release bottleneck director must include a concrete inbound action")
+    if not hud._bottleneck.text.contains("INBOUND") or not hud._bottleneck.text.contains("待機 10"):
+        _fail("v2 Director must report the inbound symptom with concrete evidence")
+        return
+    if hud._bottleneck.text.contains("強化") or hud._bottleneck.text.contains("→"):
+        _fail("v2 Director must not prescribe the equipment/action answer")
         return
 
     sim.inbound_queue = 0

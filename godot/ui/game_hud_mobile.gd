@@ -14,13 +14,18 @@ var _mobile_scroll_touch_index := -1
 var _mobile_scroll_drag_distance := 0.0
 var _mobile_mouse_scroll_active := false
 var _mobile_mouse_drag_distance := 0.0
+var _v2_overview_panel: PanelContainer
+var _v2_overview_label: Label
 
 
 func _ready() -> void:
     super._ready()
+    _build_v2_management_overview()
     _apply_mobile_management_layout(true)
     _apply_mobile_progression_copy()
     _apply_mobile_rank3_compaction()
+    _apply_v2_primary_hud()
+    _apply_v2_management_scope()
 
 
 func _process(delta: float) -> void:
@@ -28,6 +33,9 @@ func _process(delta: float) -> void:
     _apply_mobile_management_layout(false)
     _apply_mobile_progression_copy()
     _apply_mobile_rank3_compaction()
+    _apply_v2_primary_hud()
+    _apply_v2_management_scope()
+    _render_v2_management_overview()
 
 
 func _input(event: InputEvent) -> void:
@@ -256,3 +264,121 @@ func _apply_mobile_progression_copy() -> void:
         ]
     else:
         _progression_label.text = "RANK 1  SMALL DEPOT\n物流評価 %d / 8" % sim.logistics_rating
+
+
+func _build_v2_management_overview() -> void:
+    var list := _find_upgrade_list(_sheet)
+    if list == null:
+        return
+
+    _v2_overview_panel = PanelContainer.new()
+    _v2_overview_panel.name = "V2ManagementOverview"
+    _v2_overview_panel.add_theme_stylebox_override(
+        "panel",
+        _panel_style(Color(0.018, 0.052, 0.070, 0.985), Color(0.18, 0.72, 0.96, 0.90), 14)
+    )
+    list.add_child(_v2_overview_panel)
+    list.move_child(_v2_overview_panel, 0)
+
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 10)
+    margin.add_theme_constant_override("margin_right", 10)
+    margin.add_theme_constant_override("margin_top", 8)
+    margin.add_theme_constant_override("margin_bottom", 8)
+    _v2_overview_panel.add_child(margin)
+
+    _v2_overview_label = Label.new()
+    _v2_overview_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _v2_overview_label.add_theme_font_override("font", JAPANESE_UI_FONT)
+    _v2_overview_label.add_theme_font_size_override("font_size", 11)
+    _v2_overview_label.add_theme_color_override("font_color", Color(0.86, 0.96, 1.0))
+    margin.add_child(_v2_overview_label)
+    _render_v2_management_overview()
+
+
+func _render_v2_management_overview() -> void:
+    if _v2_overview_label == null or sim == null:
+        return
+    _v2_overview_label.text = "OVERVIEW｜全体状況\nINBOUND %s  STORAGE %s\nPICKING %s  PACKING %s  SHIPPING %s" % [
+        _v2_zone_status("inbound"),
+        _v2_zone_status("storage"),
+        _v2_zone_status("picking"),
+        _v2_zone_status("packing"),
+        _v2_zone_status("shipping"),
+    ]
+
+
+func _v2_zone_status(zone_key: String) -> String:
+    match zone_key:
+        "inbound":
+            return "混雑" if sim.inbound_queue >= 8 else ("高負荷" if sim.inbound_queue >= 4 else "正常")
+        "storage":
+            var fill := float(sim.rack_stock) / float(maxi(1, sim.rack_capacity))
+            return "混雑" if fill >= 0.95 else ("高負荷" if fill >= 0.70 else "正常")
+        "picking":
+            return "混雑" if sim.open_orders >= 10 else ("高負荷" if sim.open_orders >= 6 else "正常")
+        "packing":
+            return "混雑" if sim.packing_queue >= 8 else ("高負荷" if sim.packing_queue >= 3 else "正常")
+        "shipping":
+            return "混雑" if sim.packed_queue >= 8 else ("高負荷" if sim.packed_queue >= 4 else "正常")
+    return "正常"
+
+
+func _apply_v2_primary_hud() -> void:
+    # RP currently has no clear v2 player decision attached to it, so do not
+    # spend permanent portrait HUD space on it.
+    if _rp != null:
+        var metric_box := _rp.get_parent()
+        if metric_box != null and metric_box.get_parent() is PanelContainer:
+            (metric_box.get_parent() as PanelContainer).visible = false
+
+    # The old FTUE teaches Management-first purchasing, which is explicitly
+    # superseded by the v2 Zone-first loop. Rank 1 v2 will replace it next.
+    if _ftue_coach != null:
+        _ftue_coach.visible = false
+
+
+func _apply_v2_management_scope() -> void:
+    # Production mobile path: Management is an executive dashboard. Keep the
+    # legacy Domain/buttons alive underneath for regression safety, but remove
+    # them from the player-facing purchase surface.
+    if _management_title != null:
+        _management_title.text = "経営管理"
+    if _management_hint != null:
+        _management_hint.text = "全体状況を確認。設備判断は倉庫のZoneから。"
+
+    for button in _upgrade_buttons.values():
+        (button as Button).visible = false
+
+    if _facility_header != null:
+        _facility_header.visible = false
+    for zone_label in _facility_zone_labels.values():
+        (zone_label as Label).visible = false
+    for facility_button in _facility_buttons.values():
+        (facility_button as Button).visible = false
+
+    if _staffing_label != null:
+        _staffing_label.visible = false
+    if _staffing_grid != null:
+        _staffing_grid.visible = false
+
+    if _v2_overview_panel != null:
+        _v2_overview_panel.visible = true
+        var list := _find_upgrade_list(_sheet)
+        if list != null and _v2_overview_panel.get_parent() == list:
+            list.move_child(_v2_overview_panel, 0)
+
+    _replace_v2_management_copy(_sheet)
+
+
+func _replace_v2_management_copy(node: Node) -> void:
+    if node == null:
+        return
+    if node is Label:
+        var label := node as Label
+        if label.text == "事業投資":
+            label.text = "経営管理"
+        elif label.text.contains("詰まりを見て"):
+            label.text = "全体状況を確認。設備判断は倉庫のZoneから。"
+    for child in node.get_children():
+        _replace_v2_management_copy(child)

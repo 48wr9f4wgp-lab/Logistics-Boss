@@ -2,6 +2,7 @@ extends SceneTree
 
 const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
 const WarehouseViewScript = preload("res://view/warehouse_view_mobile.gd")
+const ZoneInteractionScript = preload("res://view/zone_interaction_view.gd")
 const VisualPass2Script = preload("res://view/visual_pass_2.gd")
 const VisualPass3Script = preload("res://view/visual_pass_3.gd")
 const ForkliftAutomationScript = preload("res://view/forklift_automation_view.gd")
@@ -61,6 +62,10 @@ func _populate_stage(stage: Node, sim) -> void:
     var view = WarehouseViewScript.new()
     stage.add_child(view)
     view.bind_sim(sim)
+
+    var zone_interaction = ZoneInteractionScript.new()
+    view.add_child(zone_interaction)
+    zone_interaction.bind(view)
 
     var pass2 = VisualPass2Script.new()
     view.add_child(pass2)

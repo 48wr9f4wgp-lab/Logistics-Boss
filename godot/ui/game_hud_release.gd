@@ -157,18 +157,23 @@ func _find_bottom_dock() -> PanelContainer:
 
 
 func _bottleneck_text(info: Dictionary) -> String:
+    # Core Experience v2: the Director reports symptoms and evidence, never
+    # the equipment/action answer. The player must inspect the physical Zone.
     var text := ""
     match String(info.get("key", "stable")):
         "inbound":
-            text = "搬入口混雑 → 受入強化"
+            text = "INBOUND高負荷｜待機 %d" % (sim.inbound_queue if sim != null else 0)
         "rack":
-            text = "棚不足 → 保管見直し"
+            text = "STORAGE高負荷｜%d/%d" % [
+                sim.rack_stock if sim != null else 0,
+                sim.rack_capacity if sim != null else 0,
+            ]
         "packing":
-            text = "梱包詰まり → 梱包強化"
+            text = "PACKING高負荷｜待機 %d" % (sim.packing_queue if sim != null else 0)
         "outbound":
-            text = "出荷滞留 → 出荷強化"
+            text = "SHIPPING高負荷｜待機 %d" % (sim.packed_queue if sim != null else 0)
         "orders":
-            text = "注文滞留 → ピック強化"
+            text = "PICKING高負荷｜注文 %d" % (sim.open_orders if sim != null else 0)
         "stable":
             text = "安定運転"
         _:

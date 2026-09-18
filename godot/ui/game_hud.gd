@@ -17,6 +17,8 @@ var _flow_button: Button
 var _inbound_button: Button
 var _outbound_button: Button
 var _sheet: PanelContainer
+var _management_title: Label
+var _management_hint: Label
 var _upgrade_buttons: Dictionary = {}
 const SHIPMENT_TOAST_BATCH_SECONDS := 1.5
 
@@ -213,12 +215,12 @@ func _build_management_sheet() -> void:
     var head := HBoxContainer.new()
     column.add_child(head)
 
-    var title := Label.new()
-    title.text = _copy("事業投資", "CAPITAL EXPANSION")
-    title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    title.add_theme_font_size_override("font_size", 21)
-    title.add_theme_color_override("font_color", Color(0.91, 0.98, 1.0))
-    head.add_child(title)
+    _management_title = Label.new()
+    _management_title.text = _copy("事業投資", "CAPITAL EXPANSION")
+    _management_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    _management_title.add_theme_font_size_override("font_size", 21)
+    _management_title.add_theme_color_override("font_color", Color(0.91, 0.98, 1.0))
+    head.add_child(_management_title)
 
     var close := Button.new()
     close.text = _copy("閉じる", "CLOSE")
@@ -228,12 +230,12 @@ func _build_management_sheet() -> void:
     close.pressed.connect(_toggle_sheet)
     head.add_child(close)
 
-    var hint := Label.new()
-    hint.text = _copy("詰まりを見て、原因に効く投資だけを選ぶ。", "Read the bottleneck. Invest only where flow improves.")
-    hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    hint.add_theme_font_size_override("font_size", 11)
-    hint.add_theme_color_override("font_color", Color(0.56, 0.69, 0.76))
-    column.add_child(hint)
+    _management_hint = Label.new()
+    _management_hint.text = _copy("詰まりを見て、原因に効く投資だけを選ぶ。", "Read the bottleneck. Invest only where flow improves.")
+    _management_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _management_hint.add_theme_font_size_override("font_size", 11)
+    _management_hint.add_theme_color_override("font_color", Color(0.56, 0.69, 0.76))
+    column.add_child(_management_hint)
 
     var scroll := ScrollContainer.new()
     scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
