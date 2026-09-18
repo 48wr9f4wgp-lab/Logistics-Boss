@@ -381,6 +381,7 @@ func _create_worker(index: int) -> Node3D:
     legs.position.y = 0.25
     var legs_material := StandardMaterial3D.new()
     legs_material.albedo_color = Color(0.035, 0.07, 0.09)
+    legs_material.roughness = 0.72
     legs.material_override = legs_material
     root.add_child(legs)
 
@@ -393,6 +394,8 @@ func _create_worker(index: int) -> Node3D:
     body.position.y = 0.66
     var body_material := StandardMaterial3D.new()
     body_material.albedo_color = Color(0.10, 0.20, 0.27)
+    body_material.roughness = 0.60
+    body_material.metallic = 0.04
     body.material_override = body_material
     root.add_child(body)
 
@@ -404,6 +407,8 @@ func _create_worker(index: int) -> Node3D:
     var vest_material := StandardMaterial3D.new()
     var vest_palette := [ORANGE, Color(0.97, 0.70, 0.12), Color(0.18, 0.65, 0.90)]
     vest_material.albedo_color = vest_palette[index % vest_palette.size()]
+    vest_material.roughness = 0.46
+    vest_material.metallic = 0.02
     vest.material_override = vest_material
     root.add_child(vest)
 
@@ -415,6 +420,7 @@ func _create_worker(index: int) -> Node3D:
     head.position.y = 1.08
     var skin := StandardMaterial3D.new()
     skin.albedo_color = Color(0.88, 0.69, 0.53)
+    skin.roughness = 0.76
     head.material_override = skin
     root.add_child(head)
 
@@ -427,6 +433,8 @@ func _create_worker(index: int) -> Node3D:
     helmet.position.y = 1.25
     var helmet_material := StandardMaterial3D.new()
     helmet_material.albedo_color = Color(1.0, 0.72, 0.08)
+    helmet_material.roughness = 0.34
+    helmet_material.metallic = 0.08
     helmet.material_override = helmet_material
     root.add_child(helmet)
 
@@ -438,6 +446,7 @@ func _create_worker(index: int) -> Node3D:
     cargo.position = Vector3(0.0, 0.66, -0.40)
     var cargo_material := StandardMaterial3D.new()
     cargo_material.albedo_color = Color(0.86, 0.61, 0.30)
+    cargo_material.roughness = 0.80
     cargo.material_override = cargo_material
     cargo.visible = false
     root.add_child(cargo)
@@ -467,7 +476,16 @@ func _rebuild_boxes(root: Node3D, count: int, start: Vector3, grid: Vector2, col
         var x := start.x + float(i % columns) * 0.46
         var z := start.z + float((i / columns) % maxi(1, int(grid.y))) * 0.46
         var y := start.y + float(i / (columns * maxi(1, int(grid.y)))) * 0.36
-        _box_into(root, "Parcel", Vector3(0.39, 0.31, 0.39), Vector3(x, y, z), color)
+        # Small deterministic tone variation keeps queue piles from reading as
+        # one cloned plastic block while preserving the authoritative box count.
+        var tone := 0.96 + float(i % 3) * 0.025
+        var parcel_color := Color(
+            clampf(color.r * tone, 0.0, 1.0),
+            clampf(color.g * tone, 0.0, 1.0),
+            clampf(color.b * tone, 0.0, 1.0),
+            color.a
+        )
+        _box_into(root, "Parcel", Vector3(0.39, 0.31, 0.39), Vector3(x, y, z), parcel_color)
 
 
 func _box(name: String, size: Vector3, position: Vector3, color: Color) -> MeshInstance3D:
@@ -485,6 +503,21 @@ func _box_into(parent: Node, name: String, size: Vector3, position: Vector3, col
     var material := StandardMaterial3D.new()
     material.albedo_color = color
     material.roughness = 0.58
+    material.metallic = 0.0
+
+    # Final mobile surface finish: cardboard stays matte, while the forklift's
+    # painted body and steel cab/mast get enough specular separation to stop
+    # reading as the same flat material. Geometry and gameplay remain unchanged.
+    match name:
+        "Parcel":
+            material.roughness = 0.80
+        "Body":
+            material.roughness = 0.42
+            material.metallic = 0.10
+        "Cab", "MastL", "MastR":
+            material.roughness = 0.50
+            material.metallic = 0.18
+
     mesh_instance.material_override = material
     parent.add_child(mesh_instance)
     return mesh_instance
