@@ -209,6 +209,16 @@ jobs:
             exit 1
           fi
 
+      - name: Construction and reward presentation smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 40s godot --headless --path godot --script res://tests/construction_reward_presentation_smoke.gd 2>&1 | tee /tmp/construction-reward-presentation-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/construction-reward-presentation-smoke.log; then
+            echo 'Construction/reward presentation smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Save recovery smoke
         shell: bash
         run: |
