@@ -212,7 +212,7 @@ func _render_rank1_actions() -> void:
 
     if not sim.has_method("rank1_project_for_zone"):
         return
-    var project_kind: StringName = sim.call("rank1_project_for_zone", _selected_zone)
+    var project_kind := StringName(sim.call("rank1_project_for_zone", _selected_zone))
     if project_kind == &"":
         return
 
@@ -260,7 +260,7 @@ func _on_operations_action() -> void:
 func _on_capital_action() -> void:
     if sim == null or not sim.has_method("rank1_project_for_zone"):
         return
-    var project_kind: StringName = sim.call("rank1_project_for_zone", _selected_zone)
+    var project_kind := StringName(sim.call("rank1_project_for_zone", _selected_zone))
     if project_kind == &"":
         return
 
