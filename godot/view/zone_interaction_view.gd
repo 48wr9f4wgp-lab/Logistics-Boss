@@ -154,10 +154,10 @@ func pick_zone_from_ray(from: Vector3, to: Vector3) -> String:
     var query := PhysicsRayQueryParameters3D.create(from, to, ZONE_COLLISION_LAYER)
     query.collide_with_areas = true
     query.collide_with_bodies = false
-    var result := world.direct_space_state.intersect_ray(query)
+    var result: Dictionary = world.direct_space_state.intersect_ray(query)
     if result.is_empty():
         return ""
-    var collider := result.get("collider")
+    var collider: Object = result.get("collider") as Object
     if collider is Area3D:
         return String((collider as Area3D).get_meta("zone_key", ""))
     return ""
