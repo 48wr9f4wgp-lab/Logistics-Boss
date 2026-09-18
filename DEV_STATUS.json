@@ -13,7 +13,7 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_246_success_ios_export_71_success_android_export_58_success_render_capture_44_success",
+    "ci_latest_verified": "godot_248_success_ios_export_72_success_android_export_60_success_render_capture_46_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -33,7 +33,8 @@
     "native_ios": "blocked_only_on_mac_xcode_access_for_minimum_viable_development_install",
     "native_android": "deferred_until_production_decision_go_then_platform_expansion_decision",
     "release": "pre_go_not_release_candidate",
-    "progression_dead_end": "pass_pr97_zero_cash_rank1_contract_rank2_all_staffing_and_8_facility_paths_rank3_all_routes_plus_structural_refunding"
+    "progression_dead_end": "pass_pr97_zero_cash_rank1_contract_rank2_all_staffing_and_8_facility_paths_rank3_all_routes_plus_structural_refunding",
+    "ftue_core_loop_comprehension": "pass_pr99_ftue_stays_active_until_authoritative_measurement_completed_then_teaches_verdict_and_next_loop"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -50,9 +51,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "PR #97 merged after Godot CI #246 passed the progression/resource dead-end audit: zero-cash Rank 1 contract recovery, every Rank 2 staffing preset, all 8 exclusive Rank 2 facility combinations, all Rank 3 routing modes, and Rank 3 Receiving Annex / inbound-carrier funding all retained authoritative shipment/cash recovery. Physical native iPhone validation remains incomplete.",
+  "last_verified_done": "PR #99 merged after Godot CI #248 passed: fresh-save FTUE no longer declares the Core Loop learned at purchase time. START GUIDE 4/4 remains active through the real 25-second measurement and completes only when the authoritative measurement result arrives; the player is explicitly told to read 改善 / 横ばい / 要再判断. Physical native iPhone comprehension evidence remains pending.",
   "blocked": "Native physical-iPhone DEVICE_VALIDATION is deferred by user because Mac/Xcode access will not be available for a while. This is an acknowledged phase blocker, not a completed gate.",
-  "next": "While native DEVICE_VALIDATION is deferred, audit FTUE/Core Loop comprehension support using current automated and iPhone Web engineering-preview evidence. Fix only evidence-backed issues. Do not call DEVICE_VALIDATION complete and do not enter GREENLIGHT until representative physical-iPhone evidence is collected.",
+  "next": "While native DEVICE_VALIDATION is deferred, audit economy/progression pacing for stalls, runaway accumulation, and non-decisions using current deterministic reports/scouts. Fix only evidence-backed issues. Do not call DEVICE_VALIDATION complete and do not enter GREENLIGHT until representative physical-iPhone evidence is collected.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -85,9 +86,9 @@
     "resume_condition": "MAC_XCODE_ACCESS_BECOMES_AVAILABLE"
   },
   "latest_pre_go_risk_reduction": {
-    "pr": 97,
-    "merge_commit": "8c24e083e601db676c56ab5e836ccf6961de7a4b",
-    "title": "Audit progression dead-end recovery",
-    "evidence": "Godot CI #246 progression dead-end audit success"
+    "pr": 99,
+    "merge_commit": "693dd4dd78d01cdb5c3ce3b95974e604ef9ac79b",
+    "title": "Keep FTUE active through measurement result",
+    "evidence": "Godot CI #248 FTUE/Core Loop comprehension regression success"
   }
 }
