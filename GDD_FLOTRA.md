@@ -207,17 +207,49 @@ Exact renovation cost and downtime are balance hypotheses, not locked values.
 Only two Rank 2 Zones are implemented in the current slice:
 
 #### STORAGE
-- **Fast Pick Rack** — faster access / picking, lower storage density;
-- **High Density Rack** — higher capacity, slower picking.
+- **Fast Pick Rack**
+  - storage contribution: +12;
+  - pick task duration ×0.75;
+  - weakness: 4 fewer storage slots than High Density Rack.
+- **High Density Rack**
+  - storage contribution: +16;
+  - pick task duration ×1.14;
+  - weakness: slower pick processing.
+
+Verified paired scenarios:
+- order backlog: Fast Pick **18** picks vs High Density **12**;
+- storage-pressure absorption: Fast Pick **4** boxes vs High Density **8**.
 
 #### PACKING
-- **Parallel Pack Line** — concurrent jobs / long-queue throughput, weaker single-job efficiency and/or higher staffing demand;
-- **Fast Pack Cell** — fast single-job response, weaker long-queue resilience.
+- **Parallel Pack Line**
+  - 2 concurrent jobs;
+  - per-job duration ×1.10;
+  - strength: long-queue throughput.
+- **Fast Pack Cell**
+  - 1 concurrent job;
+  - per-job duration ×0.58;
+  - strength: single-job latency.
+- a Rank 2 PACKING system supersedes the Rank 1 Second Packing Bench behavior; Fast Pack Cell therefore retains its intended one-job weakness.
+
+Verified paired scenarios:
+- 200-box / 180-second long queue: Parallel **106** completions vs Fast Cell **102**;
+- single-job latency: Parallel **3.35s** vs Fast Cell **1.75s**.
 
 For each pair:
 - A must have at least one tested scenario where it is preferable;
 - B must have at least one tested scenario where it is preferable;
 - neither option may be universally dominant across the paired scenarios.
+
+Current Vertical Slice renovation implementation:
+- first build uses the full catalog price;
+- A ⇄ B renovation costs **75% of the target equipment fresh-build price**;
+- renovation gives no refund;
+- only one mode per Zone is active;
+- STORAGE capacity contribution is replaced rather than stacked;
+- downsizing STORAGE never deletes existing inventory; temporary over-capacity drains naturally;
+- renovation physically replaces the active 3D equipment;
+- renovation starts a new authoritative Before/After measurement;
+- 75% is the current tested implementation value and remains tunable after human playtest rather than a permanent economy constant.
 
 INBOUND, PICKING, and SHIPPING v2 equipment remain deferred until this slice passes playtest.
 
@@ -388,6 +420,15 @@ Do not label a choice as recommended.
 Normal structural equipment uses:
 
 **equipment card → preview → ghost/planned geometry → explicit build/renovate confirmation → physical construction/change**
+
+Current verified implementation:
+- Rank 1 and Rank 2 capital actions use a two-step preview → explicit commit flow;
+- Rank 2 preview shows equipment name, strength, weakness/trade-off, and real build/renovation cost;
+- commit changes authoritative Domain state and physically replaces the active Rank 2 geometry;
+- build/renovation triggers investment emphasis and authoritative Before/After measurement;
+- short action feedback is held long enough to read.
+
+**Still required before the next iPhone Web playtest:** the preview must add physical ghost/planned geometry and a clearer selected-Zone construction/reward transition. Text-only preview is not considered the final presentation contract.
 
 Cash must not be converted into an invisible stat change from a single ambiguous button press.
 
