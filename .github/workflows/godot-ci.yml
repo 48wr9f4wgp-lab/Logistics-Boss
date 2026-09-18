@@ -189,6 +189,26 @@ jobs:
             exit 1
           fi
 
+      - name: Rank 2 v2 renovation smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 40s godot --headless --path godot --script res://tests/rank2_v2_renovation_smoke.gd 2>&1 | tee /tmp/rank2-v2-renovation-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/rank2-v2-renovation-smoke.log; then
+            echo 'Rank 2 v2 renovation smoke emitted an engine/script error'
+            exit 1
+          fi
+
+      - name: Rank 2 v2 dominance smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 40s godot --headless --path godot --script res://tests/rank2_v2_dominance_smoke.gd 2>&1 | tee /tmp/rank2-v2-dominance-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/rank2-v2-dominance-smoke.log; then
+            echo 'Rank 2 v2 dominance smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Save recovery smoke
         shell: bash
         run: |
