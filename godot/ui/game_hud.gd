@@ -69,7 +69,7 @@ func _build_brand_strip() -> void:
     add_child(brand)
 
     var title := Label.new()
-    title.text = "LOGISTICS BOSS"
+    title.text = "FLOTRA"
     title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     title.add_theme_font_size_override("font_size", 18)

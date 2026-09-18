@@ -40,7 +40,7 @@ func _compact_command_hud() -> void:
         for child in brand.get_children():
             if child is Label:
                 var label := child as Label
-                label.add_theme_font_size_override("font_size", 16 if label.text == "LOGISTICS BOSS" else 8)
+                label.add_theme_font_size_override("font_size", 16 if label.text == "FLOTRA" else 8)
 
     var metrics := _find_metric_row()
     if metrics != null:
@@ -127,7 +127,7 @@ func _find_brand_strip() -> HBoxContainer:
             continue
         var row := child as HBoxContainer
         for item in row.get_children():
-            if item is Label and (item as Label).text == "LOGISTICS BOSS":
+            if item is Label and (item as Label).text == "FLOTRA":
                 return row
     return null
 

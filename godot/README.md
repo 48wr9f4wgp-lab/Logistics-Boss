@@ -1,4 +1,4 @@
-# Logistics Boss — Godot Vertical Slice
+# FLOTRA — Godot Vertical Slice
 
 This folder is the migration candidate for the production game. The current Web build under `/docs` remains the reference/rollback baseline until the Godot slice passes the migration gate in `TECH_DECISION_GODOT_MIGRATION_2026-09-15.md`.
 

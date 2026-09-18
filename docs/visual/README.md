@@ -1,7 +1,7 @@
-# LOGISTICS BOSS — Canonical Visual Reference
+# FLOTRA — Canonical Visual Reference
 
 Last synchronized: 2026-09-16 JST
-Scope: LOGISTICS BOSS only
+Scope: FLOTRA only
 
 ## Canonical North Star image
 
@@ -11,10 +11,10 @@ This image is the approved visual North Star for mood, camera family, palette ro
 
 ## Canonical implementation rules
 
-`ART_BIBLE_LOGISTICS_BOSS.md`
+`ART_BIBLE_FLOTRA.md`
 
 The image is **not** a pixel-for-pixel runtime requirement. Exact UI dimensions, worker counts, truck counts, rack counts, decorative text, concept-only navigation, prices and statistics are not gameplay specifications.
 
-Gameplay / Domain truth remains governed by `GDD_LOGISTICS_BOSS.md` and the authoritative simulation code.
+Gameplay / Domain truth remains governed by `GDD_FLOTRA.md` and the authoritative simulation code.
 
 When image fidelity conflicts with mobile readability, interaction clarity or stable performance, follow the Art Bible production priority.
