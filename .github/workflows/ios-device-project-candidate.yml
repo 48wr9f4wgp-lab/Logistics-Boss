@@ -1,0 +1,138 @@
+name: Logistics Boss iOS Device Project Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      team_id:
+        description: 'Apple Developer Team ID (10 uppercase alphanumeric characters)'
+        required: true
+        type: string
+      bundle_id:
+        description: 'Final iOS Bundle Identifier (reverse-DNS)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ios-device-project:
+    runs-on: macos-14
+    timeout-minutes: 20
+    env:
+      LOGISTICS_BOSS_IOS_TEAM_ID: ${{ inputs.team_id }}
+      LOGISTICS_BOSS_IOS_BUNDLE_ID: ${{ inputs.bundle_id }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Xcode environment
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcode-select -p
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Validate supplied iOS identifiers
+        run: |
+          set -euo pipefail
+          python3 godot/tools/native_release_inputs.py --platform ios
+
+      - name: Generate ephemeral device-project preset
+        run: |
+          set -euo pipefail
+          cp godot/export_presets.cfg /tmp/logistics-boss-web-export-presets.cfg
+          python3 godot/tools/prepare_ios_export.py \
+            --base /tmp/logistics-boss-web-export-presets.cfg \
+            --output godot/export_presets.cfg \
+            --preset-name 'iOS Device Project'
+          grep -q 'name="iOS Device Project"' godot/export_presets.cfg
+          grep -q 'application/export_project_only=true' godot/export_presets.cfg
+
+      - name: Parse/import project on macOS
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --editor --quit 2>&1 | tee /tmp/godot-ios-device-import.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-device-import.log; then
+            echo 'Godot macOS parse/import emitted an engine/script error'
+            exit 1
+          fi
+
+      - name: Generate unsigned real-identifier Xcode project
+        id: ios_export
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          rm -rf ios-build
+          mkdir -p ios-build
+          godot --headless --path godot --export-release 'iOS Device Project' ../ios-build/LogisticsBoss 2>&1 | tee /tmp/godot-ios-device-export.log
+
+      - name: Validate device-project payload
+        run: |
+          set -euo pipefail
+
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/godot-ios-device-export.log; then
+            echo 'Godot iOS device-project export emitted an engine/script error'
+            exit 1
+          fi
+
+          require_file() {
+            if [ ! -s "$1" ]; then
+              echo "Missing required iOS device-project payload: $1"
+              exit 1
+            fi
+          }
+
+          require_file ios-build/LogisticsBoss.xcodeproj/project.pbxproj
+          require_file ios-build/LogisticsBoss/LogisticsBoss-Info.plist
+          require_file ios-build/LogisticsBoss.xcframework/ios-arm64/libgodot.a
+          require_file ios-build/MoltenVK.xcframework/Info.plist
+          require_file ios-build/PrivacyInfo.xcprivacy
+
+          pck_path="$(find ios-build -type f -name '*.pck' -size +0c -print -quit)"
+          if [ -z "$pck_path" ]; then
+            echo 'Missing non-empty *.pck in generated iOS payload'
+            exit 1
+          fi
+
+          pbx='ios-build/LogisticsBoss.xcodeproj/project.pbxproj'
+          plist='ios-build/LogisticsBoss/LogisticsBoss-Info.plist'
+
+          grep -Fq "DEVELOPMENT_TEAM = ${LOGISTICS_BOSS_IOS_TEAM_ID};" "$pbx"
+          grep -Fq "PRODUCT_BUNDLE_IDENTIFIER = ${LOGISTICS_BOSS_IOS_BUNDLE_ID};" "$pbx"
+          grep -Fq 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' "$pbx"
+
+          test "$(/usr/libexec/PlistBuddy -c 'Print :UIRequiresFullScreen' "$plist")" = "true"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :UISupportedInterfaceOrientations:0' "$plist")" = "UIInterfaceOrientationPortrait"
+          if grep -q 'UIInterfaceOrientationLandscape' "$plist"; then
+            echo 'Landscape orientation unexpectedly present in iOS device project'
+            exit 1
+          fi
+
+          cat > ios-build/DEVICE_CANDIDATE_METADATA.txt <<EOF
+          LOGISTICS BOSS iOS device-project candidate
+          source_commit=${GITHUB_SHA}
+          team_id=${LOGISTICS_BOSS_IOS_TEAM_ID}
+          bundle_id=${LOGISTICS_BOSS_IOS_BUNDLE_ID}
+          signing=UNSIGNED
+          distribution=NONE
+          physical_device_qa=NOT_RUN
+          EOF
+
+          echo "Godot export step outcome: ${{ steps.ios_export.outcome }}"
+          ditto -c -k --sequesterRsrc --keepParent ios-build /tmp/LogisticsBoss-ios-device-project.zip
+          test -s /tmp/LogisticsBoss-ios-device-project.zip
+          echo 'Unsigned real-identifier iOS device-project candidate validated.'
+
+      - name: Upload unsigned device-project candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: logistics-boss-ios-device-project-${{ github.sha }}
+          path: /tmp/LogisticsBoss-ios-device-project.zip
+          if-no-files-found: error
+          retention-days: 7

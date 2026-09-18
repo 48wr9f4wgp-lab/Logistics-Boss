@@ -1,6 +1,6 @@
 # LOGISTICS BOSS — Development Handoff
 
-Last updated: 2026-09-17 JST
+Last updated: 2026-09-18 JST
 
 ## 1. Product / canonical intent
 
@@ -23,14 +23,16 @@ Current release label: **Code RC Candidate**. It is **not Native RC**.
 Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
-Latest verified native-bootstrap merge:
-- PR #78 — `Add synthetic Android native export smoke`
-- merge commit: `1661e87fc372d6b1ca4fa8b28da82f08579c69a4`
-- Godot CI #195: **success**
-- iOS Export Smoke #34: **success**
-- Android Export Smoke #7: **success**
+Latest verified presentation/native-prep baseline:
+- PR #86 — `Polish final worker parcel and equipment surfaces`
+- merge commit: `0c500b686198ba5785a0aac6a9fd5f37b1ac10d9`
+- Godot CI #216: **success**
+- iOS Export Smoke #47: **success**
+- Android Export Smoke #28: **success**
+- Rendered Visual Capture #14: **success**
+- current Rank 1 / 2 / 3 rendered captures: **human inspected / pass**
 
-Latest product feature merge before native-bootstrap work:
+Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
 - merge commit: `2cfc8c65ca482e8597df9565c4c172bba1aede3d`
 
@@ -44,6 +46,14 @@ Recent QA/product milestones:
 - PR #75: real Meta Loop E2E through Rank 3 using earned operating cash
 - PR #76: returning-session resume brief + `session_resume` local instrumentation
 - PR #78: synthetic Android APK export route + package / manifest / ARM64 / signature / zip-alignment verification
+- PR #79: premium warehouse material / lighting hierarchy
+- PR #80: Domain-driven worker / forklift liveness
+- PR #81: stronger Rank 3 facility-scale silhouette
+- PR #82: CI-rendered Rank 1 / 2 / 3 visual-capture artifact path
+- PR #83: rendered-capture-driven Rank framing / Annex / routing composition fixes
+- PR #84: 2× MSAA + restrained HUD depth
+- PR #85: final 3D depth-lighting balance
+- PR #86: final worker / parcel / equipment surface finish
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -256,12 +266,12 @@ Must preserve:
 - physical Rank growth
 - restrained portrait HUD
 
-Important validation caveat:
-- the latest visual passes are protected by code/CI visual smokes;
-- the last explicitly recorded actual rendered screenshot inspection predates the newest visual passes;
-- therefore do **not** claim latest visual changes are human visually confirmed until a current runtime capture / device pass is completed.
+Current validation state:
+- Rank 1 / 2 / 3 are rendered automatically at 390×844 by the Rendered Visual Capture workflow;
+- the current post-PR86 captures were human inspected and passed for composition, lighting, HUD balance, Rank progression, parcel/worker/equipment surface finish, and absence of the earlier Rank 3 foreground obstruction;
+- this confirms the current CI-rendered presentation baseline, **not** native-device safe area, display scaling, thermal performance, audio, haptics, or real-device touch behavior.
 
-This caveat does not change the Code RC Candidate label, but it remains part of final device QA.
+A physical iPhone visual/device pass is still mandatory before Native RC.
 
 ## 9. Native export routes — proven synthetic paths
 
@@ -270,15 +280,30 @@ This caveat does not change the Code RC Candidate label, but it remains part of 
 Current proven route:
 - GitHub-hosted macOS + Xcode
 - Godot 4.7.2 + templates
-- synthetic CI-only identifiers
+- synthetic CI-only identifiers for automatic smoke
 - ephemeral iOS export preset
 - unsigned Xcode project export
 - Xcode project / framework / PCK payload validation
 - `logistics-boss-ios-xcode-smoke` artifact path
 
-Latest iOS Export Smoke verified above is green.
+PR #86 / iOS Export Smoke #47 artifact was downloaded and manually inspected:
+- iOS arm64 `libgodot.a` present
+- MoltenVK XCFramework present
+- non-empty `LogisticsBoss.pck` present
+- `PrivacyInfo.xcprivacy` present
+- deployment target 15.0
+- portrait-only orientation
+- full-screen mode
+- synthetic Team ID / Bundle ID correctly injected
 
-Production Apple identifiers / certificates / provisioning profiles are not committed.
+Prepared next gate:
+- `.github/workflows/ios-device-project-candidate.yml`
+- manual-only `workflow_dispatch`
+- accepts the confirmed real Apple Team ID + final Bundle ID
+- generates and validates an **unsigned** real-identifier Xcode-project artifact
+- does not import certificates, sign, install, or distribute anything
+
+Production Apple identifiers / certificates / provisioning profiles are not committed. Signed-device work remains blocked until the account owner supplies/authorizes the signing route.
 
 ### Android
 
@@ -372,6 +397,7 @@ Release / QA:
 - `.github/workflows/godot-ci.yml`
 - `.github/workflows/godot-preview-pages.yml`
 - `.github/workflows/ios-export-smoke.yml`
+- `.github/workflows/ios-device-project-candidate.yml`
 - `.github/workflows/android-export-smoke.yml`
 - `godot/tools/native_release_inputs.py`
 - `godot/tools/prepare_ios_export.py`
@@ -394,12 +420,14 @@ Release / QA:
 
 ## 14. Immediate next task
 
-Code-level product / QA work is substantially converged, and both native platforms now have a synthetic CI export path.
+Code-level product / QA work and the visual baseline are substantially converged. The current priority is **iPhone native-device gating**, not another presentation or feature pass.
 
-Next priority is **production-signing + physical-device Native RC preparation**, not another broad feature pass:
-1. keep main CI green and fix only concrete code-level defects found by final audit;
-2. obtain confirmed final iOS / Android identifiers and authorized production signing inputs;
-3. prepare production-signed native candidates, including the Android release AAB path;
-4. run physical iPhone + Android QA including current visual inspection;
-5. fix native-specific issues and rerun regression;
-6. declare Native RC only when both device gates pass.
+Immediate sequence:
+1. obtain the confirmed Apple Developer Team ID and final iOS Bundle Identifier;
+2. run the manual `iOS Device Project Candidate` workflow to produce a real-identifier **unsigned** Xcode-project artifact;
+3. only after explicit authorization, configure a secure Apple signing/provisioning route and produce an installable signed candidate;
+4. run physical iPhone QA: cold launch, fresh FTUE, schema-v7 load, background/resume, kill/relaunch save, Safe Area / Dynamic Island, edge orbit/pinch, Management touch scroll, audio/haptics, Rank 1→2→3, routing after reload, current visual inspection, and 10+ minute mature Rank 3 performance;
+5. fix only native-specific defects and rerun regression;
+6. complete the equivalent Android production-signing / device gate before declaring Native RC.
+
+Do not infer or invent the Team ID, Bundle ID, certificates, or provisioning material.

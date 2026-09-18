@@ -1,9 +1,9 @@
 {
-  "schema": 4,
-  "phase": "code_rc_candidate_native_gate_pending",
+  "schema": 5,
+  "phase": "code_rc_candidate_ios_device_gate_ready_for_real_identifiers",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_195_success_ios_export_34_success_android_export_7_success",
+    "ci_latest_verified": "godot_216_success_ios_export_47_success_android_export_28_success_render_capture_14_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -12,13 +12,15 @@
     "mobile_management_scroll": "verified_web_ios_and_regression_covered",
     "save": "schema_v7_primary_backup_recovery_pass",
     "measurement_feedback": "domain_verdict_shared_by_hud_gamefeel_and_3d",
-    "visual_progression": "rank2_rank3_code_ci_covered_latest_human_render_check_pending",
+    "visual_progression": "rank1_rank2_rank3_current_render_human_inspected_through_pr86",
+    "visual_final_polish": "passes_pr79_to_pr86_merged_render_capture_14_human_pass",
     "analytics": "provider_neutral_local_only_no_external_upload",
     "performance": "runtime_fps_monitor_and_soak_present_native_device_measurement_pending",
     "audio_haptics": "procedural_audio_and_native_haptic_hooks_present_native_device_verify_pending",
-    "unsigned_ios_export": "macos_xcode_route_green_synthetic_identifiers",
-    "synthetic_android_export": "linux_apk_route_green_pr78_package_manifest_arm64_signature_zipalign_verified",
-    "native_ios": "blocked_on_final_identifiers_production_signing_and_physical_device_qa",
+    "unsigned_ios_export": "ios_export_47_green_artifact_manually_audited_arm64_pck_privacyinfo_ios15_portrait_fullscreen_synthetic_ids",
+    "ios_device_candidate_workflow": "manual_real_identifier_unsigned_xcode_project_path_prepared_signing_not_performed",
+    "synthetic_android_export": "android_export_28_green_synthetic_apk_route_existing_proof",
+    "native_ios": "blocked_on_final_team_id_bundle_id_authorized_signing_and_physical_iphone_qa",
     "native_android": "blocked_on_final_package_production_signing_aab_candidate_and_physical_device_qa",
     "release": "code_rc_candidate_not_native_rc"
   },
@@ -27,19 +29,25 @@
     "merge_commit": "2cfc8c65ca482e8597df9565c4c172bba1aede3d",
     "title": "Restore session context for returning players"
   },
+  "latest_visual_merge": {
+    "pr": 86,
+    "merge_commit": "0c500b686198ba5785a0aac6a9fd5f37b1ac10d9",
+    "title": "Polish final worker parcel and equipment surfaces"
+  },
   "latest_native_bootstrap_merge": {
     "pr": 78,
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "next": "Keep Code RC stable. Obtain confirmed final iOS and Android identifiers plus authorized production signing inputs, produce signed native candidates (including Android production AAB route), then run physical iPhone and Android QA including current visual inspection, safe-area/navigation clearance, save/relaunch, audio/haptics, routing, and sustained Rank 3 performance before declaring Native RC.",
+  "next": "Supply the confirmed Apple Developer Team ID and final iOS Bundle Identifier to the manual unsigned iOS device-project candidate workflow. After the real-identifier project is validated, explicitly authorize and provide a secure Apple signing/provisioning route before any signed build or device installation. Then run physical iPhone QA: cold launch, fresh FTUE, schema-v7 load, background/resume, kill/relaunch save, safe area/Dynamic Island, edge orbit/pinch, management scroll, audio/haptics, Rank1-to-Rank3 reachability, routing reload, current visual inspection, and 10+ minute mature Rank3 performance with no sustained sub-30 FPS.",
   "external_actions_require_approval": [
     "paid developer account purchase or renewal",
     "production signing-key generation or rotation on behalf of the user",
-    "App Store submission",
+    "Apple certificate/provisioning import for signed candidate generation",
+    "TestFlight or App Store distribution",
     "Google Play submission",
     "IAP or ads activation",
     "external analytics or crash-provider contract/upload"
   ],
-  "updated_at": "2026-09-17"
+  "updated_at": "2026-09-18"
 }
