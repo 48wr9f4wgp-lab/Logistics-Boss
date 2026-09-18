@@ -85,7 +85,7 @@ func _run() -> void:
             high_density_button = button
             break
     assert(high_density_button != null, "visual preview capture must expose High Density Rack")
-    var preview_cash := preview_sim.money
+    var preview_cash: int = int(preview_sim.money)
     high_density_button.emit_signal("pressed")
     assert(preview_sim.money == preview_cash, "visual preview capture must not spend cash on first tap")
 
