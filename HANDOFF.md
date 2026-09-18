@@ -29,6 +29,30 @@ Core Experience v2 locks:
 
 Existing simulation/save/CI/export evidence is preserved. It is not sufficient proof that the v2 Core Experience works.
 
+### Interaction Skeleton — DONE
+
+PR #107 — `Add Vertical Slice v2 interaction skeleton`
+- merge commit: `185aeed749d1c390c14dc46934055e8fa1173b50`
+- Godot CI #265: **success**
+- iOS Export Smoke #86: **success**
+- Rendered Visual Capture #63: **success**
+- Android Export Smoke #77: **success** (historical technical reference only)
+- dedicated v2 interaction skeleton smoke: **success**
+- fresh Rank 1 portrait render: **human inspected / pass**
+
+Verified player-facing v2 shell:
+- five physical 3D Zone targets: INBOUND / STORAGE / PICKING / PACKING / SHIPPING;
+- touch/raycast Zone selection;
+- lower-sheet Zone Panel with authoritative evidence and separate OPERATIONS / CAPITAL hierarchy;
+- Director reports symptoms/evidence and no longer prescribes the equipment answer;
+- RP is hidden from the primary mobile HUD;
+- mobile Management is an Overview/dashboard shell;
+- legacy repeated upgrades, Rank 2 Zone purchase buttons, and old staffing presets are hidden from the player-facing mobile Management path;
+- all five Zone labels are readable in the default 390×844 portrait capture after evidence-driven scale/framing corrections.
+
+This is **Interaction Skeleton evidence only**. Rank 1 v2 structural projects, direct Zone staffing, Rank 2 renovation, and the new event-driven onboarding are not yet implemented.
+
+
 ## 1. Product / canonical intent
 
 FLOTRA（フロトラ） is a portrait mobile 3D logistics-management / automation-observer game. The player is the logistics-center owner / operations manager, not a manual parcel carrier or forklift driver.
@@ -66,14 +90,16 @@ Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
 Current verified main baseline:
-- PR #103 — `Strengthen Rank 2 growth legibility`
-- merge commit: `a8671914e96270d482022a69785aaec964eea6e2`
-- Godot CI #255: **success**
-- iOS Export Smoke #77: **success**
-- Android Export Smoke #67: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
-- Rendered Visual Capture #53: **success**
-- fresh Rank 1 / 2 / 3 captures: **human inspected / pass**
-- PR #101 economy pacing, PR #99 FTUE comprehension, PR #97 progression dead-end audit and PR #96 warehouse-hero framing are included in this baseline
+- PR #107 — `Add Vertical Slice v2 interaction skeleton`
+- merge commit: `185aeed749d1c390c14dc46934055e8fa1173b50`
+- Godot CI #265: **success**
+- iOS Export Smoke #86: **success**
+- Android Export Smoke #77: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
+- Rendered Visual Capture #63: **success**
+- fresh Rank 1 390×844 capture: **human inspected / pass**
+- all five Zone labels readable in the default portrait frame
+- v2 Zone Panel / Director / mobile Management shell covered by dedicated automated smoke
+- legacy technical/save/progression evidence from PRs #97–#103 remains preserved where not superseded by Core Experience v2
 
 Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
@@ -103,6 +129,7 @@ Recent QA/product milestones:
 - PR #99: FTUE remains active until the authoritative measurement result; Core Loop is not declared learned at purchase time
 - PR #101: exhaustive 510s Rank 2 staffing frontier exposed and fixed an always-Shipping near-dominant non-decision; final adaptive frontier = 212 shipments vs best fixed 202
 - PR #103: fresh rendered-capture audit found Rank 2 growth too subtle; widened the persistent operations mezzanine/crown and added rear service modules so Rank 2 reads as a larger facility while Rank 3 remains the larger step
+- PR #107: Core Experience v2 Interaction Skeleton — five 3D Zone targets, Zone Panel, symptom-only Director, Management dashboard shell, RP removed from primary HUD, legacy mobile purchase/preset controls hidden; CI #265 / iOS #86 / Render #63 passed and fresh portrait capture human-inspected
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -457,31 +484,46 @@ Release / QA:
 
 ## 14. Immediate next task
 
-FLOTRA is now in **ACTIVE_PHASE = VERTICAL_SLICE** for Core Experience v2.
+FLOTRA remains in **ACTIVE_PHASE = VERTICAL_SLICE** for Core Experience v2.
 
-The previous Mac-independent audits remain valid technical/product evidence for the legacy baseline, but the 2026-09-18 iPhone Web playtest found a higher-priority Core Experience failure. Do not resume speculative polish and do not enter GREENLIGHT.
+### LAST VERIFIED DONE
 
-**NEXT — implementation step 1: Interaction skeleton**
+**Interaction Skeleton — DONE / PR #107**
 
-Implement as a small reviewable PR:
-1. readable 3D Zone targets;
-2. Zone Panel bottom sheet while keeping warehouse context visible;
-3. symptom-only Director copy;
-4. remove normal Zone equipment purchasing from Management;
-5. preserve authoritative simulation/save behavior;
-6. add/update automated coverage for the interaction path and mobile layout.
+Verified:
+- five 3D Zone targets and touch/raycast selection;
+- Zone Panel lower-sheet shell;
+- symptom-only Director;
+- Management Overview/dashboard shell;
+- RP hidden from primary mobile HUD;
+- legacy repeated upgrade / Rank 2 facility purchase / staffing preset controls hidden from the player-facing mobile path;
+- Godot CI #265 / iOS Export Smoke #86 / Rendered Visual Capture #63 green;
+- fresh 390×844 Rank 1 render human-inspected with all five Zone labels readable.
 
-Then continue in this order:
-- Rank 1 v2 structural projects + event-driven onboarding + Warehouse Expansion;
-- direct player-facing Zone staffing;
-- Rank 2 STORAGE pair + paid renovation + paired dominance tests;
-- Rank 2 PACKING pair + paid renovation + paired dominance tests;
-- equipment preview / ghost / visible construction / measurement feedback;
-- iPhone Web playtest.
+The legacy Management-first FTUE is intentionally hidden on the production mobile v2 path. The old non-mobile FTUE/Core Loop smoke remains only as regression evidence for preserved technical behavior until the new Rank 1 v2 onboarding replaces it.
 
-**STOP / SCOPE CONDITION:** do not implement Rank 2 INBOUND/PICKING/SHIPPING v2 equipment, Rank 3 redesign, or advanced sorter/ASRS/cross-dock content until the v2 slice passes playtest.
+### NEXT — Rank 1 v2
 
-Return to DEVICE_VALIDATION only after the v2 slice is end-to-end playable, CI/save regressions are green, fresh visual evidence is inspected, and iPhone Web play no longer reproduces the Management-clicker failure mode.
+Implement as the next small, reviewable PR:
+
+1. **Rack Wing** — visible storage expansion with authoritative capacity effect;
+2. **Second Packing Bench** — visible parallel packing project with authoritative packing effect;
+3. **Worker Hire** — one meaningful additional worker, avoiding repeated hire-button spam;
+4. **Forklift Project** — keep authoritative inbound→storage automation and make its project/visual consequence fit the Zone-first flow;
+5. **event-driven Zone-first onboarding** — observe symptom → tap Zone → act → watch logistics → read measured result;
+6. **Warehouse Expansion** — a visible strategic project that grows Small Depot into Rank 2.
+
+Acceptance focus:
+- first meaningful improvement must not require Management as an equipment store;
+- every Rank 1 project must visibly change the warehouse or logistics behavior;
+- onboarding must not reveal the equipment answer;
+- preserve authoritative simulation, schema-v7 save compatibility, and current v2 Interaction Skeleton behavior.
+
+**STOP / SCOPE CONDITION:** do not start Rank 2 STORAGE/PACKING renovation, deferred INBOUND/PICKING/SHIPPING v2 equipment, Rank 3 redesign, or advanced sorter/ASRS/cross-dock content until Rank 1 v2 is coherent and testable.
+
+After Rank 1 v2 is implemented and verified, continue with direct Zone staffing, then Rank 2 STORAGE/PACKING renovation pairs, construction preview/reward feedback, and iPhone Web playtest.
+
+Return to DEVICE_VALIDATION only after the complete v2 slice is end-to-end playable, CI/save regressions are green, fresh visual evidence is inspected, and iPhone Web play no longer reproduces the Management-clicker failure mode.
 
 Native representative-iPhone evidence remains required before GREENLIGHT.
 
