@@ -134,7 +134,7 @@ def _status(values: Dict[str, str], platform: str, require_signing: bool) -> Dic
 
 
 def _print_human(result: Dict[str, dict], require_signing: bool) -> None:
-    print("LOGISTICS BOSS native release input check")
+    print("FLOTRA native release input check")
     for target, state in result.items():
         label = "iOS" if target == "ios" else "Android"
         print(f"{label}: {'READY' if state['ready'] else 'BLOCKED'}")
