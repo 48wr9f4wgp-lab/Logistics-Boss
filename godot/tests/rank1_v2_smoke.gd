@@ -48,7 +48,7 @@ func _verify_domain_and_save() -> bool:
     )
 
     if int(sim.save_data().get("schema_version", -1)) != FlotraV2Sim.SAVE_SCHEMA_V2:
-        _fail("Rank 1 v2 runtime must write save schema 8")
+        _fail("Rank 1 v2 runtime must write save schema 9")
         return false
     if sim.facility_rank != 1 or sim.rank1_projects_completed() != 0:
         _fail("fresh Rank 1 v2 operation must begin as an undeveloped Small Depot")
@@ -101,11 +101,11 @@ func _verify_domain_and_save() -> bool:
     var saved := sim.save_data()
     var round_trip: FlotraV2Sim = SimScript.new()
     if not round_trip.load_data(saved):
-        _fail("schema 8 Rank 1 v2 save must round-trip")
+        _fail("schema 9 Rank 1 v2 save must round-trip")
         return false
     for kind in round_trip.rank1_project_kinds():
         if not round_trip.rank1_project_owned(kind):
-            _fail("schema 8 save must preserve Rank 1 v2 project ownership: %s" % String(kind))
+            _fail("schema 9 save must preserve Rank 1 v2 project ownership: %s" % String(kind))
             return false
     if int(round_trip.call("_packing_capacity")) != 2:
         _fail("Second Packing Bench authoritative capacity must survive save/load")
@@ -134,7 +134,7 @@ func _verify_domain_and_save() -> bool:
 
     var migrated: FlotraV2Sim = SimScript.new()
     if not migrated.load_data(legacy_data):
-        _fail("schema 7 save must migrate into schema 8")
+        _fail("schema 7 save must migrate into schema 9")
         return false
     if not migrated.rank1_project_owned(FlotraV2Sim.PROJECT_RACK_WING):
         _fail("legacy rack investment must migrate into Rack Wing ownership")
@@ -149,7 +149,7 @@ func _verify_domain_and_save() -> bool:
         _fail("legacy forklift unlock must migrate into Forklift Project ownership")
         return false
     if int(migrated.save_data().get("schema_version", -1)) != FlotraV2Sim.SAVE_SCHEMA_V2:
-        _fail("migrated save must write the new schema 8 baseline")
+        _fail("migrated save must write the new schema 9 baseline")
         return false
 
     if not _has_event(events, "rank1_project_purchased"):

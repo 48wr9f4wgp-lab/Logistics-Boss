@@ -179,6 +179,16 @@ jobs:
             exit 1
           fi
 
+      - name: Direct Zone staffing smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 35s godot --headless --path godot --script res://tests/direct_zone_staffing_smoke.gd 2>&1 | tee /tmp/direct-zone-staffing-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/direct-zone-staffing-smoke.log; then
+            echo 'Direct Zone staffing smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Save recovery smoke
         shell: bash
         run: |

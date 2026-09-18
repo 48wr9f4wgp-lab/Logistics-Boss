@@ -19,6 +19,8 @@ var _v2_overview_label: Label
 var _v2_rank1_expansion_panel: PanelContainer
 var _v2_rank1_expansion_label: Label
 var _v2_rank1_expansion_button: Button
+var _v2_staffing_panel: PanelContainer
+var _v2_staffing_label: Label
 
 
 func _ready() -> void:
@@ -40,6 +42,7 @@ func _process(delta: float) -> void:
     _apply_v2_management_scope()
     _render_v2_management_overview()
     _render_v2_rank1_expansion()
+    _render_v2_staffing_overview()
 
 
 func _input(event: InputEvent) -> void:
@@ -333,6 +336,28 @@ func _build_v2_management_overview() -> void:
     _v2_rank1_expansion_button.pressed.connect(_purchase_v2_warehouse_expansion)
     expansion_column.add_child(_v2_rank1_expansion_button)
 
+    _v2_staffing_panel = PanelContainer.new()
+    _v2_staffing_panel.name = "V2StaffingOverview"
+    _v2_staffing_panel.add_theme_stylebox_override(
+        "panel",
+        _panel_style(Color(0.018, 0.052, 0.070, 0.985), Color(0.28, 0.86, 0.72, 0.90), 14)
+    )
+    list.add_child(_v2_staffing_panel)
+
+    var staffing_margin := MarginContainer.new()
+    staffing_margin.add_theme_constant_override("margin_left", 10)
+    staffing_margin.add_theme_constant_override("margin_right", 10)
+    staffing_margin.add_theme_constant_override("margin_top", 8)
+    staffing_margin.add_theme_constant_override("margin_bottom", 8)
+    _v2_staffing_panel.add_child(staffing_margin)
+
+    _v2_staffing_label = Label.new()
+    _v2_staffing_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _v2_staffing_label.add_theme_font_override("font", JAPANESE_UI_FONT)
+    _v2_staffing_label.add_theme_font_size_override("font_size", 11)
+    _v2_staffing_label.add_theme_color_override("font_color", Color(0.82, 1.0, 0.92))
+    staffing_margin.add_child(_v2_staffing_label)
+
     _render_v2_management_overview()
     _render_v2_rank1_expansion()
 
@@ -394,6 +419,29 @@ func _purchase_v2_warehouse_expansion() -> void:
             _:
                 _show_toast("Warehouse Expansionを実行できない")
     _render_v2_rank1_expansion()
+
+
+func _render_v2_staffing_overview() -> void:
+    if _v2_staffing_panel == null or _v2_staffing_label == null:
+        return
+    if sim == null or sim.facility_rank < 2 or not sim.has_method("direct_staffing_summary"):
+        _v2_staffing_panel.visible = false
+        return
+
+    var summary: Dictionary = sim.call("direct_staffing_summary")
+    if not bool(summary.get("enabled", false)):
+        _v2_staffing_panel.visible = false
+        return
+
+    _v2_staffing_panel.visible = true
+    var cooldown := float(summary.get("cooldown", 0.0))
+    var lock_text := "変更可" if cooldown <= 0.0 else "観察中 %d秒" % int(ceil(cooldown))
+    _v2_staffing_label.text = "STAFFING｜現在配置\nRECEIVING/STORAGE %d人｜PICKING %d人｜SHIPPING %d人\n%s｜変更は各ZoneのOPERATIONSから" % [
+        int(summary.get("inbound", 0)),
+        int(summary.get("picking", 0)),
+        int(summary.get("shipping", 0)),
+        lock_text,
+    ]
 
 
 func _v2_zone_status(zone_key: String) -> String:
