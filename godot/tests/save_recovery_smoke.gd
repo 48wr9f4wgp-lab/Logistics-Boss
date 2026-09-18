@@ -1,6 +1,6 @@
 extends SceneTree
 
-const SimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
+const SimScript = preload("res://domain/flotra_v2_sim.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 
 
@@ -71,10 +71,17 @@ func _verify_full_progress_reset(store: LogisticsSaveStore) -> void:
 
     var marker := FileAccess.open(SaveStoreScript.FTUE_DONE_PATH, FileAccess.WRITE)
     if marker == null:
-        _fail("reset smoke must create FTUE marker")
+        _fail("reset smoke must create legacy FTUE marker")
         return
     marker.store_string("core_loop_ftue_v1\n")
     marker.close()
+
+    var v2_marker := FileAccess.open(SaveStoreScript.V2_RANK1_FTUE_DONE_PATH, FileAccess.WRITE)
+    if v2_marker == null:
+        _fail("reset smoke must create v2 Rank 1 FTUE marker")
+        return
+    v2_marker.store_string("flotra_v2_rank1_ftue_v1\n")
+    v2_marker.close()
 
     if not store.reset_user_progress():
         _fail("full progress reset must report success")
@@ -85,6 +92,7 @@ func _verify_full_progress_reset(store: LogisticsSaveStore) -> void:
         SaveStoreScript.TEMP_PATH,
         SaveStoreScript.BACKUP_PATH,
         SaveStoreScript.FTUE_DONE_PATH,
+        SaveStoreScript.V2_RANK1_FTUE_DONE_PATH,
     ]:
         if FileAccess.file_exists(path):
             _fail("full progress reset must remove %s" % path)

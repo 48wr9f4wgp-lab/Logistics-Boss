@@ -44,6 +44,9 @@ func _run() -> void:
     if main.sim.facility_rank != 2 or main.sim.logistics_rating < 8:
         _fail("runtime startup must restore authoritative progression before presentation binds")
         return
+    if int(main.sim.save_data().get("schema_version", -1)) != FlotraV2Sim.SAVE_SCHEMA_V2:
+        _fail("runtime startup must migrate the schema 7 seed into the schema 8 v2 runtime")
+        return
 
     var hud = null
     for child in main.get_children():

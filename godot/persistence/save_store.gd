@@ -5,6 +5,7 @@ const SAVE_PATH := "user://logistics_boss_godot_save.json"
 const TEMP_PATH := "user://logistics_boss_godot_save.tmp"
 const BACKUP_PATH := "user://logistics_boss_godot_save.bak"
 const FTUE_DONE_PATH := "user://logistics_boss_ftue_v1.done"
+const V2_RANK1_FTUE_DONE_PATH := "user://flotra_v2_rank1_ftue_v1.done"
 
 
 func save_sim(sim: WarehouseSim) -> bool:
@@ -49,7 +50,7 @@ func load_into(sim: WarehouseSim) -> bool:
 
 func reset_user_progress() -> bool:
     var ok := true
-    for path in [SAVE_PATH, TEMP_PATH, BACKUP_PATH, FTUE_DONE_PATH]:
+    for path in [SAVE_PATH, TEMP_PATH, BACKUP_PATH, FTUE_DONE_PATH, V2_RANK1_FTUE_DONE_PATH]:
         if not FileAccess.file_exists(path):
             continue
         var absolute := ProjectSettings.globalize_path(path)

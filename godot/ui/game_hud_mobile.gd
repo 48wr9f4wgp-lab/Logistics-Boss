@@ -16,6 +16,9 @@ var _mobile_mouse_scroll_active := false
 var _mobile_mouse_drag_distance := 0.0
 var _v2_overview_panel: PanelContainer
 var _v2_overview_label: Label
+var _v2_rank1_expansion_panel: PanelContainer
+var _v2_rank1_expansion_label: Label
+var _v2_rank1_expansion_button: Button
 
 
 func _ready() -> void:
@@ -36,6 +39,7 @@ func _process(delta: float) -> void:
     _apply_v2_primary_hud()
     _apply_v2_management_scope()
     _render_v2_management_overview()
+    _render_v2_rank1_expansion()
 
 
 func _input(event: InputEvent) -> void:
@@ -293,7 +297,44 @@ func _build_v2_management_overview() -> void:
     _v2_overview_label.add_theme_font_size_override("font_size", 11)
     _v2_overview_label.add_theme_color_override("font_color", Color(0.86, 0.96, 1.0))
     margin.add_child(_v2_overview_label)
+
+    _v2_rank1_expansion_panel = PanelContainer.new()
+    _v2_rank1_expansion_panel.name = "V2Rank1Expansion"
+    _v2_rank1_expansion_panel.add_theme_stylebox_override(
+        "panel",
+        _panel_style(Color(0.020, 0.058, 0.075, 0.985), Color(1.0, 0.62, 0.22, 0.92), 14)
+    )
+    list.add_child(_v2_rank1_expansion_panel)
+    list.move_child(_v2_rank1_expansion_panel, mini(1, list.get_child_count() - 1))
+
+    var expansion_margin := MarginContainer.new()
+    expansion_margin.add_theme_constant_override("margin_left", 10)
+    expansion_margin.add_theme_constant_override("margin_right", 10)
+    expansion_margin.add_theme_constant_override("margin_top", 8)
+    expansion_margin.add_theme_constant_override("margin_bottom", 8)
+    _v2_rank1_expansion_panel.add_child(expansion_margin)
+
+    var expansion_column := VBoxContainer.new()
+    expansion_column.add_theme_constant_override("separation", 6)
+    expansion_margin.add_child(expansion_column)
+
+    _v2_rank1_expansion_label = Label.new()
+    _v2_rank1_expansion_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _v2_rank1_expansion_label.add_theme_font_override("font", JAPANESE_UI_FONT)
+    _v2_rank1_expansion_label.add_theme_font_size_override("font_size", 11)
+    _v2_rank1_expansion_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.64))
+    expansion_column.add_child(_v2_rank1_expansion_label)
+
+    _v2_rank1_expansion_button = Button.new()
+    _v2_rank1_expansion_button.custom_minimum_size = Vector2(0, 58)
+    _v2_rank1_expansion_button.add_theme_font_override("font", JAPANESE_UI_FONT)
+    _v2_rank1_expansion_button.add_theme_font_size_override("font_size", 11)
+    _v2_rank1_expansion_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _v2_rank1_expansion_button.pressed.connect(_purchase_v2_warehouse_expansion)
+    expansion_column.add_child(_v2_rank1_expansion_button)
+
     _render_v2_management_overview()
+    _render_v2_rank1_expansion()
 
 
 func _render_v2_management_overview() -> void:
@@ -306,6 +347,53 @@ func _render_v2_management_overview() -> void:
         _v2_zone_status("packing"),
         _v2_zone_status("shipping"),
     ]
+
+
+func _render_v2_rank1_expansion() -> void:
+    if _v2_rank1_expansion_panel == null or _v2_rank1_expansion_label == null or _v2_rank1_expansion_button == null:
+        return
+    if sim == null or sim.facility_rank != 1 or not sim.has_method("rank1_expansion_readiness"):
+        _v2_rank1_expansion_panel.visible = false
+        return
+
+    _v2_rank1_expansion_panel.visible = true
+    var readiness: Dictionary = sim.call("rank1_expansion_readiness")
+    var projects := int(readiness.get("projects", 0))
+    var projects_required := int(readiness.get("projects_required", 4))
+    var rating := int(readiness.get("rating", 0))
+    var rating_required := int(readiness.get("rating_required", 8))
+    var cost := int(readiness.get("cost", 0))
+
+    _v2_rank1_expansion_label.text = "WAREHOUSE EXPANSION\n設備Project %d/%d｜物流評価 %d/%d\nSmall Depot → RANK 2 WAREHOUSE" % [
+        projects,
+        projects_required,
+        rating,
+        rating_required,
+    ]
+
+    var ready_except_funds := bool(readiness.get("projects_ready", false)) and bool(readiness.get("rating_ready", false))
+    _v2_rank1_expansion_button.disabled = not ready_except_funds or sim.money < cost
+    _v2_rank1_expansion_button.text = "Warehouseへ拡張｜¥%s" % _format_number(cost)
+
+
+func _purchase_v2_warehouse_expansion() -> void:
+    if sim == null or not sim.has_method("purchase_warehouse_expansion"):
+        return
+    var result: Dictionary = sim.call("purchase_warehouse_expansion")
+    if bool(result.get("ok", false)):
+        _show_toast("WAREHOUSE EXPANSION  RANK 2")
+        _sheet.visible = false
+    else:
+        match String(result.get("reason", "")):
+            "projects":
+                _show_toast("設備Projectが未完了")
+            "rating":
+                _show_toast("物流評価が不足")
+            "funds":
+                _show_toast("資金不足  ¥%s必要" % _format_number(int(result.get("cost", 0))))
+            _:
+                _show_toast("Warehouse Expansionを実行できない")
+    _render_v2_rank1_expansion()
 
 
 func _v2_zone_status(zone_key: String) -> String:

@@ -1,12 +1,13 @@
 extends SceneTree
 
-const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
+const WarehouseSimScript = preload("res://domain/flotra_v2_sim.gd")
 const WarehouseViewScript = preload("res://view/warehouse_view_mobile.gd")
 const ZoneInteractionScript = preload("res://view/zone_interaction_view.gd")
 const VisualPass2Script = preload("res://view/visual_pass_2.gd")
 const VisualPass3Script = preload("res://view/visual_pass_3.gd")
 const ForkliftAutomationScript = preload("res://view/forklift_automation_view.gd")
 const DomainLivenessScript = preload("res://view/domain_liveness_view.gd")
+const Rank1ProjectScript = preload("res://view/rank1_project_view.gd")
 const Rank2FacilityScript = preload("res://view/rank2_facility_view.gd")
 const Rank3ExpansionScript = preload("res://view/rank3_receiving_annex_view.gd")
 const Rank3RoutingScript = preload("res://view/rank3_routing_hub_view.gd")
@@ -79,6 +80,10 @@ func _populate_stage(stage: Node, sim) -> void:
     view.add_child(liveness)
     liveness.bind(view, sim)
 
+    var rank1_projects = Rank1ProjectScript.new()
+    view.add_child(rank1_projects)
+    rank1_projects.bind(view, sim)
+
     var rank2 = Rank2FacilityScript.new()
     view.add_child(rank2)
     rank2.bind(view, sim)
@@ -127,6 +132,16 @@ func _make_sim(rank: int):
     data["packed_queue"] = 5
     data["open_orders"] = 6
     data["rack_capacity"] = 12
+    data["rank1_projects"] = {
+        "rack_wing": true,
+        "second_packing_bench": true,
+        "worker_hire": true,
+        "forklift_project": true,
+        "warehouse_expansion": rank >= 2,
+    }
+    data["rack_level"] = 1
+    data["worker_count"] = 4 if rank == 1 else int(data.get("worker_count", 3))
+    data["forklift_unlocked"] = true
 
     if rank >= 2:
         data["facility_rank"] = 2
