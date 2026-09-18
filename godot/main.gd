@@ -66,6 +66,7 @@ func _ready() -> void:
     # Optional presentation failures must never strand the visible shell on placeholders.
     var hud: GameHud = GameHudScript.new()
     hud.bind_sim(sim)
+    hud.reset_progress_requested.connect(_reset_all_progress)
     add_child(hud)
 
     # Returning players get a five-second continuity brief built only from the
@@ -141,3 +142,21 @@ func _notification(what: int) -> void:
                 "total_shipped": sim.shipped if sim != null else 0,
                 "health": runtime_health.snapshot() if runtime_health != null else {},
             })
+
+
+func _reset_all_progress() -> void:
+    if save_store == null:
+        push_error("FLOTRA reset requested before save store initialization")
+        return
+    if not save_store.reset_user_progress():
+        push_error("FLOTRA reset could not remove all local progress files")
+        return
+
+    _autosave_timer = 0.0
+    call_deferred("_reload_after_progress_reset")
+
+
+func _reload_after_progress_reset() -> void:
+    var error := get_tree().reload_current_scene()
+    if error != OK:
+        push_error("FLOTRA reset could not reload the current scene: %s" % error)
