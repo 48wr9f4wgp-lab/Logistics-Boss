@@ -102,7 +102,10 @@ func _ready() -> void:
     var resume_brief: LogisticsSessionResumeBrief = SessionResumeBriefScript.new()
     hud.add_child(resume_brief)
     var ftue_step := String(hud.call("current_ftue_step")) if hud.has_method("current_ftue_step") else ""
-    var should_show_resume := resumed_session and (ftue_step.is_empty() or ftue_step == "complete")
+    var v2_ftue_step := v2_rank1_coach.current_step_key() if v2_rank1_coach.visible else ""
+    var legacy_ftue_clear := ftue_step.is_empty() or ftue_step == "complete"
+    var v2_ftue_clear := v2_ftue_step.is_empty() or v2_ftue_step == "complete"
+    var should_show_resume := resumed_session and legacy_ftue_clear and v2_ftue_clear
     resume_brief.bind(sim, should_show_resume)
 
     var visual_pass_3: WarehouseVisualPass3 = WarehouseVisualPass3Script.new()
