@@ -16,7 +16,11 @@ var _evidence: Label
 var _equipment: Label
 var _operations: Label
 var _capital: Label
+var _operations_action: Button
+var _capital_action: Button
+var _action_message: Label
 var _close_button: Button
+var _preview_kind: StringName = &""
 
 
 func _ready() -> void:
@@ -34,6 +38,8 @@ func bind_sim(next_sim: WarehouseSim) -> void:
 func open_zone(zone_key: String) -> void:
     if zone_key not in ["inbound", "storage", "picking", "packing", "shipping"]:
         return
+    if _selected_zone != zone_key:
+        _preview_kind = &""
     _selected_zone = zone_key
     if _panel != null:
         _panel.visible = true
@@ -136,6 +142,14 @@ func _build_panel() -> void:
     _operations.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     operations_box.add_child(_operations)
 
+    _operations_action = Button.new()
+    _operations_action.custom_minimum_size = Vector2(0, 44)
+    _operations_action.add_theme_font_override("font", JAPANESE_UI_FONT)
+    _operations_action.add_theme_font_size_override("font_size", 10)
+    _operations_action.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _operations_action.pressed.connect(_on_operations_action)
+    operations_box.add_child(_operations_action)
+
     var capital_panel := _section_panel(Color(1.0, 0.62, 0.22, 0.82))
     capital_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     split.add_child(capital_panel)
@@ -148,6 +162,18 @@ func _build_panel() -> void:
     _capital.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     capital_box.add_child(_capital)
 
+    _capital_action = Button.new()
+    _capital_action.custom_minimum_size = Vector2(0, 56)
+    _capital_action.add_theme_font_override("font", JAPANESE_UI_FONT)
+    _capital_action.add_theme_font_size_override("font_size", 10)
+    _capital_action.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _capital_action.pressed.connect(_on_capital_action)
+    capital_box.add_child(_capital_action)
+
+    _action_message = _label(10, Color(1.0, 0.78, 0.46))
+    _action_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    column.add_child(_action_message)
+
 
 func _render() -> void:
     if sim == null or _selected_zone.is_empty() or _title == null:
@@ -158,7 +184,123 @@ func _render() -> void:
     _evidence.text = _zone_evidence(_selected_zone)
     _equipment.text = "現在設備｜%s" % _current_equipment(_selected_zone)
     _operations.text = _operations_text(_selected_zone)
-    _capital.text = "設備の建設・改装は\nこのZoneから行う"
+    _capital.text = "設備判断はこのZoneで行う"
+    _render_rank1_actions()
+
+
+func _render_rank1_actions() -> void:
+    if _operations_action == null or _capital_action == null or _action_message == null:
+        return
+
+    _operations_action.visible = false
+    _capital_action.visible = false
+    _action_message.text = ""
+
+    if sim == null or sim.facility_rank != 1 or not sim.has_method("rank1_project_info"):
+        return
+
+    var worker_info: Dictionary = sim.call("rank1_project_info", StringName("worker_hire"))
+    if not worker_info.is_empty():
+        var worker_owned := bool(worker_info.get("owned", false))
+        _operations_action.visible = true
+        _operations_action.disabled = worker_owned
+        _operations_action.text = (
+            "✓ Worker Hire｜採用済み"
+            if worker_owned
+            else "Worker Hire｜全体要員 +1｜¥%s" % _format_money(int(worker_info.get("cost", 0)))
+        )
+
+    if not sim.has_method("rank1_project_for_zone"):
+        return
+    var project_kind: StringName = sim.call("rank1_project_for_zone", _selected_zone)
+    if project_kind == &"":
+        return
+
+    var info: Dictionary = sim.call("rank1_project_info", project_kind)
+    if info.is_empty():
+        return
+
+    var owned := bool(info.get("owned", false))
+    _capital_action.visible = true
+    _capital_action.disabled = owned
+    if owned:
+        _capital_action.text = "✓ %s｜稼働中" % String(info.get("label", "Project"))
+        if _preview_kind == project_kind:
+            _preview_kind = &""
+        return
+
+    var cost := int(info.get("cost", 0))
+    var affordable := sim.money >= cost
+    _capital_action.disabled = not affordable
+    if _preview_kind == project_kind:
+        _capital_action.text = "建設する｜%s｜¥%s" % [
+            String(info.get("label", "Project")),
+            _format_money(cost),
+        ]
+        _action_message.text = "%s\n%s" % [
+            String(info.get("strength", "")),
+            String(info.get("effect", "")),
+        ]
+    else:
+        _capital_action.text = "内容を見る｜%s｜¥%s" % [
+            String(info.get("label", "Project")),
+            _format_money(cost),
+        ]
+
+
+func _on_operations_action() -> void:
+    if sim == null or not sim.has_method("purchase_rank1_project"):
+        return
+    var result: Dictionary = sim.call("purchase_rank1_project", StringName("worker_hire"))
+    _render()
+    if not bool(result.get("ok", false)):
+        _action_message.text = _purchase_failure_text(result)
+
+
+func _on_capital_action() -> void:
+    if sim == null or not sim.has_method("rank1_project_for_zone"):
+        return
+    var project_kind: StringName = sim.call("rank1_project_for_zone", _selected_zone)
+    if project_kind == &"":
+        return
+
+    if _preview_kind != project_kind:
+        _preview_kind = project_kind
+        _render()
+        return
+
+    if not sim.has_method("purchase_rank1_project"):
+        return
+    var result: Dictionary = sim.call("purchase_rank1_project", project_kind)
+    if bool(result.get("ok", false)):
+        _preview_kind = &""
+    _render()
+    if not bool(result.get("ok", false)):
+        _action_message.text = _purchase_failure_text(result)
+
+
+func _purchase_failure_text(result: Dictionary) -> String:
+    match String(result.get("reason", "")):
+        "funds":
+            return "資金不足｜¥%s必要" % _format_money(int(result.get("cost", 0)))
+        "owned":
+            return "このProjectは導入済み"
+        "rank":
+            return "現在の施設Rankでは実行できない"
+        _:
+            return "このProjectは実行できない"
+
+
+func _format_money(value: int) -> String:
+    var raw := str(maxi(0, value))
+    var out := ""
+    var count := 0
+    for index in range(raw.length() - 1, -1, -1):
+        if count > 0 and count % 3 == 0:
+            out = "," + out
+        out = raw[index] + out
+        count += 1
+    return out
 
 
 func _zone_name(zone_key: String) -> String:
@@ -241,12 +383,18 @@ func _zone_evidence(zone_key: String) -> String:
 
 func _current_equipment(zone_key: String) -> String:
     if zone_key == "storage":
+        if sim.has_method("rank1_project_owned") and bool(sim.call("rank1_project_owned", StringName("rack_wing"))):
+            return "Rack Wing"
         var storage := _selected_facility_label("storage")
         return storage if not storage.is_empty() else "Small Rack"
     if zone_key == "packing":
+        if sim.has_method("rank1_project_owned") and bool(sim.call("rank1_project_owned", StringName("second_packing_bench"))):
+            return "Dual Packing Bench"
         var packing := _selected_facility_label("packing")
         return packing if not packing.is_empty() else "Standard Pack Bench"
     if zone_key == "inbound":
+        if sim.has_method("rank1_project_owned") and bool(sim.call("rank1_project_owned", StringName("forklift_project"))):
+            return "Forklift Automation"
         var intake := _selected_facility_label("intake")
         if not intake.is_empty():
             return intake
