@@ -68,8 +68,17 @@ func _run() -> void:
     if not bool(purchase.get("ok", false)):
         _fail("FTUE smoke must be able to purchase a starter upgrade")
         return
+    if coach.current_step_key() != "invest":
+        _fail("first investment must keep FTUE active until the measured result is visible")
+        return
+    if not coach.body_text().contains("計測中") or not coach.body_text().contains("改善"):
+        _fail("post-investment FTUE must tell the player to observe and read the measurement verdict")
+        return
+
+    for _index in range(260):
+        sim.step(0.1)
     if coach.current_step_key() != "complete":
-        _fail("first investment must complete the core-loop FTUE")
+        _fail("FTUE must complete only after the real 25-second measurement result arrives")
         return
     if not coach.body_text().contains("観察") or not coach.body_text().contains("投資") or not coach.body_text().contains("測定"):
         _fail("completion copy must teach the canonical observe-decision-invest-measure loop")

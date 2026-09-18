@@ -21,6 +21,7 @@ var sim: WarehouseSim
 var _step: int = Step.OBSERVE
 var _observe_elapsed := 0.0
 var _complete_elapsed := 0.0
+var _investment_started := false
 var _persist_completion := true
 var _bound := false
 
@@ -104,6 +105,7 @@ func bind_context(
     _step = Step.OBSERVE
     _observe_elapsed = 0.0
     _complete_elapsed = 0.0
+    _investment_started = false
 
     if sim == null or _manage_button == null or _sheet == null:
         visible = false
@@ -169,6 +171,14 @@ func _on_sim_event(event: Dictionary) -> void:
         "receiving_annex_purchased",
         "inbound_carrier_program_purchased",
     ] and _step <= Step.INVEST:
+        _investment_started = true
+        if _step < Step.INVEST:
+            _advance_to(Step.INVEST)
+        else:
+            _render_step()
+        return
+
+    if event_type == "measurement_completed" and _step == Step.INVEST and _investment_started:
         _complete_ftue()
 
 
@@ -248,7 +258,11 @@ func _render_step() -> void:
                 _manage_button.modulate = Color(1.0, 0.86, 0.60)
         Step.INVEST:
             _step_label.text = "START GUIDE  4/4  効果測定"
-            _body_label.text = "投資を1つ実行。前25秒→後25秒を自動計測し、出荷が伸びたか確認する。"
+            _body_label.text = (
+                "計測中。倉庫の流れを観察し、結果の「改善 / 横ばい / 要再判断」まで確認する。"
+                if _investment_started
+                else "投資を1つ実行。投資前の流れ→後25秒を自動計測し、結果まで確認する。"
+            )
         Step.COMPLETE:
             _step_label.text = "CORE LOOP  習得"
             _body_label.text = "観察 → 判断 → 投資 → 測定。結果を見て次のボトルネックへ再投資しよう。"
