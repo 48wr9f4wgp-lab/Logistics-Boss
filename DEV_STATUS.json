@@ -1,9 +1,19 @@
 {
-  "schema": 5,
-  "phase": "code_rc_candidate_ios_device_gate_ready_for_real_identifiers",
+  "schema": 6,
+  "official_title": "FLOTRA",
+  "reading": "フロトラ",
+  "legacy_title_alias": "LOGISTICS BOSS",
+  "active_phase": "DEVICE_VALIDATION",
+  "production_decision": "UNDECIDED",
+  "release_approval": "NOT_REQUESTED",
+  "development_target": "iPhone / iOS",
+  "primary_input": "touch",
+  "status_label": "PRE_GO_DEVICE_VALIDATION",
+  "real_device_access": "UNRECORDED",
+  "mac_xcode_access_path": "UNRECORDED",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_216_success_ios_export_47_success_android_export_28_success_render_capture_14_success",
+    "ci_latest_verified": "godot_233_success_ios_export_63_success_android_export_45_success_render_capture_31_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -12,17 +22,17 @@
     "mobile_management_scroll": "verified_web_ios_and_regression_covered",
     "save": "schema_v7_primary_backup_recovery_pass",
     "measurement_feedback": "domain_verdict_shared_by_hud_gamefeel_and_3d",
-    "visual_progression": "rank1_rank2_rank3_current_render_human_inspected_through_pr86",
+    "visual_progression": "rank1_rank2_rank3_current_render_human_inspected_pre_device_validation",
     "visual_final_polish": "passes_pr79_to_pr86_merged_render_capture_14_human_pass",
     "analytics": "provider_neutral_local_only_no_external_upload",
-    "performance": "runtime_fps_monitor_and_soak_present_native_device_measurement_pending",
-    "audio_haptics": "procedural_audio_and_native_haptic_hooks_present_native_device_verify_pending",
-    "unsigned_ios_export": "ios_export_47_green_artifact_manually_audited_arm64_pck_privacyinfo_ios15_portrait_fullscreen_synthetic_ids",
-    "ios_device_candidate_workflow": "manual_real_identifier_unsigned_xcode_project_path_prepared_signing_not_performed",
-    "synthetic_android_export": "android_export_28_green_synthetic_apk_route_existing_proof",
-    "native_ios": "blocked_on_final_team_id_bundle_id_authorized_signing_and_physical_iphone_qa",
-    "native_android": "blocked_on_final_package_production_signing_aab_candidate_and_physical_device_qa",
-    "release": "code_rc_candidate_not_native_rc"
+    "performance": "runtime_fps_monitor_and_soak_present_physical_iphone_measurement_pending",
+    "audio_haptics": "procedural_audio_and_native_haptic_hooks_present_physical_iphone_verify_pending",
+    "unsigned_ios_export": "synthetic_unsigned_xcode_export_proven_pre_go_technical_evidence_only",
+    "ios_device_candidate_workflow": "prepared_but_not_active_pre_go_release_enablement",
+    "synthetic_android_export": "historical_technical_evidence_only_android_not_active_pre_go",
+    "native_ios": "blocked_on_real_device_access_and_minimum_viable_development_build_path",
+    "native_android": "deferred_until_production_decision_go_then_platform_expansion_decision",
+    "release": "pre_go_not_release_candidate"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -39,7 +49,18 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "next": "Supply the confirmed Apple Developer Team ID and final iOS Bundle Identifier to the manual unsigned iOS device-project candidate workflow. After the real-identifier project is validated, explicitly authorize and provide a secure Apple signing/provisioning route before any signed build or device installation. Then run physical iPhone QA: cold launch, fresh FTUE, schema-v7 load, background/resume, kill/relaunch save, safe area/Dynamic Island, edge orbit/pinch, management scroll, audio/haptics, Rank1-to-Rank3 reachability, routing reload, current visual inspection, and 10+ minute mature Rank3 performance with no sustained sub-30 FPS.",
+  "last_verified_done": "Vertical Slice code/visual baseline converged; automated Godot/iOS-export/Android-export/render checks green; current rendered Rank 1-3 baseline human-inspected. Physical native iPhone validation has not yet been completed.",
+  "blocked": "REAL_DEVICE_ACCESS and MAC_XCODE_ACCESS_PATH are not yet recorded. If development signing/provisioning is required to reach a physical iPhone build, use the minimum viable Pre-GO route only.",
+  "next": "Record REAL_DEVICE_ACCESS and MAC_XCODE_ACCESS_PATH, obtain the minimum viable development-signed iOS build needed for physical testing if required, then run multi-session physical iPhone DEVICE_VALIDATION. Evaluate touch feel, UI/safe area/readability, Core Loop comprehension, reward/growth recognition, save/load, cold launch, suspend/resume/interruption recovery, FPS/frame pacing, thermal/battery tendency, and representative Rank 3 behavior. Do not require final Bundle ID, production signing, TestFlight, App Store Connect, Store assets, or Android production work before GREENLIGHT.",
+  "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
+  "post_go_only": [
+    "RELEASE_ENABLEMENT",
+    "final production Bundle ID / App ID decisions",
+    "production signing and provisioning operations",
+    "App Store Connect / TestFlight production workflow",
+    "store assets and submission preparation",
+    "Android PLATFORM_EXPANSION_DECISION and any active Android production work"
+  ],
   "external_actions_require_approval": [
     "paid developer account purchase or renewal",
     "production signing-key generation or rotation on behalf of the user",
@@ -49,8 +70,5 @@
     "IAP or ads activation",
     "external analytics or crash-provider contract/upload"
   ],
-  "updated_at": "2026-09-18",
-  "official_title": "FLOTRA",
-  "reading": "フロトラ",
-  "legacy_title_alias": "LOGISTICS BOSS"
+  "updated_at": "2026-09-18"
 }
