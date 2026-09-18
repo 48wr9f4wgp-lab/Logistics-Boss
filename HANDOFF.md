@@ -1,10 +1,10 @@
-# LOGISTICS BOSS — Development Handoff
+# FLOTRA — Development Handoff
 
 Last updated: 2026-09-18 JST
 
 ## 1. Product / canonical intent
 
-LOGISTICS BOSS is a portrait mobile 3D logistics-management / automation-observer game. The player is the logistics-center owner / operations manager, not a manual parcel carrier or forklift driver.
+FLOTRA（フロトラ） is a portrait mobile 3D logistics-management / automation-observer game. The player is the logistics-center owner / operations manager, not a manual parcel carrier or forklift driver.
 
 Canonical Core Loop:
 
@@ -16,7 +16,7 @@ Canonical Meta Loop:
 
 Domain owns logistics, money, routing, contracts, progression, and measurement verdicts. UI / View must never invent shipments, revenue, ownership, or progression outcomes.
 
-Current release label: **Code RC Candidate**. It is **not Native RC**.
+Official title: **FLOTRA（フロトラ）**\nFormer title / migration alias: **LOGISTICS BOSS**\n\nCurrent release label: **Code RC Candidate**. It is **not Native RC**.
 
 ## 2. Repository / current GitHub state
 
@@ -249,7 +249,7 @@ This is a technical synthetic export proof, not a production Play candidate.
 ## 8. Visual implementation state
 
 Canonical visual implementation spec:
-- `ART_BIBLE_LOGISTICS_BOSS.md`
+- `ART_BIBLE_FLOTRA.md`
 
 Canonical North Star asset:
 - `docs/visual/logistics_boss_visual_north_star_2026-09-16.png`
@@ -284,7 +284,7 @@ Current proven route:
 - ephemeral iOS export preset
 - unsigned Xcode project export
 - Xcode project / framework / PCK payload validation
-- `logistics-boss-ios-xcode-smoke` artifact path
+- `flotra-ios-xcode-smoke` artifact path
 
 PR #86 / iOS Export Smoke #47 artifact was downloaded and manually inspected:
 - iOS arm64 `libgodot.a` present
@@ -317,7 +317,7 @@ Current proven route:
 - ephemeral debug keystore
 - ARM64 APK export
 - APK package / launcher manifest / native payload / signature / zip-alignment validation
-- short-lived `logistics-boss-android-apk-smoke` artifact
+- short-lived `flotra-android-apk-smoke` artifact
 
 The normal app path uses `package/show_in_app_library=true`. `package/show_as_launcher_app` remains false; that setting is not used to turn this game into an Android home/launcher application.
 
@@ -374,8 +374,8 @@ Do not perform without explicit approval:
 
 Canonical / design:
 - `GAME_DEV_MASTER_RULES.md`
-- `GDD_LOGISTICS_BOSS.md`
-- `ART_BIBLE_LOGISTICS_BOSS.md`
+- `GDD_FLOTRA.md`
+- `ART_BIBLE_FLOTRA.md`
 - `docs/visual/README.md`
 - `docs/visual/logistics_boss_visual_north_star_2026-09-16.png`
 
