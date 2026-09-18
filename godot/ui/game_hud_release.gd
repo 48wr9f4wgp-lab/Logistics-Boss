@@ -8,7 +8,7 @@ const RELEASE_METRICS_BOTTOM := 86.0
 const RELEASE_BOTTLENECK_TOP := 90.0
 const RELEASE_BOTTLENECK_BOTTOM := 122.0
 const RELEASE_STATUS_TOP := 128.0
-const RELEASE_WAVE_BOTTOM := 174.0
+const RELEASE_WAVE_BOTTOM := 158.0
 const RELEASE_FTUE_BOTTOM := 190.0
 
 const HUD_SURFACE := Color(0.012, 0.034, 0.048, 0.955)
@@ -115,9 +115,9 @@ func _premium_panel_style(background: Color, border: Color, radius: int, shadow_
 
 
 func _sync_release_overlay_visibility() -> void:
-    if _wave_panel == null or _ftue_coach == null:
-        return
-    if _ftue_coach.visible:
+    # Keep workload information, but fold it into the bottleneck director so
+    # normal Rank 2/3 play gives the warehouse one continuous visual field.
+    if _wave_panel != null:
         _wave_panel.visible = false
 
 
@@ -157,18 +157,40 @@ func _find_bottom_dock() -> PanelContainer:
 
 
 func _bottleneck_text(info: Dictionary) -> String:
+    var text := ""
     match String(info.get("key", "stable")):
         "inbound":
-            return "搬入口混雑 → 受入を強化"
+            text = "搬入口混雑 → 受入強化"
         "rack":
-            return "棚不足 → 保管を見直す"
+            text = "棚不足 → 保管見直し"
         "packing":
-            return "梱包詰まり → 梱包を強化"
+            text = "梱包詰まり → 梱包強化"
         "outbound":
-            return "出荷滞留 → 出荷を強化"
+            text = "出荷滞留 → 出荷強化"
         "orders":
-            return "注文滞留 → ピックを強化"
+            text = "注文滞留 → ピック強化"
         "stable":
-            return "安定運転"
+            text = "安定運転"
         _:
-            return super._bottleneck_text(info)
+            text = super._bottleneck_text(info)
+
+    var wave := _inline_wave_summary()
+    return text if wave.is_empty() else "%s ｜ %s" % [text, wave]
+
+
+func _inline_wave_summary() -> String:
+    if sim == null or not sim.has_method("workload_wave"):
+        return ""
+    var wave: Dictionary = sim.call("workload_wave")
+    if not bool(wave.get("enabled", false)):
+        return ""
+
+    var key := String(wave.get("key", "normal"))
+    if key == "normal":
+        var next_label := String(wave.get("next_wave_label", ""))
+        var next_seconds := ceili(float(wave.get("seconds_until_next_wave", 0.0)))
+        return "" if next_label.is_empty() else "次:%s %d秒" % [next_label, next_seconds]
+
+    var label := String(wave.get("label", "運用負荷"))
+    var remaining := ceili(float(wave.get("remaining", 0.0)))
+    return "%s 残%d秒" % [label, remaining]

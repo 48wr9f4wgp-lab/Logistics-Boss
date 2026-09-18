@@ -539,8 +539,8 @@ func _build_measurement_banner() -> void:
     _measurement_panel.anchor_right = 0.92
     _measurement_panel.anchor_top = 1.0
     _measurement_panel.anchor_bottom = 1.0
-    _measurement_panel.offset_top = -184.0
-    _measurement_panel.offset_bottom = -116.0
+    _measurement_panel.offset_top = -154.0
+    _measurement_panel.offset_bottom = -100.0
     _measurement_panel.add_theme_stylebox_override(
         "panel",
         _panel_style(Color(0.018, 0.055, 0.075, 0.97), Color(0.18, 0.72, 0.96, 0.92), 14)
@@ -560,7 +560,7 @@ func _build_measurement_banner() -> void:
 func _tune_mobile_hud() -> void:
     var dock := _find_bottom_dock()
     if dock != null:
-        dock.offset_top = -100.0
+        dock.offset_top = -90.0
         dock.offset_bottom = -22.0
 
     if _sheet != null:
@@ -603,13 +603,13 @@ func _sync_transient_overlay_positions() -> void:
         if sheet_open:
             _measurement_panel.anchor_top = 0.30
             _measurement_panel.anchor_bottom = 0.30
-            _measurement_panel.offset_top = -28.0
-            _measurement_panel.offset_bottom = 28.0
+            _measurement_panel.offset_top = -24.0
+            _measurement_panel.offset_bottom = 24.0
         else:
             _measurement_panel.anchor_top = 1.0
             _measurement_panel.anchor_bottom = 1.0
-            _measurement_panel.offset_top = -184.0
-            _measurement_panel.offset_bottom = -116.0
+            _measurement_panel.offset_top = -154.0
+            _measurement_panel.offset_bottom = -100.0
 
 
 func _find_bottom_dock() -> PanelContainer:

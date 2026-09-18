@@ -13,7 +13,7 @@ const MOBILE_DRAG_FILTER_WEIGHT := 0.78
 const MOBILE_PINCH_FILTER_WEIGHT := 0.75
 const MOBILE_MIN_DISTANCE := 14.0
 const MOBILE_MAX_DISTANCE := 32.0
-const MOBILE_DEFAULT_DISTANCE := 21.5
+const MOBILE_DEFAULT_DISTANCE := 19.5
 const MOBILE_NEAR_FOV := 52.0
 const MOBILE_FAR_FOV := 46.0
 
@@ -112,8 +112,8 @@ func _update_camera(delta: float) -> void:
         0.0,
         1.0
     )
-    var near_target := Vector3(0.0, 1.20, 0.10)
-    var far_target := Vector3(0.0, 0.72, 0.05)
+    var near_target := Vector3(0.0, 0.96, 0.08)
+    var far_target := Vector3(0.0, 0.60, 0.04)
     var target := near_target.lerp(far_target, zoom_t)
     var desired_fov := _desired_mobile_fov()
 

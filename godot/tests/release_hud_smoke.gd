@@ -58,6 +58,38 @@ func _run() -> void:
         _fail("workload wave banner must yield to active fresh-save onboarding")
         return
 
+    var dock := hud._find_bottom_dock()
+    if dock == null or dock.offset_bottom - dock.offset_top > 70.0:
+        _fail("bottom command dock must stay compact so warehouse growth remains the visual hero")
+        return
+    if hud._measurement_panel == null or hud._measurement_panel.offset_bottom - hud._measurement_panel.offset_top > 56.0:
+        _fail("measurement feedback must not consume excessive portrait height")
+        return
+
+    var feedback := hud.measurement_feedback({
+        "before": {"shipments_per_min": 21.6, "packing_queue": 7.8},
+        "after": {"shipments_per_min": 26.4, "packing_queue": 1.4},
+        "verdict": {"state": "improved", "headline": "改善", "delta": 4.8, "threshold": 1.0},
+    })
+    var feedback_text := String(feedback.get("text", ""))
+    if feedback_text.count("\n") != 1:
+        _fail("measurement feedback must stay within two compact lines")
+        return
+    if not feedback_text.contains("改善 ↑ +4.8/分"):
+        _fail("measurement feedback must front-load the improvement result")
+        return
+
+    sim.facility_rank = 2
+    var inline_wave := hud._inline_wave_summary()
+    if inline_wave.is_empty():
+        _fail("Rank 2 workload forecast must remain available in the compact bottleneck director")
+        return
+    hud._sync_release_overlay_visibility()
+    if hud._wave_panel.visible:
+        _fail("normal Rank 2/3 play must fold workload forecast into the bottleneck director instead of a second panel")
+        return
+    sim.facility_rank = 1
+
     if hud._sheet.anchor_top > 0.27:
         _fail("mobile management sheet must use enough vertical screen area for touch navigation")
         return

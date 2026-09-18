@@ -105,6 +105,10 @@ func _populate_stage(stage: Node, sim) -> void:
     var composition = CompositionFixScript.new()
     view.add_child(composition)
     composition.bind(view)
+    assert(
+        is_equal_approx(view._camera_distance, CompositionFixScript.HERO_CAMERA_DISTANCE),
+        "visual capture must use the warehouse-hero portrait camera distance"
+    )
 
 
 func _make_sim(rank: int):

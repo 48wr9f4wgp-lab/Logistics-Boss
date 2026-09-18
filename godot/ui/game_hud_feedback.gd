@@ -67,20 +67,26 @@ func measurement_feedback(event: Dictionary) -> Dictionary:
 
     var before_rate := float(before.get("shipments_per_min", 0.0))
     var after_rate := float(after.get("shipments_per_min", 0.0))
-    var result_line := "%s｜出荷 %s/分（%.1f→%.1f）" % [
+    var direction := "→"
+    if state == "improved":
+        direction = "↑"
+    elif state == "regressed":
+        direction = "↓"
+
+    var result_line := "%s %s %s/分｜%.1f→%.1f" % [
         headline,
+        direction,
         _signed_delta(delta),
         before_rate,
         after_rate,
     ]
-    var context_line := "入庫 %.1f→%.1f｜梱包 %.1f→%.1f" % [
-        float(before.get("inbound_queue", 0.0)),
-        float(after.get("inbound_queue", 0.0)),
-        float(before.get("packing_queue", 0.0)),
-        float(after.get("packing_queue", 0.0)),
+    var action_short := _short_bottleneck_action(bottleneck_key)
+    var context_line := "%s｜次:%s" % [
+        _compact_context_metric(bottleneck_key, before, after),
+        action_short,
     ]
-    var action_line := next_action.replace("次:", "次 →")
-    var text := "%s\n%s\n%s" % [result_line, context_line, action_line]
+    var action_line := "次: %s" % action_short
+    var text := "%s\n%s" % [result_line, context_line]
     var needs_followup := state != "improved" or bottleneck_key != "stable"
 
     return {
@@ -159,3 +165,43 @@ func _signed_delta(value: float) -> String:
     if value < 0.0:
         return "%.1f" % value
     return "±0.0"
+
+
+func _short_bottleneck_action(key: String) -> String:
+    match key:
+        "inbound":
+            return "受入強化"
+        "rack":
+            return "保管見直し"
+        "packing":
+            return "梱包強化"
+        "outbound":
+            return "出荷強化"
+        "orders":
+            return "ピック強化"
+        _:
+            return "観察継続"
+
+
+func _compact_context_metric(key: String, before: Dictionary, after: Dictionary) -> String:
+    match key:
+        "inbound":
+            return "入庫 %.1f→%.1f" % [
+                float(before.get("inbound_queue", 0.0)),
+                float(after.get("inbound_queue", 0.0)),
+            ]
+        "outbound":
+            return "出荷待ち %.1f→%.1f" % [
+                float(before.get("outbound_queue", 0.0)),
+                float(after.get("outbound_queue", 0.0)),
+            ]
+        "orders":
+            return "注文 %.1f→%.1f" % [
+                float(before.get("open_orders", 0.0)),
+                float(after.get("open_orders", 0.0)),
+            ]
+        _:
+            return "梱包 %.1f→%.1f" % [
+                float(before.get("packing_queue", 0.0)),
+                float(after.get("packing_queue", 0.0)),
+            ]
