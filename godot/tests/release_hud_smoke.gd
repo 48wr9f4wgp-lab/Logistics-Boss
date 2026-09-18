@@ -92,8 +92,29 @@ func _run() -> void:
     if hud._reset_button == null or not hud._reset_button.text.contains("リセット"):
         _fail("management sheet must expose the confirmed test-data reset control")
         return
-    if hud._reset_dialog == null:
-        _fail("test-data reset must require a confirmation dialog")
+    if hud._reset_modal == null or hud._reset_modal_panel == null:
+        _fail("test-data reset must use an in-HUD confirmation modal")
+        return
+    if hud._reset_modal.get_parent() != hud:
+        _fail("reset confirmation must stay inside the HUD canvas instead of using a separate Window")
+        return
+    if hud._reset_modal.visible:
+        _fail("reset confirmation modal must start hidden")
+        return
+    if hud._reset_modal.z_index < 100:
+        _fail("reset confirmation modal must render above normal HUD surfaces")
+        return
+    if not is_equal_approx(hud._reset_modal_panel.offset_right - hud._reset_modal_panel.offset_left, 330.0):
+        _fail("reset confirmation panel must stay within the 390px portrait reference width")
+        return
+    if not is_equal_approx(hud._reset_modal_panel.offset_bottom - hud._reset_modal_panel.offset_top, 264.0):
+        _fail("reset confirmation panel must use the compact mobile height")
+        return
+    if not hud._reset_confirm_button.has_theme_font_override("font"):
+        _fail("reset modal controls must inherit the embedded Japanese UI font")
+        return
+    if hud._reset_cancel_button.text != "キャンセル" or hud._reset_confirm_button.text != "リセット":
+        _fail("reset modal actions must remain explicit and readable")
         return
 
     hud._sheet.visible = true
@@ -103,6 +124,31 @@ func _run() -> void:
         return
 
     scroll.scroll_vertical = 0
+    hud._request_reset_confirmation()
+    if not hud._reset_modal.visible:
+        _fail("reset button flow must open the in-HUD confirmation modal")
+        return
+
+    var blocked_touch := InputEventScreenTouch.new()
+    blocked_touch.index = 6
+    blocked_touch.position = scroll.get_global_rect().get_center()
+    blocked_touch.pressed = true
+    hud._input(blocked_touch)
+
+    var blocked_drag := InputEventScreenDrag.new()
+    blocked_drag.index = 6
+    blocked_drag.position = blocked_touch.position + Vector2(0, -120)
+    blocked_drag.relative = Vector2(0, -120)
+    hud._input(blocked_drag)
+    if scroll.scroll_vertical != 0:
+        _fail("reset confirmation modal must block management scrolling behind it")
+        return
+
+    hud._cancel_reset_confirmation()
+    if hud._reset_modal.visible:
+        _fail("reset confirmation cancel must close the modal")
+        return
+
     var touch := InputEventScreenTouch.new()
     touch.index = 7
     touch.position = scroll.get_global_rect().get_center()
