@@ -66,7 +66,7 @@ func _on_sim_event(event: Dictionary) -> void:
                 INVESTMENT_LIFETIME,
                 event_type
             )
-        "facility_purchased":
+        "facility_purchased", "facility_renovated":
             var group := String(event.get("group", ""))
             _spawn_feedback(
                 _facility_group_center(group),
@@ -190,9 +190,9 @@ func _measurement_center(kind: String) -> Vector3:
     match kind:
         "worker", "speed":
             return CENTER_FLOOR
-        "rack", "rank1_rack_wing", "facility_fast_pick_rack", "facility_high_density_rack":
+        "rack", "rank1_rack_wing", "facility_fast_pick_rack", "facility_high_density_rack", "renovation_fast_pick_rack", "renovation_high_density_rack":
             return STORAGE_CENTER
-        "packing", "rank1_second_packing_bench", "facility_parallel_pack", "facility_fast_pack_cell":
+        "packing", "rank1_second_packing_bench", "facility_parallel_pack", "facility_fast_pack_cell", "renovation_parallel_pack", "renovation_fast_pack_cell":
             return PACKING_CENTER
         "forklift", "rank1_forklift_project":
             return FORKLIFT_CENTER
@@ -210,9 +210,9 @@ func _measurement_center(kind: String) -> Vector3:
 
 func _measurement_extent(kind: String) -> Vector2:
     match kind:
-        "rack", "rank1_rack_wing", "facility_fast_pick_rack", "facility_high_density_rack":
+        "rack", "rank1_rack_wing", "facility_fast_pick_rack", "facility_high_density_rack", "renovation_fast_pick_rack", "renovation_high_density_rack":
             return Vector2(1.90, 2.35)
-        "packing", "rank1_second_packing_bench", "facility_parallel_pack", "facility_fast_pack_cell":
+        "packing", "rank1_second_packing_bench", "facility_parallel_pack", "facility_fast_pack_cell", "renovation_parallel_pack", "renovation_fast_pack_cell":
             return Vector2(1.65, 1.45)
         "facility_double_dock", "facility_buffer_yard":
             return Vector2(1.80, 1.35)
