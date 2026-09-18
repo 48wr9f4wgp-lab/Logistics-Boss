@@ -3,6 +3,9 @@ class_name WarehouseZonePanel
 
 signal opened(zone_key: String)
 signal closed
+signal construction_preview_changed(zone_key: String, kind: StringName)
+signal construction_preview_cleared
+signal construction_committed(zone_key: String, kind: StringName, action: String)
 
 const JAPANESE_UI_FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
 
@@ -43,7 +46,7 @@ func open_zone(zone_key: String) -> void:
     if zone_key not in ["inbound", "storage", "picking", "packing", "shipping"]:
         return
     if _selected_zone != zone_key:
-        _preview_kind = &""
+        _clear_construction_preview()
     _selected_zone = zone_key
     if _panel != null:
         _panel.visible = true
@@ -55,6 +58,7 @@ func close() -> void:
     if _panel == null or not _panel.visible:
         return
     _panel.visible = false
+    _clear_construction_preview()
     _selected_zone = ""
     closed.emit()
 
@@ -65,6 +69,27 @@ func is_open() -> bool:
 
 func selected_zone() -> String:
     return _selected_zone
+
+
+func preview_kind() -> StringName:
+    return _preview_kind
+
+
+func _set_construction_preview(kind: StringName) -> void:
+    if _preview_kind == kind:
+        return
+    _preview_kind = kind
+    if kind == &"":
+        construction_preview_cleared.emit()
+    elif not _selected_zone.is_empty():
+        construction_preview_changed.emit(_selected_zone, kind)
+
+
+func _clear_construction_preview() -> void:
+    if _preview_kind == &"":
+        return
+    _preview_kind = &""
+    construction_preview_cleared.emit()
 
 
 func _process(_delta: float) -> void:
@@ -270,7 +295,7 @@ func _render_rank1_actions() -> void:
     if owned:
         _capital_action.text = "✓ %s｜稼働中" % String(info.get("label", "Project"))
         if _preview_kind == project_kind:
-            _preview_kind = &""
+            _clear_construction_preview()
         return
 
     var cost := int(info.get("cost", 0))
@@ -325,7 +350,7 @@ func _render_rank2_equipment_actions() -> void:
         if active:
             button.text = "✓ %s｜稼働中" % String(info.get("label", String(kind)))
             if _preview_kind == kind:
-                _preview_kind = &""
+                _clear_construction_preview()
             continue
 
         if _preview_kind == kind:
@@ -355,7 +380,7 @@ func _on_rank2_capital_action(button: Button) -> void:
         return
 
     if _preview_kind != kind:
-        _preview_kind = kind
+        _set_construction_preview(kind)
         _render()
         return
 
@@ -364,7 +389,8 @@ func _on_rank2_capital_action(button: Button) -> void:
     var result: Dictionary = sim.call("purchase_facility", kind)
     if bool(result.get("ok", false)):
         var action := String(result.get("action", "build"))
-        _preview_kind = &""
+        _clear_construction_preview()
+        construction_committed.emit(_selected_zone, kind, action)
         _set_notice("%s完了｜25秒のBefore / After計測開始" % (
             "改装" if action == "renovate" else "建設"
         ), 6.0)
@@ -469,7 +495,7 @@ func _on_capital_action() -> void:
         return
 
     if _preview_kind != project_kind:
-        _preview_kind = project_kind
+        _set_construction_preview(project_kind)
         _render()
         return
 
@@ -477,7 +503,9 @@ func _on_capital_action() -> void:
         return
     var result: Dictionary = sim.call("purchase_rank1_project", project_kind)
     if bool(result.get("ok", false)):
-        _preview_kind = &""
+        _clear_construction_preview()
+        construction_committed.emit(_selected_zone, project_kind, "build")
+        _set_notice("建設完了｜25秒のBefore / After計測開始", 6.0)
     _render()
     if not bool(result.get("ok", false)):
         _action_message.text = _purchase_failure_text(result)
