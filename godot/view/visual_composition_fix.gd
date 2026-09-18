@@ -3,7 +3,7 @@ class_name WarehouseVisualCompositionFix
 
 const HERO_CAMERA_DISTANCE := 15.2
 const BASE_FOV := 31.5
-const OVERVIEW_FOV := 38.0
+const OVERVIEW_FOV := 38.5
 const OVERVIEW_START_DISTANCE := 19.5
 const OVERVIEW_MAX_DISTANCE := 25.0
 
