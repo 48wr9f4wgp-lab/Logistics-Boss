@@ -53,6 +53,33 @@ Verified player-facing v2 shell:
 This is **Interaction Skeleton evidence only**. Rank 1 v2 structural projects, direct Zone staffing, Rank 2 renovation, and the new event-driven onboarding are not yet implemented.
 
 
+### Rank 1 Core Experience v2 — DONE
+
+PR #109 — `Build Rank 1 Core Experience v2`
+- merge commit: `d2a93d421fb097a9863abd0ddb9c4f4fd70746e5`
+- Godot CI #267: **success**
+- iOS Export Smoke #87: **success**
+- Rendered Visual Capture #65: **success**
+- Android Export Smoke #79: **success** (historical technical reference only)
+- dedicated Rank 1 v2 structural project smoke: **success**
+- schema 8 save recovery / schema 7 migration: **success**
+- fresh developed Rank 1 + Rank 2 captures: **human inspected / pass**
+
+Verified Rank 1 v2:
+- STORAGE → **Rack Wing** structural project with authoritative storage-capacity growth and dedicated 3D geometry;
+- PACKING → **Second Packing Bench** with authoritative two-job packing capacity and dedicated 3D geometry;
+- one-time **Worker Hire** instead of repeated hiring spam;
+- INBOUND → **Forklift Project**, reusing authoritative inbound→storage automation;
+- first capital tap is preview/confirmation; cash is only spent on explicit second-step commitment;
+- Logistics Rating no longer silently auto-promotes Rank 1;
+- **Warehouse Expansion** in Management is the explicit Rank 1 → Rank 2 strategic project;
+- new Zone-first onboarding teaches observe → inspect Zone → decide → measure without revealing the equipment answer;
+- runtime persistence is schema 8, with prior schema 7 investment state migrated into equivalent v2 project ownership;
+- reset removes both legacy and v2 onboarding markers.
+
+Rank 1 v2 is implemented, but the overall Vertical Slice v2 is **not complete** until direct Zone staffing plus Rank 2 STORAGE/PACKING renovation and the final iPhone Web playtest are finished.
+
+
 ## 1. Product / canonical intent
 
 FLOTRA（フロトラ） is a portrait mobile 3D logistics-management / automation-observer game. The player is the logistics-center owner / operations manager, not a manual parcel carrier or forklift driver.
@@ -90,16 +117,17 @@ Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
 Current verified main baseline:
-- PR #107 — `Add Vertical Slice v2 interaction skeleton`
-- merge commit: `185aeed749d1c390c14dc46934055e8fa1173b50`
-- Godot CI #265: **success**
-- iOS Export Smoke #86: **success**
-- Android Export Smoke #77: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
-- Rendered Visual Capture #63: **success**
-- fresh Rank 1 390×844 capture: **human inspected / pass**
-- all five Zone labels readable in the default portrait frame
-- v2 Zone Panel / Director / mobile Management shell covered by dedicated automated smoke
-- legacy technical/save/progression evidence from PRs #97–#103 remains preserved where not superseded by Core Experience v2
+- PR #109 — `Build Rank 1 Core Experience v2`
+- merge commit: `d2a93d421fb097a9863abd0ddb9c4f4fd70746e5`
+- Godot CI #267: **success**
+- iOS Export Smoke #87: **success**
+- Android Export Smoke #79: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
+- Rendered Visual Capture #65: **success**
+- dedicated Rank 1 v2 structural project smoke: **success**
+- runtime save schema: **8**
+- schema 7 → 8 migration: **verified**
+- fresh developed Rank 1 and Rank 2 390×844 captures: **human inspected / pass**
+- PR #107 Interaction Skeleton and prior technical/save/progression evidence remain preserved where not superseded
 
 Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
@@ -130,6 +158,7 @@ Recent QA/product milestones:
 - PR #101: exhaustive 510s Rank 2 staffing frontier exposed and fixed an always-Shipping near-dominant non-decision; final adaptive frontier = 212 shipments vs best fixed 202
 - PR #103: fresh rendered-capture audit found Rank 2 growth too subtle; widened the persistent operations mezzanine/crown and added rear service modules so Rank 2 reads as a larger facility while Rank 3 remains the larger step
 - PR #107: Core Experience v2 Interaction Skeleton — five 3D Zone targets, Zone Panel, symptom-only Director, Management dashboard shell, RP removed from primary HUD, legacy mobile purchase/preset controls hidden; CI #265 / iOS #86 / Render #63 passed and fresh portrait capture human-inspected
+- PR #109: Rank 1 Core Experience v2 — Rack Wing / Second Packing Bench / Worker Hire / Forklift Project / explicit Warehouse Expansion / Zone-first FTUE / schema 8 migration; CI #267 / iOS #87 / Render #65 passed and developed Rank 1 + Rank 2 captures human-inspected
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -488,40 +517,46 @@ FLOTRA remains in **ACTIVE_PHASE = VERTICAL_SLICE** for Core Experience v2.
 
 ### LAST VERIFIED DONE
 
-**Interaction Skeleton — DONE / PR #107**
+**Rank 1 Core Experience v2 — DONE / PR #109**
 
 Verified:
-- five 3D Zone targets and touch/raycast selection;
-- Zone Panel lower-sheet shell;
-- symptom-only Director;
-- Management Overview/dashboard shell;
-- RP hidden from primary mobile HUD;
-- legacy repeated upgrade / Rank 2 facility purchase / staffing preset controls hidden from the player-facing mobile path;
-- Godot CI #265 / iOS Export Smoke #86 / Rendered Visual Capture #63 green;
-- fresh 390×844 Rank 1 render human-inspected with all five Zone labels readable.
+- Interaction Skeleton from PR #107 remains intact;
+- Rack Wing is a visible + authoritative STORAGE project;
+- Second Packing Bench is a visible + authoritative two-job PACKING project;
+- Worker Hire is one-time, not a repeated scalar purchase loop;
+- Forklift Project activates real inbound→storage automation;
+- capital projects use explicit preview/second-step commitment;
+- Warehouse Expansion is the deliberate Rank 2 promotion action;
+- Zone-first onboarding teaches observation and decision instead of Management-first clicking;
+- save schema 8 round-trips and schema 7 migrates safely;
+- Godot CI #267 / iOS Export Smoke #87 / Rendered Visual Capture #65 green;
+- fresh developed Rank 1 and Rank 2 portrait renders human-inspected / pass.
 
-The legacy Management-first FTUE is intentionally hidden on the production mobile v2 path. The old non-mobile FTUE/Core Loop smoke remains only as regression evidence for preserved technical behavior until the new Rank 1 v2 onboarding replaces it.
-
-### NEXT — Rank 1 v2
+### NEXT — direct Zone staffing
 
 Implement as the next small, reviewable PR:
 
-1. **Rack Wing** — visible storage expansion with authoritative capacity effect;
-2. **Second Packing Bench** — visible parallel packing project with authoritative packing effect;
-3. **Worker Hire** — one meaningful additional worker, avoiding repeated hire-button spam;
-4. **Forklift Project** — keep authoritative inbound→storage automation and make its project/visual consequence fit the Zone-first flow;
-5. **event-driven Zone-first onboarding** — observe symptom → tap Zone → act → watch logistics → read measured result;
-6. **Warehouse Expansion** — a visible strategic project that grows Small Depot into Rank 2.
+1. replace the hidden legacy staffing presets with direct player-facing Zone allocation/reassignment;
+2. preserve a valid logistics role floor so staffing cannot deadlock flow;
+3. make the current worker distribution readable in Zone Panel / Management Staffing;
+4. keep staffing as an **OPERATIONS** decision, separate from CAPITAL equipment;
+5. add cooldown/observation protection without restoring preset-button gameplay;
+6. preserve schema 8 compatibility and old staffing-plan migration where practical.
 
 Acceptance focus:
-- first meaningful improvement must not require Management as an equipment store;
-- every Rank 1 project must visibly change the warehouse or logistics behavior;
-- onboarding must not reveal the equipment answer;
-- preserve authoritative simulation, schema-v7 save compatibility, and current v2 Interaction Skeleton behavior.
+- player understands where workers are assigned without decoding 3/1/1 preset labels;
+- reassignment changes authoritative worker roles/tasks;
+- zero-cash flow remains recoverable;
+- Zone Panel remains the local decision surface while Management retains executive staffing overview;
+- Rank 1 v2 behavior and Warehouse Expansion remain intact.
 
-**STOP / SCOPE CONDITION:** do not start Rank 2 STORAGE/PACKING renovation, deferred INBOUND/PICKING/SHIPPING v2 equipment, Rank 3 redesign, or advanced sorter/ASRS/cross-dock content until Rank 1 v2 is coherent and testable.
+After staffing passes:
+- implement Rank 2 **STORAGE** Fast Pick Rack ⇄ High Density Rack paid renovation + paired dominance tests;
+- implement Rank 2 **PACKING** Parallel Pack Line ⇄ Fast Pack Cell paid renovation + paired dominance tests;
+- complete construction preview / visible renovation feedback;
+- run the next iPhone Web Core Experience playtest.
 
-After Rank 1 v2 is implemented and verified, continue with direct Zone staffing, then Rank 2 STORAGE/PACKING renovation pairs, construction preview/reward feedback, and iPhone Web playtest.
+**STOP / SCOPE CONDITION:** do not implement deferred Rank 2 INBOUND/PICKING/SHIPPING v2 equipment, Rank 3 redesign, advanced sorter/ASRS/cross-dock content, or release work yet.
 
 Return to DEVICE_VALIDATION only after the complete v2 slice is end-to-end playable, CI/save regressions are green, fresh visual evidence is inspected, and iPhone Web play no longer reproduces the Management-clicker failure mode.
 
