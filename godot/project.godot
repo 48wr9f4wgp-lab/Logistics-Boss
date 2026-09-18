@@ -1,11 +1,11 @@
 ; Engine configuration file.
-; Logistics Boss Godot vertical slice.
+; FLOTRA Godot vertical slice.
 
 config_version=5
 
 [application]
 
-config/name="Logistics Boss"
+config/name="FLOTRA"
 run/main_scene="res://scenes/main.tscn"
 config/icon="res://icon.svg"
 config/features=PackedStringArray("4.7", "GL Compatibility")
