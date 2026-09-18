@@ -1,4 +1,4 @@
-# Logistics Boss — Rank 3 Fulfillment Center
+# FLOTRA — Rank 3 Fulfillment Center
 
 Status: Context Lock / implementation target / 2026-09-15
 Authority: title-specific Rank 3 design. Current `main` remains authoritative for implemented behavior until this spec is merged and implemented.
@@ -77,7 +77,7 @@ Source:
 Useful principle:
 - the long-term fantasy can escalate from a small operation toward a logistics network.
 
-Constraint for Logistics Boss:
+Constraint for FLOTRA:
 - network/campus scale is a later meta layer. Rank 3 must first prove that one center can become deeper without becoming cluttered.
 
 ## 3. Rank 3 unlock — freedom progression
