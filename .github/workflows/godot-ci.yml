@@ -51,6 +51,16 @@ jobs:
       - name: Economy pacing report
         run: godot --headless --path godot --script res://tests/economy_pacing_report.gd
 
+      - name: Economy progression pacing audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 45s godot --headless --path godot --script res://tests/economy_progression_pacing_audit.gd 2>&1 | tee /tmp/economy-progression-pacing-audit.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/economy-progression-pacing-audit.log; then
+            echo 'Economy progression pacing audit emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Rank 2 readiness scout
         run: godot --headless --path godot --script res://tests/rank2_readiness_scout.gd
 
