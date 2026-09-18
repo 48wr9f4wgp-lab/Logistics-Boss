@@ -87,7 +87,7 @@ func _build_zone_targets() -> void:
         label.no_depth_test = true
         label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
         label.double_sided = true
-        label.fixed_size = true
+        label.pixel_size = 0.012
         add_child(label)
         _zone_labels[String(zone_key)] = label
 
