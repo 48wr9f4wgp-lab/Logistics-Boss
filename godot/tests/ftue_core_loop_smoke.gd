@@ -120,14 +120,14 @@ func _run() -> void:
         _fail("measurement result must give the player a next action")
         return
     var result_lines := String(regressed_feedback.get("text", "")).split("\n")
-    if result_lines.size() != 3:
-        _fail("measurement feedback must use three-line mobile hierarchy")
+    if result_lines.size() != 2:
+        _fail("measurement feedback must use two-line mobile hierarchy")
         return
     if not String(result_lines[0]).contains("出荷") or not String(result_lines[0]).contains("-11.9"):
         _fail("first measurement line must prioritize the shipment outcome")
         return
-    if not String(result_lines[2]).begins_with("次 →"):
-        _fail("third measurement line must expose the next action")
+    if not String(result_lines[1]).contains("次:"):
+        _fail("second measurement line must expose compact context and the next action")
         return
 
     var improved := regressed.duplicate(true)
