@@ -1,4 +1,4 @@
-name: Logistics Boss Godot CI
+name: FLOTRA Godot CI
 
 on:
   push:
@@ -276,7 +276,7 @@ jobs:
       - name: Upload engineering-preview artifact
         uses: actions/upload-artifact@v4
         with:
-          name: logistics-boss-godot-web-preview
+          name: flotra-godot-web-preview
           path: godot-web
           if-no-files-found: error
           retention-days: 7
