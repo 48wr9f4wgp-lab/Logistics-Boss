@@ -1,4 +1,4 @@
-name: Logistics Boss Rendered Visual Capture
+name: FLOTRA Rendered Visual Capture
 
 on:
   pull_request:
@@ -73,7 +73,7 @@ jobs:
       - name: Upload rendered visual captures
         uses: actions/upload-artifact@v4
         with:
-          name: logistics-boss-rendered-visual-captures
+          name: flotra-rendered-visual-captures
           path: visual-captures/*.png
           if-no-files-found: error
           retention-days: 7

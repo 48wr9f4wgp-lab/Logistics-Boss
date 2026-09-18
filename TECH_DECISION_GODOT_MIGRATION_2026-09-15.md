@@ -1,4 +1,4 @@
-# Logistics Boss — Godot Migration Decision Record
+# FLOTRA — Godot Migration Decision Record
 
 Date: 2026-09-15 JST  
 Status: **Godot adopted as canonical production baseline**  
@@ -6,7 +6,7 @@ Canonical repo: `48wr9f4wgp-lab/Logistics-Boss`
 
 ## Decision
 
-Logistics Boss production development moves to **Godot 4.x + GDScript**.
+FLOTRA production development moves to **Godot 4.x + GDScript**.
 
 The previous Three.js/DOM build is now a **legacy reference only**. It is no longer a compatibility target and does not block Godot-side architecture, UI, rendering, input, save, balance, or content decisions.
 

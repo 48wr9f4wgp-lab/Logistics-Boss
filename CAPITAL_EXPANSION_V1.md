@@ -1,10 +1,10 @@
-# Logistics Boss — Capital Expansion Loop v1
+# FLOTRA — Capital Expansion Loop v1
 
 Status: LOCK for implementation / 2026-09-14
 Priority: This title-specific spec overrides older progression details where they conflict.
 
 ## Product direction
-Logistics Boss is not a button-upgrade idle game and not a prescribed puzzle path.
+FLOTRA is not a button-upgrade idle game and not a prescribed puzzle path.
 The central fantasy is to grow a tiny manual depot into a visually massive logistics operation by repeatedly reinvesting profits into equipment that changes the real flow of goods.
 
 Core loop:

@@ -1,4 +1,4 @@
-name: Logistics Boss iOS Export Smoke
+name: FLOTRA iOS Export Smoke
 
 on:
   pull_request:
@@ -112,6 +112,7 @@ jobs:
           plist='ios-build/LogisticsBoss/LogisticsBoss-Info.plist'
           grep -Fq 'DEVELOPMENT_TEAM = ABCDE12XYZ;' "$pbx"
           grep -Fq 'PRODUCT_BUNDLE_IDENTIFIER = com.example.logistics-boss-ci;' "$pbx"
+          grep -Fq 'INFOPLIST_KEY_CFBundleDisplayName = "FLOTRA";' "$pbx"
           grep -Fq 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' "$pbx"
           test "$(/usr/libexec/PlistBuddy -c 'Print :UIRequiresFullScreen' "$plist")" = "true"
           test "$(/usr/libexec/PlistBuddy -c 'Print :UISupportedInterfaceOrientations:0' "$plist")" = "UIInterfaceOrientationPortrait"
@@ -139,7 +140,7 @@ jobs:
       - name: Upload unsigned iOS Xcode-project smoke artifact
         uses: actions/upload-artifact@v4
         with:
-          name: logistics-boss-ios-xcode-smoke
+          name: flotra-ios-xcode-smoke
           path: /tmp/LogisticsBoss-ios-project.zip
           if-no-files-found: error
           retention-days: 3

@@ -1,4 +1,4 @@
-# LOGISTICS BOSS — Rank 2 Post-Zone Decision
+# FLOTRA — Rank 2 Post-Zone Decision
 
 Date: 2026-09-15 JST
 Status: measured product decision

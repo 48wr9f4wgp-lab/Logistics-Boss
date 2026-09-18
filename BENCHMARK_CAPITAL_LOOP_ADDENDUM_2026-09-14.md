@@ -1,5 +1,7 @@
 # Logistics Boss Benchmark Addendum — Capital / Automation Loop — 2026-09-14
 
+> Historical record created under the former title **LOGISTICS BOSS**. Official current title: **FLOTRA（フロトラ）**.
+
 Status: current design reference for Capital Expansion v1
 
 ## Why this addendum exists

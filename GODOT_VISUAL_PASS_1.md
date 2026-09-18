@@ -1,4 +1,4 @@
-# LOGISTICS BOSS — Godot Visual Pass 1
+# FLOTRA — Godot Visual Pass 1
 
 Status: Active implementation spec
 Visual North Star: `VISUAL_NORTH_STAR_GODOT.md`

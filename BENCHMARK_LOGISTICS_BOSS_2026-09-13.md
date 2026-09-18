@@ -1,5 +1,7 @@
 # Logistics Boss Benchmark Pack — 2026-09-13
 
+> Historical record created under the former title **LOGISTICS BOSS**. Official current title: **FLOTRA（フロトラ）**.
+
 Status: Live benchmark refresh before major design pass
 Scope: 3D observer management / logistics / automation / mobile-first interaction
 Canonical rule: GAME_DEV_MASTER_RULES v1.3

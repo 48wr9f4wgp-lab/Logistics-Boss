@@ -1,4 +1,4 @@
-name: Logistics Boss iOS Device Project Candidate
+name: FLOTRA iOS Device Project Candidate
 
 on:
   workflow_dispatch:
@@ -105,6 +105,7 @@ jobs:
 
           grep -Fq "DEVELOPMENT_TEAM = ${LOGISTICS_BOSS_IOS_TEAM_ID};" "$pbx"
           grep -Fq "PRODUCT_BUNDLE_IDENTIFIER = ${LOGISTICS_BOSS_IOS_BUNDLE_ID};" "$pbx"
+          grep -Fq 'INFOPLIST_KEY_CFBundleDisplayName = "FLOTRA";' "$pbx"
           grep -Fq 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' "$pbx"
 
           test "$(/usr/libexec/PlistBuddy -c 'Print :UIRequiresFullScreen' "$plist")" = "true"
@@ -115,7 +116,7 @@ jobs:
           fi
 
           cat > ios-build/DEVICE_CANDIDATE_METADATA.txt <<EOF
-          LOGISTICS BOSS iOS device-project candidate
+          FLOTRA iOS device-project candidate
           source_commit=${GITHUB_SHA}
           team_id=${LOGISTICS_BOSS_IOS_TEAM_ID}
           bundle_id=${LOGISTICS_BOSS_IOS_BUNDLE_ID}
@@ -132,7 +133,7 @@ jobs:
       - name: Upload unsigned device-project candidate
         uses: actions/upload-artifact@v4
         with:
-          name: logistics-boss-ios-device-project-${{ github.sha }}
+          name: flotra-ios-device-project-${{ github.sha }}
           path: /tmp/LogisticsBoss-ios-device-project.zip
           if-no-files-found: error
           retention-days: 7
