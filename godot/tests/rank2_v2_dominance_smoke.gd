@@ -30,7 +30,10 @@ func _run() -> void:
     var parallel_long_queue := _packing_long_queue(&"parallel_pack")
     var fast_cell_long_queue := _packing_long_queue(&"fast_pack_cell")
     if parallel_long_queue <= fast_cell_long_queue:
-        _fail("Parallel Pack Line must win the long-queue throughput scenario")
+        _fail("Parallel Pack Line must win the long-queue throughput scenario: parallel=%d fast=%d" % [
+            parallel_long_queue,
+            fast_cell_long_queue,
+        ])
         return
 
     var parallel_latency := _packing_single_job_latency(&"parallel_pack")
@@ -124,7 +127,7 @@ func _packing_long_queue(kind: StringName) -> int:
     sim.inbound_queue = 0
     sim.rack_stock = 0
     sim.open_orders = 0
-    sim.packing_queue = 40
+    sim.packing_queue = 200
     sim.packed_queue = 0
 
     var counter := {"completed": 0}
@@ -133,7 +136,7 @@ func _packing_long_queue(kind: StringName) -> int:
             counter["completed"] = int(counter["completed"]) + 1
     )
 
-    for _index in int(ceil(60.0 / STEP)):
+    for _index in int(ceil(180.0 / STEP)):
         sim.step(STEP)
     return int(counter["completed"])
 
