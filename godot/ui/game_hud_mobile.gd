@@ -342,6 +342,11 @@ func _apply_v2_management_scope() -> void:
     # Production mobile path: Management is an executive dashboard. Keep the
     # legacy Domain/buttons alive underneath for regression safety, but remove
     # them from the player-facing purchase surface.
+    if _management_title != null:
+        _management_title.text = "経営管理"
+    if _management_hint != null:
+        _management_hint.text = "全体状況を確認。設備判断は倉庫のZoneから。"
+
     for button in _upgrade_buttons.values():
         (button as Button).visible = false
 
