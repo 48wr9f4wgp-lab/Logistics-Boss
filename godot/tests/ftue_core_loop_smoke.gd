@@ -123,8 +123,8 @@ func _run() -> void:
     if result_lines.size() != 2:
         _fail("measurement feedback must use two-line mobile hierarchy")
         return
-    if not String(result_lines[0]).contains("出荷") or not String(result_lines[0]).contains("-11.9"):
-        _fail("first measurement line must prioritize the shipment outcome")
+    if not String(result_lines[0]).contains("-11.9/分") or not String(result_lines[0]).contains("50.4→38.5"):
+        _fail("first measurement line must prioritize the shipment delta and before-to-after rate")
         return
     if not String(result_lines[1]).contains("次:"):
         _fail("second measurement line must expose compact context and the next action")
