@@ -14,9 +14,9 @@ This filename is retained for compatibility with existing references. The curren
 Purpose: evaluate **FLOTRA itself on a representative physical iPhone** and collect enough evidence for GREENLIGHT.
 
 Current required state:
-- REAL_DEVICE_ACCESS: **UNRECORDED**
-- MAC_XCODE_ACCESS_PATH: **UNRECORDED**
-- physical iPhone development build: **NOT YET VERIFIED**
+- REAL_DEVICE_ACCESS: **AVAILABLE — user's iPhone**
+- MAC_XCODE_ACCESS_PATH: **BLOCKED — no Mac currently available**
+- physical iPhone development build: **NOT YET VERIFIED — blocked on Mac/Xcode access**
 
 Pre-GO does **not** require:
 - final production Bundle ID / App ID
@@ -28,7 +28,7 @@ Pre-GO does **not** require:
 - production IAP / Ads integration
 - active Android production work
 
-If development signing / provisioning is necessary to reach a physical iPhone, use only the minimum viable path required for DEVICE_VALIDATION.
+If development signing / provisioning is necessary to reach the user's iPhone, use only the minimum viable path required for DEVICE_VALIDATION. The current minimum path is documented in `DEVICE_VALIDATION_ACCESS.md`: temporary Mac/Xcode access → Xcode Personal Team → unique non-final development Bundle ID → automatic signing → physical iPhone.
 
 ## 2. Verified technical baseline
 
@@ -55,18 +55,19 @@ The synthetic export proofs reduce technical uncertainty. They are **not** produ
 Record before claiming DEVICE_VALIDATION is underway on hardware:
 
 ### REAL_DEVICE_ACCESS
-Record:
-- representative iPhone model
+Confirmed:
+- ownership / access path: user's own iPhone
+- repeated sessions: available
+
+Still record at test start:
+- exact iPhone model
 - iOS version
-- ownership / access path
-- how the development build will be installed
-- whether repeated sessions can be run reliably
+- exact development-build install result
 
 ### MAC_XCODE_ACCESS_PATH
-Record one:
-- available Mac + Xcode path
-- authorized remote / CI development-build path
-- exact blocker if no viable path exists
+Current state: **BLOCKED — no Mac currently available**.
+
+The existing GitHub-hosted macOS workflow proves Xcode-project generation but does not pair/install to the user's iPhone. The next unblock is temporary access to a Mac capable of current Xcode. Do not purchase hardware or paid membership solely to clear this blocker without explicit approval.
 
 Do not infer these fields from chat metadata or old assumptions. Record actual reachable paths.
 

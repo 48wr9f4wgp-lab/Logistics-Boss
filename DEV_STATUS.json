@@ -1,5 +1,5 @@
 {
-  "schema": 6,
+  "schema": 7,
   "official_title": "FLOTRA",
   "reading": "フロトラ",
   "legacy_title_alias": "LOGISTICS BOSS",
@@ -9,8 +9,8 @@
   "development_target": "iPhone / iOS",
   "primary_input": "touch",
   "status_label": "PRE_GO_DEVICE_VALIDATION",
-  "real_device_access": "UNRECORDED",
-  "mac_xcode_access_path": "UNRECORDED",
+  "real_device_access": "AVAILABLE_USER_IPHONE_REPEATED_TESTING",
+  "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
     "ci_latest_verified": "godot_233_success_ios_export_63_success_android_export_45_success_render_capture_31_success",
@@ -30,7 +30,7 @@
     "unsigned_ios_export": "synthetic_unsigned_xcode_export_proven_pre_go_technical_evidence_only",
     "ios_device_candidate_workflow": "prepared_but_not_active_pre_go_release_enablement",
     "synthetic_android_export": "historical_technical_evidence_only_android_not_active_pre_go",
-    "native_ios": "blocked_on_real_device_access_and_minimum_viable_development_build_path",
+    "native_ios": "blocked_only_on_mac_xcode_access_for_minimum_viable_development_install",
     "native_android": "deferred_until_production_decision_go_then_platform_expansion_decision",
     "release": "pre_go_not_release_candidate"
   },
@@ -50,8 +50,8 @@
     "title": "Add synthetic Android native export smoke"
   },
   "last_verified_done": "Vertical Slice code/visual baseline converged; automated Godot/iOS-export/Android-export/render checks green; current rendered Rank 1-3 baseline human-inspected. Physical native iPhone validation has not yet been completed.",
-  "blocked": "REAL_DEVICE_ACCESS and MAC_XCODE_ACCESS_PATH are not yet recorded. If development signing/provisioning is required to reach a physical iPhone build, use the minimum viable Pre-GO route only.",
-  "next": "Record REAL_DEVICE_ACCESS and MAC_XCODE_ACCESS_PATH, obtain the minimum viable development-signed iOS build needed for physical testing if required, then run multi-session physical iPhone DEVICE_VALIDATION. Evaluate touch feel, UI/safe area/readability, Core Loop comprehension, reward/growth recognition, save/load, cold launch, suspend/resume/interruption recovery, FPS/frame pacing, thermal/battery tendency, and representative Rank 3 behavior. Do not require final Bundle ID, production signing, TestFlight, App Store Connect, Store assets, or Android production work before GREENLIGHT.",
+  "blocked": "REAL_DEVICE_ACCESS is confirmed: the user will test on their own iPhone. The sole current DEVICE_VALIDATION access blocker is MAC_XCODE_ACCESS_PATH: no Mac is available. GitHub Actions can generate the unsigned Xcode project but cannot pair/install it to the user's physical iPhone.",
+  "next": "Obtain temporary access to a Mac capable of running current Xcode without starting RELEASE_ENABLEMENT. On that Mac, use the existing FLOTRA unsigned Xcode project, sign with Xcode Personal Team / automatic signing using a unique non-final development Bundle ID, install to the user's iPhone, and begin multi-session DEVICE_VALIDATION. Paid Apple Developer Program membership, final production Bundle ID, TestFlight, App Store Connect, Store assets, and Android production work are not required before GREENLIGHT.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -70,5 +70,14 @@
     "IAP or ads activation",
     "external analytics or crash-provider contract/upload"
   ],
-  "updated_at": "2026-09-18"
+  "updated_at": "2026-09-18",
+  "device_validation_access": {
+    "representative_device": "USER_IPHONE_MODEL_UNRECORDED",
+    "repeated_sessions": "AVAILABLE",
+    "mac_xcode": "NOT_AVAILABLE",
+    "minimum_viable_install_path": "OBTAIN_TEMPORARY_MAC_XCODE_ACCESS_THEN_XCODE_PERSONAL_TEAM_AUTOMATIC_SIGNING_WITH_UNIQUE_DEV_ONLY_BUNDLE_ID",
+    "paid_developer_program_required_for_personal_device_test": false,
+    "production_bundle_id_required_pre_go": false,
+    "current_blocker": "MAC_XCODE_ACCESS_ONLY"
+  }
 }

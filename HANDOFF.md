@@ -26,11 +26,11 @@ Former title / migration alias: **LOGISTICS BOSS**
 - PRODUCTION_DECISION: **UNDECIDED**
 - RELEASE_APPROVAL: **NOT_REQUESTED**
 - PRIMARY_INPUT: **touch**
-- REAL_DEVICE_ACCESS: **UNRECORDED**
-- MAC_XCODE_ACCESS_PATH: **UNRECORDED**
+- REAL_DEVICE_ACCESS: **AVAILABLE — user's iPhone / repeated testing available**
+- MAC_XCODE_ACCESS_PATH: **BLOCKED — no Mac currently available**
 - Status label: **PRE-GO / DEVICE_VALIDATION**
 
-The current gate is to evaluate FLOTRA itself on a representative physical iPhone. It is not an App Store release-enablement gate.
+The current gate is to evaluate FLOTRA itself on the user's physical iPhone. It is not an App Store release-enablement gate. The sole current access blocker is a Mac/Xcode path for minimum viable development signing/installation. See `DEVICE_VALIDATION_ACCESS.md`.
 
 ## 2. Repository / current GitHub state
 
