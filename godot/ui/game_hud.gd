@@ -1,6 +1,8 @@
 extends CanvasLayer
 class_name GameHud
 
+signal reset_progress_requested
+
 var sim: WarehouseSim
 
 var _money: Label
