@@ -77,7 +77,7 @@ func show_commit(zone_key: String, kind: StringName, action: String) -> void:
     if beacon_material != null:
         tween.tween_property(beacon_material, "emission_energy_multiplier", 0.25, 0.90)            .set_trans(Tween.TRANS_QUAD)            .set_ease(Tween.EASE_OUT)
     tween.chain().tween_interval(0.12)
-    tween.chain().tween_callback(root.queue_free)
+    tween.chain().tween_callback(Callable(root, "queue_free"))
 
     root.set_meta("zone_key", zone_key)
     root.set_meta("kind", String(kind))
