@@ -17,6 +17,7 @@ var _equipment: Label
 var _operations: Label
 var _capital: Label
 var _operations_action: Button
+var _staffing_move_buttons: Array[Button] = []
 var _capital_action: Button
 var _action_message: Label
 var _close_button: Button
@@ -150,6 +151,17 @@ func _build_panel() -> void:
     _operations_action.pressed.connect(_on_operations_action)
     operations_box.add_child(_operations_action)
 
+    for _index in 2:
+        var move_button := Button.new()
+        move_button.custom_minimum_size = Vector2(0, 38)
+        move_button.add_theme_font_override("font", JAPANESE_UI_FONT)
+        move_button.add_theme_font_size_override("font_size", 9)
+        move_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        move_button.pressed.connect(_on_staffing_move.bind(move_button))
+        move_button.visible = false
+        operations_box.add_child(move_button)
+        _staffing_move_buttons.append(move_button)
+
     var capital_panel := _section_panel(Color(1.0, 0.62, 0.22, 0.82))
     capital_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     split.add_child(capital_panel)
@@ -186,6 +198,7 @@ func _render() -> void:
     _operations.text = _operations_text(_selected_zone)
     _capital.text = "設備判断はこのZoneで行う"
     _render_rank1_actions()
+    _render_direct_staffing_actions()
 
 
 func _render_rank1_actions() -> void:
@@ -246,6 +259,82 @@ func _render_rank1_actions() -> void:
             String(info.get("label", "Project")),
             _format_money(cost),
         ]
+
+
+func _render_direct_staffing_actions() -> void:
+    for button in _staffing_move_buttons:
+        button.visible = false
+        button.disabled = true
+        button.remove_meta("from_zone")
+        button.remove_meta("to_zone")
+
+    if sim == null or sim.facility_rank < 2:
+        return
+    if not sim.has_method("direct_staffing_summary") or not sim.has_method("staffing_zone_for_warehouse_zone"):
+        return
+
+    var target := String(sim.call("staffing_zone_for_warehouse_zone", _selected_zone))
+    if target.is_empty():
+        if _selected_zone == "packing":
+            _action_message.text = "PACKINGは設備処理｜Worker直接配置なし"
+        return
+
+    var summary: Dictionary = sim.call("direct_staffing_summary")
+    if not bool(summary.get("enabled", false)):
+        return
+
+    var cooldown := float(summary.get("cooldown", 0.0))
+    var sources: Array[String] = []
+    for zone in ["inbound", "picking", "shipping"]:
+        if zone != target:
+            sources.append(zone)
+
+    for index in mini(_staffing_move_buttons.size(), sources.size()):
+        var source := sources[index]
+        var button := _staffing_move_buttons[index]
+        var source_count := int(summary.get(source, 0))
+        button.visible = true
+        button.disabled = cooldown > 0.0 or source_count <= 1
+        button.set_meta("from_zone", source)
+        button.set_meta("to_zone", target)
+        button.text = "%sから1名移す" % _staffing_zone_label(source)
+
+    if cooldown > 0.0:
+        _action_message.text = "配置変更後の観察中｜あと%d秒" % int(ceil(cooldown))
+
+
+func _on_staffing_move(button: Button) -> void:
+    if sim == null or not sim.has_method("reassign_zone_staffing"):
+        return
+    var from_zone := String(button.get_meta("from_zone", ""))
+    var to_zone := String(button.get_meta("to_zone", ""))
+    var result: Dictionary = sim.call("reassign_zone_staffing", from_zone, to_zone)
+    _render()
+    if bool(result.get("ok", false)):
+        _action_message.text = "%s → %s｜1名再配置" % [
+            _staffing_zone_label(from_zone),
+            _staffing_zone_label(to_zone),
+        ]
+        return
+
+    match String(result.get("reason", "")):
+        "minimum":
+            _action_message.text = "%sは最低1名必要" % _staffing_zone_label(from_zone)
+        "cooldown":
+            _action_message.text = "観察中｜あと%d秒" % int(ceil(float(result.get("remaining", 0.0))))
+        _:
+            _action_message.text = "この配置変更は実行できない"
+
+
+func _staffing_zone_label(zone_key: String) -> String:
+    match zone_key:
+        "inbound":
+            return "RECEIVING"
+        "picking":
+            return "PICKING"
+        "shipping":
+            return "SHIPPING"
+    return zone_key.to_upper()
 
 
 func _on_operations_action() -> void:
@@ -420,6 +509,19 @@ func _selected_facility_label(group: String) -> String:
 
 
 func _operations_text(zone_key: String) -> String:
+    if sim.has_method("direct_staffing_summary") and sim.facility_rank >= 2:
+        var direct: Dictionary = sim.call("direct_staffing_summary")
+        if bool(direct.get("enabled", false)):
+            match zone_key:
+                "inbound", "storage":
+                    return "担当Worker %d人\nINBOUND→STORAGE" % int(direct.get("inbound", 0))
+                "picking":
+                    return "担当Worker %d人\n注文処理を担当" % int(direct.get("picking", 0))
+                "packing":
+                    return "設備処理\nWorker直接配置なし"
+                "shipping":
+                    return "担当Worker %d人\n出荷処理を担当" % int(direct.get("shipping", 0))
+
     if not sim.has_method("staffing_summary"):
         return "物流状態を観察"
     var summary: Dictionary = sim.call("staffing_summary")
