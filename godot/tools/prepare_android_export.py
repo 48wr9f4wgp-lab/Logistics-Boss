@@ -78,6 +78,7 @@ def _self_test() -> int:
         assert '[preset.1]' in text
         assert 'platform="Android"' in text
         assert 'package/unique_name="com.example.logisticsbossci"' in text
+        assert 'package/name="FLOTRA"' in text
         assert 'architectures/arm64-v8a=true' in text
         assert 'gradle_build/use_gradle_build=false' in text
         assert 'package/show_in_app_library=true' in text
