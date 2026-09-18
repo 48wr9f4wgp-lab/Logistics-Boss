@@ -1,4 +1,4 @@
-# LOGISTICS BOSS — Godot Visual North Star
+# FLOTRA — Godot Visual North Star
 
 Status: **CANONICAL / APPROVED**
 Approved: 2026-09-15
@@ -6,7 +6,7 @@ Applies to: Godot production direction
 
 ## Canonical visual target
 
-The user-approved final-vision image generated on 2026-09-15 is the visual North Star for the Godot version of LOGISTICS BOSS.
+The user-approved final-vision image generated on 2026-09-15 is the visual North Star for the Godot version of FLOTRA.
 
 This is not a loose mood-board reference. When visual decisions conflict, prefer the direction described here unless a later title-specific Art Bible or explicit user decision overrides it.
 
