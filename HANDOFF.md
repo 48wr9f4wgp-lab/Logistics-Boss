@@ -77,7 +77,31 @@ Verified Rank 1 v2:
 - runtime persistence is schema 8, with prior schema 7 investment state migrated into equivalent v2 project ownership;
 - reset removes both legacy and v2 onboarding markers.
 
-Rank 1 v2 is implemented, but the overall Vertical Slice v2 is **not complete** until direct Zone staffing plus Rank 2 STORAGE/PACKING renovation and the final iPhone Web playtest are finished.
+Rank 1 v2 is implemented. The overall Vertical Slice v2 remains **incomplete** until Rank 2 STORAGE/PACKING renovation and the final iPhone Web playtest are finished.
+
+### Direct Zone Staffing — DONE
+
+PR #111 — `Add direct Zone staffing`
+- merge commit: `2412a22c4eb75e526e1901b4632943a1a7d2a37b`
+- Godot CI #269: **success**
+- iOS Export Smoke #88: **success**
+- Rendered Visual Capture #67: **success**
+- Android Export Smoke #81: **success** (historical technical reference only)
+- dedicated direct Zone staffing smoke: **success**
+- save/runtime regressions: **success**
+
+Verified staffing model:
+- staffed flows are **RECEIVING (INBOUND/STORAGE)**, **PICKING**, and **SHIPPING**;
+- PACKING explicitly has no direct Worker allocation because it is equipment-processed in the current authoritative simulation;
+- Rank 2 starts at **2 / 2 / 1**;
+- one action moves one Worker from a source staffed flow to the inspected target flow;
+- each staffed flow keeps at least 1 Worker, preventing role-deadlock;
+- each reassignment starts the existing 30-second observation cooldown;
+- Zone Panel shows local staffing and source→target reassignment controls;
+- Management shows an executive staffing overview only;
+- legacy staffing preset grid remains hidden;
+- runtime save schema is now **v9**;
+- schema v8 preset state migrates into equivalent direct Zone counts.
 
 
 ## 1. Product / canonical intent
@@ -117,17 +141,16 @@ Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
 Current verified main baseline:
-- PR #109 — `Build Rank 1 Core Experience v2`
-- merge commit: `d2a93d421fb097a9863abd0ddb9c4f4fd70746e5`
-- Godot CI #267: **success**
-- iOS Export Smoke #87: **success**
-- Android Export Smoke #79: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
-- Rendered Visual Capture #65: **success**
-- dedicated Rank 1 v2 structural project smoke: **success**
-- runtime save schema: **8**
-- schema 7 → 8 migration: **verified**
-- fresh developed Rank 1 and Rank 2 390×844 captures: **human inspected / pass**
-- PR #107 Interaction Skeleton and prior technical/save/progression evidence remain preserved where not superseded
+- PR #111 — `Add direct Zone staffing`
+- merge commit: `2412a22c4eb75e526e1901b4632943a1a7d2a37b`
+- Godot CI #269: **success**
+- iOS Export Smoke #88: **success**
+- Android Export Smoke #81: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
+- Rendered Visual Capture #67: **success**
+- dedicated direct Zone staffing smoke: **success**
+- runtime save schema: **9**
+- schema 8 staffing preset → direct Zone migration: **verified**
+- PR #109 Rank 1 v2 and PR #107 Interaction Skeleton remain included
 
 Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
@@ -159,6 +182,7 @@ Recent QA/product milestones:
 - PR #103: fresh rendered-capture audit found Rank 2 growth too subtle; widened the persistent operations mezzanine/crown and added rear service modules so Rank 2 reads as a larger facility while Rank 3 remains the larger step
 - PR #107: Core Experience v2 Interaction Skeleton — five 3D Zone targets, Zone Panel, symptom-only Director, Management dashboard shell, RP removed from primary HUD, legacy mobile purchase/preset controls hidden; CI #265 / iOS #86 / Render #63 passed and fresh portrait capture human-inspected
 - PR #109: Rank 1 Core Experience v2 — Rack Wing / Second Packing Bench / Worker Hire / Forklift Project / explicit Warehouse Expansion / Zone-first FTUE / schema 8 migration; CI #267 / iOS #87 / Render #65 passed and developed Rank 1 + Rank 2 captures human-inspected
+- PR #111: direct Zone staffing — RECEIVING/PICKING/SHIPPING source→target reassignment, one-worker floor, 30-second observation lock, Zone Panel controls, Management staffing overview, schema 9 persistence; CI #269 / iOS #88 / Render #67 passed
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -517,44 +541,55 @@ FLOTRA remains in **ACTIVE_PHASE = VERTICAL_SLICE** for Core Experience v2.
 
 ### LAST VERIFIED DONE
 
-**Rank 1 Core Experience v2 — DONE / PR #109**
+**Direct Zone Staffing — DONE / PR #111**
 
 Verified:
-- Interaction Skeleton from PR #107 remains intact;
-- Rack Wing is a visible + authoritative STORAGE project;
-- Second Packing Bench is a visible + authoritative two-job PACKING project;
-- Worker Hire is one-time, not a repeated scalar purchase loop;
-- Forklift Project activates real inbound→storage automation;
-- capital projects use explicit preview/second-step commitment;
-- Warehouse Expansion is the deliberate Rank 2 promotion action;
-- Zone-first onboarding teaches observation and decision instead of Management-first clicking;
-- save schema 8 round-trips and schema 7 migrates safely;
-- Godot CI #267 / iOS Export Smoke #87 / Rendered Visual Capture #65 green;
-- fresh developed Rank 1 and Rank 2 portrait renders human-inspected / pass.
+- Rank 1 v2 from PR #109 remains intact;
+- staffed flows are RECEIVING (INBOUND/STORAGE), PICKING, SHIPPING;
+- PACKING has no fake Worker assignment control;
+- Rank 2 starts at 2/2/1;
+- one Worker is moved source → inspected target per action;
+- every staffed flow retains at least one Worker;
+- 30-second observation cooldown remains authoritative;
+- Zone Panel is the local staffing decision surface;
+- Management exposes executive staffing overview, not preset buttons;
+- schema 9 persists direct staffing and schema 8 preset state migrates safely;
+- Godot CI #269 / iOS Export Smoke #88 / Rendered Visual Capture #67 green.
 
-### NEXT — direct Zone staffing
+### NEXT — Rank 2 STORAGE + PACKING renovation
 
-Implement as the next small, reviewable PR:
+Implement as the next focused slice.
 
-1. replace the hidden legacy staffing presets with direct player-facing Zone allocation/reassignment;
-2. preserve a valid logistics role floor so staffing cannot deadlock flow;
-3. make the current worker distribution readable in Zone Panel / Management Staffing;
-4. keep staffing as an **OPERATIONS** decision, separate from CAPITAL equipment;
-5. add cooldown/observation protection without restoring preset-button gameplay;
-6. preserve schema 8 compatibility and old staffing-plan migration where practical.
+#### STORAGE
+- **Fast Pick Rack**
+- **High Density Rack**
+- paid renovation **A ⇄ B**
+- visible geometry replacement
+- authoritative capacity / pick-speed trade-off
+- Before/After measurement
+- paired scenarios proving neither option is universally dominant
 
-Acceptance focus:
-- player understands where workers are assigned without decoding 3/1/1 preset labels;
-- reassignment changes authoritative worker roles/tasks;
-- zero-cash flow remains recoverable;
-- Zone Panel remains the local decision surface while Management retains executive staffing overview;
-- Rank 1 v2 behavior and Warehouse Expansion remain intact.
+#### PACKING
+- **Parallel Pack Line**
+- **Fast Pack Cell**
+- paid renovation **A ⇄ B**
+- visible geometry replacement
+- authoritative parallelism / single-job-speed trade-off
+- Before/After measurement
+- paired scenarios proving neither option is universally dominant
 
-After staffing passes:
-- implement Rank 2 **STORAGE** Fast Pick Rack ⇄ High Density Rack paid renovation + paired dominance tests;
-- implement Rank 2 **PACKING** Parallel Pack Line ⇄ Fast Pack Cell paid renovation + paired dominance tests;
-- complete construction preview / visible renovation feedback;
-- run the next iPhone Web Core Experience playtest.
+Renovation requirements:
+- one active equipment mode per Zone;
+- replacing equipment costs money;
+- no full-refund flip loop;
+- replacement updates both physical geometry and Domain behavior;
+- normal equipment action stays in the warehouse Zone Panel, not Management;
+- current direct staffing remains an OPERATIONS layer and must not be merged into capital choices.
+
+After STORAGE + PACKING renovation passes:
+- complete any missing construction/renovation preview feedback needed for comprehension;
+- run fresh rendered evidence;
+- run the next **iPhone Web Core Experience playtest**.
 
 **STOP / SCOPE CONDITION:** do not implement deferred Rank 2 INBOUND/PICKING/SHIPPING v2 equipment, Rank 3 redesign, advanced sorter/ASRS/cross-dock content, or release work yet.
 

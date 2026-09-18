@@ -225,9 +225,30 @@ INBOUND, PICKING, and SHIPPING v2 equipment remain deferred until this slice pas
 
 The previous player-facing five-preset model is superseded for Core Experience v2.
 
-The player should understand staffing as **direct Zone assignment/reassignment**. Existing internal role logic may be reused when safe, but the UI should not require decoding labels such as 3/1/1.
+The player-facing model is **direct Zone reassignment** over the authoritative Worker task system.
 
-Staffing remains an operational layer distinct from capital equipment.
+Staffed flows:
+- **RECEIVING** — covers INBOUND → STORAGE work;
+- **PICKING** — covers order picking;
+- **SHIPPING** — covers dispatch work.
+
+PACKING is equipment-processed in the current simulation and therefore has **no direct Worker allocation**. Do not fake a staffing control for it.
+
+Rank 2 starts at:
+- RECEIVING: 2;
+- PICKING: 2;
+- SHIPPING: 1.
+
+A staffing action moves **one Worker from a source staffed flow to the inspected target flow**.
+
+Locked safety rules:
+- every staffed flow keeps at least 1 Worker;
+- a reassignment starts the existing 30-second observation cooldown;
+- current allocation is readable in the Zone Panel;
+- Management shows an executive staffing overview only;
+- legacy preset names remain compatibility/migration data and are not player-facing v2 controls.
+
+Staffing remains an **OPERATIONS** layer distinct from CAPITAL equipment.
 
 ### Existing workload systems
 
@@ -277,13 +298,13 @@ Routing state is Domain-authoritative. A SHIP task freezes route, batch and valu
 - scheduled inbound interval ×0.85
 - counted in equipment assets
 - visible 3D state
-- schema-v7 persistence
+- persistence preserved through current runtime schema v9
 
 Research showed that scheduled inbound cadence is the first post-routing lever that materially increases shipments. AGV / sorter / ASRS-style candidates are not automatically added unless measurement proves product value.
 
 ## 9. Save / Recovery
 
-Current save schema: v7.
+Current runtime save schema: **v9**.
 
 Persistence:
 - local JSON under `user://`
@@ -294,6 +315,12 @@ Persistence:
 - save on close / application pause
 
 Save compatibility is a release requirement. Existing valid progression must not be destroyed by ordinary upgrades.
+
+Migration baseline:
+- schema v7 and earlier legacy progression remains loadable through the layered migration path;
+- schema v8 Rank 1 v2 project state remains valid;
+- schema v8 named staffing presets migrate into equivalent schema v9 direct Zone counts;
+- schema v9 persists Rank 1 v2 project ownership plus direct Zone staffing.
 
 ## 10. Camera / Mobile UX
 
