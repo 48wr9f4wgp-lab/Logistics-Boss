@@ -138,8 +138,11 @@ func _run() -> void:
         _fail("v2 Director must not reveal the action/equipment answer")
         return
 
-    if not _contains_label_text(hud._sheet, "経営管理"):
+    if hud._management_title == null or hud._management_title.text != "経営管理":
         _fail("mobile Management must present itself as management, not a capital store")
+        return
+    if hud._management_hint == null or not hud._management_hint.text.contains("Zone"):
+        _fail("v2 Management must direct equipment decisions back to the warehouse Zones")
         return
 
     hud.queue_free()
@@ -149,11 +152,3 @@ func _run() -> void:
     print("Godot v2 interaction skeleton smoke passed")
     quit(0)
 
-
-func _contains_label_text(node: Node, text: String) -> bool:
-    if node is Label and (node as Label).text == text:
-        return true
-    for child in node.get_children():
-        if _contains_label_text(child, text):
-            return true
-    return false
