@@ -2,6 +2,33 @@
 
 Last updated: 2026-09-18 JST
 
+## 0. Core Experience v2 reset — 2026-09-18
+
+Repeated iPhone Web playtest invalidated the prior assumption that FLOTRA only needed native-device polish before GREENLIGHT.
+
+Observed product failures:
+- facility/equipment growth was not legible enough during ordinary play;
+- Management was difficult to parse and action → consequence was unclear;
+- play drifted toward repeatedly buying available upgrades;
+- meaningful equipment/decision variety became repetitive too quickly.
+
+Therefore FLOTRA has deliberately moved **DEVICE_VALIDATION → VERTICAL_SLICE** for a targeted **Core Experience v2** rework.
+
+Canonical implementation packet:
+- `VERTICAL_SLICE_V2_CHANGE_PACKET.md`
+
+Core Experience v2 locks:
+- 3D warehouse is the primary game board;
+- normal equipment decisions start from warehouse Zones;
+- Director shows symptoms/evidence, not the answer;
+- Management becomes an executive dashboard;
+- major equipment has visible geometry + authoritative effect + strength + weakness + measurement;
+- Rank 2 Zone equipment is replaceable by paid renovation;
+- current slice = full Rank 1 v2 + Rank 2 STORAGE/PACKING only;
+- do not add the remaining Rank 2 Zones or redesign Rank 3 until the slice passes playtest.
+
+Existing simulation/save/CI/export evidence is preserved. It is not sufficient proof that the v2 Core Experience works.
+
 ## 1. Product / canonical intent
 
 FLOTRA（フロトラ） is a portrait mobile 3D logistics-management / automation-observer game. The player is the logistics-center owner / operations manager, not a manual parcel carrier or forklift driver.
@@ -21,7 +48,7 @@ Former title / migration alias: **LOGISTICS BOSS**
 
 ## 1.1 Platform / state
 
-- ACTIVE_PHASE: **DEVICE_VALIDATION**
+- ACTIVE_PHASE: **VERTICAL_SLICE**
 - DEVELOPMENT_TARGET: **iPhone / iOS**
 - PRODUCTION_DECISION: **UNDECIDED**
 - RELEASE_APPROVAL: **NOT_REQUESTED**
@@ -29,9 +56,9 @@ Former title / migration alias: **LOGISTICS BOSS**
 - REAL_DEVICE_ACCESS: **AVAILABLE — user's iPhone / repeated testing available**
 - MAC_XCODE_ACCESS_PATH: **BLOCKED — no Mac currently available**
 - Native physical-iPhone lane: **DEFERRED BY USER until Mac/Xcode access returns**
-- Status label: **PRE-GO / DEVICE_VALIDATION**
+- Status label: **PRE-GO / VERTICAL_SLICE v2 REWORK**
 
-The current macro gate remains DEVICE_VALIDATION, but the native physical-iPhone lane is intentionally deferred while Mac/Xcode access is unavailable. This blocker is acknowledged and must not be treated as a passed gate. In the meantime, continue Mac-independent Pre-GO risk reduction only. See `DEVICE_VALIDATION_ACCESS.md`.
+The current active phase is VERTICAL_SLICE because real iPhone Web play exposed a Core Experience failure. Native physical-iPhone DEVICE_VALIDATION remains deferred while Mac/Xcode access is unavailable and will resume only after the v2 slice passes its own playtest/CI/visual checks. The native blocker remains acknowledged and is not treated as a passed gate. See `DEVICE_VALIDATION_ACCESS.md`.
 
 ## 2. Repository / current GitHub state
 
@@ -104,7 +131,9 @@ Not connected / not active:
 - IAP / ads
 - App Store / Google Play submission
 
-## 4. Canonical product state
+## 4. Preserved legacy implementation baseline
+
+The implementation details below describe the preserved pre-v2 baseline. Where they conflict with Core Experience v2, `VERTICAL_SLICE_V2_CHANGE_PACKET.md` and the synchronized `GDD_FLOTRA.md` take precedence. Do not delete useful legacy Domain/save/Rank 3 code merely because it is outside the v2 slice.
 
 ### Rank 1 — Small Depot
 
@@ -428,19 +457,32 @@ Release / QA:
 
 ## 14. Immediate next task
 
-FLOTRA remains in **ACTIVE_PHASE = DEVICE_VALIDATION**, with the native physical-iPhone lane **DEFERRED BY USER** until Mac/Xcode access becomes available.
+FLOTRA is now in **ACTIVE_PHASE = VERTICAL_SLICE** for Core Experience v2.
 
-While deferred, do not advance to GREENLIGHT. Mac-independent risk-reduction progress:
+The previous Mac-independent audits remain valid technical/product evidence for the legacy baseline, but the 2026-09-18 iPhone Web playtest found a higher-priority Core Experience failure. Do not resume speculative polish and do not enter GREENLIGHT.
 
-1. progression dead-end / resource dead-end audit across Rank 1 → Rank 3: **DONE — PR #97 / Godot CI #246**
-2. FTUE / Core Loop comprehension audit: **DONE — PR #99 / Godot CI #248**. Evidence-backed issue fixed: FTUE previously completed immediately after purchase; it now waits for the authoritative measurement result.
-3. economy / progression pacing audit: **DONE — PR #101 / Godot CI #253**. Evidence-backed issue fixed: best adaptive staffing initially beat fixed Shipping by only 2 shipments in one 510s cycle; after the storage-buffer tune the gap is 10 shipments / ¥5,000.
-4. reward / growth legibility audit: **DONE — PR #103 / Godot CI #255 / Rendered Visual Capture #53**. Evidence-backed issue fixed: Rank 2 persistent growth was too subtle in fresh portrait renders; the operations spine/crown and rear service mass were strengthened and re-inspected.
-5. save/recovery and current regression coverage: **GREEN on the latest verified CI**
-6. no further speculative Mac-independent polish is authorized by evidence.
+**NEXT — implementation step 1: Interaction skeleton**
 
-Optional iPhone Web engineering-preview checks may provide partial touch/readability evidence, but they do **not** satisfy native DEVICE_VALIDATION exit.
+Implement as a small reviewable PR:
+1. readable 3D Zone targets;
+2. Zone Panel bottom sheet while keeping warehouse context visible;
+3. symptom-only Director copy;
+4. remove normal Zone equipment purchasing from Management;
+5. preserve authoritative simulation/save behavior;
+6. add/update automated coverage for the interaction path and mobile layout.
 
-**NEXT / STOP CONDITION:** keep the verified baseline stable. Resume native physical-iPhone DEVICE_VALIDATION when Mac/Xcode access returns. Only after representative physical-iPhone evidence is collected may FLOTRA enter **GREENLIGHT** and record GO / HOLD / KILL.
+Then continue in this order:
+- Rank 1 v2 structural projects + event-driven onboarding + Warehouse Expansion;
+- direct player-facing Zone staffing;
+- Rank 2 STORAGE pair + paid renovation + paired dominance tests;
+- Rank 2 PACKING pair + paid renovation + paired dominance tests;
+- equipment preview / ghost / visible construction / measurement feedback;
+- iPhone Web playtest.
+
+**STOP / SCOPE CONDITION:** do not implement Rank 2 INBOUND/PICKING/SHIPPING v2 equipment, Rank 3 redesign, or advanced sorter/ASRS/cross-dock content until the v2 slice passes playtest.
+
+Return to DEVICE_VALIDATION only after the v2 slice is end-to-end playable, CI/save regressions are green, fresh visual evidence is inspected, and iPhone Web play no longer reproduces the Management-clicker failure mode.
+
+Native representative-iPhone evidence remains required before GREENLIGHT.
 
 Do not start RELEASE_ENABLEMENT, production signing, App Store Connect/TestFlight production work, Store assets, or active Android production work before PRODUCTION_DECISION=GO.

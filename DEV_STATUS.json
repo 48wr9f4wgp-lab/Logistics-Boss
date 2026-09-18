@@ -3,12 +3,12 @@
   "official_title": "FLOTRA",
   "reading": "フロトラ",
   "legacy_title_alias": "LOGISTICS BOSS",
-  "active_phase": "DEVICE_VALIDATION",
+  "active_phase": "VERTICAL_SLICE",
   "production_decision": "UNDECIDED",
   "release_approval": "NOT_REQUESTED",
   "development_target": "iPhone / iOS",
   "primary_input": "touch",
-  "status_label": "PRE_GO_DEVICE_VALIDATION",
+  "status_label": "PRE_GO_VERTICAL_SLICE_V2_REWORK",
   "real_device_access": "AVAILABLE_USER_IPHONE_REPEATED_TESTING",
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
@@ -35,7 +35,12 @@
     "release": "pre_go_not_release_candidate",
     "progression_dead_end": "pass_pr97_zero_cash_rank1_contract_rank2_all_staffing_and_8_facility_paths_rank3_all_routes_plus_structural_refunding",
     "ftue_core_loop_comprehension": "pass_pr99_ftue_stays_active_until_authoritative_measurement_completed_then_teaches_verdict_and_next_loop",
-    "economy_progression_pacing": "pass_pr101_rank2_510s_frontier_best_adaptive_212_vs_best_fixed_shipping_202_after_storage_buffer_tune"
+    "economy_progression_pacing": "pass_pr101_rank2_510s_frontier_best_adaptive_212_vs_best_fixed_shipping_202_after_storage_buffer_tune",
+    "core_experience_v2_playtest": "fail_2026_09_18_ios_web_management_clicker_growth_not_legible_management_hard_to_parse_repetition_exposed",
+    "core_loop_e2e_v2": "pending_vertical_slice_v2_implementation",
+    "management_readability_v2": "fail_2026_09_18_ios_web_information_hierarchy_action_effect_unclear",
+    "reward_growth_recognition_v2": "fail_2026_09_18_ios_web_equipment_and_facility_change_not_clear_during_normal_play",
+    "legacy_core_loop_automation": "pass_pr74_valid_for_legacy_flow_not_v2_product_proof"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -52,9 +57,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "PR #103 merged after Godot CI #255 and Rendered Visual Capture #53 passed. Fresh canonical Rank 1/2/3 renders were human-inspected: Rank 2's prior thin rear-crown-only growth read was strengthened with a wider persistent operations mezzanine/crown and two rear service modules; Rank 3 still reads as the larger facility step and no new foreground/HUD obstruction was observed. Physical native iPhone reward/growth recognition remains pending.",
-  "blocked": "Native physical-iPhone DEVICE_VALIDATION is deferred by user because Mac/Xcode access will not be available for a while. This is an acknowledged phase blocker, not a completed gate.",
-  "next": "Mac-independent Pre-GO risk-reduction audits are complete for progression dead-ends, FTUE/Core Loop comprehension, economy/progression pacing, and reward/growth legibility. Maintain current regression/save coverage green and avoid speculative polish. Resume native physical-iPhone DEVICE_VALIDATION when Mac/Xcode access becomes available; do not enter GREENLIGHT before representative device evidence.",
+  "last_verified_done": "2026-09-18 iPhone Web playtest exposed a Core Experience failure: growth/equipment consequences were not clear enough during ordinary play, Management was hard to parse, and play drifted toward repeated upgrade clicking. FLOTRA was deliberately routed back from DEVICE_VALIDATION to VERTICAL_SLICE for Core Experience v2. The v2 Change Packet and GDD locks define the targeted rework; existing technical/save/CI evidence remains preserved but does not prove the v2 product experience.",
+  "blocked": "No Mac-independent implementation blocker for Vertical Slice v2. Native physical-iPhone DEVICE_VALIDATION remains deferred until Mac/Xcode access becomes available, but it is not the current active-phase blocker.",
+  "next": "Implement Vertical Slice v2 in small PRs, starting with the interaction skeleton: 3D Zone targets, Zone Panel, symptom-only Director, and removal of normal Zone equipment purchasing from Management. Then complete Rank 1 v2, direct player-facing staffing, Rank 2 STORAGE and PACKING renovation pairs, construction preview/reward feedback, and repeat iPhone Web playtest before adding other Zones.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -91,5 +96,48 @@
     "merge_commit": "a8671914e96270d482022a69785aaec964eea6e2",
     "title": "Strengthen Rank 2 growth legibility",
     "evidence": "Godot CI #255, iOS Export Smoke #77, Rendered Visual Capture #53 success; fresh Rank 1/2/3 captures human-inspected"
+  },
+  "phase_return": {
+    "from": "DEVICE_VALIDATION",
+    "to": "VERTICAL_SLICE",
+    "date": "2026-09-18",
+    "reason": "Core Experience failure found in repeated iPhone Web playtest",
+    "issues": [
+      "facility/equipment growth not legible enough during ordinary play",
+      "Management information hierarchy and action consequences unclear",
+      "play drifted toward repeated available-upgrade clicking",
+      "meaningful equipment/decision variety exhausted too quickly"
+    ],
+    "scope": "targeted Core Experience v2 rework; preserve technical/save/simulation/CI assets"
+  },
+  "vertical_slice_v2": {
+    "change_packet": "VERTICAL_SLICE_V2_CHANGE_PACKET.md",
+    "implementation_state": "NOT_YET_IMPLEMENTED",
+    "locked_scope": [
+      "3D warehouse as primary game board",
+      "Zone-first normal equipment decisions",
+      "symptom-only Director",
+      "Management as executive dashboard",
+      "full Rank 1 v2 path",
+      "direct player-facing Zone staffing",
+      "Rank 2 STORAGE pair with paid renovation",
+      "Rank 2 PACKING pair with paid renovation",
+      "equipment preview and visible construction/change",
+      "authoritative Before/After measurement"
+    ],
+    "deferred": [
+      "Rank 2 INBOUND v2 equipment",
+      "Rank 2 PICKING v2 equipment",
+      "Rank 2 SHIPPING v2 equipment",
+      "Rank 3 redesign/new systems",
+      "advanced sorter/ASRS/cross-dock content"
+    ],
+    "return_to_device_validation_when": [
+      "v2 slice playable end-to-end",
+      "CI/save regressions green",
+      "fresh visual evidence inspected",
+      "iPhone Web playtest no longer reproduces Management-clicker failure mode",
+      "facility/equipment consequences legible during ordinary play"
+    ]
   }
 }
