@@ -421,16 +421,23 @@ Normal structural equipment uses:
 
 **equipment card → preview → ghost/planned geometry → explicit build/renovate confirmation → physical construction/change**
 
-Current verified implementation:
+Verified implementation:
 - Rank 1 and Rank 2 capital actions use a two-step preview → explicit commit flow;
 - Rank 2 preview shows equipment name, strength, weakness/trade-off, and real build/renovation cost;
-- commit changes authoritative Domain state and physically replaces the active Rank 2 geometry;
-- build/renovation triggers investment emphasis and authoritative Before/After measurement;
-- short action feedback is held long enough to read.
-
-**Still required before the next iPhone Web playtest:** the preview must add physical ghost/planned geometry and a clearer selected-Zone construction/reward transition. Text-only preview is not considered the final presentation contract.
+- first preview tap does **not** spend cash;
+- preview draws semi-transparent planned equipment geometry directly in the selected warehouse Zone;
+- covered Rank 1 structural previews: Rack Wing, Second Packing Bench, Forklift Project;
+- covered Rank 2 previews: Fast Pick Rack, High Density Rack, Parallel Pack Line, Fast Pack Cell;
+- selecting another equipment choice replaces the old ghost;
+- switching Zones or closing the Zone Panel clears stale preview geometry;
+- successful authoritative commit clears the ghost, activates the real equipment geometry, and produces a short selected-Zone construction emphasis;
+- build/renovation continues into authoritative Before/After measurement;
+- short action feedback is held long enough to read;
+- fresh 390×844 `rank2_preview.png` evidence was human-inspected with the STORAGE Zone Panel open, High Density Rack ghost visible, and the warehouse still readable behind the decision surface.
 
 Cash must not be converted into an invisible stat change from a single ambiguous button press.
+
+The presentation contract is now implementation-complete for Vertical Slice v2. Human iPhone Web playtest evidence is still required before declaring the Core Experience rework successful.
 
 ### 11.5 Management Dashboard
 
@@ -605,7 +612,7 @@ Existing simulation, save/recovery, CI, export smoke, and reusable visual work r
 Canonical implementation packet:
 - VERTICAL_SLICE_V2_CHANGE_PACKET.md
 
-The slice implements:
+The implemented slice now contains:
 - full Rank 1 v2 path;
 - 3D Zone interaction;
 - Zone Panel;
@@ -614,9 +621,14 @@ The slice implements:
 - direct player-facing staffing;
 - Rank 2 STORAGE pair + renovation;
 - Rank 2 PACKING pair + renovation;
-- construction preview / visible physical change / authoritative measurement.
+- physical planned-equipment ghost preview;
+- explicit preview → commit → real-geometry transition;
+- selected-Zone construction/reward emphasis;
+- authoritative Before/After measurement.
 
-The slice explicitly does not implement the remaining Rank 2 Zones or redesign Rank 3.
+The implementation scope is complete for the planned Vertical Slice v2. The slice explicitly does not implement the remaining Rank 2 Zones or redesign Rank 3.
+
+**Current gate:** human iPhone Web Core Experience playtest. Do not add deferred content merely because implementation work is otherwise complete.
 
 ### Return to DEVICE_VALIDATION
 
