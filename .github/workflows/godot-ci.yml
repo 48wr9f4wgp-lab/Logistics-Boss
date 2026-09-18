@@ -159,6 +159,16 @@ jobs:
             exit 1
           fi
 
+      - name: Vertical Slice v2 interaction skeleton smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 30s godot --headless --path godot --script res://tests/v2_interaction_skeleton_smoke.gd 2>&1 | tee /tmp/v2-interaction-skeleton-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/v2-interaction-skeleton-smoke.log; then
+            echo 'Vertical Slice v2 interaction skeleton smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Save recovery smoke
         shell: bash
         run: |
