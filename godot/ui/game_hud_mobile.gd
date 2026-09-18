@@ -31,6 +31,10 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+    if _reset_modal != null and _reset_modal.visible:
+        _reset_mobile_scroll_gesture()
+        return
+
     if _sheet == null or not _sheet.visible or _mobile_scroll == null:
         _reset_mobile_scroll_gesture()
         return
