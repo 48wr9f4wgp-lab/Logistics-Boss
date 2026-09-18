@@ -1,168 +1,219 @@
-# FLOTRA — Native Release Checklist
+# FLOTRA — iPhone Device Validation / Deferred Release Enablement Checklist
 
-Status: **code-level RC candidate / native preparation pending**
+Status: **Pre-GO / ACTIVE_PHASE = DEVICE_VALIDATION**
+Development target: **iPhone / iOS**
+PRODUCTION_DECISION: **UNDECIDED**
+RELEASE_APPROVAL: **NOT_REQUESTED**
 Engine: Godot 4.7.2 Standard / GDScript / GL Compatibility
 Reference viewport: portrait 390×844
 
-## 1. Code-level readiness already prepared
+This filename is retained for compatibility with existing references. The current gate is **DEVICE_VALIDATION**, not Native RC or App Store release enablement.
 
-- authoritative Domain simulation separated from UI/View
+## 1. Current gate
+
+Purpose: evaluate **FLOTRA itself on a representative physical iPhone** and collect enough evidence for GREENLIGHT.
+
+Current required state:
+- REAL_DEVICE_ACCESS: **UNRECORDED**
+- MAC_XCODE_ACCESS_PATH: **UNRECORDED**
+- physical iPhone development build: **NOT YET VERIFIED**
+
+Pre-GO does **not** require:
+- final production Bundle ID / App ID
+- production certificate / provisioning operations
+- App Store Connect setup
+- TestFlight production workflow
+- Store assets
+- production analytics / crash SDK
+- production IAP / Ads integration
+- active Android production work
+
+If development signing / provisioning is necessary to reach a physical iPhone, use only the minimum viable path required for DEVICE_VALIDATION.
+
+## 2. Verified technical baseline
+
+Already prepared / verified:
+- authoritative Domain simulation separated from UI / View
 - schema-v7 local save with primary + backup recovery
-- startup / FTUE / Rank 1 / Rank 2 / Rank 3 regressions
+- startup / FTUE / Rank 1 / Rank 2 / Rank 3 automated regressions
 - long-running Rank 1 / Rank 3 soak and save/resume coverage
 - touch orbit + pinch zoom
 - portrait overview framing regression coverage
 - Rank 3 management touch-scroll regression coverage
 - procedural gameplay feedback audio baseline
 - native haptic hooks through `Input.vibrate_handheld`
-- provider-neutral analytics event layer; no external data transmission
+- provider-neutral local analytics; no external data transmission
 - runtime FPS health sampling
-- real iPhone Safari engineering-preview verification after PR #57
-- RC preflight checks for viewport, renderer, required release assets and export-preset policy
+- current Rank 1 / 2 / 3 rendered baseline human-inspected
+- synthetic unsigned iOS Xcode-project export path proven
+- synthetic Android export proof retained as historical technical evidence only
 
-## 2. Native release input bootstrap
+The synthetic export proofs reduce technical uncertainty. They are **not** production signing or release-readiness evidence.
 
-The repository provides:
-- `godot/native_release_inputs.example.env`
-- `godot/tools/native_release_inputs.py`
+## 3. DEVICE_VALIDATION prerequisites
 
-Copy the example locally to `godot/.native-release.env` and fill only on a trusted machine. The real file is gitignored.
+Record before claiming DEVICE_VALIDATION is underway on hardware:
 
-Validation command:
+### REAL_DEVICE_ACCESS
+Record:
+- representative iPhone model
+- iOS version
+- ownership / access path
+- how the development build will be installed
+- whether repeated sessions can be run reliably
 
-```bash
-python3 godot/tools/native_release_inputs.py \
-  --env-file godot/.native-release.env \
-  --platform all \
-  --require-signing
-```
+### MAC_XCODE_ACCESS_PATH
+Record one:
+- available Mac + Xcode path
+- authorized remote / CI development-build path
+- exact blocker if no viable path exists
 
-The validator checks identifier syntax and Android signing-file presence. It never prints the Android keystore password.
+Do not infer these fields from chat metadata or old assumptions. Record actual reachable paths.
 
-## 3. Mac-less iOS export bootstrap
+## 4. Development-build rule
 
-A local Mac is not required for the first native-export gate.
+DEVICE_VALIDATION needs an installable iPhone development build, not a production release candidate.
 
-The repository provides:
-- `godot/tools/prepare_ios_export.py`
-- `.github/workflows/ios-export-smoke.yml`
+Allowed Pre-GO when needed:
+- development signing / provisioning
+- temporary/non-final development identifier where technically valid
+- limited build/export spike needed to reach the device
 
-The generator appends an **ephemeral iOS export preset** at build time. The committed `godot/export_presets.cfg` still contains only the Web engineering-preview preset.
+Not required Pre-GO:
+- final production Bundle ID
+- production distribution certificate
+- production release CI/CD
+- TestFlight production operation
 
-The macOS GitHub Actions smoke does this automatically:
-1. start a hosted macOS runner with Xcode
-2. install Godot 4.7.2 + export templates
-3. validate synthetic iOS identifiers
-4. generate a temporary iOS preset with `application/export_project_only=true`
-5. import the Godot project on macOS
-6. export an unsigned Xcode-project ZIP
-7. verify the ZIP contains an `.xcodeproj/project.pbxproj`
-8. upload the unsigned Xcode-project artifact for inspection
+If the only viable route requires cost, contract, paid developer enrollment, external distribution, or another external-impact action, stop before that action and obtain explicit user approval.
 
-Synthetic values are used only by the smoke workflow. They are not production identifiers and are never merged into `export_presets.cfg`.
+## 5. Physical iPhone validation matrix
 
-Once real Apple identifiers exist, the same path can inject them without committing them to source control. Final signed-device/TestFlight work still requires Apple account signing material and an active Apple Developer setup.
+Run across **multiple sessions**. Do not treat a single boot as DEVICE_VALIDATION exit evidence.
 
-### Real-identifier iOS device-project candidate
+### Core experience
+- Core Loop is understood without developer explanation
+- bottleneck → intervention → reaction → measurement is readable
+- the logistics flow itself feels satisfying
+- the small-depot → large-logistics-center growth promise is perceived
+- reward / growth changes are recognized
+- no normal-path progression dead-end or resource dead-end
 
-The repository also provides:
-- `.github/workflows/ios-device-project-candidate.yml`
+### Touch / UI
+- tap actions are reliable
+- single-finger orbit feels controlled
+- pinch zoom feels controlled
+- edge gestures do not conflict badly with iOS
+- maximum zoom-out remains readable
+- Safe Area / Dynamic Island clearance
+- text and controls are readable at actual phone size
+- Management sheet scroll reaches all actions
+- no horizontal drift / clipping
 
-This workflow is **manual-only** (`workflow_dispatch`). It requires the real Apple Team ID and final Bundle Identifier as run inputs, then:
-1. validates both identifiers
-2. generates an ephemeral iOS preset
-3. exports an **unsigned** Xcode project
-4. verifies the Team ID / Bundle ID were injected into the Xcode project
-5. verifies iOS arm64 payload, non-empty PCK, PrivacyInfo, iOS 15.0 deployment target, portrait-only orientation, and full-screen mode
-6. writes candidate metadata marking signing and physical-device QA as not completed
-7. uploads the Xcode-project ZIP artifact
-
-This workflow does **not** import certificates, create/rotate signing keys, sign an app, install to a device, or upload to TestFlight. Those remain explicit later gates.
-
-Latest inspected unsigned smoke artifact (PR #86 / iOS Export Smoke #47) contained:
-- iOS arm64 `libgodot.a`
-- MoltenVK XCFramework
-- non-empty game PCK
-- `PrivacyInfo.xcprivacy`
-- iOS deployment target 15.0
-- portrait-only supported orientation
-- full-screen requirement
-- synthetic CI-only Team ID / Bundle ID
-
-## 4. External identifiers required before signed native builds
-
-These values must not be guessed or committed as fake production identifiers.
-
-### iOS
-- `LOGISTICS_BOSS_IOS_TEAM_ID`: Apple Developer Team ID, 10-character Apple team code
-- `LOGISTICS_BOSS_IOS_BUNDLE_ID`: final unique reverse-DNS Bundle Identifier
-- signing/provisioning material from the Apple Developer account
-
-Godot requires both the App Store Team ID and Bundle Identifier for iOS export.
-
-### Android
-- `LOGISTICS_BOSS_ANDROID_PACKAGE`: final unique lowercase reverse-DNS application package
-- `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`: release keystore path
-- `GODOT_ANDROID_KEYSTORE_RELEASE_USER`: release key alias
-- `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`: release signing password
-
-Godot supports the three `GODOT_ANDROID_KEYSTORE_RELEASE_*` environment variables as export-time overrides, so release signing secrets do not need to be stored in `export_presets.cfg`.
-
-Secrets/passwords belong in local export credentials / CI secret storage, never in source control.
-
-## 5. Native build gate
-
-After the validator reports READY:
-1. feed the real iOS Team ID and Bundle ID into the CI/native preset generator
-2. import Apple certificate/provisioning material into the temporary CI keychain only when signed iOS builds are authorized
-3. produce the signed iOS build / TestFlight candidate
-4. add the Android preset using the real package name
-5. inject Android keystore credentials at build time, not in source control
-6. produce the signed Android APK/AAB candidate
-7. do not commit generated build products or credentials
-
-Do not insert placeholder production identifiers merely to make export commands pass.
-
-## 6. Native verification gate
-
-Run on at least one physical iPhone and one physical Android device.
-
-Required pass:
+### Lifecycle / save
 - cold launch
 - fresh-save FTUE
 - existing schema-v7 save load
-- 10+ minute representative session
-- pause/background/resume
-- touch orbit and pinch at screen edges
-- maximum zoom-out keeps the operation readable
-- Safe Area / Dynamic Island / navigation-area clearance
-- management sheet reaches all actions by touch scroll
-- no horizontal management drift or clipping
-- audio starts only after platform permits playback
-- haptics fire for meaningful events and do not spam shipments
+- save survives app kill / relaunch
+- suspend / resume
+- interruption recovery
+
+### Audio / haptics
+- audio starts under normal platform policy
+- meaningful haptics fire
+- shipment events do not create haptic spam
+
+### Progression / mature state
 - Rank 1 → Rank 2 → Rank 3 controls remain reachable
-- all three routing modes remain playable after save/reload
-- no sustained <30 FPS on target device during representative Rank 3 scene
-- save survives app kill/relaunch
+- all routing modes remain playable after save / reload
+- representative mature Rank 3 session runs for 10+ minutes
 
-## 7. Store / external-service actions requiring explicit approval
+### Performance / device health
+- FPS / frame pacing observed on the representative iPhone
+- no sustained sub-30 FPS in representative mature Rank 3
+- thermal tendency observed
+- battery tendency noted where practical
 
-Do not perform without user approval:
-- Apple App Store submission
-- Google Play submission
-- paid developer-account purchase or renewal
-- analytics/crash provider contract or data upload
+### Visual
+- current runtime presentation checked against `ART_BIBLE_FLOTRA.md`
+- current runtime presentation checked against the canonical North Star
+- visual hierarchy remains readable on the physical device
+
+## 6. DEVICE_VALIDATION exit → GREENLIGHT
+
+When the above evidence is sufficient, move to **GREENLIGHT** and record:
+- riskiest assumption
+- observation / measurement method
+- GO condition
+- HOLD condition
+- additional validation budget / time limit
+- physical-device / playtest evidence
+- market evidence when needed
+- technical risk
+- remaining production cost / content volume
+- known blockers
+- decision owner / source
+- decision date
+
+GREENLIGHT must record exactly one:
+- **GO**
+- **HOLD**
+- **KILL**
+
+This sets `PRODUCTION_DECISION`. It does **not** approve App Store release.
+
+## 7. Prepared but deferred release infrastructure
+
+The repository already contains technical scaffolding that may be useful later:
+- `godot/native_release_inputs.example.env`
+- `godot/tools/native_release_inputs.py`
+- `godot/tools/prepare_ios_export.py`
+- `.github/workflows/ios-export-smoke.yml`
+- `.github/workflows/ios-device-project-candidate.yml`
+- `.github/workflows/android-export-smoke.yml`
+
+Current policy:
+- keep these assets stable
+- use synthetic export workflows as technical evidence
+- do not make the real-identifier iOS candidate workflow the active NEXT
+- do not fill production identifiers merely for consistency
+- do not activate Android production work Pre-GO
+
+Existing `LOGISTICS_BOSS_*` environment-variable names and `LogisticsBoss` internal output paths are compatibility identifiers and do not need renaming solely to match the FLOTRA product title.
+
+## 8. POST-GO only: Release Enablement
+
+Only if `PRODUCTION_DECISION=GO`:
+1. enter FUNCTIONAL_BUILD / RELEASE_ENABLEMENT as appropriate
+2. finalize production Bundle ID / App ID decisions
+3. configure authorized production signing / provisioning
+4. prepare App Store Connect / TestFlight production workflow
+5. define the release-candidate scope
+6. complete polish / QA / RELEASE_CANDIDATE gates
+7. evaluate Android separately via `PLATFORM_EXPANSION_DECISION`
+
+Android is not automatically activated by GO.
+
+## 9. External actions requiring explicit approval
+
+Do not perform without explicit user approval:
+- paid Apple / Google developer-account purchase or renewal
+- production signing-key generation / rotation
+- Apple certificate / provisioning import when it creates production or external impact
+- TestFlight / App Store distribution
+- Google Play distribution
 - IAP / ads / monetization activation
-- production signing-key generation/rotation on behalf of the user
+- external analytics / crash-provider contract or data upload
+- any other irreversible / external-impact release action
 
-## 8. Current RC blocker definition
+## 10. Current blocker definition
 
-The repository is a **Code RC Candidate**.
+FLOTRA is **not a Release Candidate**.
 
-Do **not** call it **Native RC** until all of the following are complete:
-1. final iOS/Android identifiers are supplied
-2. signed native builds are produced
-3. physical iPhone and Android verification passes
-4. native performance / safe-area / audio / haptic behavior is confirmed
+Current blockers for DEVICE_VALIDATION are:
+1. REAL_DEVICE_ACCESS not recorded
+2. MAC_XCODE_ACCESS_PATH not recorded
+3. physical-iPhone development-build path not verified
+4. physical iPhone multi-session evidence not collected
 
-Store submission is a later external action and is not part of the Native RC definition.
+After those are resolved, proceed to **GREENLIGHT**, not RELEASE_ENABLEMENT.
