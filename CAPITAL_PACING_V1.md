@@ -1,4 +1,4 @@
-# Logistics Boss — Capital Pacing v1
+# FLOTRA — Capital Pacing v1
 
 Status: measured balance baseline / 2026-09-15
 Authority: title-specific economy continuation of `CAPITAL_EXPANSION_V2.md`.
