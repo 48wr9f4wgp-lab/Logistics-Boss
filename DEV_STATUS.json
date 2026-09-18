@@ -13,7 +13,7 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_248_success_ios_export_72_success_android_export_60_success_render_capture_46_success",
+    "ci_latest_verified": "godot_253_success_ios_export_76_success_android_export_65_success_render_capture_51_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -34,7 +34,8 @@
     "native_android": "deferred_until_production_decision_go_then_platform_expansion_decision",
     "release": "pre_go_not_release_candidate",
     "progression_dead_end": "pass_pr97_zero_cash_rank1_contract_rank2_all_staffing_and_8_facility_paths_rank3_all_routes_plus_structural_refunding",
-    "ftue_core_loop_comprehension": "pass_pr99_ftue_stays_active_until_authoritative_measurement_completed_then_teaches_verdict_and_next_loop"
+    "ftue_core_loop_comprehension": "pass_pr99_ftue_stays_active_until_authoritative_measurement_completed_then_teaches_verdict_and_next_loop",
+    "economy_progression_pacing": "pass_pr101_rank2_510s_frontier_best_adaptive_212_vs_best_fixed_shipping_202_after_storage_buffer_tune"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -51,9 +52,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "PR #99 merged after Godot CI #248 passed: fresh-save FTUE no longer declares the Core Loop learned at purchase time. START GUIDE 4/4 remains active through the real 25-second measurement and completes only when the authoritative measurement result arrives; the player is explicitly told to read 改善 / 横ばい / 要再判断. Physical native iPhone comprehension evidence remains pending.",
+  "last_verified_done": "PR #101 merged after Godot CI #253 passed the economy/progression pacing audit. The initial exhaustive 510-second Rank 2 frontier exposed a non-decision: the best anticipatory staffing strategy beat fixed Shipping by only 2 shipments (196 vs 194). Rank 2 storage buffers were tuned while preserving Fast Pick < High Density capacity and their speed tradeoff; the final frontier is 212 vs 202 shipments (+10, +¥5,000) with a five-switch balanced → picking → dock adaptive pattern.",
   "blocked": "Native physical-iPhone DEVICE_VALIDATION is deferred by user because Mac/Xcode access will not be available for a while. This is an acknowledged phase blocker, not a completed gate.",
-  "next": "While native DEVICE_VALIDATION is deferred, audit economy/progression pacing for stalls, runaway accumulation, and non-decisions using current deterministic reports/scouts. Fix only evidence-backed issues. Do not call DEVICE_VALIDATION complete and do not enter GREENLIGHT until representative physical-iPhone evidence is collected.",
+  "next": "While native DEVICE_VALIDATION is deferred, audit reward/growth legibility so investments and Rank 1 → Rank 2 → Rank 3 facility growth remain obvious in current rendered/Web evidence. Fix only evidence-backed issues. Do not call DEVICE_VALIDATION complete and do not enter GREENLIGHT until representative physical-iPhone evidence is collected.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -86,9 +87,9 @@
     "resume_condition": "MAC_XCODE_ACCESS_BECOMES_AVAILABLE"
   },
   "latest_pre_go_risk_reduction": {
-    "pr": 99,
-    "merge_commit": "693dd4dd78d01cdb5c3ce3b95974e604ef9ac79b",
-    "title": "Keep FTUE active through measurement result",
-    "evidence": "Godot CI #248 FTUE/Core Loop comprehension regression success"
+    "pr": 101,
+    "merge_commit": "e5c5c22a376b665becb81fe3c73374b183f3cd08",
+    "title": "Audit economy and progression pacing",
+    "evidence": "Godot CI #253: exhaustive Rank 2 510s staffing frontier passed with best adaptive 212 shipments vs best fixed 202; iOS Export Smoke #76 and Rendered Visual Capture #51 success"
   }
 }
