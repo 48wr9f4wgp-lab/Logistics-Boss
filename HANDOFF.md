@@ -39,14 +39,14 @@ Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
 Current verified main baseline:
-- PR #99 — `Keep FTUE active through measurement result`
-- merge commit: `693dd4dd78d01cdb5c3ce3b95974e604ef9ac79b`
-- Godot CI #248: **success**
-- iOS Export Smoke #72: **success**
-- Android Export Smoke #60: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
-- Rendered Visual Capture #46: **success**
-- FTUE/Core Loop comprehension regression: **success**
-- PR #97 progression dead-end audit and PR #96 warehouse-hero framing are included in this baseline
+- PR #101 — `Audit economy and progression pacing`
+- merge commit: `e5c5c22a376b665becb81fe3c73374b183f3cd08`
+- Godot CI #253: **success**
+- iOS Export Smoke #76: **success**
+- Android Export Smoke #65: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
+- Rendered Visual Capture #51: **success**
+- economy/progression pacing frontier: **success**
+- PR #99 FTUE comprehension, PR #97 progression dead-end audit and PR #96 warehouse-hero framing are included in this baseline
 
 Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
@@ -74,6 +74,7 @@ Recent QA/product milestones:
 - PR #96: make the warehouse the portrait visual hero; compact HUD/measurement stack + closer framing
 - PR #97: progression/resource dead-end audit across zero-cash Rank 1/2/3 recovery paths
 - PR #99: FTUE remains active until the authoritative measurement result; Core Loop is not declared learned at purchase time
+- PR #101: exhaustive 510s Rank 2 staffing frontier exposed and fixed an always-Shipping near-dominant non-decision; final adaptive frontier = 212 shipments vs best fixed 202
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -144,6 +145,8 @@ Reassignment lock: 30 simulated seconds.
 Expansion:
 - Zone A Intake: Double Dock / Buffer Yard
 - Zone B Storage: Fast Pick Rack / High Density Rack
+  - Fast Pick Rack: storage +12, PICK 25% faster
+  - High Density Rack: storage +16, PICK 14% slower
 - Zone C Packing: Parallel Pack / Fast Pack Cell
 
 Deterministic forecast/surge workload waves make staffing an anticipatory management decision.
@@ -428,8 +431,8 @@ While deferred, do not advance to GREENLIGHT. Mac-independent risk-reduction pro
 
 1. progression dead-end / resource dead-end audit across Rank 1 → Rank 3: **DONE — PR #97 / Godot CI #246**
 2. FTUE / Core Loop comprehension audit: **DONE — PR #99 / Godot CI #248**. Evidence-backed issue fixed: FTUE previously completed immediately after purchase; it now waits for the authoritative measurement result.
-3. **NEXT — audit economy / progression pacing for stalls, runaway accumulation and non-decisions**
-4. audit reward / growth legibility so investments and Rank growth remain obvious;
+3. economy / progression pacing audit: **DONE — PR #101 / Godot CI #253**. Evidence-backed issue fixed: best adaptive staffing initially beat fixed Shipping by only 2 shipments in one 510s cycle; after the storage-buffer tune the gap is 10 shipments / ¥5,000.
+4. **NEXT — audit reward / growth legibility so investments and Rank growth remain obvious**
 5. keep save/recovery and current regression coverage green;
 6. fix only evidence-backed issues found by those audits.
 
