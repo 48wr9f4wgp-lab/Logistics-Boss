@@ -79,6 +79,10 @@ func _build_zone_targets() -> void:
         label.text = String(definition["label"])
         var zone_position: Vector3 = definition["position"]
         label.position = Vector3(zone_position.x, 0.34, 2.75)
+        if String(zone_key) == "shipping":
+            # Keep the far-right shipping target readable in the default portrait
+            # hero camera without moving its authoritative tap Area3D.
+            label.position = Vector3(4.45, 0.34, 1.75)
         label.font = JAPANESE_UI_FONT
         label.font_size = 22
         label.outline_size = 9
