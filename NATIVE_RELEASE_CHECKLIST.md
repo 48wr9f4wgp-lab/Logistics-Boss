@@ -16,6 +16,7 @@ Purpose: evaluate **FLOTRA itself on a representative physical iPhone** and coll
 Current required state:
 - REAL_DEVICE_ACCESS: **AVAILABLE — user's iPhone**
 - MAC_XCODE_ACCESS_PATH: **BLOCKED — no Mac currently available**
+- native physical-iPhone lane: **DEFERRED BY USER until Mac/Xcode access returns**
 - physical iPhone development build: **NOT YET VERIFIED — blocked on Mac/Xcode access**
 
 Pre-GO does **not** require:
@@ -207,14 +208,25 @@ Do not perform without explicit user approval:
 - external analytics / crash-provider contract or data upload
 - any other irreversible / external-impact release action
 
-## 10. Current blocker definition
+## 10. Current blocker / defer definition
 
 FLOTRA is **not a Release Candidate**.
 
-Current blockers for DEVICE_VALIDATION are:
-1. REAL_DEVICE_ACCESS not recorded
-2. MAC_XCODE_ACCESS_PATH not recorded
-3. physical-iPhone development-build path not verified
-4. physical iPhone multi-session evidence not collected
+Current state:
+- REAL_DEVICE_ACCESS: available
+- MAC_XCODE_ACCESS_PATH: blocked
+- native physical-iPhone lane: **deferred by user for now**
+- physical-iPhone development-build path: not verified
+- physical iPhone multi-session evidence: not collected
 
-After those are resolved, proceed to **GREENLIGHT**, not RELEASE_ENABLEMENT.
+This defer does not change ACTIVE_PHASE and does not satisfy DEVICE_VALIDATION exit.
+
+While deferred, valid Mac-independent Pre-GO work includes:
+- progression dead-end / resource dead-end audits
+- FTUE / Core Loop comprehension-support audits
+- economy / progression pacing audits
+- reward / growth legibility audits
+- save / recovery / regression hardening
+- optional Web engineering-preview checks as partial evidence only
+
+When Mac/Xcode access becomes available, resume the native physical-iPhone lane and collect the missing DEVICE_VALIDATION evidence. Then proceed to **GREENLIGHT**, not RELEASE_ENABLEMENT.

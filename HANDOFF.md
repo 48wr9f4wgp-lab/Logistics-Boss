@@ -28,9 +28,10 @@ Former title / migration alias: **LOGISTICS BOSS**
 - PRIMARY_INPUT: **touch**
 - REAL_DEVICE_ACCESS: **AVAILABLE — user's iPhone / repeated testing available**
 - MAC_XCODE_ACCESS_PATH: **BLOCKED — no Mac currently available**
+- Native physical-iPhone lane: **DEFERRED BY USER until Mac/Xcode access returns**
 - Status label: **PRE-GO / DEVICE_VALIDATION**
 
-The current gate is to evaluate FLOTRA itself on the user's physical iPhone. It is not an App Store release-enablement gate. The sole current access blocker is a Mac/Xcode path for minimum viable development signing/installation. See `DEVICE_VALIDATION_ACCESS.md`.
+The current macro gate remains DEVICE_VALIDATION, but the native physical-iPhone lane is intentionally deferred while Mac/Xcode access is unavailable. This blocker is acknowledged and must not be treated as a passed gate. In the meantime, continue Mac-independent Pre-GO risk reduction only. See `DEVICE_VALIDATION_ACCESS.md`.
 
 ## 2. Repository / current GitHub state
 
@@ -416,14 +417,19 @@ Release / QA:
 
 ## 14. Immediate next task
 
-FLOTRA is in **ACTIVE_PHASE = DEVICE_VALIDATION**.
+FLOTRA remains in **ACTIVE_PHASE = DEVICE_VALIDATION**, with the native physical-iPhone lane **DEFERRED BY USER** until Mac/Xcode access becomes available.
 
-Immediate sequence:
-1. record `REAL_DEVICE_ACCESS`: representative iPhone and how it can receive a development build;
-2. record `MAC_XCODE_ACCESS_PATH`: the available Mac/Xcode route, or the exact blocker if none exists;
-3. use the minimum viable **development** signing/provisioning path required to install FLOTRA on that iPhone; do not require final production identifiers;
-4. run multiple physical-iPhone DEVICE_VALIDATION sessions covering touch/UI, Core Loop comprehension, growth/reward recognition, save/lifecycle, FPS/frame pacing, thermal/battery tendency, mature Rank 3, and current visual quality;
-5. fix only evidence-backed DEVICE_VALIDATION defects and re-test;
-6. enter **GREENLIGHT** and record GO / HOLD / KILL with evidence.
+While deferred, do not advance to GREENLIGHT. Use the time for Mac-independent Pre-GO risk reduction:
 
-Do not start RELEASE_ENABLEMENT, final production Bundle ID/signing, App Store Connect/TestFlight production work, Store assets, or active Android production work before PRODUCTION_DECISION=GO.
+1. audit progression dead-end / resource dead-end behavior across Rank 1 → Rank 3;
+2. audit FTUE and Core Loop comprehension support using current automated/Web evidence;
+3. audit economy / progression pacing for stalls, runaway accumulation and non-decisions;
+4. audit reward / growth legibility so investments and Rank growth remain obvious;
+5. keep save/recovery and current regression coverage green;
+6. fix only evidence-backed issues found by those audits.
+
+Optional iPhone Web engineering-preview checks may provide partial touch/readability evidence, but they do **not** satisfy native DEVICE_VALIDATION exit.
+
+Resume native DEVICE_VALIDATION when Mac/Xcode access returns. Only after representative physical-iPhone evidence is collected may FLOTRA enter **GREENLIGHT** and record GO / HOLD / KILL.
+
+Do not start RELEASE_ENABLEMENT, production signing, App Store Connect/TestFlight production work, Store assets, or active Android production work before PRODUCTION_DECISION=GO.
