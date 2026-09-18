@@ -1,4 +1,4 @@
-# Logistics Boss — UX / Ergonomics Pass 1
+# FLOTRA — UX / Ergonomics Pass 1
 
 Date: 2026-09-14
 Status: implementation baseline before next iPhone playtest
