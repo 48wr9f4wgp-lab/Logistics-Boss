@@ -13,7 +13,7 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_269_success_ios_export_88_success_android_export_81_success_render_capture_67_success",
+    "ci_latest_verified": "godot_273_success_ios_export_91_success_android_export_85_success_render_capture_71_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -45,7 +45,10 @@
     "v2_zone_visuals": "pass_render_capture_63_human_inspected_all_five_zone_labels_readable_in_default_rank1_portrait_frame",
     "rank1_v2": "pass_pr109_structural_projects_explicit_rank2_expansion_zone_first_onboarding_schema8_migration",
     "rank1_v2_visuals": "pass_render_capture_65_human_inspected_developed_rank1_and_rank2_no_visual_regression",
-    "direct_zone_staffing": "pass_pr111_receiving_picking_shipping_direct_reassignment_floor1_cooldown_schema9"
+    "direct_zone_staffing": "pass_pr111_receiving_picking_shipping_direct_reassignment_floor1_cooldown_schema9",
+    "rank2_v2_renovation": "pass_pr113_storage_fast_pick_high_density_packing_parallel_fast_cell_paid_bidirectional_renovation_no_refund_authoritative_measurement",
+    "rank2_v2_dominance": "pass_pr113_storage_orders_fast18_dense12_storage_buffer_fast4_dense8_packing_long_parallel106_fast102_packing_latency_parallel3_35_fast1_75",
+    "rank2_v2_visuals": "pass_render_capture_71_human_inspected_rank2_rank3_no_visual_regression_zone_labels_readable"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -62,9 +65,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "PR #111 merged. Direct player-facing Zone staffing is implemented and verified: staffed flows are RECEIVING (INBOUND/STORAGE), PICKING, and SHIPPING; PACKING explicitly has no direct Worker allocation. Rank 2 begins at 2/2/1, one Worker moves source→target per action, every staffed flow keeps at least one Worker, and the existing 30-second observation cooldown remains authoritative. Management shows an executive staffing overview while the legacy preset grid stays hidden. Runtime save advanced to schema 9 with schema 8 preset-to-direct migration. Godot CI #269, iOS Export Smoke #88, Rendered Visual Capture #67, Android Export Smoke #81 all succeeded.",
+  "last_verified_done": "PR #113 merged. Rank 2 Core Experience v2 STORAGE/PACKING renovation is implemented and verified. STORAGE supports Fast Pick Rack ⇄ High Density Rack paid A↔B renovation with authoritative capacity/pick-speed trade-offs; PACKING supports Parallel Pack Line ⇄ Fast Pack Cell paid A↔B renovation with authoritative parallel-throughput/single-job-latency trade-offs. Renovation costs 75% of the target fresh-build price with no refund. Replacing High Density with Fast Pick preserves existing inventory even if temporarily over nominal capacity. Rank 2 PACKING supersedes the Rank 1 Second Packing Bench behavior so Fast Pack Cell retains its one-job weakness. Zone Panel uses two-step preview/commit with strength/weakness/cost, geometry is physically replaced, investment/measurement feedback is wired, and Before/After measurement runs after renovation. Dominance evidence: STORAGE orders Fast 18 vs Dense 12; STORAGE buffer Fast 4 vs Dense 8; PACKING long queue Parallel 106 vs Fast 102; PACKING latency Parallel 3.35s vs Fast 1.75s. Godot CI #273, iOS Export Smoke #91, Rendered Visual Capture #71, Android Export Smoke #85 all succeeded. Fresh Rank 2 render was human-inspected and accepted.",
   "blocked": "No Mac-independent implementation blocker for Vertical Slice v2. Native physical-iPhone DEVICE_VALIDATION remains deferred until Mac/Xcode access becomes available, but it is not the current active-phase blocker.",
-  "next": "Implement Rank 2 STORAGE and PACKING renovation pairs as the next focused slice: Fast Pick Rack ⇄ High Density Rack and Parallel Pack Line ⇄ Fast Pack Cell, with paid A↔B renovation, visible geometry replacement, authoritative effects, Before/After measurement, and paired dominance tests. Do not implement deferred Rank 2 INBOUND/PICKING/SHIPPING equipment or Rank 3 redesign yet.",
+  "next": "Complete the remaining construction/reward presentation contract as the next focused PR: physical ghost/planned preview before commitment, clear selected-Zone emphasis through build/renovation, and readable transition from preview → commit → geometry change → authoritative measurement without obscuring adjacent logistics. Preserve the current two-step Zone Panel and renovation behavior. After this presentation pass is verified, run the next iPhone Web Core Experience playtest before adding any deferred Rank 2 Zones or redesigning Rank 3.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -117,7 +120,7 @@
   },
   "vertical_slice_v2": {
     "change_packet": "VERTICAL_SLICE_V2_CHANGE_PACKET.md",
-    "implementation_state": "DIRECT_ZONE_STAFFING_DONE",
+    "implementation_state": "RANK2_STORAGE_PACKING_DONE",
     "locked_scope": [
       "3D warehouse as primary game board",
       "Zone-first normal equipment decisions",
@@ -167,14 +170,25 @@
       "Rank 2 staffing starts 2/2/1 with one-worker minimum per staffed flow",
       "source-to-target one-Worker reassignment with 30-second observation cooldown",
       "Zone Panel staffing controls and Management executive staffing overview",
-      "schema 9 direct staffing persistence and schema 8 preset migration"
+      "schema 9 direct staffing persistence and schema 8 preset migration",
+      "Rank 2 STORAGE Fast Pick Rack and High Density Rack",
+      "paid bidirectional STORAGE renovation with no refund",
+      "Rank 2 PACKING Parallel Pack Line and Fast Pack Cell",
+      "paid bidirectional PACKING renovation with no refund",
+      "Rank 2 PACKING supersedes Rank 1 Second Packing Bench behavior",
+      "two-step Rank 2 equipment preview/commit with strength and weakness copy",
+      "physical Rank 2 equipment geometry replacement",
+      "renovation investment pulse and authoritative Before/After measurement",
+      "paired dominance evidence for both STORAGE options",
+      "paired dominance evidence for both PACKING options",
+      "fresh Rank 2 render human-inspected after renovation implementation"
     ],
-    "next_step": "RANK2_STORAGE_PACKING_RENOVATION"
+    "next_step": "CONSTRUCTION_REWARD_PRESENTATION"
   },
   "latest_vertical_slice_v2_merge": {
-    "pr": 111,
-    "merge_commit": "2412a22c4eb75e526e1901b4632943a1a7d2a37b",
-    "title": "Add direct Zone staffing",
-    "evidence": "Godot CI #269, iOS Export Smoke #88, Rendered Visual Capture #67, Android Export Smoke #81 success; dedicated direct Zone staffing smoke and save/runtime regressions passed"
+    "pr": 113,
+    "merge_commit": "16053801c0aef470acd34af95f21db29c8d04bd7",
+    "title": "Add Rank 2 STORAGE and PACKING renovation",
+    "evidence": "Godot CI #273, iOS Export Smoke #91, Rendered Visual Capture #71, Android Export Smoke #85 success; renovation smoke and paired dominance smoke passed; final Rank 2 fresh capture human-inspected"
   }
 }
