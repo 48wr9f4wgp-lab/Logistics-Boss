@@ -77,11 +77,8 @@ func _build_zone_targets() -> void:
         var label := Label3D.new()
         label.name = "ZoneLabel_%s" % String(zone_key)
         label.text = String(definition["label"])
-        label.position = Vector3(
-            float((definition["position"] as Vector3).x),
-            0.16,
-            3.55
-        )
+        var zone_position: Vector3 = definition["position"]
+        label.position = Vector3(zone_position.x, 0.16, 3.55)
         label.font = JAPANESE_UI_FONT
         label.font_size = 26
         label.outline_size = 7
