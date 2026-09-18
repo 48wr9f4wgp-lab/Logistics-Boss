@@ -112,6 +112,7 @@ jobs:
           plist='ios-build/LogisticsBoss/LogisticsBoss-Info.plist'
           grep -Fq 'DEVELOPMENT_TEAM = ABCDE12XYZ;' "$pbx"
           grep -Fq 'PRODUCT_BUNDLE_IDENTIFIER = com.example.logistics-boss-ci;' "$pbx"
+          grep -Fq 'INFOPLIST_KEY_CFBundleDisplayName = "FLOTRA";' "$pbx"
           grep -Fq 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' "$pbx"
           test "$(/usr/libexec/PlistBuddy -c 'Print :UIRequiresFullScreen' "$plist")" = "true"
           test "$(/usr/libexec/PlistBuddy -c 'Print :UISupportedInterfaceOrientations:0' "$plist")" = "UIInterfaceOrientationPortrait"
