@@ -17,7 +17,10 @@ var _facility_header: Label
 var _facility_zone_labels: Dictionary = {}
 var _facility_buttons: Dictionary = {}
 var _reset_button: Button
-var _reset_dialog: ConfirmationDialog
+var _reset_modal: Control
+var _reset_modal_panel: PanelContainer
+var _reset_cancel_button: Button
+var _reset_confirm_button: Button
 
 
 func _ready() -> void:
@@ -425,22 +428,108 @@ func _build_reset_control() -> void:
     _reset_button.pressed.connect(_request_reset_confirmation)
     list.add_child(_reset_button)
 
-    _reset_dialog = ConfirmationDialog.new()
-    _reset_dialog.title = "テストデータをリセット"
-    _reset_dialog.dialog_text = "進行状況・セーブ・バックアップ・チュートリアル完了状態を削除し、RANK 1の初期状態からやり直します。\n\nこの操作は元に戻せません。"
-    _reset_dialog.confirmed.connect(_confirm_reset_progress)
-    add_child(_reset_dialog)
-    _reset_dialog.get_ok_button().text = "リセット"
-    _reset_dialog.get_cancel_button().text = "キャンセル"
+    _reset_modal = Control.new()
+    _reset_modal.name = "ResetProgressModal"
+    _reset_modal.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _reset_modal.mouse_filter = Control.MOUSE_FILTER_STOP
+    _reset_modal.z_index = 100
+    _reset_modal.visible = false
+    add_child(_reset_modal)
+
+    var scrim := ColorRect.new()
+    scrim.name = "ResetProgressScrim"
+    scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    scrim.color = Color(0.0, 0.0, 0.0, 0.72)
+    scrim.mouse_filter = Control.MOUSE_FILTER_STOP
+    _reset_modal.add_child(scrim)
+
+    _reset_modal_panel = PanelContainer.new()
+    _reset_modal_panel.name = "ResetProgressPanel"
+    _reset_modal_panel.anchor_left = 0.5
+    _reset_modal_panel.anchor_right = 0.5
+    _reset_modal_panel.anchor_top = 0.5
+    _reset_modal_panel.anchor_bottom = 0.5
+    _reset_modal_panel.offset_left = -165.0
+    _reset_modal_panel.offset_right = 165.0
+    _reset_modal_panel.offset_top = -132.0
+    _reset_modal_panel.offset_bottom = 132.0
+    _reset_modal_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+    _reset_modal_panel.add_theme_stylebox_override(
+        "panel",
+        _panel_style(Color(0.012, 0.032, 0.045, 0.995), Color(0.78, 0.30, 0.28, 0.96), 18)
+    )
+    _reset_modal.add_child(_reset_modal_panel)
+
+    var modal_margin := MarginContainer.new()
+    modal_margin.add_theme_constant_override("margin_left", 18)
+    modal_margin.add_theme_constant_override("margin_right", 18)
+    modal_margin.add_theme_constant_override("margin_top", 18)
+    modal_margin.add_theme_constant_override("margin_bottom", 16)
+    _reset_modal_panel.add_child(modal_margin)
+
+    var modal_column := VBoxContainer.new()
+    modal_column.add_theme_constant_override("separation", 12)
+    modal_margin.add_child(modal_column)
+
+    var modal_title := Label.new()
+    modal_title.text = "テストデータをリセット"
+    modal_title.add_theme_font_size_override("font_size", 19)
+    modal_title.add_theme_color_override("font_color", Color(1.0, 0.90, 0.86))
+    modal_column.add_child(modal_title)
+
+    var modal_body := Label.new()
+    modal_body.text = "進行状況・セーブ・バックアップ・チュートリアル完了状態を削除し、RANK 1の初期状態からやり直します。\n\nこの操作は元に戻せません。"
+    modal_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    modal_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    modal_body.add_theme_font_size_override("font_size", 13)
+    modal_body.add_theme_color_override("font_color", Color(0.88, 0.94, 0.97))
+    modal_column.add_child(modal_body)
+
+    var modal_actions := HBoxContainer.new()
+    modal_actions.add_theme_constant_override("separation", 10)
+    modal_column.add_child(modal_actions)
+
+    _reset_cancel_button = Button.new()
+    _reset_cancel_button.text = "キャンセル"
+    _reset_cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    _reset_cancel_button.custom_minimum_size = Vector2(0, 52)
+    _reset_cancel_button.add_theme_font_size_override("font_size", 13)
+    _apply_button_style(_reset_cancel_button, false)
+    _reset_cancel_button.pressed.connect(_cancel_reset_confirmation)
+    modal_actions.add_child(_reset_cancel_button)
+
+    _reset_confirm_button = Button.new()
+    _reset_confirm_button.text = "リセット"
+    _reset_confirm_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    _reset_confirm_button.custom_minimum_size = Vector2(0, 52)
+    _reset_confirm_button.add_theme_font_size_override("font_size", 13)
+    _reset_confirm_button.add_theme_stylebox_override(
+        "normal",
+        _panel_style(Color(0.19, 0.045, 0.045, 0.99), Color(0.96, 0.34, 0.30, 1.0), 12)
+    )
+    _reset_confirm_button.add_theme_stylebox_override(
+        "pressed",
+        _panel_style(Color(0.29, 0.055, 0.055, 1.0), Color(1.0, 0.46, 0.40, 1.0), 12)
+    )
+    _reset_confirm_button.add_theme_color_override("font_color", Color(1.0, 0.92, 0.90))
+    _reset_confirm_button.pressed.connect(_confirm_reset_progress)
+    modal_actions.add_child(_reset_confirm_button)
 
 
 func _request_reset_confirmation() -> void:
-    if _reset_dialog == null:
+    if _reset_modal == null:
         return
-    _reset_dialog.popup_centered(Vector2i(340, 250))
+    _reset_modal.visible = true
+
+
+func _cancel_reset_confirmation() -> void:
+    if _reset_modal != null:
+        _reset_modal.visible = false
 
 
 func _confirm_reset_progress() -> void:
+    if _reset_modal != null:
+        _reset_modal.visible = false
     reset_progress_requested.emit()
 
 
