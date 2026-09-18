@@ -20,7 +20,7 @@ func _init() -> void:
 
     var storage := sim.purchase_facility(&"fast_pick_rack")
     assert(bool(storage.get("ok", false)), "Rank 2 must allow one Zone B facility")
-    assert(sim.rack_capacity == base_capacity + 4, "Fast Pick Rack must add four storage slots")
+    assert(sim.rack_capacity == base_capacity + 12, "Fast Pick Rack must add twelve storage slots")
     assert(not bool(sim.purchase_facility(&"high_density_rack").get("ok", true)), "Zone B choices must be mutually exclusive")
 
     var packing := sim.purchase_facility(&"parallel_pack")
@@ -64,7 +64,7 @@ func _init() -> void:
     var density_sim := _rank2_sim()
     var density_base := density_sim.rack_capacity
     assert(bool(density_sim.purchase_facility(&"high_density_rack").get("ok", false)), "High Density Rack must be independently selectable")
-    assert(density_sim.rack_capacity == density_base + 12, "High Density Rack must add twelve storage slots")
+    assert(density_sim.rack_capacity == density_base + 16, "High Density Rack must add sixteen storage slots")
 
     var fast_pack_sim := _rank2_sim()
     assert(bool(fast_pack_sim.purchase_facility(&"fast_pack_cell").get("ok", false)), "Fast Pack Cell must be independently selectable")

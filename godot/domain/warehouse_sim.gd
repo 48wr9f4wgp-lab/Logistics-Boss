@@ -211,9 +211,12 @@ func purchase_facility(kind: StringName) -> Dictionary:
     facilities[String(kind)] = true
     match kind:
         &"fast_pick_rack":
-            rack_capacity += 4
-        &"high_density_rack":
+            # Preserve Fast Pick as the lower-capacity option, but give the
+            # forecast cycle enough buffer for receiving/picking staffing
+            # choices to create a measurable session-level payoff.
             rack_capacity += 12
+        &"high_density_rack":
+            rack_capacity += 16
 
     var measurement_kind := StringName("facility_%s" % String(kind))
     var before := _measurement.begin_investment(measurement_kind, cost, sim_time)
