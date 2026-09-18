@@ -82,17 +82,24 @@ func _build_operations_spine() -> void:
     # A rear mezzanine changes the warehouse silhouette without crossing the
     # portrait camera or hiding the process floor. It persists into Rank 3 so the
     # facility visibly grows by accumulation instead of swapping one facade for another.
-    _box(root, "OpsDeck", Vector3(4.90, 0.16, 0.96), Vector3(0.0, 2.18, -4.08), STEEL_LIGHT)
-    for x in [-2.22, 2.22]:
+    _box(root, "OpsDeck", Vector3(6.30, 0.18, 1.05), Vector3(0.0, 2.18, -4.08), STEEL_LIGHT)
+    for x in [-2.95, 2.95]:
         _box(root, "OpsSupport", Vector3(0.14, 2.16, 0.14), Vector3(x, 1.08, -4.08), STEEL)
 
-    _box(root, "OpsFrontRail", Vector3(4.72, 0.10, 0.10), Vector3(0.0, 2.77, -3.62), CYAN)
-    _box(root, "OpsBackRail", Vector3(4.72, 0.10, 0.10), Vector3(0.0, 2.77, -4.54), STEEL)
-    for x in [-2.18, -0.72, 0.72, 2.18]:
-        _box(root, "OpsRailPost", Vector3(0.08, 0.62, 0.08), Vector3(x, 2.48, -3.62), STEEL)
+    _box(root, "OpsFrontRail", Vector3(6.12, 0.10, 0.10), Vector3(0.0, 2.77, -3.58), CYAN)
+    _box(root, "OpsBackRail", Vector3(6.12, 0.10, 0.10), Vector3(0.0, 2.77, -4.58), STEEL)
+    for x in [-2.90, -1.45, 0.0, 1.45, 2.90]:
+        _box(root, "OpsRailPost", Vector3(0.08, 0.62, 0.08), Vector3(x, 2.48, -3.58), STEEL)
 
-    _box(root, "OpsConsoleBank", Vector3(2.18, 0.52, 0.34), Vector3(0.0, 2.49, -4.15), STEEL)
-    var screen := _box(root, "OpsStatusBoard", Vector3(1.74, 0.28, 0.045), Vector3(0.0, 2.52, -3.96), CYAN)
+    # Two rear service modules make the promotion read as added building mass
+    # rather than only a thin glowing rail. They are management infrastructure,
+    # not logistics capacity, and stay behind the active process floor.
+    for x in [-3.05, 3.05]:
+        _box(root, "OpsWing", Vector3(0.72, 1.18, 0.92), Vector3(x, 1.54, -4.10), STEEL_LIGHT)
+        _box(root, "OpsWingAccent", Vector3(0.08, 0.72, 0.72), Vector3(x, 1.64, -3.62), CYAN)
+
+    _box(root, "OpsConsoleBank", Vector3(2.60, 0.52, 0.34), Vector3(0.0, 2.49, -4.15), STEEL)
+    var screen := _box(root, "OpsStatusBoard", Vector3(2.10, 0.28, 0.045), Vector3(0.0, 2.52, -3.96), CYAN)
     var screen_material := screen.material_override as StandardMaterial3D
     if screen_material != null:
         screen_material.emission_enabled = true
@@ -102,10 +109,10 @@ func _build_operations_spine() -> void:
     # Rendered capture showed the original deck blending into the Rank 1 rear wall.
     # A narrow control crown gives Rank 2 a readable vertical identity without
     # becoming a roof or competing with Rank 3's much wider fulfillment bridge.
-    for x in [-2.55, 2.55]:
+    for x in [-3.15, 3.15]:
         _box(root, "OpsCrownPost", Vector3(0.11, 0.70, 0.11), Vector3(x, 3.02, -4.08), STEEL)
-    _box(root, "OpsCrownHeader", Vector3(5.22, 0.13, 0.13), Vector3(0.0, 3.35, -4.08), STEEL_LIGHT)
-    var crown_glow := _box(root, "OpsCrownGlow", Vector3(4.48, 0.065, 0.050), Vector3(0.0, 3.29, -3.99), CYAN)
+    _box(root, "OpsCrownHeader", Vector3(6.45, 0.13, 0.13), Vector3(0.0, 3.35, -4.08), STEEL_LIGHT)
+    var crown_glow := _box(root, "OpsCrownGlow", Vector3(5.70, 0.065, 0.050), Vector3(0.0, 3.29, -3.99), CYAN)
     var crown_material := crown_glow.material_override as StandardMaterial3D
     if crown_material != null:
         crown_material.emission_enabled = true
@@ -114,9 +121,9 @@ func _build_operations_spine() -> void:
 
     # Ground stripe ties the promoted management spine back to the operating floor
     # and remains readable at phone scale without adding another text label.
-    _box(root, "OpsFloorStripe", Vector3(5.10, 0.025, 0.10), Vector3(0.0, 0.045, -3.46), CYAN)
-    _status_light(root, Vector3(-2.05, 2.90, -3.60), MINT)
-    _status_light(root, Vector3(2.05, 2.90, -3.60), MINT)
+    _box(root, "OpsFloorStripe", Vector3(6.20, 0.025, 0.10), Vector3(0.0, 0.045, -3.46), CYAN)
+    _status_light(root, Vector3(-2.75, 2.90, -3.56), MINT)
+    _status_light(root, Vector3(2.75, 2.90, -3.56), MINT)
 
 
 func _build_double_dock() -> void:

@@ -49,19 +49,25 @@ func _assert_rank2_promotion_changes_silhouette() -> void:
 
     var spine := facility_view.find_child("Rank2_OperationsSpine", true, false) as Node3D
     assert(spine != null, "Rank 2 promotion must immediately add a permanent operations spine")
-    assert(spine.get_child_count() >= 10, "Rank 2 operations spine must contain enough geometry to change the facility silhouette")
+    assert(spine.get_child_count() >= 16, "Rank 2 operations spine must contain enough persistent building mass to change the facility silhouette")
 
     var deck := spine.find_child("OpsDeck", true, false) as MeshInstance3D
     assert(deck != null, "Rank 2 operations spine must include a visible management deck")
     var deck_mesh := deck.mesh as BoxMesh
-    assert(deck_mesh != null and deck_mesh.size.x >= 4.8, "Rank 2 management deck must be broad enough to read at phone scale")
+    assert(deck_mesh != null and deck_mesh.size.x >= 6.0, "Rank 2 management deck must be broad enough to read as a larger operation at phone scale")
     assert(deck.position.y >= 2.0, "Rank 2 management deck must create a real vertical silhouette change")
 
     var crown := spine.find_child("OpsCrownHeader", true, false) as MeshInstance3D
     assert(crown != null, "Rank 2 must add a readable rear control crown after promotion")
     var crown_mesh := crown.mesh as BoxMesh
-    assert(crown_mesh != null and crown_mesh.size.x >= 5.0, "Rank 2 control crown must be wide enough to separate it from Rank 1 at phone scale")
+    assert(crown_mesh != null and crown_mesh.size.x >= 6.3, "Rank 2 control crown must be wide enough to separate it from Rank 1 at phone scale")
     assert(crown.position.y >= 3.2, "Rank 2 control crown must create an unmistakable vertical step above Rank 1")
+
+    var wings := spine.find_children("OpsWing", "MeshInstance3D", true, false)
+    assert(wings.size() == 2, "Rank 2 promotion must add two rear service modules so growth reads as building mass, not only a thin rail")
+    for wing_variant in wings:
+        var wing := wing_variant as MeshInstance3D
+        assert(wing != null and absf(wing.position.x) >= 3.0, "Rank 2 service modules must visibly widen the rear facility silhouette")
 
     sim.facility_rank = 1
     await process_frame
