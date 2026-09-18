@@ -1,6 +1,6 @@
 # FLOTRA — Game Design Document
 
-Status: **Code RC Candidate**
+Status: **Pre-GO / DEVICE_VALIDATION**
 Official title: **FLOTRA（フロトラ）**
 Former title / migration alias: `LOGISTICS BOSS`
 Last synchronized: 2026-09-16 JST
@@ -13,7 +13,8 @@ This document supersedes the earlier Web/PWA-first and Three.js vertical-slice a
 - Product: FLOTRA
 - Genre: portrait 3D logistics management / automation observer
 - Player role: logistics-center owner / operations manager
-- Final platforms: native iOS + Android
+- Development target: iPhone / iOS
+- Android: not an active production target Pre-GO; evaluate only after PRODUCTION_DECISION=GO via a separate PLATFORM_EXPANSION_DECISION
 - Engineering preview: Godot Web export / GitHub Pages
 - Engine: Godot 4.7.2 Standard
 - Language: GDScript
@@ -23,7 +24,7 @@ This document supersedes the earlier Web/PWA-first and Three.js vertical-slice a
 - Session target: roughly 5–15 minutes per active session
 - Online requirement: none for current product
 - Account/backend/cloud save: none
-- Monetization: not activated; decision remains outside current RC scope
+- Monetization: not activated; outside the current Pre-GO DEVICE_VALIDATION scope
 - Analytics: provider-neutral local instrumentation only; no external transmission
 
 ## 2. Canonical Core Loop
@@ -306,7 +307,7 @@ Runtime health tracks:
 - minimum FPS
 - low-FPS seconds / ratio
 
-Native RC target includes no sustained sub-30 FPS behavior during a representative mature Rank 3 scene on target devices.
+DEVICE_VALIDATION target includes no sustained sub-30 FPS behavior during a representative mature Rank 3 scene on the representative physical iPhone. Thermal/frame-pacing evidence is required before GREENLIGHT.
 
 Provider-neutral analytics records major gameplay events locally. No external analytics provider or data upload is active.
 
@@ -327,19 +328,22 @@ Code-level acceptance:
 - no critical interaction requires hover
 - engineering Web export builds successfully
 
-Native acceptance additionally requires:
-- signed iOS and Android builds
-- cold launch on physical devices
-- safe-area verification
-- background/resume
-- save after app kill/relaunch
+DEVICE_VALIDATION acceptance additionally requires on a representative physical iPhone:
+- a development build sufficient for Pre-GO testing; production signing is not required
+- cold launch
+- safe-area / readability verification
+- background / suspend / resume / interruption recovery
+- save after app kill / relaunch
 - touch input at screen edges
-- audio/haptic verification
-- sustained Rank 3 performance check
+- audio / haptic verification
+- Core Loop comprehension and reward / growth recognition across multiple sessions
+- sustained representative Rank 3 performance / thermal observation
+
+Final Bundle ID, production signing, TestFlight, App Store Connect, Store assets, and Android production work are not DEVICE_VALIDATION exit requirements.
 
 ## 16. Current Non-goals
 
-Not required for this RC candidate:
+Not required for the current Pre-GO DEVICE_VALIDATION:
 - free-placement factory building editor
 - multiplayer
 - cloud save
@@ -358,22 +362,50 @@ Production implementation:
 - Godot 4.7.2 Standard
 - GDScript
 - GL Compatibility
-- native iOS / Android final targets
+- active development target: iPhone / iOS
+- Android is deferred until PRODUCTION_DECISION=GO and a separate PLATFORM_EXPANSION_DECISION
 - Godot Web as engineering preview only
 - local `user://` persistence
 - GitHub main as canonical repository baseline
 
 The previous Three.js / PWA-first implementation direction is superseded and must not be restored as the production game path.
 
-## 18. Release Gate
+## 18. Current Gate — DEVICE_VALIDATION
 
-Current label: **Code RC Candidate**, pending RC audit CI.
+ACTIVE_PHASE: **DEVICE_VALIDATION**
 
-Do not call the build **Native RC** until:
-1. final iOS/Android identifiers are supplied
-2. native export presets are finalized
-3. signed builds exist
-4. physical iPhone and Android QA passes
-5. safe area, lifecycle, save, audio, haptics and performance are verified
+Platform / state:
+- DEVELOPMENT_TARGET: iPhone / iOS
+- PRODUCTION_DECISION: UNDECIDED
+- RELEASE_APPROVAL: NOT_REQUESTED
+- PRIMARY_INPUT: touch
 
-Store submission and monetization activation remain separate external actions requiring explicit approval.
+Purpose:
+- evaluate FLOTRA itself on a representative physical iPhone
+- collect evidence for GREENLIGHT
+- do not complete App Store release infrastructure during Pre-GO
+
+DEVICE_VALIDATION must cover multiple sessions and include:
+- touch feel / orbit / pinch
+- UI size / Safe Area / readability
+- Core Loop comprehension
+- reward / growth recognition, including the small-depot → large-logistics-center progression promise
+- cold launch
+- save / load
+- app kill / relaunch
+- suspend / resume / interruption recovery
+- FPS / frame pacing
+- thermal / battery tendency
+- representative mature Rank 3 behavior
+- progression dead-end / resource dead-end checks
+
+After sufficient evidence, enter **GREENLIGHT** and record **GO / HOLD / KILL**.
+
+Only if PRODUCTION_DECISION=GO:
+- enter FUNCTIONAL_BUILD / RELEASE_ENABLEMENT as appropriate
+- finalize production Bundle ID / App ID decisions
+- build out production signing / provisioning
+- prepare App Store Connect / TestFlight production workflow
+- evaluate Android separately through PLATFORM_EXPANSION_DECISION
+
+GREENLIGHT is a production-investment decision, not App Store release approval.

@@ -16,7 +16,21 @@ Canonical Meta Loop:
 
 Domain owns logistics, money, routing, contracts, progression, and measurement verdicts. UI / View must never invent shipments, revenue, ownership, or progression outcomes.
 
-Official title: **FLOTRA（フロトラ）**\nFormer title / migration alias: **LOGISTICS BOSS**\n\nCurrent release label: **Code RC Candidate**. It is **not Native RC**.
+Official title: **FLOTRA（フロトラ）**
+Former title / migration alias: **LOGISTICS BOSS**
+
+## 1.1 Platform / state
+
+- ACTIVE_PHASE: **DEVICE_VALIDATION**
+- DEVELOPMENT_TARGET: **iPhone / iOS**
+- PRODUCTION_DECISION: **UNDECIDED**
+- RELEASE_APPROVAL: **NOT_REQUESTED**
+- PRIMARY_INPUT: **touch**
+- REAL_DEVICE_ACCESS: **UNRECORDED**
+- MAC_XCODE_ACCESS_PATH: **UNRECORDED**
+- Status label: **PRE-GO / DEVICE_VALIDATION**
+
+The current gate is to evaluate FLOTRA itself on a representative physical iPhone. It is not an App Store release-enablement gate.
 
 ## 2. Repository / current GitHub state
 
@@ -63,11 +77,12 @@ Always re-check GitHub before editing; this document is a handoff snapshot, not 
 - Language: GDScript
 - Renderer: GL Compatibility
 - Reference viewport: 390×844 portrait
-- Final targets: native iOS + Android
+- Active development target: native iPhone / iOS
+- Android: not an active production target Pre-GO; retain existing smoke evidence only and defer any active Android work until PRODUCTION_DECISION=GO plus a separate PLATFORM_EXPANSION_DECISION
 - Godot Web / GitHub Pages: engineering preview only
 - Source-controlled export preset: Web only
 - iOS smoke route: ephemeral export preset on GitHub-hosted macOS/Xcode
-- Android smoke route: ephemeral export preset on GitHub-hosted Linux with JDK 17 / Android SDK 35 and synthetic CI signing
+- Android smoke route: historical technical evidence only; not an active Pre-GO production route
 
 External services currently used:
 - GitHub repository
@@ -271,9 +286,9 @@ Current validation state:
 - the current post-PR86 captures were human inspected and passed for composition, lighting, HUD balance, Rank progression, parcel/worker/equipment surface finish, and absence of the earlier Rank 3 foreground obstruction;
 - this confirms the current CI-rendered presentation baseline, **not** native-device safe area, display scaling, thermal performance, audio, haptics, or real-device touch behavior.
 
-A physical iPhone visual/device pass is still mandatory before Native RC.
+A physical iPhone visual/device pass is mandatory before GREENLIGHT.
 
-## 9. Native export routes — proven synthetic paths
+## 9. Pre-GO technical export evidence — not release enablement
 
 ### iOS
 
@@ -296,68 +311,49 @@ PR #86 / iOS Export Smoke #47 artifact was downloaded and manually inspected:
 - full-screen mode
 - synthetic Team ID / Bundle ID correctly injected
 
-Prepared next gate:
+Prepared but **not active as the current Pre-GO gate**:
 - `.github/workflows/ios-device-project-candidate.yml`
 - manual-only `workflow_dispatch`
-- accepts the confirmed real Apple Team ID + final Bundle ID
-- generates and validates an **unsigned** real-identifier Xcode-project artifact
-- does not import certificates, sign, install, or distribute anything
+- can validate a supplied Team ID / Bundle ID without signing or distribution
 
-Production Apple identifiers / certificates / provisioning profiles are not committed. Signed-device work remains blocked until the account owner supplies/authorizes the signing route.
+For DEVICE_VALIDATION, do not require final production identifiers. Use only the minimum development signing / provisioning route needed to reach a representative physical iPhone, if such signing is required. Production Apple identifiers / certificates / provisioning operations remain deferred until after GREENLIGHT unless a minimal technical spike is necessary to reach the device.
 
 ### Android
 
-Current proven route:
-- GitHub-hosted Linux
-- Godot 4.7.2 + templates
-- JDK 17
-- Android SDK 35 toolchain
-- synthetic CI-only package ID
-- ephemeral Android export preset
-- ephemeral debug keystore
-- ARM64 APK export
-- APK package / launcher manifest / native payload / signature / zip-alignment validation
-- short-lived `flotra-android-apk-smoke` artifact
+Existing Android export smoke is retained as **historical technical evidence only**. Android is not an active production target during Pre-GO. Do not spend active implementation / signing / device-QA effort on Android until PRODUCTION_DECISION=GO and a separate PLATFORM_EXPANSION_DECISION authorizes it.
 
-The normal app path uses `package/show_in_app_library=true`. `package/show_as_launcher_app` remains false; that setting is not used to turn this game into an Android home/launcher application.
+## 10. DEVICE_VALIDATION blockers and exit evidence
 
-Production Android package identity, production keystore, release signing, Play AAB candidate, and physical-device QA remain unproven.
+Current blockers:
+- REAL_DEVICE_ACCESS is not recorded
+- MAC_XCODE_ACCESS_PATH is not recorded
+- an installable **development** iOS build path to the representative iPhone is not yet verified
 
-## 10. Remaining blockers before Native RC
+These are DEVICE_VALIDATION blockers. Final production Team ID / Bundle ID, production signing, TestFlight, App Store Connect, Store assets, and Android production work are **not** blockers for this phase.
 
-These are now the primary blockers; do not invent or bypass them.
-
-### iOS
-- final Apple Developer Team ID
-- final Bundle Identifier
-- authorized signing/provisioning material
-- signed iOS build / TestFlight candidate
-- physical iPhone native QA
-
-### Android
-- final package ID
-- authorized production release keystore / alias / password through secure export-time inputs
-- production-signed APK / AAB candidate; Google Play delivery route still needs the release AAB path
-- physical Android QA
-
-Required physical-device pass includes:
+Required physical-iPhone evidence across multiple sessions includes:
 - cold launch
 - fresh FTUE
 - existing schema-v7 load
-- kill/relaunch save survival
-- background/resume
-- safe-area / Dynamic Island / Android navigation clearance
+- kill / relaunch save survival
+- suspend / resume / interruption recovery
+- Safe Area / Dynamic Island / readability
 - orbit / pinch at edges and max zoom-out
 - Management touch scrolling / no horizontal drift
 - audio policy behavior
 - haptic behavior
-- Rank 1 → 2 → 3 reachability
-- all routing modes after save/reload
+- Core Loop comprehension speed
+- reward / growth recognition
+- Rank 1 → Rank 2 → Rank 3 reachability
+- all routing modes after save / reload
 - 10+ minute mature Rank 3 representative session
-- no sustained sub-30 FPS on target device
+- FPS / frame pacing
+- thermal / battery tendency
+- no sustained sub-30 FPS during representative mature Rank 3
 - current visual inspection against the Art Bible / North Star
+- no progression dead-end / resource dead-end
 
-Do **not** call the build Native RC until both native platform gates pass.
+After sufficient evidence, enter **GREENLIGHT** and record **GO / HOLD / KILL**. PRODUCTION_DECISION remains UNDECIDED until that decision.
 
 ## 11. External actions requiring explicit user approval
 
@@ -420,14 +416,14 @@ Release / QA:
 
 ## 14. Immediate next task
 
-Code-level product / QA work and the visual baseline are substantially converged. The current priority is **iPhone native-device gating**, not another presentation or feature pass.
+FLOTRA is in **ACTIVE_PHASE = DEVICE_VALIDATION**.
 
 Immediate sequence:
-1. obtain the confirmed Apple Developer Team ID and final iOS Bundle Identifier;
-2. run the manual `iOS Device Project Candidate` workflow to produce a real-identifier **unsigned** Xcode-project artifact;
-3. only after explicit authorization, configure a secure Apple signing/provisioning route and produce an installable signed candidate;
-4. run physical iPhone QA: cold launch, fresh FTUE, schema-v7 load, background/resume, kill/relaunch save, Safe Area / Dynamic Island, edge orbit/pinch, Management touch scroll, audio/haptics, Rank 1→2→3, routing after reload, current visual inspection, and 10+ minute mature Rank 3 performance;
-5. fix only native-specific defects and rerun regression;
-6. complete the equivalent Android production-signing / device gate before declaring Native RC.
+1. record `REAL_DEVICE_ACCESS`: representative iPhone and how it can receive a development build;
+2. record `MAC_XCODE_ACCESS_PATH`: the available Mac/Xcode route, or the exact blocker if none exists;
+3. use the minimum viable **development** signing/provisioning path required to install FLOTRA on that iPhone; do not require final production identifiers;
+4. run multiple physical-iPhone DEVICE_VALIDATION sessions covering touch/UI, Core Loop comprehension, growth/reward recognition, save/lifecycle, FPS/frame pacing, thermal/battery tendency, mature Rank 3, and current visual quality;
+5. fix only evidence-backed DEVICE_VALIDATION defects and re-test;
+6. enter **GREENLIGHT** and record GO / HOLD / KILL with evidence.
 
-Do not infer or invent the Team ID, Bundle ID, certificates, or provisioning material.
+Do not start RELEASE_ENABLEMENT, final production Bundle ID/signing, App Store Connect/TestFlight production work, Store assets, or active Android production work before PRODUCTION_DECISION=GO.
