@@ -7,6 +7,7 @@ const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
 const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")
 const WarehouseQueuePressureViewScript = preload("res://view/queue_pressure_view.gd")
 const WarehouseInvestmentFeedbackViewScript = preload("res://view/investment_feedback_view.gd")
+const WarehouseConstructionPreviewViewScript = preload("res://view/construction_preview_view.gd")
 const WarehouseVisualCompositionFixScript = preload("res://view/visual_composition_fix.gd")
 const ForkliftAutomationViewScript = preload("res://view/forklift_automation_view.gd")
 const WarehouseDomainLivenessViewScript = preload("res://view/domain_liveness_view.gd")
@@ -43,6 +44,10 @@ func _ready() -> void:
     var zone_interaction: WarehouseZoneInteractionView = WarehouseZoneInteractionScript.new()
     view.add_child(zone_interaction)
     zone_interaction.bind(view)
+
+    var construction_preview: WarehouseConstructionPreviewView = WarehouseConstructionPreviewViewScript.new()
+    view.add_child(construction_preview)
+    construction_preview.bind(view)
 
     var visual_pass_2: WarehouseVisualPass2 = WarehouseVisualPass2Script.new()
     view.add_child(visual_pass_2)
@@ -84,6 +89,10 @@ func _ready() -> void:
     var zone_panel: WarehouseZonePanel = WarehouseZonePanelScript.new()
     hud.add_child(zone_panel)
     zone_panel.bind_sim(sim)
+
+    zone_panel.construction_preview_changed.connect(construction_preview.show_preview)
+    zone_panel.construction_preview_cleared.connect(construction_preview.clear_preview)
+    zone_panel.construction_committed.connect(construction_preview.show_commit)
 
     zone_interaction.zone_selected.connect(func(zone_key: String):
         if hud._sheet != null and hud._sheet.visible:
