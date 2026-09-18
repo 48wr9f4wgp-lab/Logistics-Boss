@@ -39,14 +39,14 @@ Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
 Current verified main baseline:
-- PR #101 — `Audit economy and progression pacing`
-- merge commit: `e5c5c22a376b665becb81fe3c73374b183f3cd08`
-- Godot CI #253: **success**
-- iOS Export Smoke #76: **success**
-- Android Export Smoke #65: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
-- Rendered Visual Capture #51: **success**
-- economy/progression pacing frontier: **success**
-- PR #99 FTUE comprehension, PR #97 progression dead-end audit and PR #96 warehouse-hero framing are included in this baseline
+- PR #103 — `Strengthen Rank 2 growth legibility`
+- merge commit: `a8671914e96270d482022a69785aaec964eea6e2`
+- Godot CI #255: **success**
+- iOS Export Smoke #77: **success**
+- Android Export Smoke #67: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
+- Rendered Visual Capture #53: **success**
+- fresh Rank 1 / 2 / 3 captures: **human inspected / pass**
+- PR #101 economy pacing, PR #99 FTUE comprehension, PR #97 progression dead-end audit and PR #96 warehouse-hero framing are included in this baseline
 
 Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
@@ -75,6 +75,7 @@ Recent QA/product milestones:
 - PR #97: progression/resource dead-end audit across zero-cash Rank 1/2/3 recovery paths
 - PR #99: FTUE remains active until the authoritative measurement result; Core Loop is not declared learned at purchase time
 - PR #101: exhaustive 510s Rank 2 staffing frontier exposed and fixed an always-Shipping near-dominant non-decision; final adaptive frontier = 212 shipments vs best fixed 202
+- PR #103: fresh rendered-capture audit found Rank 2 growth too subtle; widened the persistent operations mezzanine/crown and added rear service modules so Rank 2 reads as a larger facility while Rank 3 remains the larger step
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -151,7 +152,7 @@ Expansion:
 
 Deterministic forecast/surge workload waves make staffing an anticipatory management decision.
 
-Rank 2 promotion itself now changes the physical facility silhouette via a permanent operations spine, before optional zone purchases.
+Rank 2 promotion itself now changes the physical facility silhouette via a permanent widened operations spine with rear service modules, before optional zone purchases. This was strengthened in PR #103 after fresh 390×844 captures showed the earlier thin rear-crown delta was too subtle at a glance.
 
 ### Rank 3 — Fulfillment Center
 
@@ -292,7 +293,9 @@ Must preserve:
 
 Current validation state:
 - Rank 1 / 2 / 3 are rendered automatically at 390×844 by the Rendered Visual Capture workflow;
-- the current post-PR86 captures were human inspected and passed for composition, lighting, HUD balance, Rank progression, parcel/worker/equipment surface finish, and absence of the earlier Rank 3 foreground obstruction;
+- Rendered Visual Capture #53 after PR #103 was downloaded and human inspected;
+- Rank 2 now shows a materially stronger persistent rear facility mass/crown than Rank 1, while Rank 3 still reads as the larger facility-scale step;
+- no new foreground obstruction or HUD regression was observed in the fresh Rank 1 / 2 / 3 captures;
 - this confirms the current CI-rendered presentation baseline, **not** native-device safe area, display scaling, thermal performance, audio, haptics, or real-device touch behavior.
 
 A physical iPhone visual/device pass is mandatory before GREENLIGHT.
@@ -432,12 +435,12 @@ While deferred, do not advance to GREENLIGHT. Mac-independent risk-reduction pro
 1. progression dead-end / resource dead-end audit across Rank 1 → Rank 3: **DONE — PR #97 / Godot CI #246**
 2. FTUE / Core Loop comprehension audit: **DONE — PR #99 / Godot CI #248**. Evidence-backed issue fixed: FTUE previously completed immediately after purchase; it now waits for the authoritative measurement result.
 3. economy / progression pacing audit: **DONE — PR #101 / Godot CI #253**. Evidence-backed issue fixed: best adaptive staffing initially beat fixed Shipping by only 2 shipments in one 510s cycle; after the storage-buffer tune the gap is 10 shipments / ¥5,000.
-4. **NEXT — audit reward / growth legibility so investments and Rank growth remain obvious**
-5. keep save/recovery and current regression coverage green;
-6. fix only evidence-backed issues found by those audits.
+4. reward / growth legibility audit: **DONE — PR #103 / Godot CI #255 / Rendered Visual Capture #53**. Evidence-backed issue fixed: Rank 2 persistent growth was too subtle in fresh portrait renders; the operations spine/crown and rear service mass were strengthened and re-inspected.
+5. save/recovery and current regression coverage: **GREEN on the latest verified CI**
+6. no further speculative Mac-independent polish is authorized by evidence.
 
 Optional iPhone Web engineering-preview checks may provide partial touch/readability evidence, but they do **not** satisfy native DEVICE_VALIDATION exit.
 
-Resume native DEVICE_VALIDATION when Mac/Xcode access returns. Only after representative physical-iPhone evidence is collected may FLOTRA enter **GREENLIGHT** and record GO / HOLD / KILL.
+**NEXT / STOP CONDITION:** keep the verified baseline stable. Resume native physical-iPhone DEVICE_VALIDATION when Mac/Xcode access returns. Only after representative physical-iPhone evidence is collected may FLOTRA enter **GREENLIGHT** and record GO / HOLD / KILL.
 
 Do not start RELEASE_ENABLEMENT, production signing, App Store Connect/TestFlight production work, Store assets, or active Android production work before PRODUCTION_DECISION=GO.
