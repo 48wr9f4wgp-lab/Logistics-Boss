@@ -106,6 +106,19 @@ jobs:
           require_file ios-build/LogisticsBoss.xcframework/Info.plist
           require_file ios-build/LogisticsBoss.xcframework/ios-arm64/libgodot.a
           require_file ios-build/MoltenVK.xcframework/Info.plist
+          require_file ios-build/PrivacyInfo.xcprivacy
+
+          pbx='ios-build/LogisticsBoss.xcodeproj/project.pbxproj'
+          plist='ios-build/LogisticsBoss/LogisticsBoss-Info.plist'
+          grep -Fq 'DEVELOPMENT_TEAM = ABCDE12XYZ;' "$pbx"
+          grep -Fq 'PRODUCT_BUNDLE_IDENTIFIER = com.example.logistics-boss-ci;' "$pbx"
+          grep -Fq 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' "$pbx"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :UIRequiresFullScreen' "$plist")" = "true"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :UISupportedInterfaceOrientations:0' "$plist")" = "UIInterfaceOrientationPortrait"
+          if grep -q 'UIInterfaceOrientationLandscape' "$plist"; then
+            echo 'Landscape orientation unexpectedly present in iOS smoke project'
+            exit 1
+          fi
 
           # Godot names the project PCK after the export target (for example,
           # LogisticsBoss.pck), and the exact location can vary by template.
