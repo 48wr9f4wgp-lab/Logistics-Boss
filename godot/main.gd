@@ -2,6 +2,7 @@ extends Node
 
 const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
 const WarehouseViewScript = preload("res://view/warehouse_view_mobile.gd")
+const WarehouseZoneInteractionScript = preload("res://view/zone_interaction_view.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
 const WarehouseVisualPass3Script = preload("res://view/visual_pass_3.gd")
 const WarehouseQueuePressureViewScript = preload("res://view/queue_pressure_view.gd")
@@ -13,6 +14,7 @@ const Rank2FacilityViewScript = preload("res://view/rank2_facility_view.gd")
 const Rank3ReceivingAnnexViewScript = preload("res://view/rank3_receiving_annex_view.gd")
 const Rank3RoutingHubViewScript = preload("res://view/rank3_routing_hub_view.gd")
 const GameHudScript = preload("res://ui/game_hud_mobile.gd")
+const WarehouseZonePanelScript = preload("res://ui/warehouse_zone_panel.gd")
 const SessionResumeBriefScript = preload("res://ui/session_resume_brief.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 const GameFeelScript = preload("res://feedback/game_feel.gd")
@@ -35,6 +37,10 @@ func _ready() -> void:
     var view: WarehouseView = WarehouseViewScript.new()
     add_child(view)
     view.bind_sim(sim)
+
+    var zone_interaction: WarehouseZoneInteractionView = WarehouseZoneInteractionScript.new()
+    view.add_child(zone_interaction)
+    zone_interaction.bind(view)
 
     var visual_pass_2: WarehouseVisualPass2 = WarehouseVisualPass2Script.new()
     view.add_child(visual_pass_2)
@@ -68,6 +74,18 @@ func _ready() -> void:
     hud.bind_sim(sim)
     hud.reset_progress_requested.connect(_reset_all_progress)
     add_child(hud)
+
+    var zone_panel: WarehouseZonePanel = WarehouseZonePanelScript.new()
+    hud.add_child(zone_panel)
+    zone_panel.bind_sim(sim)
+
+    zone_interaction.zone_selected.connect(func(zone_key: String):
+        if hud._sheet != null and hud._sheet.visible:
+            hud._toggle_sheet()
+        zone_panel.open_zone(zone_key)
+    )
+    if hud._manage_button != null:
+        hud._manage_button.pressed.connect(zone_panel.close)
 
     # Returning players get a five-second continuity brief built only from the
     # restored Domain state. Fresh saves and active FTUE keep the onboarding band.
