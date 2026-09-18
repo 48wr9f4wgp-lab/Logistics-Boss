@@ -1,4 +1,4 @@
-name: Logistics Boss Android Export Smoke
+name: FLOTRA Android Export Smoke
 
 on:
   push:
@@ -168,7 +168,7 @@ jobs:
       - name: Upload Android smoke artifact
         uses: actions/upload-artifact@v4
         with:
-          name: logistics-boss-android-apk-smoke
+          name: flotra-android-apk-smoke
           path: android-build/LogisticsBoss.apk
           if-no-files-found: error
           retention-days: 7
