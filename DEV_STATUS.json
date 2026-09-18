@@ -13,7 +13,7 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_253_success_ios_export_76_success_android_export_65_success_render_capture_51_success",
+    "ci_latest_verified": "godot_255_success_ios_export_77_success_android_export_67_success_render_capture_53_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -22,7 +22,7 @@
     "mobile_management_scroll": "verified_web_ios_and_regression_covered",
     "save": "schema_v7_primary_backup_recovery_pass",
     "measurement_feedback": "domain_verdict_shared_by_hud_gamefeel_and_3d",
-    "visual_progression": "rank1_rank2_rank3_current_render_human_inspected_pre_device_validation",
+    "visual_progression": "pass_pr103_rank1_rank2_rank3_fresh_render_human_inspected_rank2_growth_strengthened_rank3_larger_no_foreground_obstruction",
     "visual_final_polish": "passes_pr79_to_pr86_merged_render_capture_14_human_pass",
     "analytics": "provider_neutral_local_only_no_external_upload",
     "performance": "runtime_fps_monitor_and_soak_present_physical_iphone_measurement_pending",
@@ -43,18 +43,18 @@
     "title": "Restore session context for returning players"
   },
   "latest_visual_merge": {
-    "pr": 86,
-    "merge_commit": "0c500b686198ba5785a0aac6a9fd5f37b1ac10d9",
-    "title": "Polish final worker parcel and equipment surfaces"
+    "pr": 103,
+    "merge_commit": "a8671914e96270d482022a69785aaec964eea6e2",
+    "title": "Strengthen Rank 2 growth legibility"
   },
   "latest_native_bootstrap_merge": {
     "pr": 78,
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "PR #101 merged after Godot CI #253 passed the economy/progression pacing audit. The initial exhaustive 510-second Rank 2 frontier exposed a non-decision: the best anticipatory staffing strategy beat fixed Shipping by only 2 shipments (196 vs 194). Rank 2 storage buffers were tuned while preserving Fast Pick < High Density capacity and their speed tradeoff; the final frontier is 212 vs 202 shipments (+10, +¥5,000) with a five-switch balanced → picking → dock adaptive pattern.",
+  "last_verified_done": "PR #103 merged after Godot CI #255 and Rendered Visual Capture #53 passed. Fresh canonical Rank 1/2/3 renders were human-inspected: Rank 2's prior thin rear-crown-only growth read was strengthened with a wider persistent operations mezzanine/crown and two rear service modules; Rank 3 still reads as the larger facility step and no new foreground/HUD obstruction was observed. Physical native iPhone reward/growth recognition remains pending.",
   "blocked": "Native physical-iPhone DEVICE_VALIDATION is deferred by user because Mac/Xcode access will not be available for a while. This is an acknowledged phase blocker, not a completed gate.",
-  "next": "While native DEVICE_VALIDATION is deferred, audit reward/growth legibility so investments and Rank 1 → Rank 2 → Rank 3 facility growth remain obvious in current rendered/Web evidence. Fix only evidence-backed issues. Do not call DEVICE_VALIDATION complete and do not enter GREENLIGHT until representative physical-iPhone evidence is collected.",
+  "next": "Mac-independent Pre-GO risk-reduction audits are complete for progression dead-ends, FTUE/Core Loop comprehension, economy/progression pacing, and reward/growth legibility. Maintain current regression/save coverage green and avoid speculative polish. Resume native physical-iPhone DEVICE_VALIDATION when Mac/Xcode access becomes available; do not enter GREENLIGHT before representative device evidence.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -87,9 +87,9 @@
     "resume_condition": "MAC_XCODE_ACCESS_BECOMES_AVAILABLE"
   },
   "latest_pre_go_risk_reduction": {
-    "pr": 101,
-    "merge_commit": "e5c5c22a376b665becb81fe3c73374b183f3cd08",
-    "title": "Audit economy and progression pacing",
-    "evidence": "Godot CI #253: exhaustive Rank 2 510s staffing frontier passed with best adaptive 212 shipments vs best fixed 202; iOS Export Smoke #76 and Rendered Visual Capture #51 success"
+    "pr": 103,
+    "merge_commit": "a8671914e96270d482022a69785aaec964eea6e2",
+    "title": "Strengthen Rank 2 growth legibility",
+    "evidence": "Godot CI #255, iOS Export Smoke #77, Rendered Visual Capture #53 success; fresh Rank 1/2/3 captures human-inspected"
   }
 }
