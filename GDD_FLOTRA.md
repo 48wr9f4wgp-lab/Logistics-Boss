@@ -24,7 +24,7 @@ This document supersedes the earlier Web/PWA-first and Three.js vertical-slice a
 - Session target: roughly 5–15 minutes per active session
 - Online requirement: none for current product
 - Account/backend/cloud save: none
-- Monetization: not activated; outside the current Pre-GO DEVICE_VALIDATION scope
+- Monetization: not activated; outside the current Pre-GO VERTICAL_SLICE v2 scope
 - Analytics: provider-neutral local instrumentation only; no external transmission
 
 ## 2. Canonical Core Loop
