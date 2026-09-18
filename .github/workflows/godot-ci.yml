@@ -169,6 +169,16 @@ jobs:
             exit 1
           fi
 
+      - name: Progression dead-end audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 45s godot --headless --path godot --script res://tests/progression_dead_end_smoke.gd 2>&1 | tee /tmp/progression-dead-end-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/progression-dead-end-smoke.log; then
+            echo 'Progression dead-end audit emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Rank 3 inbound carrier program smoke
         shell: bash
         run: |
