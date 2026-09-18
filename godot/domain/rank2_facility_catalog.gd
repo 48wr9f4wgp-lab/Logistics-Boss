@@ -20,7 +20,7 @@ const DEFINITIONS := {
         "zone": "B",
         "group": "storage",
         "label": "高速ピックラック",
-        "effect": "保管+4 / ピック25%高速",
+        "effect": "保管+8 / ピック25%高速",
         "cost": 13000,
     },
     &"high_density_rack": {
