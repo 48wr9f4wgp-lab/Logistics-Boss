@@ -193,11 +193,13 @@ func _apply_north_star_environment() -> void:
         if child is WorldEnvironment:
             var world := child as WorldEnvironment
             if world.environment != null:
-                # Dark industrial base with enough navy lift that the warehouse
-                # reads as a site at night rather than a model floating in black.
-                world.environment.background_color = Color(0.009, 0.021, 0.032)
-                world.environment.ambient_light_color = Color(0.18, 0.27, 0.34)
-                world.environment.ambient_light_energy = 0.54
+                # Keep the industrial night setting, but separate lit faces from
+                # ambient fill more clearly. The slightly lifted navy background
+                # preserves edge readability while lower ambient energy gives the
+                # existing key/work lights enough contrast to model real depth.
+                world.environment.background_color = Color(0.012, 0.026, 0.038)
+                world.environment.ambient_light_color = Color(0.16, 0.24, 0.31)
+                world.environment.ambient_light_energy = 0.46
             return
 
 
@@ -270,8 +272,8 @@ func _limit_light_recursive(node: Node) -> void:
     elif node is DirectionalLight3D:
         var directional := node as DirectionalLight3D
         directional.shadow_enabled = true
-        directional.light_energy = 0.78
-        directional.light_color = Color(0.72, 0.84, 0.95)
+        directional.light_energy = 0.90
+        directional.light_color = Color(0.80, 0.88, 0.96)
 
     for child in node.get_children():
         _limit_light_recursive(child)
