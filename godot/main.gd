@@ -1,6 +1,6 @@
 extends Node
 
-const WarehouseSimScript = preload("res://domain/rank3_inbound_carrier_sim.gd")
+const WarehouseSimScript = preload("res://domain/flotra_v2_sim.gd")
 const WarehouseViewScript = preload("res://view/warehouse_view_mobile.gd")
 const WarehouseZoneInteractionScript = preload("res://view/zone_interaction_view.gd")
 const WarehouseVisualPass2Script = preload("res://view/visual_pass_2.gd")
@@ -10,11 +10,13 @@ const WarehouseInvestmentFeedbackViewScript = preload("res://view/investment_fee
 const WarehouseVisualCompositionFixScript = preload("res://view/visual_composition_fix.gd")
 const ForkliftAutomationViewScript = preload("res://view/forklift_automation_view.gd")
 const WarehouseDomainLivenessViewScript = preload("res://view/domain_liveness_view.gd")
+const Rank1ProjectViewScript = preload("res://view/rank1_project_view.gd")
 const Rank2FacilityViewScript = preload("res://view/rank2_facility_view.gd")
 const Rank3ReceivingAnnexViewScript = preload("res://view/rank3_receiving_annex_view.gd")
 const Rank3RoutingHubViewScript = preload("res://view/rank3_routing_hub_view.gd")
 const GameHudScript = preload("res://ui/game_hud_mobile.gd")
 const WarehouseZonePanelScript = preload("res://ui/warehouse_zone_panel.gd")
+const V2Rank1CoachScript = preload("res://ui/v2_rank1_coach.gd")
 const SessionResumeBriefScript = preload("res://ui/session_resume_brief.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 const GameFeelScript = preload("res://feedback/game_feel.gd")
@@ -56,6 +58,10 @@ func _ready() -> void:
     view.add_child(domain_liveness)
     domain_liveness.bind(view, sim)
 
+    var rank1_projects: Rank1ProjectView = Rank1ProjectViewScript.new()
+    view.add_child(rank1_projects)
+    rank1_projects.bind(view, sim)
+
     var rank2_facilities: Rank2FacilityView = Rank2FacilityViewScript.new()
     view.add_child(rank2_facilities)
     rank2_facilities.bind(view, sim)
@@ -86,6 +92,10 @@ func _ready() -> void:
     )
     if hud._manage_button != null:
         hud._manage_button.pressed.connect(zone_panel.close)
+
+    var v2_rank1_coach: V2Rank1Coach = V2Rank1CoachScript.new()
+    hud.add_child(v2_rank1_coach)
+    v2_rank1_coach.bind_context(sim, zone_interaction)
 
     # Returning players get a five-second continuity brief built only from the
     # restored Domain state. Fresh saves and active FTUE keep the onboarding band.
