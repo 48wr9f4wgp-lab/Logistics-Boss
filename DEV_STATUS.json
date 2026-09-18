@@ -13,14 +13,14 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_267_success_ios_export_87_success_android_export_79_success_render_capture_65_success",
+    "ci_latest_verified": "godot_269_success_ios_export_88_success_android_export_81_success_render_capture_67_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
     "device_web_ios": "verified_after_pr57_not_native",
     "mobile_camera": "verified_web_ios_and_regression_covered",
     "mobile_management_scroll": "verified_web_ios_and_regression_covered",
-    "save": "schema_v7_primary_backup_recovery_pass",
+    "save": "schema_v9_primary_backup_recovery_pass_schema8_staffing_migration_verified",
     "measurement_feedback": "domain_verdict_shared_by_hud_gamefeel_and_3d",
     "visual_progression": "pass_pr103_rank1_rank2_rank3_fresh_render_human_inspected_rank2_growth_strengthened_rank3_larger_no_foreground_obstruction",
     "visual_final_polish": "passes_pr79_to_pr86_merged_render_capture_14_human_pass",
@@ -44,7 +44,8 @@
     "v2_interaction_skeleton": "pass_pr107_five_zone_targets_zone_panel_symptom_only_director_mobile_management_dashboard_legacy_mobile_purchase_controls_hidden",
     "v2_zone_visuals": "pass_render_capture_63_human_inspected_all_five_zone_labels_readable_in_default_rank1_portrait_frame",
     "rank1_v2": "pass_pr109_structural_projects_explicit_rank2_expansion_zone_first_onboarding_schema8_migration",
-    "rank1_v2_visuals": "pass_render_capture_65_human_inspected_developed_rank1_and_rank2_no_visual_regression"
+    "rank1_v2_visuals": "pass_render_capture_65_human_inspected_developed_rank1_and_rank2_no_visual_regression",
+    "direct_zone_staffing": "pass_pr111_receiving_picking_shipping_direct_reassignment_floor1_cooldown_schema9"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -61,9 +62,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "PR #109 merged. Rank 1 Core Experience v2 is implemented and verified: Rack Wing, Second Packing Bench, one-time Worker Hire, Forklift Project, explicit Warehouse Expansion, Zone-first onboarding, two-step capital confirmation, visible project geometry, schema 8 persistence/migration, and explicit Rank 2 promotion gate. Godot CI #267, iOS Export Smoke #87, Rendered Visual Capture #65, Android Export Smoke #79 all succeeded. Fresh Rank 1 and Rank 2 captures were human-inspected and accepted.",
+  "last_verified_done": "PR #111 merged. Direct player-facing Zone staffing is implemented and verified: staffed flows are RECEIVING (INBOUND/STORAGE), PICKING, and SHIPPING; PACKING explicitly has no direct Worker allocation. Rank 2 begins at 2/2/1, one Worker moves source→target per action, every staffed flow keeps at least one Worker, and the existing 30-second observation cooldown remains authoritative. Management shows an executive staffing overview while the legacy preset grid stays hidden. Runtime save advanced to schema 9 with schema 8 preset-to-direct migration. Godot CI #269, iOS Export Smoke #88, Rendered Visual Capture #67, Android Export Smoke #81 all succeeded.",
   "blocked": "No Mac-independent implementation blocker for Vertical Slice v2. Native physical-iPhone DEVICE_VALIDATION remains deferred until Mac/Xcode access becomes available, but it is not the current active-phase blocker.",
-  "next": "Implement direct player-facing Zone staffing as the next small PR, preserving the Rank 1 v2 loop and Management-as-dashboard contract. After staffing passes, implement Rank 2 STORAGE and PACKING renovation pairs with paid A↔B replacement and dominance tests. Do not start deferred INBOUND/PICKING/SHIPPING Rank 2 equipment or Rank 3 redesign yet.",
+  "next": "Implement Rank 2 STORAGE and PACKING renovation pairs as the next focused slice: Fast Pick Rack ⇄ High Density Rack and Parallel Pack Line ⇄ Fast Pack Cell, with paid A↔B renovation, visible geometry replacement, authoritative effects, Before/After measurement, and paired dominance tests. Do not implement deferred Rank 2 INBOUND/PICKING/SHIPPING equipment or Rank 3 redesign yet.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -116,7 +117,7 @@
   },
   "vertical_slice_v2": {
     "change_packet": "VERTICAL_SLICE_V2_CHANGE_PACKET.md",
-    "implementation_state": "RANK1_V2_DONE",
+    "implementation_state": "DIRECT_ZONE_STAFFING_DONE",
     "locked_scope": [
       "3D warehouse as primary game board",
       "Zone-first normal equipment decisions",
@@ -160,14 +161,20 @@
       "Zone-first v2 onboarding",
       "two-step Rank 1 capital confirmation",
       "schema 8 Rank 1 project persistence and schema 7 migration",
-      "fresh developed Rank 1 render human-inspected"
+      "fresh developed Rank 1 render human-inspected",
+      "direct Zone staffing: RECEIVING (INBOUND/STORAGE), PICKING, SHIPPING",
+      "PACKING explicitly has no direct Worker allocation",
+      "Rank 2 staffing starts 2/2/1 with one-worker minimum per staffed flow",
+      "source-to-target one-Worker reassignment with 30-second observation cooldown",
+      "Zone Panel staffing controls and Management executive staffing overview",
+      "schema 9 direct staffing persistence and schema 8 preset migration"
     ],
-    "next_step": "DIRECT_ZONE_STAFFING"
+    "next_step": "RANK2_STORAGE_PACKING_RENOVATION"
   },
   "latest_vertical_slice_v2_merge": {
-    "pr": 109,
-    "merge_commit": "d2a93d421fb097a9863abd0ddb9c4f4fd70746e5",
-    "title": "Build Rank 1 Core Experience v2",
-    "evidence": "Godot CI #267, iOS Export Smoke #87, Rendered Visual Capture #65, Android Export Smoke #79 success; Rank 1 and Rank 2 fresh captures human-inspected"
+    "pr": 111,
+    "merge_commit": "2412a22c4eb75e526e1901b4632943a1a7d2a37b",
+    "title": "Add direct Zone staffing",
+    "evidence": "Godot CI #269, iOS Export Smoke #88, Rendered Visual Capture #67, Android Export Smoke #81 success; dedicated direct Zone staffing smoke and save/runtime regressions passed"
   }
 }
