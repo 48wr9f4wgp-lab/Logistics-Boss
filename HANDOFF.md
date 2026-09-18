@@ -39,14 +39,14 @@ Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
 Current verified main baseline:
-- PR #97 — `Audit progression dead-end recovery`
-- merge commit: `8c24e083e601db676c56ab5e836ccf6961de7a4b`
-- Godot CI #246: **success**
-- iOS Export Smoke #71: **success**
-- Android Export Smoke #58: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
-- Rendered Visual Capture #44: **success**
-- progression dead-end audit step: **success**
-- PR #96 warehouse-hero framing is included in this baseline
+- PR #99 — `Keep FTUE active through measurement result`
+- merge commit: `693dd4dd78d01cdb5c3ce3b95974e604ef9ac79b`
+- Godot CI #248: **success**
+- iOS Export Smoke #72: **success**
+- Android Export Smoke #60: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
+- Rendered Visual Capture #46: **success**
+- FTUE/Core Loop comprehension regression: **success**
+- PR #97 progression dead-end audit and PR #96 warehouse-hero framing are included in this baseline
 
 Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
@@ -73,6 +73,7 @@ Recent QA/product milestones:
 - PR #95: aggregate high-speed shipment toasts
 - PR #96: make the warehouse the portrait visual hero; compact HUD/measurement stack + closer framing
 - PR #97: progression/resource dead-end audit across zero-cash Rank 1/2/3 recovery paths
+- PR #99: FTUE remains active until the authoritative measurement result; Core Loop is not declared learned at purchase time
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -124,7 +125,7 @@ Capital:
 Forklift automation is Domain-authoritative logistics behavior, not fake animation.
 
 Fresh-save FTUE teaches:
-observe → identify bottleneck → change operations → open Management → invest → read measured result.
+observe → identify bottleneck → change operations → open Management → invest → remain in the guide through the real measurement window → read the authoritative measured verdict → continue to the next decision.
 
 ### Rank 2 — Warehouse
 
@@ -426,8 +427,8 @@ FLOTRA remains in **ACTIVE_PHASE = DEVICE_VALIDATION**, with the native physical
 While deferred, do not advance to GREENLIGHT. Mac-independent risk-reduction progress:
 
 1. progression dead-end / resource dead-end audit across Rank 1 → Rank 3: **DONE — PR #97 / Godot CI #246**
-2. **NEXT — audit FTUE and Core Loop comprehension support using current automated/Web evidence**
-3. audit economy / progression pacing for stalls, runaway accumulation and non-decisions;
+2. FTUE / Core Loop comprehension audit: **DONE — PR #99 / Godot CI #248**. Evidence-backed issue fixed: FTUE previously completed immediately after purchase; it now waits for the authoritative measurement result.
+3. **NEXT — audit economy / progression pacing for stalls, runaway accumulation and non-decisions**
 4. audit reward / growth legibility so investments and Rank growth remain obvious;
 5. keep save/recovery and current regression coverage green;
 6. fix only evidence-backed issues found by those audits.
