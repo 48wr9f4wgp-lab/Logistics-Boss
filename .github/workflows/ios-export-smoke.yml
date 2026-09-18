@@ -1,4 +1,4 @@
-name: Logistics Boss iOS Export Smoke
+name: FLOTRA iOS Export Smoke
 
 on:
   pull_request:
@@ -139,7 +139,7 @@ jobs:
       - name: Upload unsigned iOS Xcode-project smoke artifact
         uses: actions/upload-artifact@v4
         with:
-          name: logistics-boss-ios-xcode-smoke
+          name: flotra-ios-xcode-smoke
           path: /tmp/LogisticsBoss-ios-project.zip
           if-no-files-found: error
           retention-days: 3
