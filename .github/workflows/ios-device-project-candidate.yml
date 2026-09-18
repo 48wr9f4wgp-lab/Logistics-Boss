@@ -105,6 +105,7 @@ jobs:
 
           grep -Fq "DEVELOPMENT_TEAM = ${LOGISTICS_BOSS_IOS_TEAM_ID};" "$pbx"
           grep -Fq "PRODUCT_BUNDLE_IDENTIFIER = ${LOGISTICS_BOSS_IOS_BUNDLE_ID};" "$pbx"
+          grep -Fq 'INFOPLIST_KEY_CFBundleDisplayName = "FLOTRA";' "$pbx"
           grep -Fq 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' "$pbx"
 
           test "$(/usr/libexec/PlistBuddy -c 'Print :UIRequiresFullScreen' "$plist")" = "true"
