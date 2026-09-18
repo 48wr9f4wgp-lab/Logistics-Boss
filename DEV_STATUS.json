@@ -13,7 +13,7 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_255_success_ios_export_77_success_android_export_67_success_render_capture_53_success",
+    "ci_latest_verified": "godot_265_success_ios_export_86_success_android_export_77_success_render_capture_63_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -40,7 +40,9 @@
     "core_loop_e2e_v2": "pending_vertical_slice_v2_implementation",
     "management_readability_v2": "fail_2026_09_18_ios_web_information_hierarchy_action_effect_unclear",
     "reward_growth_recognition_v2": "fail_2026_09_18_ios_web_equipment_and_facility_change_not_clear_during_normal_play",
-    "legacy_core_loop_automation": "pass_pr74_valid_for_legacy_flow_not_v2_product_proof"
+    "legacy_core_loop_automation": "pass_pr74_valid_for_legacy_flow_not_v2_product_proof",
+    "v2_interaction_skeleton": "pass_pr107_five_zone_targets_zone_panel_symptom_only_director_mobile_management_dashboard_legacy_mobile_purchase_controls_hidden",
+    "v2_zone_visuals": "pass_render_capture_63_human_inspected_all_five_zone_labels_readable_in_default_rank1_portrait_frame"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -57,9 +59,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "2026-09-18 iPhone Web playtest exposed a Core Experience failure: growth/equipment consequences were not clear enough during ordinary play, Management was hard to parse, and play drifted toward repeated upgrade clicking. FLOTRA was deliberately routed back from DEVICE_VALIDATION to VERTICAL_SLICE for Core Experience v2. The v2 Change Packet and GDD locks define the targeted rework; existing technical/save/CI evidence remains preserved but does not prove the v2 product experience.",
+  "last_verified_done": "PR #107 merged after Godot CI #265, iOS Export Smoke #86, Rendered Visual Capture #63, and Android Export Smoke #77 all succeeded. Core Experience v2 Interaction Skeleton is now live on main: five physical 3D Zone targets, Zone Panel with authoritative evidence, symptom-only Director, RP hidden from the primary mobile HUD, Management converted to an Overview/dashboard shell, and legacy repeated upgrades/Rank 2 Zone purchases/staffing presets removed from the player-facing mobile Management path. Fresh Rank 1 render was human-inspected after two evidence-driven label-scale corrections; INBOUND/STORAGE/PICKING/PACKING/SHIPPING are all readable in the default portrait frame. This does not yet implement Rank 1 v2 structural projects or Rank 2 renovation.",
   "blocked": "No Mac-independent implementation blocker for Vertical Slice v2. Native physical-iPhone DEVICE_VALIDATION remains deferred until Mac/Xcode access becomes available, but it is not the current active-phase blocker.",
-  "next": "Implement Vertical Slice v2 in small PRs, starting with the interaction skeleton: 3D Zone targets, Zone Panel, symptom-only Director, and removal of normal Zone equipment purchasing from Management. Then complete Rank 1 v2, direct player-facing staffing, Rank 2 STORAGE and PACKING renovation pairs, construction preview/reward feedback, and repeat iPhone Web playtest before adding other Zones.",
+  "next": "Implement Rank 1 v2 as the next small PR: Rack Wing, Second Packing Bench, one Worker Hire, authoritative Forklift project, event-driven Zone-first onboarding, and visible Warehouse Expansion into Rank 2. Keep the new Zone interaction skeleton and Management dashboard contract intact; do not start Rank 2 renovation or deferred Zones until Rank 1 v2 is coherent and testable.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -112,7 +114,7 @@
   },
   "vertical_slice_v2": {
     "change_packet": "VERTICAL_SLICE_V2_CHANGE_PACKET.md",
-    "implementation_state": "NOT_YET_IMPLEMENTED",
+    "implementation_state": "INTERACTION_SKELETON_DONE",
     "locked_scope": [
       "3D warehouse as primary game board",
       "Zone-first normal equipment decisions",
@@ -138,6 +140,23 @@
       "fresh visual evidence inspected",
       "iPhone Web playtest no longer reproduces Management-clicker failure mode",
       "facility/equipment consequences legible during ordinary play"
-    ]
+    ],
+    "completed": [
+      "five 3D Zone targets and touch/raycast selection",
+      "Zone Panel lower-sheet shell with authoritative evidence",
+      "symptom-only Director",
+      "mobile Management Overview/dashboard shell",
+      "legacy repeated upgrades and Rank 2 Zone purchases hidden from player-facing mobile Management",
+      "legacy staffing presets hidden pending direct Zone staffing",
+      "RP hidden from primary mobile HUD",
+      "fresh rendered visual capture includes all five readable Zone labels"
+    ],
+    "next_step": "RANK1_V2_STRUCTURAL_PROJECTS_AND_ONBOARDING"
+  },
+  "latest_vertical_slice_v2_merge": {
+    "pr": 107,
+    "merge_commit": "185aeed749d1c390c14dc46934055e8fa1173b50",
+    "title": "Add Vertical Slice v2 interaction skeleton",
+    "evidence": "Godot CI #265, iOS Export Smoke #86, Rendered Visual Capture #63, Android Export Smoke #77 success; Rank 1 fresh capture human-inspected with all five Zone labels readable"
   }
 }
