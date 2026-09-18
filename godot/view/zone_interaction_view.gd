@@ -78,14 +78,16 @@ func _build_zone_targets() -> void:
         label.name = "ZoneLabel_%s" % String(zone_key)
         label.text = String(definition["label"])
         var zone_position: Vector3 = definition["position"]
-        label.position = Vector3(zone_position.x, 0.16, 3.55)
+        label.position = Vector3(zone_position.x, 0.34, 2.75)
         label.font = JAPANESE_UI_FONT
         label.font_size = 22
-        label.outline_size = 7
-        label.modulate = Color(0.70, 0.91, 1.0, 0.82)
+        label.outline_size = 9
+        label.modulate = Color(0.76, 0.94, 1.0, 0.96)
+        label.outline_modulate = Color(0.0, 0.04, 0.06, 0.96)
         label.no_depth_test = true
         label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
         label.double_sided = true
+        label.fixed_size = true
         add_child(label)
         _zone_labels[String(zone_key)] = label
 
