@@ -38,14 +38,15 @@ The current macro gate remains DEVICE_VALIDATION, but the native physical-iPhone
 Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
-Latest verified presentation/native-prep baseline:
-- PR #86 — `Polish final worker parcel and equipment surfaces`
-- merge commit: `0c500b686198ba5785a0aac6a9fd5f37b1ac10d9`
-- Godot CI #216: **success**
-- iOS Export Smoke #47: **success**
-- Android Export Smoke #28: **success**
-- Rendered Visual Capture #14: **success**
-- current Rank 1 / 2 / 3 rendered captures: **human inspected / pass**
+Current verified main baseline:
+- PR #97 — `Audit progression dead-end recovery`
+- merge commit: `8c24e083e601db676c56ab5e836ccf6961de7a4b`
+- Godot CI #246: **success**
+- iOS Export Smoke #71: **success**
+- Android Export Smoke #58: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
+- Rendered Visual Capture #44: **success**
+- progression dead-end audit step: **success**
+- PR #96 warehouse-hero framing is included in this baseline
 
 Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
@@ -69,6 +70,9 @@ Recent QA/product milestones:
 - PR #84: 2× MSAA + restrained HUD depth
 - PR #85: final 3D depth-lighting balance
 - PR #86: final worker / parcel / equipment surface finish
+- PR #95: aggregate high-speed shipment toasts
+- PR #96: make the warehouse the portrait visual hero; compact HUD/measurement stack + closer framing
+- PR #97: progression/resource dead-end audit across zero-cash Rank 1/2/3 recovery paths
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -326,8 +330,8 @@ Existing Android export smoke is retained as **historical technical evidence onl
 ## 10. DEVICE_VALIDATION blockers and exit evidence
 
 Current blockers:
-- REAL_DEVICE_ACCESS is not recorded
-- MAC_XCODE_ACCESS_PATH is not recorded
+- REAL_DEVICE_ACCESS is available, but the exact representative iPhone model / iOS version is still unrecorded
+- MAC_XCODE_ACCESS_PATH is blocked because no Mac is currently available
 - an installable **development** iOS build path to the representative iPhone is not yet verified
 
 These are DEVICE_VALIDATION blockers. Final production Team ID / Bundle ID, production signing, TestFlight, App Store Connect, Store assets, and Android production work are **not** blockers for this phase.
@@ -419,10 +423,10 @@ Release / QA:
 
 FLOTRA remains in **ACTIVE_PHASE = DEVICE_VALIDATION**, with the native physical-iPhone lane **DEFERRED BY USER** until Mac/Xcode access becomes available.
 
-While deferred, do not advance to GREENLIGHT. Use the time for Mac-independent Pre-GO risk reduction:
+While deferred, do not advance to GREENLIGHT. Mac-independent risk-reduction progress:
 
-1. audit progression dead-end / resource dead-end behavior across Rank 1 → Rank 3;
-2. audit FTUE and Core Loop comprehension support using current automated/Web evidence;
+1. progression dead-end / resource dead-end audit across Rank 1 → Rank 3: **DONE — PR #97 / Godot CI #246**
+2. **NEXT — audit FTUE and Core Loop comprehension support using current automated/Web evidence**
 3. audit economy / progression pacing for stalls, runaway accumulation and non-decisions;
 4. audit reward / growth legibility so investments and Rank growth remain obvious;
 5. keep save/recovery and current regression coverage green;
