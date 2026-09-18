@@ -13,7 +13,7 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_233_success_ios_export_63_success_android_export_45_success_render_capture_31_success",
+    "ci_latest_verified": "godot_246_success_ios_export_71_success_android_export_58_success_render_capture_44_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -32,7 +32,8 @@
     "synthetic_android_export": "historical_technical_evidence_only_android_not_active_pre_go",
     "native_ios": "blocked_only_on_mac_xcode_access_for_minimum_viable_development_install",
     "native_android": "deferred_until_production_decision_go_then_platform_expansion_decision",
-    "release": "pre_go_not_release_candidate"
+    "release": "pre_go_not_release_candidate",
+    "progression_dead_end": "pass_pr97_zero_cash_rank1_contract_rank2_all_staffing_and_8_facility_paths_rank3_all_routes_plus_structural_refunding"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -49,9 +50,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "Vertical Slice code/visual baseline converged; automated Godot/iOS-export/Android-export/render checks green; current rendered Rank 1-3 baseline human-inspected. Physical native iPhone validation has not yet been completed.",
+  "last_verified_done": "PR #97 merged after Godot CI #246 passed the progression/resource dead-end audit: zero-cash Rank 1 contract recovery, every Rank 2 staffing preset, all 8 exclusive Rank 2 facility combinations, all Rank 3 routing modes, and Rank 3 Receiving Annex / inbound-carrier funding all retained authoritative shipment/cash recovery. Physical native iPhone validation remains incomplete.",
   "blocked": "Native physical-iPhone DEVICE_VALIDATION is deferred by user because Mac/Xcode access will not be available for a while. This is an acknowledged phase blocker, not a completed gate.",
-  "next": "While native DEVICE_VALIDATION is deferred, continue Mac-independent Pre-GO risk reduction without changing ACTIVE_PHASE: audit and harden progression dead-end/resource dead-end behavior, FTUE/Core Loop comprehension support, economy/progression pacing, growth/reward legibility, save/recovery, and automated/mobile-web regressions. Do not call DEVICE_VALIDATION complete and do not enter GREENLIGHT until representative physical-iPhone evidence is eventually collected.",
+  "next": "While native DEVICE_VALIDATION is deferred, audit FTUE/Core Loop comprehension support using current automated and iPhone Web engineering-preview evidence. Fix only evidence-backed issues. Do not call DEVICE_VALIDATION complete and do not enter GREENLIGHT until representative physical-iPhone evidence is collected.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -82,5 +83,11 @@
     "native_device_lane": "DEFERRED_BY_USER_UNTIL_MAC_AVAILABLE",
     "defer_reason": "MAC_XCODE_ACCESS_UNAVAILABLE_FOR_FORESEEABLE_PERIOD",
     "resume_condition": "MAC_XCODE_ACCESS_BECOMES_AVAILABLE"
+  },
+  "latest_pre_go_risk_reduction": {
+    "pr": 97,
+    "merge_commit": "8c24e083e601db676c56ab5e836ccf6961de7a4b",
+    "title": "Audit progression dead-end recovery",
+    "evidence": "Godot CI #246 progression dead-end audit success"
   }
 }
