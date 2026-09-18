@@ -61,7 +61,33 @@ The macOS GitHub Actions smoke does this automatically:
 
 Synthetic values are used only by the smoke workflow. They are not production identifiers and are never merged into `export_presets.cfg`.
 
-Once real Apple identifiers exist, the same path can inject them from CI variables/secrets without requiring a local Mac. Final signed-device/TestFlight work still requires Apple account signing material and an active Apple Developer setup.
+Once real Apple identifiers exist, the same path can inject them without committing them to source control. Final signed-device/TestFlight work still requires Apple account signing material and an active Apple Developer setup.
+
+### Real-identifier iOS device-project candidate
+
+The repository also provides:
+- `.github/workflows/ios-device-project-candidate.yml`
+
+This workflow is **manual-only** (`workflow_dispatch`). It requires the real Apple Team ID and final Bundle Identifier as run inputs, then:
+1. validates both identifiers
+2. generates an ephemeral iOS preset
+3. exports an **unsigned** Xcode project
+4. verifies the Team ID / Bundle ID were injected into the Xcode project
+5. verifies iOS arm64 payload, non-empty PCK, PrivacyInfo, iOS 15.0 deployment target, portrait-only orientation, and full-screen mode
+6. writes candidate metadata marking signing and physical-device QA as not completed
+7. uploads the Xcode-project ZIP artifact
+
+This workflow does **not** import certificates, create/rotate signing keys, sign an app, install to a device, or upload to TestFlight. Those remain explicit later gates.
+
+Latest inspected unsigned smoke artifact (PR #86 / iOS Export Smoke #47) contained:
+- iOS arm64 `libgodot.a`
+- MoltenVK XCFramework
+- non-empty game PCK
+- `PrivacyInfo.xcprivacy`
+- iOS deployment target 15.0
+- portrait-only supported orientation
+- full-screen requirement
+- synthetic CI-only Team ID / Bundle ID
 
 ## 4. External identifiers required before signed native builds
 
