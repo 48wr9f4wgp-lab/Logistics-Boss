@@ -1,6 +1,8 @@
 extends RefCounted
 class_name Rank2FacilityCatalog
 
+const RENOVATION_RATE := 0.75
+
 const DEFINITIONS := {
     &"double_dock": {
         "zone": "A",
@@ -21,6 +23,8 @@ const DEFINITIONS := {
         "group": "storage",
         "label": "高速ピックラック",
         "effect": "保管+12 / ピック25%高速",
+        "strength": "ピック25%高速",
+        "weakness": "保管容量は高密度ラックより4箱少ない",
         "cost": 13000,
     },
     &"high_density_rack": {
@@ -28,6 +32,8 @@ const DEFINITIONS := {
         "group": "storage",
         "label": "高密度ラック",
         "effect": "保管+16 / ピック14%低速",
+        "strength": "保管容量 +16",
+        "weakness": "ピック処理が14%低速",
         "cost": 12000,
     },
     &"parallel_pack": {
@@ -35,6 +41,8 @@ const DEFINITIONS := {
         "group": "packing",
         "label": "並列梱包ライン",
         "effect": "2箱同時 / 1箱あたり10%低速",
+        "strength": "2箱を同時処理",
+        "weakness": "1箱あたりの処理は10%低速",
         "cost": 14000,
     },
     &"fast_pack_cell": {
@@ -42,6 +50,8 @@ const DEFINITIONS := {
         "group": "packing",
         "label": "高速梱包セル",
         "effect": "1箱処理 / 梱包42%高速",
+        "strength": "1箱を42%高速処理",
+        "weakness": "同時処理は1箱のみ",
         "cost": 13000,
     },
 }
@@ -59,6 +69,20 @@ func info(kind: StringName) -> Dictionary:
 
 func cost(kind: StringName) -> int:
     return int(info(kind).get("cost", 0))
+
+
+func renovation_cost(kind: StringName) -> int:
+    if not is_known(kind):
+        return 0
+    return int(round(float(cost(kind)) * RENOVATION_RATE))
+
+
+func strength(kind: StringName) -> String:
+    return String(info(kind).get("strength", effect(kind)))
+
+
+func weakness(kind: StringName) -> String:
+    return String(info(kind).get("weakness", ""))
 
 
 func group(kind: StringName) -> String:

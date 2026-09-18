@@ -235,6 +235,125 @@ func _same_zone_staffing(other: Dictionary) -> bool:
     return true
 
 
+func rank2_v2_equipment_kinds_for_zone(zone_key: String) -> Array[StringName]:
+    match zone_key:
+        "storage":
+            return [&"fast_pick_rack", &"high_density_rack"]
+        "packing":
+            return [&"parallel_pack", &"fast_pack_cell"]
+    return []
+
+
+func facility_renovation_cost(kind: StringName) -> int:
+    if not _rank2_facilities.is_known(kind):
+        return 0
+    return _rank2_facilities.renovation_cost(kind)
+
+
+func rank2_v2_equipment_action_info(kind: StringName) -> Dictionary:
+    if not _rank2_facilities.is_known(kind):
+        return {}
+    var group := _rank2_facilities.group(kind)
+    if group not in ["storage", "packing"]:
+        return {}
+
+    var current := selected_facility_for_group(group)
+    var active := current == String(kind)
+    var renovating := not current.is_empty() and not active
+    var cost := facility_renovation_cost(kind) if renovating else facility_cost(kind)
+    return {
+        "kind": String(kind),
+        "label": _rank2_facilities.label(kind),
+        "group": group,
+        "active": active,
+        "current_kind": current,
+        "renovating": renovating,
+        "action": "active" if active else ("renovate" if renovating else "build"),
+        "cost": cost,
+        "fresh_cost": facility_cost(kind),
+        "renovation_cost": facility_renovation_cost(kind),
+        "strength": _rank2_facilities.strength(kind),
+        "weakness": _rank2_facilities.weakness(kind),
+        "effect": _rank2_facilities.effect(kind),
+    }
+
+
+func purchase_facility(kind: StringName) -> Dictionary:
+    if not _rank2_facilities.is_known(kind):
+        return {"ok": false, "reason": "unknown", "cost": 0}
+
+    var group := _rank2_facilities.group(kind)
+    if group not in ["storage", "packing"]:
+        return super.purchase_facility(kind)
+    if facility_rank < 2:
+        return {"ok": false, "reason": "rank", "cost": facility_cost(kind)}
+
+    var current := selected_facility_for_group(group)
+    if current == String(kind):
+        return {"ok": false, "reason": "owned", "cost": facility_cost(kind)}
+
+    var renovating := not current.is_empty()
+    var cost := facility_renovation_cost(kind) if renovating else facility_cost(kind)
+    if money < cost:
+        return {"ok": false, "reason": "funds", "cost": cost}
+
+    var measurement_kind := StringName(
+        "renovation_%s" % String(kind)
+        if renovating
+        else "facility_%s" % String(kind)
+    )
+    var before := _measurement.begin_investment(measurement_kind, cost, sim_time)
+
+    money -= cost
+
+    if group == "storage":
+        var old_bonus := _storage_capacity_bonus(StringName(current)) if renovating else 0
+        var new_bonus := _storage_capacity_bonus(kind)
+        rack_capacity = maxi(1, rack_capacity - old_bonus + new_bonus)
+
+    for candidate in _rank2_facilities.all_kinds():
+        if _rank2_facilities.group(candidate) == group:
+            facilities[String(candidate)] = false
+    facilities[String(kind)] = true
+
+    var event_type := "facility_renovated" if renovating else "facility_purchased"
+    _emit(event_type, {
+        "kind": String(kind),
+        "from_kind": current,
+        "to_kind": String(kind),
+        "zone": _rank2_facilities.zone(kind),
+        "group": group,
+        "label": _rank2_facilities.label(kind),
+        "cost": cost,
+        "fresh_cost": facility_cost(kind),
+        "renovation_cost": facility_renovation_cost(kind),
+        "zones_completed": expansion_zones_completed(),
+        "measurement_kind": String(measurement_kind),
+        "measurement_window": FlowMeasurement.WINDOW_SECONDS,
+        "before": before,
+    })
+    return {
+        "ok": true,
+        "action": "renovate" if renovating else "build",
+        "from_kind": current,
+        "to_kind": String(kind),
+        "cost": cost,
+        "zones_completed": expansion_zones_completed(),
+        "measurement_kind": String(measurement_kind),
+        "measurement_window": FlowMeasurement.WINDOW_SECONDS,
+        "before": before,
+    }
+
+
+func _storage_capacity_bonus(kind: StringName) -> int:
+    match kind:
+        &"fast_pick_rack":
+            return 12
+        &"high_density_rack":
+            return 16
+    return 0
+
+
 func rank1_project_kinds() -> Array[StringName]:
     return [
         PROJECT_RACK_WING,
@@ -432,6 +551,12 @@ func rank1_project_cost(kind: StringName) -> int:
 
 
 func _packing_capacity() -> int:
+    # Rank 1's Second Packing Bench teaches parallelism. Once a Rank 2 PACKING
+    # system is installed, that system replaces the Rank 1 bench behavior so
+    # Fast Pack Cell retains its intended one-job weakness.
+    if facility_rank >= 2 and not selected_facility_for_group("packing").is_empty():
+        return super._packing_capacity()
+
     var capacity := super._packing_capacity()
     if rank1_project_owned(PROJECT_SECOND_PACKING_BENCH):
         capacity = maxi(capacity, 2)

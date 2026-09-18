@@ -21,6 +21,7 @@ func _on_sim_event(event: Dictionary) -> void:
     if event_type in [
         "upgrade_purchased",
         "facility_purchased",
+        "facility_renovated",
         "receiving_annex_purchased",
         "routing_changed",
         "inbound_carrier_program_purchased",
