@@ -1,4 +1,4 @@
-# LOGISTICS BOSS — Native Release Checklist
+# FLOTRA — Native Release Checklist
 
 Status: **code-level RC candidate / native preparation pending**
 Engine: Godot 4.7.2 Standard / GDScript / GL Compatibility
