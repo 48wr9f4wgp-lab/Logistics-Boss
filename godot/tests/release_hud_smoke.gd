@@ -117,6 +117,37 @@ func _run() -> void:
         _fail("reset modal actions must remain explicit and readable")
         return
 
+    hud._queue_shipment_toast({"value": 500, "count": 1})
+    hud._queue_shipment_toast({"value": 500, "count": 1})
+    hud._queue_shipment_toast({"value": 500, "count": 1})
+    if hud._shipment_toast_count != 3 or hud._shipment_toast_value != 1500:
+        _fail("shipment toast batching must accumulate authoritative shipment count and value")
+        return
+    hud._shipment_toast_batch_elapsed = GameHud.SHIPMENT_TOAST_BATCH_SECONDS
+    hud._flush_shipment_toast()
+    if hud._toast.text != "出荷 ×3  +¥1,500":
+        _fail("shipment toast batching must present a single compact aggregate")
+        return
+    if hud._shipment_toast_count != 0 or hud._shipment_toast_value != 0:
+        _fail("shipment toast batch must clear after display")
+        return
+
+    hud._show_toast("重要通知")
+    hud._queue_shipment_toast({"value": 500, "count": 1})
+    hud._shipment_toast_batch_elapsed = GameHud.SHIPMENT_TOAST_BATCH_SECONDS
+    hud._flush_shipment_toast()
+    if hud._toast.text != "重要通知" or hud._shipment_toast_count != 1:
+        _fail("shipment toast must not overwrite higher-priority feedback")
+        return
+    hud._priority_toast_timer = 0.0
+    hud._flush_shipment_toast()
+    if hud._toast.text != "出荷  +¥500":
+        _fail("deferred shipment toast must appear after priority feedback clears")
+        return
+
+    hud._toast_panel.visible = false
+    hud._toast_timer = 0.0
+
     hud._sheet.visible = true
     await process_frame
     if scroll.get_v_scroll_bar().max_value <= scroll.size.y:

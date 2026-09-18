@@ -18,9 +18,15 @@ var _inbound_button: Button
 var _outbound_button: Button
 var _sheet: PanelContainer
 var _upgrade_buttons: Dictionary = {}
+const SHIPMENT_TOAST_BATCH_SECONDS := 1.5
+
 var _toast_panel: PanelContainer
 var _toast: Label
 var _toast_timer := 0.0
+var _priority_toast_timer := 0.0
+var _shipment_toast_count := 0
+var _shipment_toast_value := 0
+var _shipment_toast_batch_elapsed := 0.0
 var _speed_index := 1
 var _speeds := [0.0, 1.0, 2.0, 4.0]
 
@@ -51,6 +57,14 @@ func _process(delta: float) -> void:
         return
 
     _render()
+
+    if _priority_toast_timer > 0.0:
+        _priority_toast_timer = maxf(0.0, _priority_toast_timer - delta)
+
+    if _shipment_toast_count > 0:
+        _shipment_toast_batch_elapsed += maxf(0.0, delta)
+        if _shipment_toast_batch_elapsed >= SHIPMENT_TOAST_BATCH_SECONDS:
+            _flush_shipment_toast()
 
     if _toast_timer > 0.0:
         _toast_timer -= delta
@@ -427,15 +441,41 @@ func _is_maxed(kind: StringName) -> bool:
 func _on_sim_event(event: Dictionary) -> void:
     match String(event.get("type", "")):
         "shipment":
-            _show_toast(_copy("出荷", "SHIPPED") + " +¥%s" % _format_number(int(event.get("value", 0))))
+            _queue_shipment_toast(event)
         "upgrade_purchased":
             _render()
 
 
-func _show_toast(text: String) -> void:
+func _queue_shipment_toast(event: Dictionary) -> void:
+    if _shipment_toast_count <= 0:
+        _shipment_toast_batch_elapsed = 0.0
+    _shipment_toast_count += maxi(1, int(event.get("count", 1)))
+    _shipment_toast_value += maxi(0, int(event.get("value", 0)))
+
+
+func _flush_shipment_toast() -> void:
+    if _shipment_toast_count <= 0:
+        return
+    if _priority_toast_timer > 0.0:
+        return
+
+    var label := _copy("出荷", "SHIPPED")
+    var text := "%s  +¥%s" % [label, _format_number(_shipment_toast_value)]
+    if _shipment_toast_count > 1:
+        text = "%s ×%d  +¥%s" % [label, _shipment_toast_count, _format_number(_shipment_toast_value)]
+
+    _show_toast(text, false)
+    _shipment_toast_count = 0
+    _shipment_toast_value = 0
+    _shipment_toast_batch_elapsed = 0.0
+
+
+func _show_toast(text: String, priority: bool = true) -> void:
     _toast.text = text
     _toast_panel.visible = true
     _toast_timer = 1.5
+    if priority:
+        _priority_toast_timer = 1.5
 
 
 func _copy(jp: String, en: String) -> String:
