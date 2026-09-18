@@ -1,11 +1,11 @@
-# Logistics Boss — Capital Expansion v2
+# FLOTRA — Capital Expansion v2
 
 Status: implementation baseline / 2026-09-15
 Authority: title-specific continuation of `CAPITAL_EXPANSION_V1.md`.
 
 ## Product goal
 
-Capital Expansion v2 deepens the existing capital loop without turning Logistics Boss into a numeric upgrade clicker or prescribed puzzle.
+Capital Expansion v2 deepens the existing capital loop without turning FLOTRA into a numeric upgrade clicker or prescribed puzzle.
 
 Core loop remains:
 
