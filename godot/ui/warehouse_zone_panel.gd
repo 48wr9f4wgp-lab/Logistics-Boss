@@ -19,6 +19,7 @@ var _capital: Label
 var _operations_action: Button
 var _staffing_move_buttons: Array[Button] = []
 var _capital_action: Button
+var _rank2_capital_buttons: Array[Button] = []
 var _action_message: Label
 var _close_button: Button
 var _preview_kind: StringName = &""
@@ -182,6 +183,17 @@ func _build_panel() -> void:
     _capital_action.pressed.connect(_on_capital_action)
     capital_box.add_child(_capital_action)
 
+    for _index in 2:
+        var equipment_button := Button.new()
+        equipment_button.custom_minimum_size = Vector2(0, 56)
+        equipment_button.add_theme_font_override("font", JAPANESE_UI_FONT)
+        equipment_button.add_theme_font_size_override("font_size", 9)
+        equipment_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        equipment_button.pressed.connect(_on_rank2_capital_action.bind(equipment_button))
+        equipment_button.visible = false
+        capital_box.add_child(equipment_button)
+        _rank2_capital_buttons.append(equipment_button)
+
     _action_message = _label(10, Color(1.0, 0.78, 0.46))
     _action_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     column.add_child(_action_message)
@@ -198,6 +210,7 @@ func _render() -> void:
     _operations.text = _operations_text(_selected_zone)
     _capital.text = "設備判断はこのZoneで行う"
     _render_rank1_actions()
+    _render_rank2_equipment_actions()
     _render_direct_staffing_actions()
 
 
@@ -261,6 +274,89 @@ func _render_rank1_actions() -> void:
         ]
 
 
+func _render_rank2_equipment_actions() -> void:
+    for button in _rank2_capital_buttons:
+        button.visible = false
+        button.disabled = true
+        button.remove_meta("kind")
+
+    if sim == null or sim.facility_rank != 2:
+        return
+    if not sim.has_method("rank2_v2_equipment_kinds_for_zone") or not sim.has_method("rank2_v2_equipment_action_info"):
+        return
+
+    var kinds: Array = sim.call("rank2_v2_equipment_kinds_for_zone", _selected_zone)
+    if kinds.is_empty():
+        return
+
+    _capital.text = "設備方式を選ぶ｜改装は新規価格の75%"
+    for index in mini(_rank2_capital_buttons.size(), kinds.size()):
+        var kind := StringName(kinds[index])
+        var info: Dictionary = sim.call("rank2_v2_equipment_action_info", kind)
+        if info.is_empty():
+            continue
+
+        var button := _rank2_capital_buttons[index]
+        var active := bool(info.get("active", false))
+        var renovating := bool(info.get("renovating", false))
+        var cost := int(info.get("cost", 0))
+        button.visible = true
+        button.disabled = active
+        button.set_meta("kind", String(kind))
+
+        if active:
+            button.text = "✓ %s｜稼働中" % String(info.get("label", String(kind)))
+            if _preview_kind == kind:
+                _preview_kind = &""
+            continue
+
+        if _preview_kind == kind:
+            button.text = "%s｜%s｜¥%s" % [
+                "改装する" if renovating else "建設する",
+                String(info.get("label", String(kind))),
+                _format_money(cost),
+            ]
+            _action_message.text = "強み｜%s\n弱み｜%s\n%s・返金なし" % [
+                String(info.get("strength", "")),
+                String(info.get("weakness", "")),
+                "改装" if renovating else "新規建設",
+            ]
+        else:
+            button.text = "%s｜%s｜¥%s" % [
+                "改装内容を見る" if renovating else "内容を見る",
+                String(info.get("label", String(kind))),
+                _format_money(cost),
+            ]
+
+
+func _on_rank2_capital_action(button: Button) -> void:
+    if sim == null or not sim.has_method("rank2_v2_equipment_action_info"):
+        return
+    var kind := StringName(String(button.get_meta("kind", "")))
+    if kind == &"":
+        return
+
+    if _preview_kind != kind:
+        _preview_kind = kind
+        _render()
+        return
+
+    if not sim.has_method("purchase_facility"):
+        return
+    var result: Dictionary = sim.call("purchase_facility", kind)
+    if bool(result.get("ok", false)):
+        var action := String(result.get("action", "build"))
+        _preview_kind = &""
+        _render()
+        _action_message.text = "%s完了｜25秒のBefore / After計測開始" % (
+            "改装" if action == "renovate" else "建設"
+        )
+        return
+
+    _render()
+    _action_message.text = _purchase_failure_text(result)
+
+
 func _render_direct_staffing_actions() -> void:
     for button in _staffing_move_buttons:
         button.visible = false
@@ -275,7 +371,7 @@ func _render_direct_staffing_actions() -> void:
 
     var target := String(sim.call("staffing_zone_for_warehouse_zone", _selected_zone))
     if target.is_empty():
-        if _selected_zone == "packing":
+        if _selected_zone == "packing" and _action_message.text.is_empty():
             _action_message.text = "PACKINGは設備処理｜Worker直接配置なし"
         return
 
@@ -299,7 +395,7 @@ func _render_direct_staffing_actions() -> void:
         button.set_meta("to_zone", target)
         button.text = "%sから1名移す" % _staffing_zone_label(source)
 
-    if cooldown > 0.0:
+    if cooldown > 0.0 and _action_message.text.is_empty():
         _action_message.text = "配置変更後の観察中｜あと%d秒" % int(ceil(cooldown))
 
 
@@ -472,15 +568,19 @@ func _zone_evidence(zone_key: String) -> String:
 
 func _current_equipment(zone_key: String) -> String:
     if zone_key == "storage":
+        var storage := _selected_facility_label("storage")
+        if not storage.is_empty():
+            return storage
         if sim.has_method("rank1_project_owned") and bool(sim.call("rank1_project_owned", StringName("rack_wing"))):
             return "Rack Wing"
-        var storage := _selected_facility_label("storage")
-        return storage if not storage.is_empty() else "Small Rack"
+        return "Small Rack"
     if zone_key == "packing":
+        var packing := _selected_facility_label("packing")
+        if not packing.is_empty():
+            return packing
         if sim.has_method("rank1_project_owned") and bool(sim.call("rank1_project_owned", StringName("second_packing_bench"))):
             return "Dual Packing Bench"
-        var packing := _selected_facility_label("packing")
-        return packing if not packing.is_empty() else "Standard Pack Bench"
+        return "Standard Pack Bench"
     if zone_key == "inbound":
         if sim.has_method("rank1_project_owned") and bool(sim.call("rank1_project_owned", StringName("forklift_project"))):
             return "Forklift Automation"
