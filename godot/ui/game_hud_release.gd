@@ -11,10 +11,16 @@ const RELEASE_STATUS_TOP := 128.0
 const RELEASE_WAVE_BOTTOM := 174.0
 const RELEASE_FTUE_BOTTOM := 190.0
 
+const HUD_SURFACE := Color(0.012, 0.034, 0.048, 0.955)
+const HUD_SURFACE_STRONG := Color(0.009, 0.027, 0.039, 0.985)
+const HUD_SHADOW := Color(0.0, 0.0, 0.0, 0.44)
+const HUD_ACCENT_CYAN := Color(0.18, 0.72, 0.96, 0.86)
+
 
 func _ready() -> void:
     super._ready()
     _compact_command_hud()
+    _apply_premium_hud_finish()
     if _bottleneck != null:
         _bottleneck.add_theme_font_size_override("font_size", 11)
 
@@ -58,6 +64,56 @@ func _compact_command_hud() -> void:
         _ftue_coach.offset_bottom = RELEASE_FTUE_BOTTOM
 
 
+func _apply_premium_hud_finish() -> void:
+    # The rendered capture showed a clean but very flat outline-only HUD. Add a
+    # small amount of depth while preserving the restrained command-center look.
+    # No blur, animated shader or full-screen overlay is used on the mobile path.
+    var metrics := _find_metric_row()
+    if metrics != null:
+        var accents := [
+            Color(1.0, 0.69, 0.25, 0.82),
+            Color(0.42, 0.64, 1.0, 0.82),
+            Color(0.35, 0.91, 0.73, 0.82),
+            Color(1.0, 0.66, 0.32, 0.82),
+        ]
+        var accent_index := 0
+        for child in metrics.get_children():
+            if child is not PanelContainer:
+                continue
+            var accent: Color = accents[mini(accent_index, accents.size() - 1)]
+            (child as PanelContainer).add_theme_stylebox_override(
+                "panel",
+                _premium_panel_style(HUD_SURFACE, accent, 12, 4)
+            )
+            accent_index += 1
+
+    if _bottleneck_panel != null:
+        _bottleneck_panel.add_theme_stylebox_override(
+            "panel",
+            _premium_panel_style(HUD_SURFACE, Color(0.18, 0.56, 0.72, 0.86), 14, 4)
+        )
+
+    var dock := _find_bottom_dock()
+    if dock != null:
+        dock.add_theme_stylebox_override(
+            "panel",
+            _premium_panel_style(HUD_SURFACE_STRONG, HUD_ACCENT_CYAN, 18, 6)
+        )
+
+
+func _premium_panel_style(background: Color, border: Color, radius: int, shadow_size: int) -> StyleBoxFlat:
+    var style := StyleBoxFlat.new()
+    style.bg_color = background
+    style.border_color = border
+    style.set_border_width_all(1)
+    style.set_corner_radius_all(radius)
+    style.border_blend = true
+    style.shadow_color = HUD_SHADOW
+    style.shadow_size = shadow_size
+    style.shadow_offset = Vector2(0.0, 2.0)
+    return style
+
+
 func _sync_release_overlay_visibility() -> void:
     if _wave_panel == null or _ftue_coach == null:
         return
@@ -87,6 +143,16 @@ func _find_metric_row() -> HBoxContainer:
                 metric_panels += 1
         if metric_panels >= 4:
             return row
+    return null
+
+
+func _find_bottom_dock() -> PanelContainer:
+    for child in get_children():
+        if child is not PanelContainer:
+            continue
+        var panel := child as PanelContainer
+        if is_equal_approx(panel.anchor_top, 1.0) and is_equal_approx(panel.anchor_bottom, 1.0):
+            return panel
     return null
 
 
