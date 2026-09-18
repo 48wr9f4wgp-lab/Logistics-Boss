@@ -140,9 +140,34 @@ Verified interaction:
 - renovation physically replaces the old 3D equipment;
 - renovation emits investment feedback and starts a fresh authoritative Before/After measurement.
 
-Still incomplete before playtest:
-- physical ghost/planned geometry during preview;
-- clearer selected-Zone build/renovation transition / reward moment.
+The Rank 2 renovation implementation is complete. Construction/reward presentation was completed separately in PR #115.
+
+### Construction / Reward Presentation — DONE
+
+PR #115 — `Add construction preview and reward presentation`
+- merge commit: `bff7b090a111df5be3fa0f2191dac97c45244901`
+- Godot CI #278: **success**
+- iOS Export Smoke #95: **success**
+- Rendered Visual Capture #76: **success**
+- Android Export Smoke #90: **success** (historical technical reference only)
+- dedicated construction/reward presentation smoke: **success**
+- `rank2_preview.png` 390×844: **human inspected / pass**
+
+Verified presentation behavior:
+- first structural-equipment tap remains a no-spend preview;
+- Rank 1 Rack Wing / Second Packing Bench / Forklift Project show physical planned ghost geometry;
+- Rank 2 Fast Pick Rack / High Density Rack / Parallel Pack Line / Fast Pack Cell show physical planned ghost geometry;
+- ghost is semi-transparent and sits in the selected warehouse Zone;
+- selecting another equipment choice replaces the old ghost;
+- switching Zones or closing the Zone Panel clears stale preview geometry;
+- successful authoritative build/renovation clears the ghost;
+- real equipment geometry becomes the visible result;
+- a short selected-Zone construction emphasis bridges the transition;
+- authoritative Before/After measurement remains the outcome source;
+- the preview state does not use a full-screen modal and keeps the warehouse visible;
+- fresh `rank2_preview.png` shows STORAGE Zone Panel + existing warehouse + High Density Rack planned preview together at 390×844.
+
+The planned Vertical Slice v2 implementation is now complete. Human iPhone Web Core Experience evidence remains pending and is the next gate.
 
 
 ## 1. Product / canonical intent
@@ -182,17 +207,17 @@ Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
 Current verified main baseline:
-- PR #113 — `Add Rank 2 STORAGE and PACKING renovation`
-- merge commit: `16053801c0aef470acd34af95f21db29c8d04bd7`
-- Godot CI #273: **success**
-- iOS Export Smoke #91: **success**
-- Android Export Smoke #85: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
-- Rendered Visual Capture #71: **success**
-- dedicated Rank 2 v2 renovation smoke: **success**
-- paired STORAGE/PACKING dominance smoke: **success**
+- PR #115 — `Add construction preview and reward presentation`
+- merge commit: `bff7b090a111df5be3fa0f2191dac97c45244901`
+- Godot CI #278: **success**
+- iOS Export Smoke #95: **success**
+- Android Export Smoke #90: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
+- Rendered Visual Capture #76: **success**
+- dedicated construction/reward presentation smoke: **success**
 - runtime save schema remains **9**
-- fresh final Rank 2 390×844 capture: **human inspected / pass**
-- PR #111 direct Zone staffing, PR #109 Rank 1 v2, and PR #107 Interaction Skeleton remain included
+- `rank2_preview.png` 390×844: **human inspected / pass**
+- Vertical Slice v2 planned implementation: **complete / human iPhone Web playtest pending**
+- PR #113 renovation, PR #111 staffing, PR #109 Rank 1 v2, and PR #107 Interaction Skeleton remain included
 
 Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
@@ -226,6 +251,7 @@ Recent QA/product milestones:
 - PR #109: Rank 1 Core Experience v2 — Rack Wing / Second Packing Bench / Worker Hire / Forklift Project / explicit Warehouse Expansion / Zone-first FTUE / schema 8 migration; CI #267 / iOS #87 / Render #65 passed and developed Rank 1 + Rank 2 captures human-inspected
 - PR #111: direct Zone staffing — RECEIVING/PICKING/SHIPPING source→target reassignment, one-worker floor, 30-second observation lock, Zone Panel controls, Management staffing overview, schema 9 persistence; CI #269 / iOS #88 / Render #67 passed
 - PR #113: Rank 2 STORAGE/PACKING renovation — paid A⇄B replacement, no refund, authoritative geometry/Domain switching, two-step Zone preview/commit, renovation measurement, paired dominance proof; CI #273 / iOS #91 / Render #71 passed and final Rank 2 capture human-inspected
+- PR #115: construction/reward presentation — physical planned-equipment ghost, stale-preview clearing, authoritative commit → real geometry transition, selected-Zone reward emphasis, `rank2_preview.png`; CI #278 / iOS #95 / Render #76 passed and preview capture human-inspected
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -580,55 +606,74 @@ Release / QA:
 
 ## 14. Immediate next task
 
-FLOTRA remains in **ACTIVE_PHASE = VERTICAL_SLICE** for Core Experience v2.
+FLOTRA remains in **ACTIVE_PHASE = VERTICAL_SLICE** for Core Experience v2 until the human playtest passes.
 
 ### LAST VERIFIED DONE
 
-**Rank 2 STORAGE / PACKING Renovation — DONE / PR #113**
+**Construction / Reward Presentation — DONE / PR #115**
 
 Verified:
-- Interaction Skeleton, Rank 1 v2, and direct Zone staffing remain intact;
-- STORAGE supports Fast Pick Rack ⇄ High Density Rack paid renovation;
-- PACKING supports Parallel Pack Line ⇄ Fast Pack Cell paid renovation;
-- one active mode per Zone;
-- renovation costs 75% of the target fresh-build price in the current Vertical Slice and gives no refund;
-- downsizing STORAGE never destroys existing stock;
-- Rank 2 PACKING replaces Rank 1 Second Packing Bench behavior so Fast Pack Cell retains its one-job weakness;
-- Zone Panel uses explicit preview → second-step commit with strength / weakness / cost;
-- 3D equipment geometry is replaced with the active mode;
-- renovation starts a new authoritative Before/After measurement;
-- STORAGE dominance: Fast Pick wins order backlog 18 vs 12; High Density wins storage absorption 8 vs 4;
-- PACKING dominance: Parallel wins long queue 106 vs 102; Fast Cell wins latency 1.75s vs 3.35s;
-- Godot CI #273 / iOS Export Smoke #91 / Rendered Visual Capture #71 green;
-- final fresh Rank 2 portrait render human-inspected / pass.
+- Interaction Skeleton, Rank 1 v2, direct Zone staffing, and Rank 2 STORAGE/PACKING renovation remain intact;
+- Rank 1 and Rank 2 structural choices now show physical semi-transparent planned geometry before commitment;
+- first preview tap never spends cash;
+- equipment-choice switch replaces the old ghost;
+- Zone switch / Zone Panel close removes stale ghost geometry;
+- successful authoritative commit clears ghost and exposes real equipment geometry;
+- selected Zone receives a short construction/reward emphasis;
+- authoritative Before/After measurement remains the result source;
+- Godot CI #278 / iOS Export Smoke #95 / Rendered Visual Capture #76 green;
+- `rank2_preview.png` at 390×844 human-inspected / pass;
+- the warehouse remains visible behind the STORAGE Zone Panel and planned High Density Rack preview;
+- planned Vertical Slice v2 implementation is complete.
 
-### NEXT — construction / reward presentation
+### NEXT — iPhone Web Core Experience playtest
 
-Complete the remaining presentation contract as the next small, reviewable PR:
+Do **not** add more equipment or redesign Rank 3 before this test.
 
-1. **physical ghost / planned geometry** appears after the player previews a Rank 1 or Rank 2 structural project;
-2. ghost clearly occupies the part of the selected Zone that will change without hiding adjacent logistics;
-3. explicit commit transitions ghost → real equipment;
-4. build/renovation visually emphasizes the selected Zone for a short readable moment;
-5. the warehouse remains visible; do not replace the reward with a full-screen modal;
-6. authoritative Before/After measurement remains the outcome source;
-7. preview/cancel/Zone-switch paths cannot spend money or leave stale ghost geometry.
+Use the current engineering Web preview on the user's iPhone and run a normal fresh/representative session. Re-test the original failure modes:
 
-Acceptance focus:
-- before spending, the player can point to **what physical area will change**;
-- immediately after spending, the player can see **what actually changed**;
-- the physical reward moment and measurement are linked without the Director recommending the next answer;
-- 390×844 remains readable with no precision-tap requirement.
+1. **Management-clicker drift**
+   - Does normal play still become “open Management → buy whatever is available → repeat”?
+   - PASS direction: observation of the warehouse and Zone interaction naturally drive decisions.
 
-After this presentation pass is verified:
-- publish/use the normal engineering Web preview path;
-- run the next **iPhone Web Core Experience playtest**;
-- specifically retest the original failures: Management-clicker drift, unclear equipment consequences, unreadable decision hierarchy, and repetitive decision feel.
+2. **Equipment / facility consequence recognition**
+   - Before spending, can the player identify where the planned physical change will occur?
+   - After commit, can the player identify what physically changed without a side-by-side screenshot?
+   - Can the player identify the operational consequence after the measurement window?
 
-**STOP / SCOPE CONDITION:** do not implement deferred Rank 2 INBOUND/PICKING/SHIPPING v2 equipment, Rank 3 redesign, advanced sorter/ASRS/cross-dock content, or release work before the iPhone Web playtest.
+3. **Decision hierarchy / action → consequence**
+   - Is it clear what is happening in the selected Zone?
+   - Is the distinction between OPERATIONS and CAPITAL understandable?
+   - Are strength, weakness, cost, and current equipment readable without hunting through Management?
 
-Return to DEVICE_VALIDATION only if the complete v2 slice passes the human Core Experience playtest plus CI/save/visual evidence.
+4. **Decision repetition**
+   - Does Rank 1 → Rank 2 introduce meaningfully different reasoning rather than repeated scalar-upgrade clicking?
+   - Do STORAGE/PACKING A↔B trade-offs feel like context-dependent choices rather than obvious upgrades?
 
-Native representative-iPhone evidence remains required before GREENLIGHT.
+Also verify touch behavior:
+- Zone tap is reliable;
+- first equipment tap previews rather than spends;
+- ghost appears in the intended Zone;
+- switching equipment/Zone clears the old ghost;
+- second explicit tap commits;
+- warehouse remains visible while the Zone Panel is open;
+- no horizontal overflow / tiny precision target.
 
-Do not start RELEASE_ENABLEMENT, production signing, App Store Connect/TestFlight production work, Store assets, or active Android production work before PRODUCTION_DECISION=GO.
+### Playtest routing
+
+If the human iPhone Web playtest **passes** the Core Experience criteria:
+- record evidence;
+- mark the targeted v2 rework complete;
+- route **VERTICAL_SLICE → DEVICE_VALIDATION**;
+- resume remaining device evidence, while native physical-iPhone evidence stays blocked/deferred until Mac/Xcode access exists.
+
+If the playtest **fails**:
+- remain in VERTICAL_SLICE;
+- identify the smallest failing layer (interaction, information hierarchy, reward legibility, decision design);
+- fix that layer only;
+- do not mask the failure by adding more content.
+
+**STOP / SCOPE CONDITION:** deferred Rank 2 INBOUND/PICKING/SHIPPING v2 equipment, Rank 3 redesign, advanced sorter/ASRS/cross-dock content, and release work remain out of scope until this playtest result is known.
+
+PRODUCTION_DECISION remains **UNDECIDED**.
+RELEASE_APPROVAL remains **NOT_REQUESTED**.
