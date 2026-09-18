@@ -16,12 +16,15 @@ var _staffing_buttons: Dictionary = {}
 var _facility_header: Label
 var _facility_zone_labels: Dictionary = {}
 var _facility_buttons: Dictionary = {}
+var _reset_button: Button
+var _reset_dialog: ConfirmationDialog
 
 
 func _ready() -> void:
     super._ready()
     _append_forklift_upgrade()
     _build_progression_section()
+    _build_reset_control()
     _build_measurement_banner()
     _tune_mobile_hud()
     _apply_japanese_font_recursive(self)
@@ -394,6 +397,51 @@ func _find_upgrade_list(node: Node) -> VBoxContainer:
         if found != null:
             return found
     return null
+
+
+func _build_reset_control() -> void:
+    var list := _find_upgrade_list(_sheet)
+    if list == null:
+        return
+
+    var label := Label.new()
+    label.text = "テスト / データ管理"
+    label.add_theme_font_size_override("font_size", 11)
+    label.add_theme_color_override("font_color", Color(0.68, 0.72, 0.76))
+    list.add_child(label)
+
+    _reset_button = Button.new()
+    _reset_button.text = "テストデータをリセット\n初期状態からやり直す"
+    _reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    _reset_button.custom_minimum_size = Vector2(0, 72)
+    _reset_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+    _reset_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _reset_button.add_theme_font_size_override("font_size", 11)
+    _apply_button_style(_reset_button, false)
+    _reset_button.add_theme_stylebox_override(
+        "normal",
+        _panel_style(Color(0.075, 0.035, 0.035, 0.98), Color(0.78, 0.30, 0.28, 0.92), 12)
+    )
+    _reset_button.pressed.connect(_request_reset_confirmation)
+    list.add_child(_reset_button)
+
+    _reset_dialog = ConfirmationDialog.new()
+    _reset_dialog.title = "テストデータをリセット"
+    _reset_dialog.dialog_text = "進行状況・セーブ・バックアップ・チュートリアル完了状態を削除し、RANK 1の初期状態からやり直します。\n\nこの操作は元に戻せません。"
+    _reset_dialog.confirmed.connect(_confirm_reset_progress)
+    add_child(_reset_dialog)
+    _reset_dialog.get_ok_button().text = "リセット"
+    _reset_dialog.get_cancel_button().text = "キャンセル"
+
+
+func _request_reset_confirmation() -> void:
+    if _reset_dialog == null:
+        return
+    _reset_dialog.popup_centered(Vector2i(340, 250))
+
+
+func _confirm_reset_progress() -> void:
+    reset_progress_requested.emit()
 
 
 func _build_measurement_banner() -> void:

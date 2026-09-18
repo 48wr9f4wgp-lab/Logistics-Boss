@@ -89,6 +89,12 @@ func _run() -> void:
     if list == null or list.get_node_or_null("MobileBottomSpacer") == null:
         _fail("mobile management content must include bottom padding so the last action remains reachable")
         return
+    if hud._reset_button == null or not hud._reset_button.text.contains("リセット"):
+        _fail("management sheet must expose the confirmed test-data reset control")
+        return
+    if hud._reset_dialog == null:
+        _fail("test-data reset must require a confirmation dialog")
+        return
 
     hud._sheet.visible = true
     await process_frame
