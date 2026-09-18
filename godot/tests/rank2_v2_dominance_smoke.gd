@@ -88,13 +88,14 @@ func _storage_order_backlog(kind: StringName) -> int:
     sim.packed_queue = 0
 
     var counter := {"picked": 0}
-    sim.event_emitted.connect(func(event: Dictionary) -> void:
+    var on_event := func(event: Dictionary) -> void:
         if String(event.get("type", "")) == "picked":
             counter["picked"] = int(counter["picked"]) + 1
-    )
+    sim.event_emitted.connect(on_event)
 
     for _index in int(ceil(20.0 / STEP)):
         sim.step(STEP)
+    sim.event_emitted.disconnect(on_event)
     return int(counter["picked"])
 
 
@@ -131,13 +132,14 @@ func _packing_long_queue(kind: StringName) -> int:
     sim.packed_queue = 0
 
     var counter := {"completed": 0}
-    sim.event_emitted.connect(func(event: Dictionary) -> void:
+    var on_event := func(event: Dictionary) -> void:
         if String(event.get("type", "")) == "packing_complete":
             counter["completed"] = int(counter["completed"]) + 1
-    )
+    sim.event_emitted.connect(on_event)
 
     for _index in int(ceil(180.0 / STEP)):
         sim.step(STEP)
+    sim.event_emitted.disconnect(on_event)
     return int(counter["completed"])
 
 
@@ -154,13 +156,14 @@ func _packing_single_job_latency(kind: StringName) -> float:
     sim.packed_queue = 0
 
     var state := {"completed_at": INF}
-    sim.event_emitted.connect(func(event: Dictionary) -> void:
+    var on_event := func(event: Dictionary) -> void:
         if String(event.get("type", "")) == "packing_complete" and is_inf(float(state["completed_at"])):
-            state["completed_at"] = sim.sim_time
-    )
+            state["completed_at"] = float(event.get("at", INF))
+    sim.event_emitted.connect(on_event)
 
     for _index in int(ceil(6.0 / STEP)):
         sim.step(STEP)
         if not is_inf(float(state["completed_at"])):
             break
+    sim.event_emitted.disconnect(on_event)
     return float(state["completed_at"])
