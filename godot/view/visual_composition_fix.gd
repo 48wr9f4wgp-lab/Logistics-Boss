@@ -1,9 +1,10 @@
 extends Node3D
 class_name WarehouseVisualCompositionFix
 
-const BASE_FOV := 32.5
-const OVERVIEW_FOV := 38.5
-const OVERVIEW_START_DISTANCE := 20.5
+const HERO_CAMERA_DISTANCE := 15.2
+const BASE_FOV := 31.5
+const OVERVIEW_FOV := 38.0
+const OVERVIEW_START_DISTANCE := 19.5
 const OVERVIEW_MAX_DISTANCE := 25.0
 
 const PREMIUM_FLOOR := Color(0.072, 0.095, 0.112)
@@ -30,7 +31,7 @@ var warehouse_view: WarehouseView
 
 func bind(view: WarehouseView) -> void:
     warehouse_view = view
-    warehouse_view._camera_distance = 16.7
+    warehouse_view._camera_distance = HERO_CAMERA_DISTANCE
     warehouse_view._orbit_pitch = -0.69
     warehouse_view._orbit_yaw = -0.80
     if warehouse_view.sim != null and not warehouse_view.sim.event_emitted.is_connected(_on_domain_event):
