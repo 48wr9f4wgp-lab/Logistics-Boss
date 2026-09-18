@@ -13,7 +13,7 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_273_success_ios_export_91_success_android_export_85_success_render_capture_71_success",
+    "ci_latest_verified": "godot_278_success_ios_export_95_success_android_export_90_success_render_capture_76_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -37,7 +37,7 @@
     "ftue_core_loop_comprehension": "pass_pr99_ftue_stays_active_until_authoritative_measurement_completed_then_teaches_verdict_and_next_loop",
     "economy_progression_pacing": "pass_pr101_rank2_510s_frontier_best_adaptive_212_vs_best_fixed_shipping_202_after_storage_buffer_tune",
     "core_experience_v2_playtest": "fail_2026_09_18_ios_web_management_clicker_growth_not_legible_management_hard_to_parse_repetition_exposed",
-    "core_loop_e2e_v2": "pending_vertical_slice_v2_implementation",
+    "core_loop_e2e_v2": "automated_slice_pass_human_iphone_web_playtest_pending",
     "management_readability_v2": "fail_2026_09_18_ios_web_information_hierarchy_action_effect_unclear",
     "reward_growth_recognition_v2": "fail_2026_09_18_ios_web_equipment_and_facility_change_not_clear_during_normal_play",
     "legacy_core_loop_automation": "pass_pr74_valid_for_legacy_flow_not_v2_product_proof",
@@ -48,7 +48,9 @@
     "direct_zone_staffing": "pass_pr111_receiving_picking_shipping_direct_reassignment_floor1_cooldown_schema9",
     "rank2_v2_renovation": "pass_pr113_storage_fast_pick_high_density_packing_parallel_fast_cell_paid_bidirectional_renovation_no_refund_authoritative_measurement",
     "rank2_v2_dominance": "pass_pr113_storage_orders_fast18_dense12_storage_buffer_fast4_dense8_packing_long_parallel106_fast102_packing_latency_parallel3_35_fast1_75",
-    "rank2_v2_visuals": "pass_render_capture_71_human_inspected_rank2_rank3_no_visual_regression_zone_labels_readable"
+    "rank2_v2_visuals": "pass_render_capture_71_human_inspected_rank2_rank3_no_visual_regression_zone_labels_readable",
+    "construction_reward_presentation": "pass_pr115_rank1_rank2_physical_ghost_preview_zone_switch_close_clear_commit_zone_emphasis_authoritative_measurement",
+    "construction_preview_visuals": "pass_render_capture_76_rank2_preview_390x844_human_inspected_zone_panel_plus_high_density_ghost_warehouse_remains_visible"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -65,9 +67,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "PR #113 merged. Rank 2 Core Experience v2 STORAGE/PACKING renovation is implemented and verified. STORAGE supports Fast Pick Rack ⇄ High Density Rack paid A↔B renovation with authoritative capacity/pick-speed trade-offs; PACKING supports Parallel Pack Line ⇄ Fast Pack Cell paid A↔B renovation with authoritative parallel-throughput/single-job-latency trade-offs. Renovation costs 75% of the target fresh-build price with no refund. Replacing High Density with Fast Pick preserves existing inventory even if temporarily over nominal capacity. Rank 2 PACKING supersedes the Rank 1 Second Packing Bench behavior so Fast Pack Cell retains its one-job weakness. Zone Panel uses two-step preview/commit with strength/weakness/cost, geometry is physically replaced, investment/measurement feedback is wired, and Before/After measurement runs after renovation. Dominance evidence: STORAGE orders Fast 18 vs Dense 12; STORAGE buffer Fast 4 vs Dense 8; PACKING long queue Parallel 106 vs Fast 102; PACKING latency Parallel 3.35s vs Fast 1.75s. Godot CI #273, iOS Export Smoke #91, Rendered Visual Capture #71, Android Export Smoke #85 all succeeded. Fresh Rank 2 render was human-inspected and accepted.",
+  "last_verified_done": "PR #115 merged. Construction/reward presentation for Core Experience v2 is implemented and verified. Rank 1 Rack Wing, Second Packing Bench, and Forklift Project plus Rank 2 Fast Pick Rack, High Density Rack, Parallel Pack Line, and Fast Pack Cell now show physical semi-transparent planned geometry in the selected warehouse Zone before commitment. First preview tap does not spend cash; switching equipment replaces the old ghost; switching Zones or closing the Zone Panel clears stale preview geometry. Successful authoritative build/renovation clears the ghost, real equipment geometry becomes active, and a short selected-Zone construction emphasis bridges into the existing authoritative Before/After measurement. Godot CI #278, iOS Export Smoke #95, Rendered Visual Capture #76, Android Export Smoke #90 all succeeded. rank2_preview.png at 390x844 was human-inspected: the warehouse remains visible behind the STORAGE Zone Panel, the High Density Rack planned ghost is visible before spend, and strength/weakness/¥9,000 renovation information remains readable.",
   "blocked": "No Mac-independent implementation blocker for Vertical Slice v2. Native physical-iPhone DEVICE_VALIDATION remains deferred until Mac/Xcode access becomes available, but it is not the current active-phase blocker.",
-  "next": "Complete the remaining construction/reward presentation contract as the next focused PR: physical ghost/planned preview before commitment, clear selected-Zone emphasis through build/renovation, and readable transition from preview → commit → geometry change → authoritative measurement without obscuring adjacent logistics. Preserve the current two-step Zone Panel and renovation behavior. After this presentation pass is verified, run the next iPhone Web Core Experience playtest before adding any deferred Rank 2 Zones or redesigning Rank 3.",
+  "next": "Run the next iPhone Web Core Experience playtest on the current engineering preview before adding any more content. Re-test the four original failure modes: (1) play drifting into Management-clicker behavior, (2) equipment/facility change not being perceptible during ordinary play, (3) unclear information hierarchy or action→consequence in the Zone/Management UI, and (4) repetitive decision feel. Also verify preview→ghost→commit→physical change→measurement comprehension with normal touch interaction. Keep ACTIVE_PHASE=VERTICAL_SLICE until this human playtest passes; only then route back to DEVICE_VALIDATION.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -120,7 +122,7 @@
   },
   "vertical_slice_v2": {
     "change_packet": "VERTICAL_SLICE_V2_CHANGE_PACKET.md",
-    "implementation_state": "RANK2_STORAGE_PACKING_DONE",
+    "implementation_state": "IMPLEMENTATION_COMPLETE_PLAYTEST_PENDING",
     "locked_scope": [
       "3D warehouse as primary game board",
       "Zone-first normal equipment decisions",
@@ -181,14 +183,22 @@
       "renovation investment pulse and authoritative Before/After measurement",
       "paired dominance evidence for both STORAGE options",
       "paired dominance evidence for both PACKING options",
-      "fresh Rank 2 render human-inspected after renovation implementation"
+      "fresh Rank 2 render human-inspected after renovation implementation",
+      "physical planned-equipment ghost preview for Rank 1 structural Zone projects",
+      "physical planned-equipment ghost preview for Rank 2 STORAGE/PACKING equipment",
+      "preview never spends cash",
+      "equipment-preview replacement clears stale ghost geometry",
+      "Zone switch and Zone Panel close clear stale ghost geometry",
+      "successful commit transitions ghost to real equipment geometry",
+      "short selected-Zone construction/reward emphasis after authoritative commit",
+      "rank2_preview 390x844 visual evidence with Zone Panel and physical ghost human-inspected"
     ],
-    "next_step": "CONSTRUCTION_REWARD_PRESENTATION"
+    "next_step": "IPHONE_WEB_CORE_EXPERIENCE_PLAYTEST"
   },
   "latest_vertical_slice_v2_merge": {
-    "pr": 113,
-    "merge_commit": "16053801c0aef470acd34af95f21db29c8d04bd7",
-    "title": "Add Rank 2 STORAGE and PACKING renovation",
-    "evidence": "Godot CI #273, iOS Export Smoke #91, Rendered Visual Capture #71, Android Export Smoke #85 success; renovation smoke and paired dominance smoke passed; final Rank 2 fresh capture human-inspected"
+    "pr": 115,
+    "merge_commit": "bff7b090a111df5be3fa0f2191dac97c45244901",
+    "title": "Add construction preview and reward presentation",
+    "evidence": "Godot CI #278, iOS Export Smoke #95, Rendered Visual Capture #76, Android Export Smoke #90 success; dedicated construction/reward presentation smoke passed; rank2_preview.png human-inspected at 390x844"
   }
 }
