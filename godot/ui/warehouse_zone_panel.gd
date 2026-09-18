@@ -23,6 +23,8 @@ var _rank2_capital_buttons: Array[Button] = []
 var _action_message: Label
 var _close_button: Button
 var _preview_kind: StringName = &""
+var _notice_text := ""
+var _notice_until := 0.0
 
 
 func _ready() -> void:
@@ -214,13 +216,29 @@ func _render() -> void:
     _render_direct_staffing_actions()
 
 
+func _set_notice(text: String, seconds: float = 5.0) -> void:
+    _notice_text = text
+    _notice_until = (sim.sim_time if sim != null else 0.0) + maxf(0.0, seconds)
+
+
+func _render_notice() -> void:
+    if _action_message == null:
+        return
+    var now := sim.sim_time if sim != null else 0.0
+    if not _notice_text.is_empty() and now <= _notice_until:
+        _action_message.text = _notice_text
+    else:
+        _notice_text = ""
+        _action_message.text = ""
+
+
 func _render_rank1_actions() -> void:
     if _operations_action == null or _capital_action == null or _action_message == null:
         return
 
     _operations_action.visible = false
     _capital_action.visible = false
-    _action_message.text = ""
+    _render_notice()
 
     if sim == null or sim.facility_rank != 1 or not sim.has_method("rank1_project_info"):
         return
@@ -347,10 +365,10 @@ func _on_rank2_capital_action(button: Button) -> void:
     if bool(result.get("ok", false)):
         var action := String(result.get("action", "build"))
         _preview_kind = &""
-        _render()
-        _action_message.text = "%s完了｜25秒のBefore / After計測開始" % (
+        _set_notice("%s完了｜25秒のBefore / After計測開始" % (
             "改装" if action == "renovate" else "建設"
-        )
+        ), 6.0)
+        _render()
         return
 
     _render()
@@ -407,10 +425,11 @@ func _on_staffing_move(button: Button) -> void:
     var result: Dictionary = sim.call("reassign_zone_staffing", from_zone, to_zone)
     _render()
     if bool(result.get("ok", false)):
-        _action_message.text = "%s → %s｜1名再配置" % [
+        _set_notice("%s → %s｜1名再配置" % [
             _staffing_zone_label(from_zone),
             _staffing_zone_label(to_zone),
-        ]
+        ], 4.0)
+        _render()
         return
 
     match String(result.get("reason", "")):
