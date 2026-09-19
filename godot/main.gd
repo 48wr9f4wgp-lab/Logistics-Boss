@@ -43,7 +43,7 @@ func _ready() -> void:
 
     var zone_interaction: WarehouseZoneInteractionView = WarehouseZoneInteractionScript.new()
     view.add_child(zone_interaction)
-    zone_interaction.bind(view)
+    zone_interaction.bind(view, sim)
 
     var construction_preview: WarehouseConstructionPreviewView = WarehouseConstructionPreviewViewScript.new()
     view.add_child(construction_preview)
@@ -99,6 +99,8 @@ func _ready() -> void:
             hud._toggle_sheet()
         zone_panel.open_zone(zone_key)
     )
+    if hud.has_signal("zone_navigation_requested"):
+        hud.connect("zone_navigation_requested", Callable(zone_panel, "open_zone"))
     if hud._manage_button != null:
         hud._manage_button.pressed.connect(zone_panel.close)
 

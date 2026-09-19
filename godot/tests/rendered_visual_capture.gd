@@ -105,6 +105,37 @@ func _run() -> void:
     preview_stage.queue_free()
     await process_frame
 
+    # Capture the exact human-playtest failure surface: fresh Rank 1,
+    # Management open, no structural projects completed yet. The player must
+    # be able to see that Zone names are actionable and route from each
+    # unfinished project to its physical warehouse decision surface.
+    var nav_sim = _make_rank1_discoverability_sim()
+    var nav_stage := Node.new()
+    nav_stage.name = "Rank1ManagementNavigationCapture"
+    get_root().add_child(nav_stage)
+    var nav_context: Dictionary = _populate_stage(nav_stage, nav_sim)
+    var nav_hud = nav_context["hud"]
+    nav_hud._sheet.visible = true
+    nav_hud._apply_v2_primary_hud()
+    nav_hud._render_v2_management_overview()
+    nav_hud._render_v2_rank1_expansion()
+
+    await process_frame
+    await process_frame
+    await process_frame
+    await RenderingServer.frame_post_draw
+
+    var nav_image := get_root().get_texture().get_image()
+    assert(not nav_image.is_empty(), "Rank 1 management navigation capture must produce a non-empty image")
+    assert(nav_image.get_width() == 390 and nav_image.get_height() == 844, "Rank 1 management navigation capture must preserve portrait viewport")
+    var nav_output := capture_dir.path_join("rank1_management_navigation.png")
+    var nav_error := nav_image.save_png(nav_output)
+    assert(nav_error == OK, "Rank 1 management navigation PNG must save successfully: %s" % nav_output)
+    print("saved visual capture: %s" % nav_output)
+
+    nav_stage.queue_free()
+    await process_frame
+
     quit(0)
 
 
@@ -118,7 +149,7 @@ func _populate_stage(stage: Node, sim) -> Dictionary:
 
     var zone_interaction = ZoneInteractionScript.new()
     view.add_child(zone_interaction)
-    zone_interaction.bind(view)
+    zone_interaction.bind(view, sim)
 
     var pass2 = VisualPass2Script.new()
     view.add_child(pass2)
@@ -175,6 +206,32 @@ func _populate_stage(stage: Node, sim) -> Dictionary:
         "view": view,
         "hud": hud,
     }
+
+
+func _make_rank1_discoverability_sim():
+    var sim = WarehouseSimScript.new()
+    var data: Dictionary = sim.save_data()
+    data["money"] = 37000
+    data["inbound_queue"] = 14
+    data["rack_stock"] = 7
+    data["packing_queue"] = 1
+    data["packed_queue"] = 4
+    data["open_orders"] = 11
+    data["rack_capacity"] = 8
+    data["rank1_projects"] = {
+        "rack_wing": false,
+        "second_packing_bench": false,
+        "worker_hire": false,
+        "forklift_project": false,
+        "warehouse_expansion": false,
+    }
+    data["rack_level"] = 0
+    data["worker_count"] = 3
+    data["forklift_unlocked"] = false
+    data["facility_rank"] = 1
+    data["logistics_rating"] = 0
+    assert(sim.load_data(data), "Rank 1 discoverability visual state must load")
+    return sim
 
 
 func _make_sim(rank: int):

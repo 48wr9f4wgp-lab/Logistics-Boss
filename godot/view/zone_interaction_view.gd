@@ -38,6 +38,9 @@ const ZONE_DEFINITIONS := {
 
 var _view: WarehouseView
 var _camera: Camera3D
+var _sim: WarehouseSim
+var _guidance_zone := ""
+var _label_refresh_elapsed := 0.0
 var _zone_areas: Dictionary = {}
 var _zone_labels: Dictionary = {}
 var _touch_start: Dictionary = {}
@@ -47,11 +50,42 @@ var _mouse_start := Vector2.ZERO
 var _mouse_movement := 0.0
 
 
-func bind(view: WarehouseView) -> void:
+func bind(view: WarehouseView, next_sim: WarehouseSim = null) -> void:
     _view = view
     _camera = view._camera if view != null else null
+    _sim = next_sim
     if _zone_areas.is_empty():
         _build_zone_targets()
+    _refresh_zone_labels()
+
+
+func set_sim(next_sim: WarehouseSim) -> void:
+    _sim = next_sim
+    _refresh_zone_labels()
+
+
+func set_guidance_zone(zone_key: String) -> void:
+    _guidance_zone = zone_key if ZONE_DEFINITIONS.has(zone_key) else ""
+    _refresh_zone_labels()
+
+
+func clear_guidance_zone() -> void:
+    if _guidance_zone.is_empty():
+        return
+    _guidance_zone = ""
+    _refresh_zone_labels()
+
+
+func guidance_zone() -> String:
+    return _guidance_zone
+
+
+func _process(delta: float) -> void:
+    _label_refresh_elapsed += maxf(0.0, delta)
+    if _label_refresh_elapsed < 0.20:
+        return
+    _label_refresh_elapsed = 0.0
+    _refresh_zone_labels()
 
 
 func _build_zone_targets() -> void:
@@ -94,6 +128,53 @@ func _build_zone_targets() -> void:
         label.pixel_size = 0.012
         add_child(label)
         _zone_labels[String(zone_key)] = label
+
+    _refresh_zone_labels()
+
+
+func _refresh_zone_labels() -> void:
+    for zone_key in _zone_labels:
+        var label := _zone_labels[zone_key] as Label3D
+        if label == null:
+            continue
+        var key := String(zone_key)
+        var base := String((ZONE_DEFINITIONS[key] as Dictionary).get("label", key.to_upper()))
+        var state := _zone_state(key)
+
+        if key == _guidance_zone:
+            label.text = "%s\nここをタップ" % base
+            label.modulate = Color(1.0, 0.72, 0.24, 1.0)
+            label.outline_modulate = Color(0.08, 0.03, 0.0, 1.0)
+        elif state == 2:
+            label.text = "%s\n混雑・タップ" % base
+            label.modulate = Color(1.0, 0.43, 0.30, 1.0)
+            label.outline_modulate = Color(0.09, 0.01, 0.0, 1.0)
+        elif state == 1:
+            label.text = "%s\n高負荷・タップ" % base
+            label.modulate = Color(1.0, 0.76, 0.30, 0.98)
+            label.outline_modulate = Color(0.07, 0.03, 0.0, 0.98)
+        else:
+            label.text = "%s\nタップ" % base
+            label.modulate = Color(0.76, 0.94, 1.0, 0.96)
+            label.outline_modulate = Color(0.0, 0.04, 0.06, 0.96)
+
+
+func _zone_state(zone_key: String) -> int:
+    if _sim == null:
+        return 0
+    match zone_key:
+        "inbound":
+            return 2 if _sim.inbound_queue >= 8 else (1 if _sim.inbound_queue >= 4 else 0)
+        "storage":
+            var fill := float(_sim.rack_stock) / float(maxi(1, _sim.rack_capacity))
+            return 2 if fill >= 0.95 else (1 if fill >= 0.70 else 0)
+        "picking":
+            return 2 if _sim.open_orders >= 10 else (1 if _sim.open_orders >= 6 else 0)
+        "packing":
+            return 2 if _sim.packing_queue >= 8 else (1 if _sim.packing_queue >= 3 else 0)
+        "shipping":
+            return 2 if _sim.packed_queue >= 8 else (1 if _sim.packed_queue >= 4 else 0)
+    return 0
 
 
 func _unhandled_input(event: InputEvent) -> void:

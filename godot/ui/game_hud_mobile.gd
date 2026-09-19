@@ -1,6 +1,8 @@
 extends "res://ui/game_hud_release.gd"
 class_name MobileGameHud
 
+signal zone_navigation_requested(zone_key: String)
+
 const MOBILE_SHEET_TOP := 0.26
 const MOBILE_SHEET_SIDE_MARGIN := 12.0
 const MOBILE_SHEET_BOTTOM := -108.0
@@ -16,6 +18,8 @@ var _mobile_mouse_scroll_active := false
 var _mobile_mouse_drag_distance := 0.0
 var _v2_overview_panel: PanelContainer
 var _v2_overview_label: Label
+var _v2_zone_nav_buttons: Dictionary = {}
+var _v2_rank1_project_nav_buttons: Dictionary = {}
 var _v2_rank1_expansion_panel: PanelContainer
 var _v2_rank1_expansion_label: Label
 var _v2_rank1_expansion_button: Button
@@ -294,12 +298,33 @@ func _build_v2_management_overview() -> void:
     margin.add_theme_constant_override("margin_bottom", 8)
     _v2_overview_panel.add_child(margin)
 
+    var overview_column := VBoxContainer.new()
+    overview_column.add_theme_constant_override("separation", 6)
+    margin.add_child(overview_column)
+
     _v2_overview_label = Label.new()
     _v2_overview_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     _v2_overview_label.add_theme_font_override("font", JAPANESE_UI_FONT)
     _v2_overview_label.add_theme_font_size_override("font_size", 11)
     _v2_overview_label.add_theme_color_override("font_color", Color(0.86, 0.96, 1.0))
-    margin.add_child(_v2_overview_label)
+    overview_column.add_child(_v2_overview_label)
+
+    var zone_grid := GridContainer.new()
+    zone_grid.columns = 3
+    zone_grid.add_theme_constant_override("h_separation", 6)
+    zone_grid.add_theme_constant_override("v_separation", 6)
+    overview_column.add_child(zone_grid)
+
+    for zone_key in ["inbound", "storage", "picking", "packing", "shipping"]:
+        var zone_button := Button.new()
+        zone_button.custom_minimum_size = Vector2(0, 44)
+        zone_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        zone_button.add_theme_font_override("font", JAPANESE_UI_FONT)
+        zone_button.add_theme_font_size_override("font_size", 8)
+        zone_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        zone_button.pressed.connect(_request_zone_from_management.bind(zone_key))
+        zone_grid.add_child(zone_button)
+        _v2_zone_nav_buttons[zone_key] = zone_button
 
     _v2_rank1_expansion_panel = PanelContainer.new()
     _v2_rank1_expansion_panel.name = "V2Rank1Expansion"
@@ -328,10 +353,35 @@ func _build_v2_management_overview() -> void:
     _v2_rank1_expansion_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.64))
     expansion_column.add_child(_v2_rank1_expansion_label)
 
+    var project_hint := Label.new()
+    project_hint.text = "未完了Project → 該当Zoneを開く"
+    project_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    project_hint.add_theme_font_override("font", JAPANESE_UI_FONT)
+    project_hint.add_theme_font_size_override("font_size", 9)
+    project_hint.add_theme_color_override("font_color", Color(0.72, 0.78, 0.82))
+    expansion_column.add_child(project_hint)
+
+    var project_grid := GridContainer.new()
+    project_grid.columns = 2
+    project_grid.add_theme_constant_override("h_separation", 6)
+    project_grid.add_theme_constant_override("v_separation", 6)
+    expansion_column.add_child(project_grid)
+
+    for project_kind in ["rack_wing", "second_packing_bench", "worker_hire", "forklift_project"]:
+        var project_button := Button.new()
+        project_button.custom_minimum_size = Vector2(0, 38)
+        project_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        project_button.add_theme_font_override("font", JAPANESE_UI_FONT)
+        project_button.add_theme_font_size_override("font_size", 8)
+        project_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        project_button.pressed.connect(_request_rank1_project_zone.bind(project_kind))
+        project_grid.add_child(project_button)
+        _v2_rank1_project_nav_buttons[project_kind] = project_button
+
     _v2_rank1_expansion_button = Button.new()
-    _v2_rank1_expansion_button.custom_minimum_size = Vector2(0, 58)
+    _v2_rank1_expansion_button.custom_minimum_size = Vector2(0, 48)
     _v2_rank1_expansion_button.add_theme_font_override("font", JAPANESE_UI_FONT)
-    _v2_rank1_expansion_button.add_theme_font_size_override("font_size", 11)
+    _v2_rank1_expansion_button.add_theme_font_size_override("font_size", 9)
     _v2_rank1_expansion_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     _v2_rank1_expansion_button.pressed.connect(_purchase_v2_warehouse_expansion)
     expansion_column.add_child(_v2_rank1_expansion_button)
@@ -365,13 +415,17 @@ func _build_v2_management_overview() -> void:
 func _render_v2_management_overview() -> void:
     if _v2_overview_label == null or sim == null:
         return
-    _v2_overview_label.text = "OVERVIEW｜全体状況\nINBOUND %s  STORAGE %s\nPICKING %s  PACKING %s  SHIPPING %s" % [
-        _v2_zone_status("inbound"),
-        _v2_zone_status("storage"),
-        _v2_zone_status("picking"),
-        _v2_zone_status("packing"),
-        _v2_zone_status("shipping"),
-    ]
+    _v2_overview_label.text = "OVERVIEW｜Zoneをタップして現場を開く"
+
+    for zone_key in _v2_zone_nav_buttons:
+        var button := _v2_zone_nav_buttons[zone_key] as Button
+        if button == null:
+            continue
+        var status := _v2_zone_status(String(zone_key))
+        button.text = "%s｜%s\nタップして確認" % [
+            _v2_zone_short_label(String(zone_key)),
+            status,
+        ]
 
 
 func _render_v2_rank1_expansion() -> void:
@@ -398,7 +452,96 @@ func _render_v2_rank1_expansion() -> void:
 
     var ready_except_funds := bool(readiness.get("projects_ready", false)) and bool(readiness.get("rating_ready", false))
     _v2_rank1_expansion_button.disabled = not ready_except_funds or sim.money < cost
-    _v2_rank1_expansion_button.text = "Warehouseへ拡張｜¥%s" % _format_number(cost)
+    if not bool(readiness.get("projects_ready", false)):
+        _v2_rank1_expansion_button.text = "拡張条件未達｜下の未完了Projectを先に実施"
+    elif not bool(readiness.get("rating_ready", false)):
+        _v2_rank1_expansion_button.text = "拡張条件未達｜物流評価 %d/%d" % [rating, rating_required]
+    elif sim.money < cost:
+        _v2_rank1_expansion_button.text = "資金不足｜Warehouse拡張 ¥%s" % _format_number(cost)
+    else:
+        _v2_rank1_expansion_button.text = "Warehouseへ拡張｜¥%s" % _format_number(cost)
+
+    _render_rank1_project_navigation()
+
+
+func _render_rank1_project_navigation() -> void:
+    if sim == null:
+        return
+    for project_kind in _v2_rank1_project_nav_buttons:
+        var button := _v2_rank1_project_nav_buttons[project_kind] as Button
+        if button == null:
+            continue
+        var info: Dictionary = sim.call("rank1_project_info", StringName(project_kind)) if sim.has_method("rank1_project_info") else {}
+        var owned := bool(info.get("owned", false))
+        var label := String(info.get("label", project_kind))
+        var zone_key := _rank1_project_navigation_zone(String(project_kind))
+        button.visible = sim.facility_rank == 1
+        button.disabled = owned
+        button.text = (
+            "✓ %s\n完了" % label
+            if owned
+            else "%s\n→ %s" % [label, _v2_zone_short_label(zone_key)]
+        )
+
+
+func _rank1_project_navigation_zone(project_kind: String) -> String:
+    match project_kind:
+        "rack_wing":
+            return "storage"
+        "second_packing_bench":
+            return "packing"
+        "forklift_project":
+            return "inbound"
+        "worker_hire":
+            return _current_problem_zone()
+    return "inbound"
+
+
+func _request_rank1_project_zone(project_kind: String) -> void:
+    _request_zone_from_management(_rank1_project_navigation_zone(project_kind))
+
+
+func _request_zone_from_management(zone_key: String) -> void:
+    if zone_key.is_empty():
+        return
+    if _sheet != null:
+        _sheet.visible = false
+    if _manage_button != null:
+        _manage_button.text = "経営管理"
+    zone_navigation_requested.emit(zone_key)
+
+
+func _current_problem_zone() -> String:
+    if sim == null:
+        return "inbound"
+    var info: Dictionary = sim.bottleneck()
+    match String(info.get("key", "stable")):
+        "inbound":
+            return "inbound"
+        "rack":
+            return "storage"
+        "packing":
+            return "packing"
+        "outbound":
+            return "shipping"
+        "orders":
+            return "picking"
+    return "inbound"
+
+
+func _v2_zone_short_label(zone_key: String) -> String:
+    match zone_key:
+        "inbound":
+            return "INBOUND"
+        "storage":
+            return "STORAGE"
+        "picking":
+            return "PICKING"
+        "packing":
+            return "PACKING"
+        "shipping":
+            return "SHIPPING"
+    return zone_key.to_upper()
 
 
 func _purchase_v2_warehouse_expansion() -> void:
@@ -468,8 +611,25 @@ func _apply_v2_primary_hud() -> void:
         if metric_box != null and metric_box.get_parent() is PanelContainer:
             (metric_box.get_parent() as PanelContainer).visible = false
 
+    # Rank 1 must teach Zone-first play without offering three unexplained
+    # policy buttons as the most obvious intervention. Rank 2+ restores them
+    # with explicit operational meaning.
+    var show_policy := sim != null and sim.facility_rank >= 2
+    if _flow_button != null:
+        _flow_button.visible = show_policy
+        _flow_button.text = "均等運用"
+    if _inbound_button != null:
+        _inbound_button.visible = show_policy
+        _inbound_button.text = "入荷優先"
+    if _outbound_button != null:
+        _outbound_button.visible = show_policy
+        _outbound_button.text = "出荷優先"
+
+    if _manage_button != null:
+        _manage_button.text = "閉じる" if _sheet != null and _sheet.visible else "経営管理"
+
     # The old FTUE teaches Management-first purchasing, which is explicitly
-    # superseded by the v2 Zone-first loop. Rank 1 v2 will replace it next.
+    # superseded by the v2 Zone-first loop.
     if _ftue_coach != null:
         _ftue_coach.visible = false
 
@@ -481,7 +641,7 @@ func _apply_v2_management_scope() -> void:
     if _management_title != null:
         _management_title.text = "経営管理"
     if _management_hint != null:
-        _management_hint.text = "全体状況を確認。設備判断は倉庫のZoneから。"
+        _management_hint.text = "Zoneをタップ → 現場。設備はZoneのCAPITAL。"
 
     for button in _upgrade_buttons.values():
         (button as Button).visible = false
@@ -515,6 +675,6 @@ func _replace_v2_management_copy(node: Node) -> void:
         if label.text == "事業投資":
             label.text = "経営管理"
         elif label.text.contains("詰まりを見て"):
-            label.text = "全体状況を確認。設備判断は倉庫のZoneから。"
+            label.text = "Zoneをタップ → 現場。設備はZoneのCAPITAL。"
     for child in node.get_children():
         _replace_v2_management_copy(child)

@@ -21,6 +21,7 @@ var _step: int = Step.OBSERVE
 var _observe_elapsed := 0.0
 var _complete_elapsed := 0.0
 var _measurement_kind := ""
+var _inspect_zone := ""
 var _persist_completion := true
 
 var _step_label: Label
@@ -95,6 +96,7 @@ func bind_context(
     _observe_elapsed = 0.0
     _complete_elapsed = 0.0
     _measurement_kind = ""
+    _inspect_zone = ""
 
     if sim == null or _zone_interaction == null or not _should_run():
         visible = false
@@ -144,8 +146,11 @@ func _process(delta: float) -> void:
             visible = false
 
 
-func _on_zone_selected(_zone_key: String) -> void:
+func _on_zone_selected(zone_key: String) -> void:
     if _step <= Step.INSPECT:
+        _inspect_zone = zone_key
+        if _zone_interaction != null:
+            _zone_interaction.clear_guidance_zone()
         _advance_to(Step.ACT)
 
 
@@ -167,13 +172,51 @@ func _advance_to(next_step: int) -> void:
     if next_step <= _step:
         return
     _step = next_step
+    if _step == Step.INSPECT:
+        _refresh_inspect_guidance()
+    elif _step > Step.INSPECT and _zone_interaction != null:
+        _zone_interaction.clear_guidance_zone()
     _render_step()
     step_changed.emit(current_step_key())
+
+
+func _refresh_inspect_guidance() -> void:
+    _inspect_zone = _bottleneck_zone()
+    if _zone_interaction == null:
+        return
+    if _inspect_zone.is_empty():
+        _zone_interaction.clear_guidance_zone()
+    else:
+        _zone_interaction.set_guidance_zone(_inspect_zone)
+
+
+func _bottleneck_zone() -> String:
+    if sim == null:
+        return ""
+    var info: Dictionary = sim.bottleneck()
+    match String(info.get("key", "stable")):
+        "inbound":
+            return "inbound"
+        "rack":
+            return "storage"
+        "packing":
+            return "packing"
+        "outbound":
+            return "shipping"
+        "orders":
+            return "picking"
+    return ""
+
+
+func guidance_zone() -> String:
+    return _inspect_zone
 
 
 func _complete_ftue() -> void:
     if _step == Step.COMPLETE:
         return
+    if _zone_interaction != null:
+        _zone_interaction.clear_guidance_zone()
     _step = Step.COMPLETE
     _complete_elapsed = 0.0
     _write_completion_marker()
@@ -183,6 +226,8 @@ func _complete_ftue() -> void:
 
 
 func _skip() -> void:
+    if _zone_interaction != null:
+        _zone_interaction.clear_guidance_zone()
     _write_completion_marker()
     completed.emit(true)
     visible = false
@@ -218,7 +263,10 @@ func _render_step() -> void:
             _body_label.text = "物流は自動で流れます。Directorと倉庫を見て、どこに仕事が溜まるか観察。"
         Step.INSPECT:
             _step_label.text = "START GUIDE  2/4  現場確認"
-            _body_label.text = "気になるZoneを倉庫上でタップ。待ち数・設備・現在の流れを確認する。"
+            if _inspect_zone.is_empty():
+                _body_label.text = "倉庫上のZone名には「タップ」と表示されます。気になるZoneを押して現場を確認。"
+            else:
+                _body_label.text = "倉庫上の「%s｜ここをタップ」を押して現場を確認。" % _zone_label(_inspect_zone)
         Step.ACT:
             _step_label.text = "START GUIDE  3/4  判断"
             _body_label.text = "Zone Panelの数値と設備を見比べる。必要ならProject内容を確認して実行。"
@@ -233,7 +281,24 @@ func _render_step() -> void:
         _skip_button.visible = _step != Step.COMPLETE
 
 
+func _zone_label(zone_key: String) -> String:
+    match zone_key:
+        "inbound":
+            return "INBOUND"
+        "storage":
+            return "STORAGE"
+        "picking":
+            return "PICKING"
+        "packing":
+            return "PACKING"
+        "shipping":
+            return "SHIPPING"
+    return zone_key.to_upper()
+
+
 func _disconnect_context() -> void:
+    if _zone_interaction != null:
+        _zone_interaction.clear_guidance_zone()
     if sim != null and sim.event_emitted.is_connected(_on_sim_event):
         sim.event_emitted.disconnect(_on_sim_event)
     if _zone_interaction != null and _zone_interaction.zone_selected.is_connected(_on_zone_selected):
