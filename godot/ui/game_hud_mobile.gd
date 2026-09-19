@@ -353,31 +353,38 @@ func _build_v2_management_overview() -> void:
     _v2_rank1_expansion_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.64))
     expansion_column.add_child(_v2_rank1_expansion_label)
 
-    _v2_rank1_expansion_button = Button.new()
-    _v2_rank1_expansion_button.custom_minimum_size = Vector2(0, 58)
-    _v2_rank1_expansion_button.add_theme_font_override("font", JAPANESE_UI_FONT)
-    _v2_rank1_expansion_button.add_theme_font_size_override("font_size", 11)
-    _v2_rank1_expansion_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    _v2_rank1_expansion_button.pressed.connect(_purchase_v2_warehouse_expansion)
-    expansion_column.add_child(_v2_rank1_expansion_button)
-
     var project_hint := Label.new()
-    project_hint.text = "未完了Projectは該当Zoneを開いて実施"
+    project_hint.text = "未完了Project → 該当Zoneを開く"
     project_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     project_hint.add_theme_font_override("font", JAPANESE_UI_FONT)
     project_hint.add_theme_font_size_override("font_size", 9)
     project_hint.add_theme_color_override("font_color", Color(0.72, 0.78, 0.82))
     expansion_column.add_child(project_hint)
 
+    var project_grid := GridContainer.new()
+    project_grid.columns = 2
+    project_grid.add_theme_constant_override("h_separation", 6)
+    project_grid.add_theme_constant_override("v_separation", 6)
+    expansion_column.add_child(project_grid)
+
     for project_kind in ["rack_wing", "second_packing_bench", "worker_hire", "forklift_project"]:
         var project_button := Button.new()
-        project_button.custom_minimum_size = Vector2(0, 46)
+        project_button.custom_minimum_size = Vector2(0, 42)
+        project_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         project_button.add_theme_font_override("font", JAPANESE_UI_FONT)
-        project_button.add_theme_font_size_override("font_size", 9)
+        project_button.add_theme_font_size_override("font_size", 8)
         project_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         project_button.pressed.connect(_request_rank1_project_zone.bind(project_kind))
-        expansion_column.add_child(project_button)
+        project_grid.add_child(project_button)
         _v2_rank1_project_nav_buttons[project_kind] = project_button
+
+    _v2_rank1_expansion_button = Button.new()
+    _v2_rank1_expansion_button.custom_minimum_size = Vector2(0, 48)
+    _v2_rank1_expansion_button.add_theme_font_override("font", JAPANESE_UI_FONT)
+    _v2_rank1_expansion_button.add_theme_font_size_override("font_size", 9)
+    _v2_rank1_expansion_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _v2_rank1_expansion_button.pressed.connect(_purchase_v2_warehouse_expansion)
+    expansion_column.add_child(_v2_rank1_expansion_button)
 
     _v2_staffing_panel = PanelContainer.new()
     _v2_staffing_panel.name = "V2StaffingOverview"
@@ -471,9 +478,9 @@ func _render_rank1_project_navigation() -> void:
         button.visible = sim.facility_rank == 1
         button.disabled = owned
         button.text = (
-            "✓ %s｜完了" % label
+            "✓ %s\n完了" % label
             if owned
-            else "%s｜未完了 → %sを開く" % [label, _v2_zone_short_label(zone_key)]
+            else "%s\n→ %s" % [label, _v2_zone_short_label(zone_key)]
         )
 
 
@@ -634,7 +641,7 @@ func _apply_v2_management_scope() -> void:
     if _management_title != null:
         _management_title.text = "経営管理"
     if _management_hint != null:
-        _management_hint.text = "Zone名をタップ → 現場を開く。設備は各ZoneのCAPITALから。"
+        _management_hint.text = "Zoneをタップ → 現場。設備はZoneのCAPITAL。"
 
     for button in _upgrade_buttons.values():
         (button as Button).visible = false
@@ -668,6 +675,6 @@ func _replace_v2_management_copy(node: Node) -> void:
         if label.text == "事業投資":
             label.text = "経営管理"
         elif label.text.contains("詰まりを見て"):
-            label.text = "Zone名をタップ → 現場を開く。設備は各ZoneのCAPITALから。"
+            label.text = "Zoneをタップ → 現場。設備はZoneのCAPITAL。"
     for child in node.get_children():
         _replace_v2_management_copy(child)
