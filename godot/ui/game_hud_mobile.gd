@@ -310,17 +310,17 @@ func _build_v2_management_overview() -> void:
     overview_column.add_child(_v2_overview_label)
 
     var zone_grid := GridContainer.new()
-    zone_grid.columns = 2
+    zone_grid.columns = 3
     zone_grid.add_theme_constant_override("h_separation", 6)
     zone_grid.add_theme_constant_override("v_separation", 6)
     overview_column.add_child(zone_grid)
 
     for zone_key in ["inbound", "storage", "picking", "packing", "shipping"]:
         var zone_button := Button.new()
-        zone_button.custom_minimum_size = Vector2(0, 50)
+        zone_button.custom_minimum_size = Vector2(0, 44)
         zone_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         zone_button.add_theme_font_override("font", JAPANESE_UI_FONT)
-        zone_button.add_theme_font_size_override("font_size", 9)
+        zone_button.add_theme_font_size_override("font_size", 8)
         zone_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         zone_button.pressed.connect(_request_zone_from_management.bind(zone_key))
         zone_grid.add_child(zone_button)
@@ -369,7 +369,7 @@ func _build_v2_management_overview() -> void:
 
     for project_kind in ["rack_wing", "second_packing_bench", "worker_hire", "forklift_project"]:
         var project_button := Button.new()
-        project_button.custom_minimum_size = Vector2(0, 42)
+        project_button.custom_minimum_size = Vector2(0, 38)
         project_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         project_button.add_theme_font_override("font", JAPANESE_UI_FONT)
         project_button.add_theme_font_size_override("font_size", 8)
