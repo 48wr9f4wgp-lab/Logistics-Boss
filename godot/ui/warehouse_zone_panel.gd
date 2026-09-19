@@ -8,6 +8,8 @@ signal construction_preview_cleared
 signal construction_committed(zone_key: String, kind: StringName, action: String)
 
 const JAPANESE_UI_FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
+const ACTION_TAP_MAX_MOVEMENT := 18.0
+const SYNTHETIC_MOUSE_SUPPRESS_MS := 450
 
 var sim: WarehouseSim
 var _selected_zone := ""
@@ -28,6 +30,13 @@ var _close_button: Button
 var _preview_kind: StringName = &""
 var _notice_text := ""
 var _notice_until := 0.0
+
+var _raw_touch_index := -1
+var _raw_touch_button: Button
+var _raw_touch_movement := 0.0
+var _raw_mouse_button: Button
+var _raw_mouse_movement := 0.0
+var _suppress_mouse_until_msec := 0
 
 
 func _ready() -> void:
@@ -58,6 +67,7 @@ func close() -> void:
     if _panel == null or not _panel.visible:
         return
     _panel.visible = false
+    _reset_raw_action_input()
     _clear_construction_preview()
     _selected_zone = ""
     closed.emit()
@@ -95,6 +105,115 @@ func _clear_construction_preview() -> void:
 func _process(_delta: float) -> void:
     if is_open():
         _render()
+
+
+func _input(event: InputEvent) -> void:
+    if not is_open():
+        _reset_raw_action_input()
+        return
+
+    if event is InputEventScreenTouch:
+        var touch := event as InputEventScreenTouch
+        if touch.pressed:
+            if _raw_touch_index < 0:
+                var target := _action_button_at(touch.position)
+                if target != null:
+                    _raw_touch_index = touch.index
+                    _raw_touch_button = target
+                    _raw_touch_movement = 0.0
+                    get_viewport().set_input_as_handled()
+        elif touch.index == _raw_touch_index:
+            var target := _raw_touch_button
+            var movement := _raw_touch_movement
+            _raw_touch_index = -1
+            _raw_touch_button = null
+            _raw_touch_movement = 0.0
+            _suppress_mouse_until_msec = Time.get_ticks_msec() + SYNTHETIC_MOUSE_SUPPRESS_MS
+            get_viewport().set_input_as_handled()
+            if target != null and movement <= ACTION_TAP_MAX_MOVEMENT and target.get_global_rect().has_point(touch.position):
+                _activate_raw_action_button(target)
+        return
+
+    if event is InputEventScreenDrag:
+        var drag := event as InputEventScreenDrag
+        if drag.index == _raw_touch_index and _raw_touch_button != null:
+            _raw_touch_movement += drag.relative.length()
+            get_viewport().set_input_as_handled()
+        return
+
+    if event is InputEventMouseButton:
+        var mouse_button := event as InputEventMouseButton
+        if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+            return
+
+        if Time.get_ticks_msec() < _suppress_mouse_until_msec:
+            if _action_button_at(mouse_button.position) != null:
+                get_viewport().set_input_as_handled()
+            return
+
+        if mouse_button.pressed:
+            var target := _action_button_at(mouse_button.position)
+            if target != null:
+                _raw_mouse_button = target
+                _raw_mouse_movement = 0.0
+                get_viewport().set_input_as_handled()
+        elif _raw_mouse_button != null:
+            var target := _raw_mouse_button
+            var movement := _raw_mouse_movement
+            _raw_mouse_button = null
+            _raw_mouse_movement = 0.0
+            get_viewport().set_input_as_handled()
+            if target != null and movement <= ACTION_TAP_MAX_MOVEMENT and target.get_global_rect().has_point(mouse_button.position):
+                _activate_raw_action_button(target)
+        return
+
+    if event is InputEventMouseMotion and _raw_mouse_button != null:
+        _raw_mouse_movement += (event as InputEventMouseMotion).relative.length()
+        get_viewport().set_input_as_handled()
+
+
+func _action_button_at(position: Vector2) -> Button:
+    var candidates: Array[Button] = []
+    for button in _rank2_capital_buttons:
+        candidates.append(button)
+    for button in _staffing_move_buttons:
+        candidates.append(button)
+    if _capital_action != null:
+        candidates.append(_capital_action)
+    if _operations_action != null:
+        candidates.append(_operations_action)
+
+    for button in candidates:
+        if button == null or not button.visible or button.disabled:
+            continue
+        if button.get_global_rect().has_point(position):
+            return button
+    return null
+
+
+func _activate_raw_action_button(button: Button) -> void:
+    if button == null or not button.visible or button.disabled:
+        return
+
+    if button == _capital_action:
+        _on_capital_action()
+        return
+    if button == _operations_action:
+        _on_operations_action()
+        return
+    if button in _rank2_capital_buttons:
+        _on_rank2_capital_action(button)
+        return
+    if button in _staffing_move_buttons:
+        _on_staffing_move(button)
+
+
+func _reset_raw_action_input() -> void:
+    _raw_touch_index = -1
+    _raw_touch_button = null
+    _raw_touch_movement = 0.0
+    _raw_mouse_button = null
+    _raw_mouse_movement = 0.0
 
 
 func _build_panel() -> void:
