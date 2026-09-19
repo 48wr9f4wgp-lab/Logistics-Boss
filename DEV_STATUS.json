@@ -13,7 +13,7 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_284_success_ios_export_100_success_android_export_96_success_render_capture_82_success",
+    "ci_latest_verified": "godot_286_success_ios_export_101_success_android_export_98_success_render_capture_84_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -37,7 +37,7 @@
     "ftue_core_loop_comprehension": "pass_pr99_ftue_stays_active_until_authoritative_measurement_completed_then_teaches_verdict_and_next_loop",
     "economy_progression_pacing": "pass_pr101_rank2_510s_frontier_best_adaptive_212_vs_best_fixed_shipping_202_after_storage_buffer_tune",
     "core_experience_v2_playtest": "fail_2026_09_18_ios_web_management_clicker_growth_not_legible_management_hard_to_parse_repetition_exposed",
-    "core_loop_e2e_v2": "automated_slice_pass_human_iphone_web_discoverability_retest_pending",
+    "core_loop_e2e_v2": "automated_slice_pass_human_iphone_web_zone_action_touch_retest_pending",
     "management_readability_v2": "fail_2026_09_18_ios_web_information_hierarchy_action_effect_unclear",
     "reward_growth_recognition_v2": "fail_2026_09_18_ios_web_equipment_and_facility_change_not_clear_during_normal_play",
     "legacy_core_loop_automation": "pass_pr74_valid_for_legacy_flow_not_v2_product_proof",
@@ -53,7 +53,9 @@
     "construction_preview_visuals": "pass_render_capture_76_rank2_preview_390x844_human_inspected_zone_panel_plus_high_density_ghost_warehouse_remains_visible",
     "core_experience_v2_playtest_retest_2026_09_19": "fail_ios_web_discoverability_where_to_tap_equipment_route_unclear_policy_controls_misread_as_staffing",
     "interaction_discoverability_v2": "pass_pr117_zone_tap_affordance_management_zone_navigation_persistent_rank1_project_routes_rank1_policy_controls_hidden_rank2_policy_labels_explicit_human_retest_pending",
-    "discoverability_visuals": "pass_render_capture_82_rank1_management_navigation_390x844_human_inspected_five_zone_routes_four_project_routes_visible"
+    "discoverability_visuals": "pass_render_capture_82_rank1_management_navigation_390x844_human_inspected_five_zone_routes_four_project_routes_visible",
+    "core_experience_v2_touch_retest_2026_09_19": "fail_ios_web_zone_panel_capital_visible_but_tap_no_preview_no_ghost_no_commit",
+    "zone_panel_touch_input_v2": "pass_pr119_raw_screen_touch_and_mouse_fallback_first_tap_preview_no_spend_synthetic_mouse_suppressed_second_touch_commit"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -70,9 +72,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "PR #117 merged after the 2026-09-19 iPhone Web Core Experience retest failed discoverability. The failure was specific: the player could not tell where to tap or what each control did; Management showed 設備Project 0/4 without an actionable route; and the bottom BALANCED / INBOUND / SHIP policy controls were interpreted as staffing changes. PR #117 fixes only that layer: all five warehouse Zone labels now advertise タップ and pressure state; the first FTUE inspection can mark the actual stressed Zone as ここをタップ without revealing the equipment answer; Management Overview now exposes five tappable Zone routes; Rank 1 Warehouse Expansion keeps all four structural Project routes visible and completed routes stay visible as 完了; Rank 1 hides the ambiguous logistics-policy controls, while Rank 2+ labels them 均等運用 / 入荷優先 / 出荷優先. Godot CI #284, iOS Export Smoke #100, Rendered Visual Capture #82, Android Export Smoke #96 all succeeded. Fresh rank1_management_navigation.png at 390x844 was human-inspected: five Zone routes, all four Project routes, and the Expansion condition are visible in the same Management screen.",
+  "last_verified_done": "PR #119 merged after the 2026-09-19 iPhone Web retest showed a narrower input failure: the Zone Panel CAPITAL action was visible (e.g. 内容を見る｜Forklift Project｜¥20,000) but tapping it on iPhone Web did not change the button to 建設する, did not show the planned ghost, and did not commit. PR #119 adds a raw pointer fallback inside WarehouseZonePanel for actionable Zone controls only. It hit-tests the actual visible/enabled Button rectangles for InputEventScreenTouch and mouse-only Web input, distinguishes tap from drag, and suppresses synthetic mouse input for 450ms after touch so one physical tap cannot preview+commit. A new real-input smoke pushes actual ScreenTouch/MouseButton events through the viewport and verifies first touch → preview/no spend/建設する, synthetic mouse duplicate → ignored, second explicit touch → authoritative Forklift purchase, and mouse-only Web fallback → preview. Godot CI #286, iOS Export Smoke #101, Rendered Visual Capture #84, Android Export Smoke #98 all succeeded.",
   "blocked": "No Mac-independent implementation blocker for Vertical Slice v2. Native physical-iPhone DEVICE_VALIDATION remains deferred until Mac/Xcode access becomes available, but it is not the current active-phase blocker.",
-  "next": "Re-run the iPhone Web Core Experience playtest on the current engineering preview, focusing first on discoverability before judging deeper reward/decision quality. From a fresh/representative Rank 1 state, verify that the player can identify tappable warehouse Zones without explanation, reach a structural Project from either the warehouse or Management, correctly understand that Rank 2+ 均等運用 / 入荷優先 / 出荷優先 are logistics policies rather than staffing controls, and understand why Warehouse Expansion is blocked. If discoverability passes, continue the same session into ghost→commit→physical change→measurement and Rank 2 STORAGE/PACKING trade-off judgment. Remain in VERTICAL_SLICE until this human retest passes.",
+  "next": "Re-run the iPhone Web test on the current engineering preview and test one Rank 1 CAPITAL action before judging anything else. Open a Zone with an unfinished structural Project and tap 内容を見る once: the button must immediately change to 建設する and the physical ghost must appear without spending cash. Tap the same action a second explicit time: cash must decrease, the Project must become owned/real geometry must appear, and the preview must clear into the existing measurement flow. Also verify Worker Hire and, if Rank 2 is reachable, one Rank 2 equipment action. If this touch path passes, continue the broader discoverability/Core Experience retest. Remain in VERTICAL_SLICE until the human iPhone Web touch retest passes.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -125,7 +127,7 @@
   },
   "vertical_slice_v2": {
     "change_packet": "VERTICAL_SLICE_V2_CHANGE_PACKET.md",
-    "implementation_state": "DISCOVERABILITY_FIX_DONE_RETEST_PENDING",
+    "implementation_state": "ZONE_PANEL_TOUCH_FIX_DONE_RETEST_PENDING",
     "locked_scope": [
       "3D warehouse as primary game board",
       "Zone-first normal equipment decisions",
@@ -202,14 +204,20 @@
       "completed Rank 1 Project routes remain visible as 完了 instead of disappearing",
       "Rank 1 hides ambiguous logistics-policy controls",
       "Rank 2+ logistics policy controls are explicitly labelled 均等運用 / 入荷優先 / 出荷優先",
-      "rank1_management_navigation 390x844 visual evidence human-inspected"
+      "rank1_management_navigation 390x844 visual evidence human-inspected",
+      "raw iPhone/Web touch fallback for Rank 1 CAPITAL actions",
+      "raw iPhone/Web touch fallback for Worker Hire",
+      "raw iPhone/Web touch fallback for Rank 2 equipment actions",
+      "raw iPhone/Web touch fallback for direct staffing actions",
+      "synthetic mouse suppression after touch to prevent accidental preview+commit",
+      "real ScreenTouch/MouseButton viewport smoke for Zone Panel action controls"
     ],
-    "next_step": "IPHONE_WEB_DISCOVERABILITY_RETEST"
+    "next_step": "IPHONE_WEB_ZONE_ACTION_TOUCH_RETEST"
   },
   "latest_vertical_slice_v2_merge": {
-    "pr": 117,
-    "merge_commit": "d47caaed010447e338e4b18014bf0fd70f0c6796",
-    "title": "Fix Core Experience v2 discoverability",
-    "evidence": "Godot CI #284, iOS Export Smoke #100, Rendered Visual Capture #82, Android Export Smoke #96 success; dedicated discoverability/navigation smoke passed; rank1_management_navigation.png human-inspected at 390x844"
+    "pr": 119,
+    "merge_commit": "f42348bf14bc4e5fb48b4dc2ddc0ce125afd903e",
+    "title": "Fix Zone Panel touch input on iPhone Web",
+    "evidence": "Godot CI #286, iOS Export Smoke #101, Rendered Visual Capture #84, Android Export Smoke #98 success; real ScreenTouch/MouseButton Zone Panel smoke passed"
   }
 }
