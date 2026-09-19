@@ -169,6 +169,16 @@ jobs:
             exit 1
           fi
 
+      - name: V2 discoverability and navigation smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 35s godot --headless --path godot --script res://tests/v2_discoverability_navigation_smoke.gd 2>&1 | tee /tmp/v2-discoverability-navigation-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/v2-discoverability-navigation-smoke.log; then
+            echo 'V2 discoverability/navigation smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Rank 1 v2 structural project smoke
         shell: bash
         run: |
