@@ -104,8 +104,15 @@ func _run() -> void:
     if hud._v2_overview_panel == null or not hud._v2_overview_panel.visible:
         _fail("v2 mobile Management must open on an executive Overview shell")
         return
-    if hud._v2_overview_label == null or not hud._v2_overview_label.text.contains("PACKING 混雑"):
-        _fail("Management Overview must summarize Zone state without prescribing equipment")
+    if hud._v2_overview_label == null or not hud._v2_overview_label.text.contains("Zoneをタップ"):
+        _fail("Management Overview must explain that Zone controls are actionable")
+        return
+    var packing_nav := hud._v2_zone_nav_buttons.get("packing") as Button
+    if packing_nav == null or not packing_nav.text.contains("PACKING") or not packing_nav.text.contains("混雑"):
+        _fail("Management Overview must expose authoritative PACKING state on its Zone navigation control")
+        return
+    if packing_nav.text.contains("強化") or packing_nav.text.contains("Fast") or packing_nav.text.contains("Parallel"):
+        _fail("Management Overview Zone navigation must not prescribe the equipment answer")
         return
 
     for button in hud._upgrade_buttons.values():
