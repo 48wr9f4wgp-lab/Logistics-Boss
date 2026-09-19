@@ -76,7 +76,7 @@ func _verify_touch_preview_and_commit() -> bool:
     if sim.money != cash_before:
         _fail("synthetic mouse after touch must not double-fire the capital action")
         return false
-    if not panel.preview_kind() == &"forklift_project":
+    if panel.preview_kind() != &"forklift_project":
         _fail("synthetic mouse suppression must preserve the active preview")
         return false
 
