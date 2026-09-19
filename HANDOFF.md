@@ -167,7 +167,48 @@ Verified presentation behavior:
 - the preview state does not use a full-screen modal and keeps the warehouse visible;
 - fresh `rank2_preview.png` shows STORAGE Zone Panel + existing warehouse + High Density Rack planned preview together at 390×844.
 
-The planned Vertical Slice v2 implementation is now complete. Human iPhone Web Core Experience evidence remains pending and is the next gate.
+The planned Vertical Slice v2 implementation is complete. The first 2026-09-19 iPhone Web retest then exposed a discoverability/navigation failure, recorded below.
+
+### iPhone Web Core Experience Retest — FAIL / 2026-09-19
+
+Human observation before coaching:
+- player reported **分かりづらかった**;
+- player could not tell **どこを押せば何が出来るのか**;
+- player believed equipment strengthening was unavailable and therefore felt that only staffing-like changes were possible;
+- screenshot evidence showed Management with `設備Project 0/4` but no obvious visible route to those Projects;
+- the bottom `バランス / 入庫 / 出庫` controls were interpreted as staffing changes, while the code actually uses them as logistics-policy controls.
+
+Result:
+- **Core Experience v2 human retest = FAIL**;
+- failure layer = **interaction discoverability / navigation / control semantics**;
+- equipment/reward recognition and deeper decision-variety judgment were not considered valid because the intended equipment surface was not reliably reached;
+- remain in **VERTICAL_SLICE**;
+- do not add more equipment to compensate.
+
+### Discoverability / Navigation Fix — DONE
+
+PR #117 — `Fix Core Experience v2 discoverability`
+- merge commit: `d47caaed010447e338e4b18014bf0fd70f0c6796`
+- Godot CI #284: **success**
+- iOS Export Smoke #100: **success**
+- Rendered Visual Capture #82: **success**
+- Android Export Smoke #96: **success** (historical technical reference only)
+- dedicated v2 discoverability/navigation smoke: **success**
+- `rank1_management_navigation.png` 390×844: **human inspected / pass**
+
+Verified correction:
+- every warehouse Zone label explicitly advertises `タップ`;
+- stressed Zones advertise `高負荷・タップ` or `混雑・タップ`;
+- first FTUE inspection may mark the actual stressed Zone as `ここをタップ` without revealing the equipment answer;
+- Management Overview exposes five direct Zone navigation buttons;
+- tapping a Management Zone closes Management and hands the player to that Zone Panel;
+- Rank 1 Warehouse Expansion keeps Rack Wing / Second Packing Bench / Worker Hire / Forklift Project routes visible;
+- completed Project routes remain visible as `完了` rather than disappearing;
+- Rank 1 hides the ambiguous logistics-policy controls entirely;
+- Rank 2+ restores them as `均等運用 / 入荷優先 / 出荷優先`;
+- fresh portrait evidence shows five Zone routes, all four Project routes, and Expansion status in the same Management view.
+
+Human iPhone Web retest is still required. Automated/visual PASS does not override the prior human FAIL.
 
 
 ## 1. Product / canonical intent
@@ -207,17 +248,17 @@ Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
 Current verified main baseline:
-- PR #115 — `Add construction preview and reward presentation`
-- merge commit: `bff7b090a111df5be3fa0f2191dac97c45244901`
-- Godot CI #278: **success**
-- iOS Export Smoke #95: **success**
-- Android Export Smoke #90: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
-- Rendered Visual Capture #76: **success**
-- dedicated construction/reward presentation smoke: **success**
+- PR #117 — `Fix Core Experience v2 discoverability`
+- merge commit: `d47caaed010447e338e4b18014bf0fd70f0c6796`
+- Godot CI #284: **success**
+- iOS Export Smoke #100: **success**
+- Android Export Smoke #96: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
+- Rendered Visual Capture #82: **success**
+- dedicated v2 discoverability/navigation smoke: **success**
 - runtime save schema remains **9**
-- `rank2_preview.png` 390×844: **human inspected / pass**
-- Vertical Slice v2 planned implementation: **complete / human iPhone Web playtest pending**
-- PR #113 renovation, PR #111 staffing, PR #109 Rank 1 v2, and PR #107 Interaction Skeleton remain included
+- `rank1_management_navigation.png` 390×844: **human inspected / pass**
+- latest human iPhone Web result: **FAIL before PR #117 / discoverability correction implemented / retest pending**
+- PR #115 construction presentation, PR #113 renovation, PR #111 staffing, PR #109 Rank 1 v2, and PR #107 Interaction Skeleton remain included
 
 Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
@@ -252,6 +293,7 @@ Recent QA/product milestones:
 - PR #111: direct Zone staffing — RECEIVING/PICKING/SHIPPING source→target reassignment, one-worker floor, 30-second observation lock, Zone Panel controls, Management staffing overview, schema 9 persistence; CI #269 / iOS #88 / Render #67 passed
 - PR #113: Rank 2 STORAGE/PACKING renovation — paid A⇄B replacement, no refund, authoritative geometry/Domain switching, two-step Zone preview/commit, renovation measurement, paired dominance proof; CI #273 / iOS #91 / Render #71 passed and final Rank 2 capture human-inspected
 - PR #115: construction/reward presentation — physical planned-equipment ghost, stale-preview clearing, authoritative commit → real geometry transition, selected-Zone reward emphasis, `rank2_preview.png`; CI #278 / iOS #95 / Render #76 passed and preview capture human-inspected
+- PR #117: discoverability/navigation correction after failed 2026-09-19 human retest — tappable Zone labels, Management→Zone routes, persistent Rank 1 Project routes, Rank 1 policy controls hidden, Rank 2+ policy labels clarified; CI #284 / iOS #100 / Render #82 passed and `rank1_management_navigation.png` human-inspected
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -606,74 +648,67 @@ Release / QA:
 
 ## 14. Immediate next task
 
-FLOTRA remains in **ACTIVE_PHASE = VERTICAL_SLICE** for Core Experience v2 until the human playtest passes.
+FLOTRA remains in **ACTIVE_PHASE = VERTICAL_SLICE**.
 
 ### LAST VERIFIED DONE
 
-**Construction / Reward Presentation — DONE / PR #115**
+**Discoverability / Navigation Fix — DONE / PR #117**
 
-Verified:
-- Interaction Skeleton, Rank 1 v2, direct Zone staffing, and Rank 2 STORAGE/PACKING renovation remain intact;
-- Rank 1 and Rank 2 structural choices now show physical semi-transparent planned geometry before commitment;
-- first preview tap never spends cash;
-- equipment-choice switch replaces the old ghost;
-- Zone switch / Zone Panel close removes stale ghost geometry;
-- successful authoritative commit clears ghost and exposes real equipment geometry;
-- selected Zone receives a short construction/reward emphasis;
-- authoritative Before/After measurement remains the result source;
-- Godot CI #278 / iOS Export Smoke #95 / Rendered Visual Capture #76 green;
-- `rank2_preview.png` at 390×844 human-inspected / pass;
-- the warehouse remains visible behind the STORAGE Zone Panel and planned High Density Rack preview;
-- planned Vertical Slice v2 implementation is complete.
+Human evidence that triggered the fix:
+- 2026-09-19 iPhone Web retest = **FAIL**;
+- player could not tell where to tap or what visible controls changed;
+- `設備Project 0/4` did not expose a clear route to equipment decisions;
+- `バランス / 入庫 / 出庫` were interpreted as staffing controls even though they are logistics-policy controls.
 
-### NEXT — iPhone Web Core Experience playtest
+Verified fix:
+- five warehouse Zone labels explicitly advertise tap affordance;
+- pressured Zones combine status + tap affordance;
+- first FTUE inspection can point to the actual stressed Zone as `ここをタップ`;
+- Management Overview has five tappable Zone routes;
+- Rank 1 Expansion keeps all four Project routes visible until completion;
+- completed Project routes stay visible as `完了`;
+- Rank 1 hides ambiguous logistics-policy controls;
+- Rank 2+ labels policies `均等運用 / 入荷優先 / 出荷優先`;
+- Godot CI #284 / iOS Export Smoke #100 / Rendered Visual Capture #82 green;
+- `rank1_management_navigation.png` at 390×844 human-inspected / pass.
 
-Do **not** add more equipment or redesign Rank 3 before this test.
+### NEXT — iPhone Web discoverability retest
 
-Use the current engineering Web preview on the user's iPhone and run a normal fresh/representative session. Re-test the original failure modes:
+Do **not** add more content before this result.
 
-1. **Management-clicker drift**
-   - Does normal play still become “open Management → buy whatever is available → repeat”?
-   - PASS direction: observation of the warehouse and Zone interaction naturally drive decisions.
+Run the current engineering Web preview on the user's iPhone from a fresh or representative Rank 1 state.
 
-2. **Equipment / facility consequence recognition**
-   - Before spending, can the player identify where the planned physical change will occur?
-   - After commit, can the player identify what physically changed without a side-by-side screenshot?
-   - Can the player identify the operational consequence after the measurement window?
+First judge discoverability without coaching:
 
-3. **Decision hierarchy / action → consequence**
-   - Is it clear what is happening in the selected Zone?
-   - Is the distinction between OPERATIONS and CAPITAL understandable?
-   - Are strength, weakness, cost, and current equipment readable without hunting through Management?
+1. Can the player tell that warehouse Zone labels are tappable?
+2. When a Zone is pressured, is it obvious that tapping that Zone opens the relevant decision surface?
+3. From Management, can the player reach a specific Zone without already knowing the architecture?
+4. With `設備Project 0/4`, can the player identify all four unfinished Projects and where to go for each?
+5. Are the Rank 1 bottom controls free of the previous `バランス / 入庫 / 出庫` ambiguity?
+6. If Rank 2 is reached, are `均等運用 / 入荷優先 / 出荷優先` understood as logistics policies rather than staffing?
 
-4. **Decision repetition**
-   - Does Rank 1 → Rank 2 introduce meaningfully different reasoning rather than repeated scalar-upgrade clicking?
-   - Do STORAGE/PACKING A↔B trade-offs feel like context-dependent choices rather than obvious upgrades?
+If those pass, continue the same session and re-evaluate:
+- OPERATIONS vs CAPITAL clarity;
+- preview → ghost → explicit commit;
+- visible physical change;
+- authoritative Before/After measurement;
+- whether Rank 1 → Rank 2 decisions feel meaningfully different instead of repetitive.
 
-Also verify touch behavior:
-- Zone tap is reliable;
-- first equipment tap previews rather than spends;
-- ghost appears in the intended Zone;
-- switching equipment/Zone clears the old ghost;
-- second explicit tap commits;
-- warehouse remains visible while the Zone Panel is open;
-- no horizontal overflow / tiny precision target.
+### Routing
 
-### Playtest routing
-
-If the human iPhone Web playtest **passes** the Core Experience criteria:
-- record evidence;
+If the human retest passes:
+- record the evidence;
 - mark the targeted v2 rework complete;
 - route **VERTICAL_SLICE → DEVICE_VALIDATION**;
-- resume remaining device evidence, while native physical-iPhone evidence stays blocked/deferred until Mac/Xcode access exists.
+- native physical-iPhone evidence remains separately deferred until Mac/Xcode access exists.
 
-If the playtest **fails**:
+If discoverability still fails:
 - remain in VERTICAL_SLICE;
-- identify the smallest failing layer (interaction, information hierarchy, reward legibility, decision design);
-- fix that layer only;
-- do not mask the failure by adding more content.
+- isolate the exact missed affordance or navigation step;
+- fix only that layer;
+- do not add equipment or Rank 3 content.
 
-**STOP / SCOPE CONDITION:** deferred Rank 2 INBOUND/PICKING/SHIPPING v2 equipment, Rank 3 redesign, advanced sorter/ASRS/cross-dock content, and release work remain out of scope until this playtest result is known.
+**STOP / SCOPE CONDITION:** deferred Rank 2 INBOUND/PICKING/SHIPPING equipment, Rank 3 redesign, advanced sorter/ASRS/cross-dock content, and release work remain out of scope until this human retest result is known.
 
 PRODUCTION_DECISION remains **UNDECIDED**.
 RELEASE_APPROVAL remains **NOT_REQUESTED**.
