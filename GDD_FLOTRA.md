@@ -124,11 +124,22 @@ The first meaningful improvement must be reachable from the warehouse itself:
 
 Management is not the normal equipment store.
 
+Discoverability is part of the Core Experience contract, not optional polish:
+- every top-level warehouse Zone must visually advertise that it is tappable;
+- a stressed Zone may show its pressure state together with the tap affordance;
+- Management Overview must provide direct Zone navigation rather than only passive text;
+- a blocked Rank 1 Warehouse Expansion must expose the unfinished structural Projects and route each one to the relevant Zone;
+- completing a Project changes its route to a visible completed state instead of making the item silently disappear;
+- Rank 1 does not show the legacy logistics-policy controls as the primary obvious intervention;
+- Rank 2+ logistics-policy controls must state their meaning explicitly: 均等運用 / 入荷優先 / 出荷優先.
+
+A player should not need prior knowledge of the implementation to discover where equipment decisions live.
+
 ### Rank 1 FTUE
 
 Fresh-save onboarding is event-driven and should teach by play rather than by a long checklist.
 
-The first guided event may point the player toward a stressed Zone, but it must not solve the decision for them. After the initial guided intervention, the simulation should be allowed to produce the next bottleneck naturally.
+The first guided event may point the player toward a stressed Zone, but it must not solve the decision for them. The implementation may mark the actual stressed Zone as **ここをタップ** so the player learns the warehouse interaction surface; it must not identify which equipment is the correct answer. After the initial guided intervention, the simulation should be allowed to produce the next bottleneck naturally.
 
 FTUE completion still waits for the authoritative measurement result.
 
@@ -451,10 +462,12 @@ Target information architecture:
 
 For Vertical Slice v2:
 - Overview and Staffing are required;
+- Overview contains tappable controls that open each physical warehouse Zone;
+- Rank 1 Warehouse Expansion keeps all four structural Project routes visible until completion;
 - Contracts may retain existing functionality with minimal restructuring;
 - full Assets history may be deferred if it does not block the Core Experience test.
 
-Normal Zone equipment is not purchased from Management.
+Normal Zone equipment is not purchased from Management. Management may navigate the player to the relevant Zone but must not recreate a hidden equipment store.
 
 Facility-level Rank Expansion remains in Management because it is a strategic project.
 
@@ -463,6 +476,8 @@ Facility-level Rank Expansion remains in Management because it is a strategic pr
 - no horizontal overflow;
 - touch drag/scroll works on iPhone Web and later native iOS;
 - all primary decisions use touch-sized targets;
+- warehouse Zone labels themselves communicate tap affordance;
+- Rank 1 Management shows five tappable Zone routes plus the four structural Project routes within the normal portrait scroll surface;
 - warehouse remains visible during normal Zone decisions;
 - no critical interaction depends on hover.
 ## 12. Art Direction
@@ -547,8 +562,13 @@ For each implemented Zone:
 
 - Zone Panel hierarchy is readable at 390×844;
 - warehouse remains visible while making a Zone decision;
+- tappable warehouse Zones are discoverable without external explanation;
 - Management Overview is understandable without unrelated purchase clutter;
+- Management can route directly to each Zone;
+- Rank 1 blocked Expansion visibly identifies unfinished Project routes;
 - normal Zone equipment is not bought from Management;
+- Rank 1 does not present ambiguous logistics-policy controls as the primary intervention;
+- Rank 2+ policy controls are labelled by their actual operational meaning;
 - RP is absent from the primary HUD;
 - Director reports symptoms, not solutions;
 - the player can identify what physically changed after an investment;
@@ -607,6 +627,23 @@ This is a targeted return to VERTICAL_SLICE, not a full technical reset.
 
 Existing simulation, save/recovery, CI, export smoke, and reusable visual work remain valid assets unless superseded by v2.
 
+### Human iPhone Web retest — 2026-09-19
+
+Result: **FAIL — discoverability / navigation**
+
+Observed without coaching:
+- the player could not tell which parts of the warehouse were tappable or what each visible control changed;
+- Management showed `設備Project 0/4` without an obvious actionable route to those Projects;
+- the bottom BALANCED / INBOUND / SHIP logistics-policy controls were interpreted as staffing changes;
+- equipment consequence / ghost / deeper decision quality could not be fairly judged because the player did not reliably reach the intended equipment decision surface.
+
+Routing decision:
+- remain in **VERTICAL_SLICE**;
+- fix the smallest failing layer only;
+- do not add more equipment or Rank 3 content to mask the failure.
+
+PR #117 implements that discoverability-only correction. Human iPhone Web retest remains required.
+
 ### Current implementation scope
 
 Canonical implementation packet:
@@ -626,9 +663,9 @@ The implemented slice now contains:
 - selected-Zone construction/reward emphasis;
 - authoritative Before/After measurement.
 
-The implementation scope is complete for the planned Vertical Slice v2. The slice explicitly does not implement the remaining Rank 2 Zones or redesign Rank 3.
+The planned feature scope is complete for Vertical Slice v2, and PR #117 adds the targeted discoverability correction found by the 2026-09-19 human retest. The slice explicitly does not implement the remaining Rank 2 Zones or redesign Rank 3.
 
-**Current gate:** human iPhone Web Core Experience playtest. Do not add deferred content merely because implementation work is otherwise complete.
+**Current gate:** repeat the human iPhone Web Core Experience playtest, starting with discoverability. Do not add deferred content merely because implementation work is otherwise complete.
 
 ### Return to DEVICE_VALIDATION
 
