@@ -179,6 +179,16 @@ jobs:
             exit 1
           fi
 
+      - name: Zone Panel real touch input smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 35s godot --headless --path godot --script res://tests/zone_panel_touch_input_smoke.gd 2>&1 | tee /tmp/zone-panel-touch-input-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/zone-panel-touch-input-smoke.log; then
+            echo 'Zone Panel real touch input smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Rank 1 v2 structural project smoke
         shell: bash
         run: |
