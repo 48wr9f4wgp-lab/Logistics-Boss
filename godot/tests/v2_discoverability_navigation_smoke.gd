@@ -75,8 +75,8 @@ func _verify_rank1_management_navigation() -> bool:
         _fail("Rank 1 expansion must keep all four structural project routes visible")
         return false
     var rack_button := hud._v2_rank1_project_nav_buttons.get("rack_wing") as Button
-    if rack_button == null or not rack_button.visible or not rack_button.text.contains("未完了") or not rack_button.text.contains("STORAGE"):
-        _fail("Rack Wing must remain a visible unfinished Project → STORAGE route")
+    if rack_button == null or not rack_button.visible or rack_button.disabled or not rack_button.text.contains("Rack Wing") or not rack_button.text.contains("STORAGE"):
+        _fail("Rack Wing must remain a visible actionable Project → STORAGE route")
         return false
 
     var purchase := sim.purchase_rank1_project(&"rack_wing")
