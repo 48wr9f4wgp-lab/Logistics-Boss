@@ -13,7 +13,7 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_278_success_ios_export_95_success_android_export_90_success_render_capture_76_success",
+    "ci_latest_verified": "godot_284_success_ios_export_100_success_android_export_96_success_render_capture_82_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -37,7 +37,7 @@
     "ftue_core_loop_comprehension": "pass_pr99_ftue_stays_active_until_authoritative_measurement_completed_then_teaches_verdict_and_next_loop",
     "economy_progression_pacing": "pass_pr101_rank2_510s_frontier_best_adaptive_212_vs_best_fixed_shipping_202_after_storage_buffer_tune",
     "core_experience_v2_playtest": "fail_2026_09_18_ios_web_management_clicker_growth_not_legible_management_hard_to_parse_repetition_exposed",
-    "core_loop_e2e_v2": "automated_slice_pass_human_iphone_web_playtest_pending",
+    "core_loop_e2e_v2": "automated_slice_pass_human_iphone_web_discoverability_retest_pending",
     "management_readability_v2": "fail_2026_09_18_ios_web_information_hierarchy_action_effect_unclear",
     "reward_growth_recognition_v2": "fail_2026_09_18_ios_web_equipment_and_facility_change_not_clear_during_normal_play",
     "legacy_core_loop_automation": "pass_pr74_valid_for_legacy_flow_not_v2_product_proof",
@@ -50,7 +50,10 @@
     "rank2_v2_dominance": "pass_pr113_storage_orders_fast18_dense12_storage_buffer_fast4_dense8_packing_long_parallel106_fast102_packing_latency_parallel3_35_fast1_75",
     "rank2_v2_visuals": "pass_render_capture_71_human_inspected_rank2_rank3_no_visual_regression_zone_labels_readable",
     "construction_reward_presentation": "pass_pr115_rank1_rank2_physical_ghost_preview_zone_switch_close_clear_commit_zone_emphasis_authoritative_measurement",
-    "construction_preview_visuals": "pass_render_capture_76_rank2_preview_390x844_human_inspected_zone_panel_plus_high_density_ghost_warehouse_remains_visible"
+    "construction_preview_visuals": "pass_render_capture_76_rank2_preview_390x844_human_inspected_zone_panel_plus_high_density_ghost_warehouse_remains_visible",
+    "core_experience_v2_playtest_retest_2026_09_19": "fail_ios_web_discoverability_where_to_tap_equipment_route_unclear_policy_controls_misread_as_staffing",
+    "interaction_discoverability_v2": "pass_pr117_zone_tap_affordance_management_zone_navigation_persistent_rank1_project_routes_rank1_policy_controls_hidden_rank2_policy_labels_explicit_human_retest_pending",
+    "discoverability_visuals": "pass_render_capture_82_rank1_management_navigation_390x844_human_inspected_five_zone_routes_four_project_routes_visible"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -67,9 +70,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "PR #115 merged. Construction/reward presentation for Core Experience v2 is implemented and verified. Rank 1 Rack Wing, Second Packing Bench, and Forklift Project plus Rank 2 Fast Pick Rack, High Density Rack, Parallel Pack Line, and Fast Pack Cell now show physical semi-transparent planned geometry in the selected warehouse Zone before commitment. First preview tap does not spend cash; switching equipment replaces the old ghost; switching Zones or closing the Zone Panel clears stale preview geometry. Successful authoritative build/renovation clears the ghost, real equipment geometry becomes active, and a short selected-Zone construction emphasis bridges into the existing authoritative Before/After measurement. Godot CI #278, iOS Export Smoke #95, Rendered Visual Capture #76, Android Export Smoke #90 all succeeded. rank2_preview.png at 390x844 was human-inspected: the warehouse remains visible behind the STORAGE Zone Panel, the High Density Rack planned ghost is visible before spend, and strength/weakness/¥9,000 renovation information remains readable.",
+  "last_verified_done": "PR #117 merged after the 2026-09-19 iPhone Web Core Experience retest failed discoverability. The failure was specific: the player could not tell where to tap or what each control did; Management showed 設備Project 0/4 without an actionable route; and the bottom BALANCED / INBOUND / SHIP policy controls were interpreted as staffing changes. PR #117 fixes only that layer: all five warehouse Zone labels now advertise タップ and pressure state; the first FTUE inspection can mark the actual stressed Zone as ここをタップ without revealing the equipment answer; Management Overview now exposes five tappable Zone routes; Rank 1 Warehouse Expansion keeps all four structural Project routes visible and completed routes stay visible as 完了; Rank 1 hides the ambiguous logistics-policy controls, while Rank 2+ labels them 均等運用 / 入荷優先 / 出荷優先. Godot CI #284, iOS Export Smoke #100, Rendered Visual Capture #82, Android Export Smoke #96 all succeeded. Fresh rank1_management_navigation.png at 390x844 was human-inspected: five Zone routes, all four Project routes, and the Expansion condition are visible in the same Management screen.",
   "blocked": "No Mac-independent implementation blocker for Vertical Slice v2. Native physical-iPhone DEVICE_VALIDATION remains deferred until Mac/Xcode access becomes available, but it is not the current active-phase blocker.",
-  "next": "Run the next iPhone Web Core Experience playtest on the current engineering preview before adding any more content. Re-test the four original failure modes: (1) play drifting into Management-clicker behavior, (2) equipment/facility change not being perceptible during ordinary play, (3) unclear information hierarchy or action→consequence in the Zone/Management UI, and (4) repetitive decision feel. Also verify preview→ghost→commit→physical change→measurement comprehension with normal touch interaction. Keep ACTIVE_PHASE=VERTICAL_SLICE until this human playtest passes; only then route back to DEVICE_VALIDATION.",
+  "next": "Re-run the iPhone Web Core Experience playtest on the current engineering preview, focusing first on discoverability before judging deeper reward/decision quality. From a fresh/representative Rank 1 state, verify that the player can identify tappable warehouse Zones without explanation, reach a structural Project from either the warehouse or Management, correctly understand that Rank 2+ 均等運用 / 入荷優先 / 出荷優先 are logistics policies rather than staffing controls, and understand why Warehouse Expansion is blocked. If discoverability passes, continue the same session into ghost→commit→physical change→measurement and Rank 2 STORAGE/PACKING trade-off judgment. Remain in VERTICAL_SLICE until this human retest passes.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -122,7 +125,7 @@
   },
   "vertical_slice_v2": {
     "change_packet": "VERTICAL_SLICE_V2_CHANGE_PACKET.md",
-    "implementation_state": "IMPLEMENTATION_COMPLETE_PLAYTEST_PENDING",
+    "implementation_state": "DISCOVERABILITY_FIX_DONE_RETEST_PENDING",
     "locked_scope": [
       "3D warehouse as primary game board",
       "Zone-first normal equipment decisions",
@@ -191,14 +194,22 @@
       "Zone switch and Zone Panel close clear stale ghost geometry",
       "successful commit transitions ghost to real equipment geometry",
       "short selected-Zone construction/reward emphasis after authoritative commit",
-      "rank2_preview 390x844 visual evidence with Zone Panel and physical ghost human-inspected"
+      "rank2_preview 390x844 visual evidence with Zone Panel and physical ghost human-inspected",
+      "all five warehouse Zone labels explicitly advertise tap affordance and pressure state",
+      "first FTUE inspection can highlight the actual stressed Zone as ここをタップ",
+      "Management Overview provides five direct Zone navigation controls",
+      "Rank 1 Warehouse Expansion keeps four structural Project routes visible until completion",
+      "completed Rank 1 Project routes remain visible as 完了 instead of disappearing",
+      "Rank 1 hides ambiguous logistics-policy controls",
+      "Rank 2+ logistics policy controls are explicitly labelled 均等運用 / 入荷優先 / 出荷優先",
+      "rank1_management_navigation 390x844 visual evidence human-inspected"
     ],
-    "next_step": "IPHONE_WEB_CORE_EXPERIENCE_PLAYTEST"
+    "next_step": "IPHONE_WEB_DISCOVERABILITY_RETEST"
   },
   "latest_vertical_slice_v2_merge": {
-    "pr": 115,
-    "merge_commit": "bff7b090a111df5be3fa0f2191dac97c45244901",
-    "title": "Add construction preview and reward presentation",
-    "evidence": "Godot CI #278, iOS Export Smoke #95, Rendered Visual Capture #76, Android Export Smoke #90 success; dedicated construction/reward presentation smoke passed; rank2_preview.png human-inspected at 390x844"
+    "pr": 117,
+    "merge_commit": "d47caaed010447e338e4b18014bf0fd70f0c6796",
+    "title": "Fix Core Experience v2 discoverability",
+    "evidence": "Godot CI #284, iOS Export Smoke #100, Rendered Visual Capture #82, Android Export Smoke #96 success; dedicated discoverability/navigation smoke passed; rank1_management_navigation.png human-inspected at 390x844"
   }
 }
