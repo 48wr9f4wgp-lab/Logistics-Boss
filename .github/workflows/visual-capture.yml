@@ -69,7 +69,8 @@ jobs:
           test -s visual-captures/rank2.png
           test -s visual-captures/rank3.png
           test -s visual-captures/rank2_preview.png
-          file visual-captures/rank1.png visual-captures/rank2.png visual-captures/rank3.png visual-captures/rank2_preview.png
+          test -s visual-captures/rank1_management_navigation.png
+          file visual-captures/rank1.png visual-captures/rank2.png visual-captures/rank3.png visual-captures/rank2_preview.png visual-captures/rank1_management_navigation.png
 
       - name: Upload rendered visual captures
         uses: actions/upload-artifact@v4
