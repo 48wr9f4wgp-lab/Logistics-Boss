@@ -260,8 +260,8 @@ func _run() -> void:
         _fail("release HUD must build contract controls")
         return
     var contract_button: Button = hud._contract_buttons[0]
-    if contract_button.mouse_filter != Control.MOUSE_FILTER_PASS:
-        _fail("management buttons must pass touch drags to the ScrollContainer")
+    if contract_button.mouse_filter != Control.MOUSE_FILTER_STOP:
+        _fail("management buttons must own taps; global mobile drag handling preserves scrolling")
         return
     if contract_button.autowrap_mode == TextServer.AUTOWRAP_OFF:
         _fail("management button copy must wrap within the available mobile width")
