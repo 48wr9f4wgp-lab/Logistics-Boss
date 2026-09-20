@@ -19,6 +19,7 @@ func _run() -> void:
     await _verify_goal_and_contract()
     await _verify_drag_cancel_and_clipping()
     await _verify_zone_purchase()
+    await _verify_rank2_actions()
     print("Mobile interaction clarity checks finished; failures=%d" % _failures)
     quit(0 if _failures == 0 else 1)
 
@@ -65,7 +66,6 @@ func _verify_goal_and_contract() -> void:
     _expect(hud._v2_growth_goal.text.contains("契約を選ぶ"), "Projects4/4 rating0 must lead to contracts")
     _expect(hud._v2_growth_goal.text.contains("導入済み"), "Goal must explain that equipment is already complete")
 
-    # The reported tofu was a main-attached resume surface, not a HUD._ready child.
     var resume: LogisticsSessionResumeBrief = ResumeScript.new()
     hud.add_child(resume)
     resume.bind(sim, true)
@@ -86,6 +86,17 @@ func _verify_goal_and_contract() -> void:
     _expect(hud._sheet.visible and hud._progression_panel.visible, "Goal must open the contract section directly")
     _expect(not hud._v2_overview_panel.visible, "Contract section must not bury field navigation beneath offers")
     _expect((clarity._tabs["field"] as Button).is_visible_in_tree(), "Field tab must remain visible outside scroll")
+    _tap(clarity._tabs["field"] as Button)
+    await _settle()
+    _expect(hud._v2_overview_panel.visible and not hud._progression_panel.visible, "Field tab touch must switch visible content")
+    _tap(hud._v2_zone_nav_buttons["storage"] as Button)
+    await _settle()
+    _expect(zone.is_open() and zone.selected_zone() == "storage" and not hud._sheet.visible, "Field route must open actual Zone Panel")
+    _expect(not zone._capital_action.visible and not zone._operations_action.visible, "Installed equipment/staff must not remain fake purchase buttons")
+    _expect(zone._capital.text.contains("導入済み"), "Installed state must explain why there is no purchase")
+    zone.close()
+    clarity.open_section("contracts")
+    await _settle()
 
     var first := hud._contract_buttons[0]
     _expect(first.text == "この契約を開始 ▶", "Contract descriptions and start action must be separate")
@@ -95,6 +106,10 @@ func _verify_goal_and_contract() -> void:
     var contract_point := first.get_global_rect().get_center()
     _expect(clarity.router.button_at(contract_point) == first, "First contract action must be visible without scrolling")
     _touch(contract_point, true)
+    await create_timer(0.55).timeout
+    _mouse(contract_point, true)
+    _mouse(contract_point, false)
+    _expect(sim.active_contract.is_empty(), "Synthetic mouse during a long-held touch must not accept early")
     _touch(contract_point, false)
     _mouse(contract_point, true)
     _mouse(contract_point, false)
@@ -104,11 +119,6 @@ func _verify_goal_and_contract() -> void:
     _expect(not hud._sheet.visible, "Accepted contract must return to warehouse observation")
     _expect(hud._v2_growth_goal.text.contains("進行中"), "Accepted contract must have persistent progress feedback")
 
-    zone.open_zone("storage")
-    await _settle()
-    _expect(not zone._capital_action.visible and not zone._operations_action.visible, "Installed equipment/staff must not remain fake purchase buttons")
-    _expect(zone._capital.text.contains("導入済み"), "Installed state must explain why there is no purchase")
-    zone.close()
     sim.active_contract.clear()
     sim.logistics_rating = 8
     await _settle()
@@ -154,9 +164,23 @@ func _verify_drag_cancel_and_clipping() -> void:
     _expect(hud._mobile_scroll.scroll_vertical > start_scroll, "Dragging from a button must scroll")
     _expect(sim.active_contract.is_empty(), "A scroll-sized 12px gesture must never also activate")
 
-    hud._mobile_scroll.scroll_vertical = 100000
+    # The shortened contract cards can fit almost entirely in the viewport.
+    # Add fixture-only overflow, then place the first button above the scroll
+    # clip but still inside the viewport. Do not assume max-scroll hides it.
+    var overflow := Control.new()
+    overflow.custom_minimum_size.y = 400.0
+    hud._find_upgrade_list(hud._sheet).add_child(overflow)
     await _settle()
-    _expect(clarity.router.button_at(button.get_global_rect().get_center()) != button, "Clipped/offscreen buttons must not be raw-touch targets")
+    var scroll_top := hud._mobile_scroll.get_global_rect().position.y
+    var needed := button.get_global_rect().get_center().y - scroll_top + 12.0
+    hud._mobile_scroll.scroll_vertical += ceili(needed)
+    await _settle()
+    var clipped_point := button.get_global_rect().get_center()
+    print("Clip fixture: point=%s scroll=%s offset=%d" % [str(clipped_point), str(hud._mobile_scroll.get_global_rect()), hud._mobile_scroll.scroll_vertical])
+    _expect(get_root().get_visible_rect().has_point(clipped_point), "Clip fixture must remain inside viewport")
+    _expect(not hud._mobile_scroll.get_global_rect().has_point(clipped_point), "Clip fixture must actually be clipped")
+    _expect(clarity.router.button_at(clipped_point) != button, "Clipped buttons must not be raw-touch targets")
+    overflow.queue_free()
     hud._mobile_scroll.scroll_vertical = 0
     await _settle()
     point = button.get_global_rect().get_center()
@@ -189,6 +213,43 @@ func _verify_zone_purchase() -> void:
     await _settle()
     _expect(sim.money < before and sim.rank1_project_owned(&"rack_wing"), "Second gesture must perform authoritative construction")
     _expect(not button.visible and zone._capital.text.contains("導入済み"), "Successful construction must become installed status")
+    hud.queue_free()
+    await _settle()
+
+
+func _verify_rank2_actions() -> void:
+    var context: Dictionary = await _fresh()
+    var sim: FlotraV2Sim = context["sim"]
+    var hud: MobileGameHud = context["hud"]
+    var zone: WarehouseZonePanel = context["zone"]
+    var clarity: MobileInteractionClarity = context["clarity"]
+    sim.money = 1000000
+    for kind in [&"rack_wing", &"second_packing_bench", &"worker_hire", &"forklift_project"]:
+        sim.purchase_rank1_project(kind)
+    sim.logistics_rating = 8
+    var expansion: Dictionary = sim.purchase_warehouse_expansion()
+    _expect(bool(expansion.get("ok", false)), "Rank2 fixture expansion must succeed")
+    for zone_key in ["storage", "packing"]:
+        zone.open_zone(zone_key)
+        await _settle()
+        for button in zone._rank2_capital_buttons:
+            var kind := StringName(button.get_meta("kind", ""))
+            var money_before := sim.money
+            _expect(clarity.router.button_at(button.get_global_rect().get_center()) == button, "Rank2 equipment must be visibly hittable: %s" % String(kind))
+            _tap(button)
+            await _settle()
+            _expect(sim.money == money_before and zone.preview_kind() == kind, "Rank2 first tap must preview without spend")
+            _tap(button)
+            await _settle()
+            var info: Dictionary = sim.rank2_v2_equipment_action_info(kind)
+            _expect(bool(info.get("active", false)) and sim.money < money_before, "Rank2 build/renovation must apply once")
+    zone.open_zone("shipping")
+    await _settle()
+    var before: Dictionary = sim.direct_staffing_summary()
+    _tap(zone._staffing_move_buttons[0])
+    await _settle()
+    var after: Dictionary = sim.direct_staffing_summary()
+    _expect(int(after.get("shipping", 0)) == int(before.get("shipping", 0)) + 1, "Rank2 staffing touch must move one worker")
     hud.queue_free()
     await _settle()
 
