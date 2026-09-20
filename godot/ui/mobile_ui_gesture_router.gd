@@ -37,6 +37,7 @@ func _input(event: InputEvent) -> void:
         if _blocked_touches.has(touch.index):
             if not touch.pressed:
                 _blocked_touches.erase(touch.index)
+                _suppress_until = Time.get_ticks_msec() + MOUSE_SUPPRESSION_MS
             get_viewport().set_input_as_handled()
             return
         if touch.pressed:
@@ -61,7 +62,8 @@ func _input(event: InputEvent) -> void:
         var mouse := event as InputEventMouseButton
         if mouse.button_index != MOUSE_BUTTON_LEFT:
             return
-        if Time.get_ticks_msec() < _suppress_until:
+        # A finger held longer than the post-touch timer must still own input.
+        if _pointer >= 0 or not _blocked_touches.is_empty() or Time.get_ticks_msec() < _suppress_until:
             get_viewport().set_input_as_handled()
             return
         if mouse.pressed and _pointer == -1:
