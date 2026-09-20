@@ -1,9 +1,8 @@
 extends Node
 class_name MobileInteractionClarity
 
-# Presentation adapter for the existing v2 surfaces. Domain rules and purchase
-# handlers are unchanged. This is explicitly composed in main, not an autoload
-# or another HUD subclass. Render after inherited HUD/Zone state refreshes.
+# Presentation adapter for existing v2 surfaces, explicitly composed in main.
+# Domain rules/handlers are unchanged; this is not another HUD subclass.
 const RouterScript := preload("res://ui/mobile_ui_gesture_router.gd")
 const FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
 const ZONES := {"inbound": "入荷", "storage": "保管", "picking": "ピッキング", "packing": "梱包", "shipping": "出荷"}
@@ -31,6 +30,9 @@ func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2
     coach = next_coach
     resume_brief = next_resume
     process_priority = 100
+    # Runtime binding avoids project-theme font loading before a clean checkout
+    # has imported its TTF. The theme also covers UI attached after this bind.
+    hud.theme = load("res://ui/mobile_theme.tres") as Theme
     _normal = _style(Color(0.045, 0.12, 0.16), Color(0.28, 0.67, 0.82))
     _primary = _style(Color(0.055, 0.29, 0.25), Color(0.44, 0.95, 0.77))
     _pressed = _style(Color(0.32, 0.22, 0.075), Color(1.0, 0.76, 0.32))
@@ -38,7 +40,6 @@ func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2
     _build_sections()
     _separate_contract_actions()
     _style_buttons(hud)
-    # Include main's late-added Zone/coach/resume controls, not only HUD._ready.
     hud._apply_mobile_font_tree(hud)
     var goal := hud._v2_growth_goal
     if goal.pressed.is_connected(hud._open_growth_management):
@@ -128,8 +129,6 @@ func refresh() -> void:
         var title := String(button.get_meta("section_title"))
         button.text = "【%s】" % title if key == _section else title
         button.add_theme_stylebox_override("normal", _primary if key == _section else _normal)
-    # Rank 2 has no Rank 1 expansion project. Keep its deferred legacy Rank 3
-    # controls out of this slice's field/equipment surface.
     (_tabs["expansion"] as Button).visible = rank != 2
     if rank == 2 and _section == "expansion":
         _select_section("field")
@@ -229,7 +228,9 @@ func _render_zone() -> void:
     var worker: Dictionary = sim.call("rank1_project_info", &"worker_hire")
     if bool(worker.get("owned", false)):
         zone._operations_action.visible = false
-        zone._operations.text = zone._operations.text.replace("全Worker", "作業員") + "\n増員済み ✓"
+        zone._operations.text = zone._operations.text.replace("全Worker", "作業員")
+        if not zone._operations.text.ends_with("増員済み ✓"):
+            zone._operations.text += "\n増員済み ✓"
     else:
         zone._operations_action.text = "作業員を1人採用\n¥%s" % hud._format_number(int(worker.get("cost", 0)))
     var kind := StringName(sim.call("rank1_project_for_zone", zone.selected_zone()))
@@ -285,12 +286,14 @@ func _select_section(section: String) -> void:
 
 func _after_action(button: Button) -> void:
     if button in hud._contract_buttons and not hud.sim.active_contract.is_empty():
-        # Only a successful authoritative acceptance returns to warehouse view.
         hud._sheet.visible = false
     refresh()
 
 
 func _style_buttons(node: Node) -> void:
+    # Keep the reset dialog's destructive-action styling and confirmation UX.
+    if node == hud._reset_modal or node == hud._reset_button:
+        return
     if node is Button:
         var button := node as Button
         button.add_theme_font_override("font", FONT)
