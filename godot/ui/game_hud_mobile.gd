@@ -37,6 +37,7 @@ func _ready() -> void:
     _apply_mobile_rank3_compaction()
     _apply_v2_primary_hud()
     _apply_v2_management_scope()
+    _apply_mobile_font_tree(self)
 
 
 func _process(delta: float) -> void:
@@ -182,7 +183,9 @@ func _configure_scroll_content(node: Node) -> void:
     elif node is Button:
         var button := node as Button
         button.clip_text = false
-        button.mouse_filter = Control.MOUSE_FILTER_PASS
+        # Buttons inside the ScrollContainer must own taps on iOS Web.
+        # Global _input still observes drag motion to scroll the sheet.
+        button.mouse_filter = Control.MOUSE_FILTER_STOP
         button.focus_mode = Control.FOCUS_NONE
         if button is not OptionButton:
             button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -213,11 +216,23 @@ func _configure_known_mobile_controls() -> void:
         _routing_summary.custom_minimum_size = Vector2(0, 42)
     if _routing_select != null:
         _routing_select.custom_minimum_size = Vector2(0, 54)
-        _routing_select.mouse_filter = Control.MOUSE_FILTER_PASS
+        _routing_select.mouse_filter = Control.MOUSE_FILTER_STOP
     if _receiving_annex_button != null:
         _receiving_annex_button.custom_minimum_size = Vector2(0, 88)
     if _inbound_carrier_button != null:
         _inbound_carrier_button.custom_minimum_size = Vector2(0, 88)
+
+
+func _apply_mobile_font_tree(node: Node) -> void:
+    if node is Label:
+        (node as Label).add_theme_font_override("font", JAPANESE_UI_FONT)
+    elif node is Button:
+        (node as Button).add_theme_font_override("font", JAPANESE_UI_FONT)
+    elif node is LineEdit:
+        (node as LineEdit).add_theme_font_override("font", JAPANESE_UI_FONT)
+
+    for child in node.get_children():
+        _apply_mobile_font_tree(child)
 
 
 func _ensure_scroll_bottom_padding() -> void:
