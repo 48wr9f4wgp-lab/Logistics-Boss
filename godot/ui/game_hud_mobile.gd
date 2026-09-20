@@ -611,19 +611,16 @@ func _apply_v2_primary_hud() -> void:
         if metric_box != null and metric_box.get_parent() is PanelContainer:
             (metric_box.get_parent() as PanelContainer).visible = false
 
-    # Rank 1 must teach Zone-first play without offering three unexplained
-    # policy buttons as the most obvious intervention. Rank 2+ restores them
-    # with explicit operational meaning.
-    var show_policy := sim != null and sim.facility_rank >= 2
+    # Legacy BALANCED / INBOUND / SHIP policy only affects Rank 1 dynamic
+    # task choice. Rank 2+ uses direct Zone staffing, so showing these controls
+    # there would advertise an action that no longer changes authoritative work.
+    # Keep the compatibility API, but hide the controls on the v2 player path.
     if _flow_button != null:
-        _flow_button.visible = show_policy
-        _flow_button.text = "均等運用"
+        _flow_button.visible = false
     if _inbound_button != null:
-        _inbound_button.visible = show_policy
-        _inbound_button.text = "入荷優先"
+        _inbound_button.visible = false
     if _outbound_button != null:
-        _outbound_button.visible = show_policy
-        _outbound_button.text = "出荷優先"
+        _outbound_button.visible = false
 
     if _manage_button != null:
         _manage_button.text = "閉じる" if _sheet != null and _sheet.visible else "経営管理"
