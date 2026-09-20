@@ -13,7 +13,7 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "godot_290_success_ios_export_103_success_android_export_102_success_render_capture_88_success",
+    "ci_latest_verified": "godot_295_success_ios_export_107_success_android_export_107_success_render_capture_93_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
@@ -37,7 +37,7 @@
     "ftue_core_loop_comprehension": "pass_pr99_ftue_stays_active_until_authoritative_measurement_completed_then_teaches_verdict_and_next_loop",
     "economy_progression_pacing": "pass_pr101_rank2_510s_frontier_best_adaptive_212_vs_best_fixed_shipping_202_after_storage_buffer_tune",
     "core_experience_v2_playtest": "fail_2026_09_18_ios_web_management_clicker_growth_not_legible_management_hard_to_parse_repetition_exposed",
-    "core_loop_e2e_v2": "automated_slice_and_natural_progression_pass_human_iphone_web_core_purpose_retest_pending",
+    "core_loop_e2e_v2": "automated_slice_and_natural_progression_pass_human_iphone_web_mobile_ui_foundation_retest_pending",
     "management_readability_v2": "fail_2026_09_18_ios_web_information_hierarchy_action_effect_unclear",
     "reward_growth_recognition_v2": "fail_2026_09_18_ios_web_equipment_and_facility_change_not_clear_during_normal_play",
     "legacy_core_loop_automation": "pass_pr74_valid_for_legacy_flow_not_v2_product_proof",
@@ -61,7 +61,10 @@
     "post_playtest_audit_2026_09_20": "found_existing_contract_system_not_missing_but_disconnected_from_visible_growth_goal_plus_worker_copy_policy_ui_measurement_verdict_inventory_preservation_test_gaps",
     "v2_consistency_repair": "pass_pr121_worker_activity_truthful_non_authoritative_policy_controls_hidden_kind_aware_measurement_inflight_inventory_preserved",
     "rank1_v2_natural_progression": "pass_pr121_fresh_normal_play_144_9s_contracts5_started6_shipped46_rating10_explicit_rank2_expansion_no_cash_or_rating_injection",
-    "rank1_growth_objective": "pass_pr122_primary_goal_contract_progress_rank2_requirements_management_contracts_first_rating_explained"
+    "rank1_growth_objective": "pass_pr122_primary_goal_contract_progress_rank2_requirements_management_contracts_first_rating_explained",
+    "core_experience_v2_mobile_ui_retest_2026_09_20": "fail_human_iphone_web_some_buttons_unresponsive_and_japanese_text_garbled",
+    "mobile_ui_foundation_v2": "pass_pr124_bundled_mplus_for_mobile_text_raw_management_touch_router_drag_scroll_and_zone_panel_touch_regressions",
+    "mobile_ui_source_encoding": "pass_ui_12_gd_files_scanned_no_replacement_or_utf8_mojibake_sequences"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -78,9 +81,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "PR #122 merged after the 2026-09-20 post-playtest audit. Human iPhone Web evidence first confirmed the PR #119 touch path works (first tap → preview/ghost/no spend; second tap → commit), but the broader Core Experience still failed because the player reported that it was unclear what the game was asking them to achieve. Audit showed contracts already existed and were authoritative; the problem was disconnection between contracts, Logistics Rating, structural Projects and Warehouse Expansion, plus several implementation/UI inconsistencies. PR #121 repaired those inconsistencies: Rank 1 Worker copy now shows authoritative current activity instead of misleading role count 0; legacy BALANCED/INBOUND/SHIP controls are hidden from the v2 path because Rank 2 direct staffing owns authoritative work assignment; investment verdicts can use local operational effects such as storage pressure; in-flight Worker/Forklift inventory survives capacity-down renovation. A new fresh-save natural progression smoke reached Rank 2 in 144.9 simulated seconds using only normal contracts, earned shipment cash, normal project purchases and explicit Warehouse Expansion: 5 contracts completed, 46 shipments, Logistics Rating 10. PR #122 then connected the existing progression spine visibly: a persistent Rank 1 objective shows contract status plus equipment/rating/expansion requirements, tapping it opens Management with contracts first, Warehouse Expansion explains that Logistics Rating comes from contract completion, and FTUE teaches 契約達成 → 物流評価 → 設備Project → Warehouse expansion. Godot CI #290, iOS Export Smoke #103, Rendered Visual Capture #88, Android Export Smoke #102 all succeeded; fresh 390×844 captures were human-inspected.",
+  "last_verified_done": "PR #124 merged after human iPhone Web testing exposed a more fundamental mobile UI failure: some visible buttons still did not respond reliably and Japanese text could render garbled. Audit found two systemic risks: most base HUD text relied on platform font fallback while only newer surfaces explicitly used the bundled M PLUS 1p, and Management Buttons inside a STOP ScrollContainer were configured PASS, allowing iOS/Web taps to continue into the scroll parent. Source scan of all 12 godot/ui GDScript files found no replacement-character/mojibake strings, so the text issue was treated as runtime font fallback rather than corrupted source. PR #124 recursively applies bundled M PLUS 1p to Mobile HUD text controls, makes Management Buttons own taps, adds a raw mobile action router for visible/enabled Management/dock actions with drag rejection and 450ms synthetic-mouse suppression, and routes Button-origin drags into the existing Management scroll path. New mobile_ui_foundation_smoke verifies bundled font resolution/glyph coverage, real ScreenTouch navigation from Management, and scrolling initiated on a Button. Godot CI #295, iOS Export Smoke #107, Rendered Visual Capture #93, Android Export Smoke #107 all succeeded. Web engineering preview was republished by commit 82f2097b6d57e6bacb1a88946a8d65e4604355f9.",
   "blocked": "No Mac-independent implementation blocker for Vertical Slice v2. Native physical-iPhone DEVICE_VALIDATION remains deferred until Mac/Xcode access becomes available, but it is not the current active-phase blocker.",
-  "next": "Re-run the iPhone Web Core Experience test on the current engineering preview from a fresh/representative Rank 1 state, without coaching. First answer only one question: can the player explain in their own words that the game is about completing contracts, raising Logistics Rating, improving the warehouse with structural Projects, and expanding to the next facility rank? Then verify the visible sequence: primary NEXT objective → choose contract → contract progress on the main HUD → solve relevant warehouse bottleneck through Zone actions → contract/rating progress → Project progress → Warehouse Expansion. If that purpose/growth spine is understood, continue the same session into reward/decision-quality evaluation. If it is still unclear, remain in VERTICAL_SLICE and fix the smallest missing explanatory/feedback link only; do not add new contracts, penalties, equipment, Rank 3 content, or release work.",
+  "next": "Before any further Core Experience or progression judgment, re-run a short iPhone Web mobile-UI foundation test on the current engineering preview. Verify: (1) Japanese text renders normally across the main HUD, Management, contracts, Project routes and Zone Panel; (2) Management Zone buttons respond to a normal tap; (3) Rank 1 Project route buttons respond; (4) contract buttons respond; (5) Zone Panel CAPITAL/OPERATIONS still respond; (6) dragging from on top of a Management button scrolls instead of triggering it. If any basic UI input or text-rendering failure remains, stay in VERTICAL_SLICE and fix only that platform/UI foundation layer. Do not resume the Core Purpose/Growth Spine retest until this foundation passes.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -133,7 +136,7 @@
   },
   "vertical_slice_v2": {
     "change_packet": "VERTICAL_SLICE_V2_CHANGE_PACKET.md",
-    "implementation_state": "GROWTH_OBJECTIVE_SPINE_DONE_RETEST_PENDING",
+    "implementation_state": "MOBILE_UI_FOUNDATION_FIX_DONE_RETEST_PENDING",
     "locked_scope": [
       "3D warehouse as primary game board",
       "Zone-first normal equipment decisions",
@@ -226,14 +229,21 @@
       "persistent Rank 1 growth objective: contract progress plus Rank 2 requirements",
       "Rank 1 Management puts contract/progression controls first",
       "Warehouse Expansion explains Logistics Rating is earned through contracts",
-      "FTUE teaches contract → rating → Project → warehouse expansion objective"
+      "FTUE teaches contract → rating → Project → warehouse expansion objective",
+      "Mobile HUD text controls forced to bundled M PLUS 1p instead of platform fallback",
+      "Management Buttons own taps instead of passing them to the ScrollContainer",
+      "raw ScreenTouch/mouse action router for Management and primary mobile actions",
+      "Button-origin drag gestures continue to scroll Management through global drag handling",
+      "450ms synthetic-mouse suppression after touch prevents duplicate mobile actions",
+      "mobile UI foundation smoke verifies font resolution, glyph coverage, Management ScreenTouch and Button-origin scrolling",
+      "godot/ui source scan found no UTF-8 replacement/mojibake strings"
     ],
-    "next_step": "IPHONE_WEB_CORE_PURPOSE_RETEST"
+    "next_step": "IPHONE_WEB_MOBILE_UI_FOUNDATION_RETEST"
   },
   "latest_vertical_slice_v2_merge": {
-    "pr": 122,
-    "merge_commit": "d94fc680b1c6a49f6f3f001e0d85d7fb6eed18f8",
-    "title": "Connect Rank 1 contracts to warehouse growth",
-    "evidence": "Godot CI #290, iOS Export Smoke #103, Rendered Visual Capture #88, Android Export Smoke #102 success; Rank 1 growth objective smoke passed; PR #121 natural progression evidence preserved (144.9s, 5 contracts, 46 shipments, rating 10, explicit Rank 2 expansion)"
+    "pr": 124,
+    "merge_commit": "6a3bfc173e3113368d8929cbe312f0e06aaff3de",
+    "title": "Stabilize mobile UI font and touch foundation",
+    "evidence": "Godot CI #295, iOS Export Smoke #107, Rendered Visual Capture #93, Android Export Smoke #107 success; mobile UI foundation smoke passed; Web preview republished at 82f2097b..."
   }
 }
