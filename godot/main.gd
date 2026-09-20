@@ -19,6 +19,7 @@ const GameHudScript = preload("res://ui/game_hud_mobile.gd")
 const WarehouseZonePanelScript = preload("res://ui/warehouse_zone_panel.gd")
 const V2Rank1CoachScript = preload("res://ui/v2_rank1_coach.gd")
 const SessionResumeBriefScript = preload("res://ui/session_resume_brief.gd")
+const MobileInteractionClarityScript = preload("res://ui/mobile_interaction_clarity.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 const GameFeelScript = preload("res://feedback/game_feel.gd")
 const AnalyticsScript = preload("res://telemetry/analytics_service.gd")
@@ -118,6 +119,13 @@ func _ready() -> void:
     var v2_ftue_clear := v2_ftue_step.is_empty() or v2_ftue_step == "complete"
     var should_show_resume := resumed_session and legacy_ftue_clear and v2_ftue_clear
     resume_brief.bind(sim, should_show_resume)
+
+    # Compose the interaction presentation after every mobile surface exists.
+    # It owns UI gestures only; simulation, saves and purchase handlers stay intact.
+    var interaction_clarity: MobileInteractionClarity = MobileInteractionClarityScript.new()
+    interaction_clarity.name = "MobileInteractionClarity"
+    hud.add_child(interaction_clarity)
+    interaction_clarity.bind(hud as MobileGameHud, zone_panel, v2_rank1_coach, resume_brief)
 
     var visual_pass_3: WarehouseVisualPass3 = WarehouseVisualPass3Script.new()
     view.add_child(visual_pass_3)

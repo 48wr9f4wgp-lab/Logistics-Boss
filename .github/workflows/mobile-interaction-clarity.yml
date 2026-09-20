@@ -1,0 +1,69 @@
+name: FLOTRA Mobile Interaction Clarity
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/mobile-interaction-clarity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/mobile-interaction-clarity.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-interaction-clarity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+      - name: Import and compile
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 120s godot --headless --audio-driver Dummy --path godot --editor --quit 2>&1 | tee /tmp/clarity-import.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/clarity-import.log; then exit 1; fi
+      - name: Test composed ScreenTouch and navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 90s godot --headless --audio-driver Dummy --path godot --script res://tests/mobile_interaction_clarity_smoke.gd 2>&1 | tee /tmp/clarity-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/clarity-smoke.log; then exit 1; fi
+      - name: Install software-render display
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0
+      - name: Capture actual main-scene UI
+        shell: bash
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          FLOTRA_CLARITY_CAPTURE_DIR: ${{ github.workspace }}/clarity-captures
+        run: |
+          set -euo pipefail
+          mkdir -p clarity-captures
+          timeout 90s xvfb-run -a -s '-screen 0 390x844x24' godot --path godot --audio-driver Dummy --display-driver x11 --rendering-method gl_compatibility --script res://tests/mobile_interaction_clarity_capture.gd 2>&1 | tee /tmp/clarity-capture.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/clarity-capture.log; then exit 1; fi
+          test -s clarity-captures/clarity_fresh.png
+          test -s clarity-captures/clarity_completed_equipment.png
+          test -s clarity-captures/clarity_contracts.png
+          test -s clarity-captures/clarity_field.png
+          test -s clarity-captures/clarity_installed_storage.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flotra-mobile-clarity-evidence
+          path: |
+            clarity-captures/*.png
+            /tmp/clarity-*.log
+          if-no-files-found: warn
+          retention-days: 7
