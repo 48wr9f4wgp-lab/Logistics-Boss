@@ -788,23 +788,30 @@ func _operations_text(zone_key: String) -> String:
                 "shipping":
                     return "担当Worker %d人\n出荷処理を担当" % int(direct.get("shipping", 0))
 
-    if not sim.has_method("staffing_summary"):
-        return "物流状態を観察"
-    var summary: Dictionary = sim.call("staffing_summary")
-    match zone_key:
-        "inbound":
-            return "関連Worker %d人\n入庫フローを観察" % int(summary.get("store", 0))
-        "storage":
-            return "関連Worker %d人\n保管率と取り出しを観察" % int(summary.get("store", 0))
-        "picking":
-            return "関連Worker %d人\n注文滞留を観察" % int(summary.get("pick", 0))
-        "packing":
-            return "PICK %d / SHIP %d\n梱包待ちを観察" % [
-                int(summary.get("pick", 0)),
-                int(summary.get("ship", 0)),
-            ]
-        "shipping":
-            return "関連Worker %d人\n出荷待ちを観察" % int(summary.get("ship", 0))
+    # Rank 1 Workers are dynamically assigned, so role-based staffing counts
+    # are not meaningful. Show the authoritative current activity instead.
+    if sim.has_method("worker_activity_summary"):
+        var activity: Dictionary = sim.call("worker_activity_summary")
+        var total := int(activity.get("total", 0))
+        match zone_key:
+            "inbound", "storage":
+                return "全Worker %d人｜自動配分\n現在 入庫作業 %d人" % [
+                    total,
+                    int(activity.get("store", 0)),
+                ]
+            "picking":
+                return "全Worker %d人｜自動配分\n現在 PICK %d人" % [
+                    total,
+                    int(activity.get("pick", 0)),
+                ]
+            "packing":
+                return "設備処理\nWorker直接配置なし"
+            "shipping":
+                return "全Worker %d人｜自動配分\n現在 出荷 %d人" % [
+                    total,
+                    int(activity.get("ship", 0)),
+                ]
+
     return "物流状態を観察"
 
 

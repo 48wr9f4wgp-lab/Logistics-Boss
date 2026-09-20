@@ -19,7 +19,7 @@ func _fail(message: String) -> void:
 func _run() -> void:
     if not await _verify_rank1_management_navigation():
         return
-    if not await _verify_rank2_policy_labels():
+    if not await _verify_rank2_policy_controls_hidden():
         return
     if not await _verify_zone_affordance_and_ftue_guidance():
         return
@@ -95,17 +95,17 @@ func _verify_rank1_management_navigation() -> bool:
     return true
 
 
-func _verify_rank2_policy_labels() -> bool:
+func _verify_rank2_policy_controls_hidden() -> bool:
     var sim: FlotraV2Sim = SimScript.new()
     sim.money = 250000
     for kind in sim.rank1_project_kinds():
         var result: Dictionary = sim.purchase_rank1_project(kind)
         if not bool(result.get("ok", false)):
-            _fail("Rank 2 policy-label seed must complete Rank 1 project: %s" % String(kind))
+            _fail("Rank 2 policy-control seed must complete Rank 1 project: %s" % String(kind))
             return false
     sim.logistics_rating = LogisticsProgression.RANK2_RATING
     if not bool(sim.purchase_warehouse_expansion().get("ok", false)):
-        _fail("Rank 2 policy-label seed must expand to Rank 2")
+        _fail("Rank 2 policy-control seed must expand to Rank 2")
         return false
 
     var hud: MobileGameHud = HudScript.new()
@@ -114,14 +114,8 @@ func _verify_rank2_policy_labels() -> bool:
     await process_frame
     hud._process(0.0)
 
-    if not hud._flow_button.visible or hud._flow_button.text != "均等運用":
-        _fail("Rank 2 balanced policy must be visible with explicit meaning")
-        return false
-    if not hud._inbound_button.visible or hud._inbound_button.text != "入荷優先":
-        _fail("Rank 2 inbound policy must be labelled 入荷優先")
-        return false
-    if not hud._outbound_button.visible or hud._outbound_button.text != "出荷優先":
-        _fail("Rank 2 outbound policy must be labelled 出荷優先")
+    if hud._flow_button.visible or hud._inbound_button.visible or hud._outbound_button.visible:
+        _fail("Rank 2 v2 must hide legacy policy controls that do not affect direct staffing")
         return false
 
     hud.queue_free()

@@ -189,6 +189,26 @@ jobs:
             exit 1
           fi
 
+      - name: V2 consistency repair smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 35s godot --headless --path godot --script res://tests/v2_consistency_repair_smoke.gd 2>&1 | tee /tmp/v2-consistency-repair-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/v2-consistency-repair-smoke.log; then
+            echo 'V2 consistency repair smoke emitted an engine/script error'
+            exit 1
+          fi
+
+      - name: Rank 1 v2 natural progression smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 45s godot --headless --path godot --script res://tests/rank1_v2_natural_progression_smoke.gd 2>&1 | tee /tmp/rank1-v2-natural-progression-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/rank1-v2-natural-progression-smoke.log; then
+            echo 'Rank 1 v2 natural progression smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: Rank 1 v2 structural project smoke
         shell: bash
         run: |

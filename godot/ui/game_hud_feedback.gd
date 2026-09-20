@@ -68,19 +68,30 @@ func measurement_feedback(event: Dictionary) -> Dictionary:
 
     var before_rate := float(before.get("shipments_per_min", 0.0))
     var after_rate := float(after.get("shipments_per_min", 0.0))
-    var direction := "→"
-    if state == "improved":
-        direction = "↑"
-    elif state == "regressed":
-        direction = "↓"
-
-    var result_line := "%s %s %s/分｜%.1f→%.1f" % [
-        headline,
-        direction,
-        _signed_delta(delta),
-        before_rate,
-        after_rate,
-    ]
+    var basis := String(verdict.get("basis", "出荷ペース"))
+    var basis_key := String(verdict.get("basis_key", "shipments_per_min"))
+    var result_line := ""
+    if basis_key == "shipments_per_min":
+        var direction := "→"
+        if state == "improved":
+            direction = "↑"
+        elif state == "regressed":
+            direction = "↓"
+        result_line = "%s %s %s/分｜%.1f→%.1f" % [
+            headline,
+            direction,
+            _signed_delta(delta),
+            before_rate,
+            after_rate,
+        ]
+    else:
+        result_line = "%s｜%s %s→%s｜出荷 %s/分" % [
+            headline,
+            basis,
+            _format_basis_value(verdict, "basis_before"),
+            _format_basis_value(verdict, "basis_after"),
+            _signed_delta(delta),
+        ]
     var action_short := _short_bottleneck_action(bottleneck_key)
     var context_line := "%s｜次:%s" % [
         _compact_context_metric(bottleneck_key, before, after),
@@ -158,6 +169,16 @@ func _style_measurement_state(state: String) -> void:
     )
     _measurement_label.add_theme_color_override("font_color", text_color)
     _measurement_label.add_theme_font_size_override("font_size", font_size)
+
+
+func _format_basis_value(verdict: Dictionary, field: String) -> String:
+    var value := float(verdict.get(field, 0.0))
+    var unit := String(verdict.get("basis_unit", ""))
+    if unit == "%":
+        return "%.0f%%" % (value * 100.0)
+    if unit.is_empty():
+        return "%.1f" % value
+    return "%.1f%s" % [value, unit]
 
 
 func _signed_delta(value: float) -> String:

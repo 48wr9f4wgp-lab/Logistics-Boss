@@ -106,7 +106,16 @@ func step(real_dt: float) -> void:
     _prune_shipment_window()
     _update_progression(dt)
 
-    _measurement.record_state(sim_time, dt, inbound_queue, packing_queue, packed_queue)
+    _measurement.record_state(
+        sim_time,
+        dt,
+        inbound_queue,
+        packing_queue,
+        packed_queue,
+        open_orders,
+        rack_stock,
+        rack_capacity
+    )
     for result in _measurement.collect_completed(sim_time):
         last_measurement = result
         _emit("measurement_completed", result)
@@ -148,6 +157,21 @@ func staffing_summary() -> Dictionary:
             summary[role] = int(summary[role]) + 1
         else:
             summary["idle"] = int(summary["idle"]) + 1
+    return summary
+
+
+func worker_activity_summary() -> Dictionary:
+    var summary := {"store": 0, "pick": 0, "ship": 0, "idle": 0, "total": workers.size()}
+    for worker in workers:
+        match int(worker.get("task", Task.IDLE)):
+            Task.STORE:
+                summary["store"] = int(summary["store"]) + 1
+            Task.PICK:
+                summary["pick"] = int(summary["pick"]) + 1
+            Task.SHIP:
+                summary["ship"] = int(summary["ship"]) + 1
+            _:
+                summary["idle"] = int(summary["idle"]) + 1
     return summary
 
 
@@ -518,7 +542,7 @@ func _update_forklift(dt: float) -> void:
         if _forklift_remaining <= 0.0:
             forklift_active = false
             forklift_progress = 0.0
-            rack_stock = mini(rack_capacity, rack_stock + 1)
+            rack_stock += 1
             _emit("forklift_stored", {"rack_stock": rack_stock})
 
     if forklift_active:
@@ -668,7 +692,11 @@ func _complete_task(worker: Dictionary) -> void:
 
     match task:
         Task.STORE:
-            rack_stock = mini(rack_capacity, rack_stock + 1)
+            # A task may have started before a capacity-down renovation.
+            # Preserve already-owned + in-flight inventory even when the rack is
+            # temporarily over nominal capacity; new STORE tasks remain blocked
+            # until stock drains below capacity.
+            rack_stock += 1
             _emit("stored", {"rack_stock": rack_stock})
         Task.PICK:
             packing_queue += 1
