@@ -114,6 +114,14 @@ func _input(event: InputEvent) -> void:
 
         if drag.index == _mobile_action_touch_index and _mobile_action_touch_button != null:
             _mobile_action_touch_movement += drag.relative.length()
+            if (
+                sheet_open
+                and _mobile_scroll != null
+                and _mobile_scroll.is_ancestor_of(_mobile_action_touch_button)
+                and drag.index != _mobile_scroll_touch_index
+                and _mobile_action_touch_movement >= MOBILE_SCROLL_DRAG_THRESHOLD
+            ):
+                _scroll_management_by(drag.relative.y)
             get_viewport().set_input_as_handled()
         return
 
