@@ -9,6 +9,8 @@ const MOBILE_SHEET_BOTTOM := -108.0
 const MOBILE_SCROLL_DRAG_THRESHOLD := 6.0
 const MOBILE_SCROLL_SPEED := 1.15
 const MOBILE_SCROLL_BOTTOM_PADDING := 40.0
+const MOBILE_ACTION_TAP_MAX_MOVEMENT := 18.0
+const MOBILE_SYNTHETIC_MOUSE_SUPPRESS_MS := 450
 
 var _mobile_layout_width := -1.0
 var _mobile_scroll: ScrollContainer
@@ -16,6 +18,12 @@ var _mobile_scroll_touch_index := -1
 var _mobile_scroll_drag_distance := 0.0
 var _mobile_mouse_scroll_active := false
 var _mobile_mouse_drag_distance := 0.0
+var _mobile_action_touch_index := -1
+var _mobile_action_touch_button: Button
+var _mobile_action_touch_movement := 0.0
+var _mobile_action_mouse_button: Button
+var _mobile_action_mouse_movement := 0.0
+var _mobile_suppress_mouse_until_msec := 0
 var _v2_growth_goal: Button
 var _v2_overview_panel: PanelContainer
 var _v2_overview_label: Label
@@ -56,55 +64,108 @@ func _process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
     if _reset_modal != null and _reset_modal.visible:
         _reset_mobile_scroll_gesture()
+        _reset_mobile_action_gesture()
         return
 
-    if _sheet == null or not _sheet.visible or _mobile_scroll == null:
-        _reset_mobile_scroll_gesture()
-        return
-
-    var scroll_rect := _mobile_scroll.get_global_rect()
+    var sheet_open := _sheet != null and _sheet.visible and _mobile_scroll != null
+    var scroll_rect := _mobile_scroll.get_global_rect() if sheet_open else Rect2()
 
     if event is InputEventScreenTouch:
         var touch := event as InputEventScreenTouch
         if touch.pressed:
-            if _mobile_scroll_touch_index < 0 and scroll_rect.has_point(touch.position):
+            if sheet_open and _mobile_scroll_touch_index < 0 and scroll_rect.has_point(touch.position):
                 _mobile_scroll_touch_index = touch.index
                 _mobile_scroll_drag_distance = 0.0
-        elif touch.index == _mobile_scroll_touch_index:
-            _mobile_scroll_touch_index = -1
-            _mobile_scroll_drag_distance = 0.0
+
+            if _mobile_action_touch_index < 0:
+                var target := _mobile_action_button_at(touch.position)
+                if target != null:
+                    _mobile_action_touch_index = touch.index
+                    _mobile_action_touch_button = target
+                    _mobile_action_touch_movement = 0.0
+                    get_viewport().set_input_as_handled()
+        else:
+            if touch.index == _mobile_scroll_touch_index:
+                _mobile_scroll_touch_index = -1
+                _mobile_scroll_drag_distance = 0.0
+
+            if touch.index == _mobile_action_touch_index:
+                var target := _mobile_action_touch_button
+                var movement := _mobile_action_touch_movement
+                _mobile_action_touch_index = -1
+                _mobile_action_touch_button = null
+                _mobile_action_touch_movement = 0.0
+                _mobile_suppress_mouse_until_msec = Time.get_ticks_msec() + MOBILE_SYNTHETIC_MOUSE_SUPPRESS_MS
+                get_viewport().set_input_as_handled()
+                if (
+                    target != null
+                    and movement <= MOBILE_ACTION_TAP_MAX_MOVEMENT
+                    and target.get_global_rect().has_point(touch.position)
+                ):
+                    _activate_mobile_action_button(target)
         return
 
     if event is InputEventScreenDrag:
         var drag := event as InputEventScreenDrag
-        if drag.index != _mobile_scroll_touch_index:
-            return
-        _mobile_scroll_drag_distance += absf(drag.relative.y)
-        if _mobile_scroll_drag_distance >= MOBILE_SCROLL_DRAG_THRESHOLD:
-            _scroll_management_by(drag.relative.y)
+        if drag.index == _mobile_scroll_touch_index:
+            _mobile_scroll_drag_distance += absf(drag.relative.y)
+            if _mobile_scroll_drag_distance >= MOBILE_SCROLL_DRAG_THRESHOLD:
+                _scroll_management_by(drag.relative.y)
+
+        if drag.index == _mobile_action_touch_index and _mobile_action_touch_button != null:
+            _mobile_action_touch_movement += drag.relative.length()
+            get_viewport().set_input_as_handled()
         return
 
     # Web exports can present touch as emulated mouse input depending on browser/runtime settings.
-    # Keep an independent mouse-drag fallback so the management sheet remains usable on iOS Safari.
     if event is InputEventMouseButton:
         var mouse_button := event as InputEventMouseButton
         if mouse_button.button_index != MOUSE_BUTTON_LEFT or _mobile_scroll_touch_index >= 0:
             return
+
+        if Time.get_ticks_msec() < _mobile_suppress_mouse_until_msec:
+            if _mobile_action_button_at(mouse_button.position) != null:
+                get_viewport().set_input_as_handled()
+            return
+
         if mouse_button.pressed:
-            _mobile_mouse_scroll_active = scroll_rect.has_point(mouse_button.position)
+            _mobile_mouse_scroll_active = sheet_open and scroll_rect.has_point(mouse_button.position)
             _mobile_mouse_drag_distance = 0.0
+            var target := _mobile_action_button_at(mouse_button.position)
+            if target != null:
+                _mobile_action_mouse_button = target
+                _mobile_action_mouse_movement = 0.0
+                get_viewport().set_input_as_handled()
         else:
             _mobile_mouse_scroll_active = false
             _mobile_mouse_drag_distance = 0.0
+            if _mobile_action_mouse_button != null:
+                var target := _mobile_action_mouse_button
+                var movement := _mobile_action_mouse_movement
+                _mobile_action_mouse_button = null
+                _mobile_action_mouse_movement = 0.0
+                get_viewport().set_input_as_handled()
+                if (
+                    target != null
+                    and movement <= MOBILE_ACTION_TAP_MAX_MOVEMENT
+                    and target.get_global_rect().has_point(mouse_button.position)
+                ):
+                    _activate_mobile_action_button(target)
         return
 
     if event is InputEventMouseMotion:
         var motion := event as InputEventMouseMotion
+        if _mobile_action_mouse_button != null:
+            _mobile_action_mouse_movement += motion.relative.length()
+            get_viewport().set_input_as_handled()
+
         if not _mobile_mouse_scroll_active or _mobile_scroll_touch_index >= 0:
             return
         if (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
             _mobile_mouse_scroll_active = false
             _mobile_mouse_drag_distance = 0.0
+            _mobile_action_mouse_button = null
+            _mobile_action_mouse_movement = 0.0
             return
         _mobile_mouse_drag_distance += absf(motion.relative.y)
         if _mobile_mouse_drag_distance >= MOBILE_SCROLL_DRAG_THRESHOLD:
@@ -123,6 +184,58 @@ func _reset_mobile_scroll_gesture() -> void:
     _mobile_scroll_drag_distance = 0.0
     _mobile_mouse_scroll_active = false
     _mobile_mouse_drag_distance = 0.0
+
+
+func _reset_mobile_action_gesture() -> void:
+    _mobile_action_touch_index = -1
+    _mobile_action_touch_button = null
+    _mobile_action_touch_movement = 0.0
+    _mobile_action_mouse_button = null
+    _mobile_action_mouse_movement = 0.0
+
+
+func _mobile_action_button_at(position: Vector2) -> Button:
+    if _sheet != null and _sheet.visible:
+        var sheet_button := _find_mobile_button_at(_sheet, position)
+        if sheet_button != null:
+            return sheet_button
+
+    for button in [_v2_growth_goal, _speed_button, _manage_button]:
+        if (
+            button != null
+            and button.is_visible_in_tree()
+            and not button.disabled
+            and button.get_global_rect().has_point(position)
+        ):
+            return button
+
+    return null
+
+
+func _find_mobile_button_at(node: Node, position: Vector2) -> Button:
+    var children := node.get_children()
+    for index in range(children.size() - 1, -1, -1):
+        var child := children[index] as Node
+        var nested := _find_mobile_button_at(child, position)
+        if nested != null:
+            return nested
+
+    if node is Button and node is not OptionButton:
+        var button := node as Button
+        if (
+            button.is_visible_in_tree()
+            and not button.disabled
+            and button.get_global_rect().has_point(position)
+        ):
+            return button
+
+    return null
+
+
+func _activate_mobile_action_button(button: Button) -> void:
+    if button == null or not button.is_visible_in_tree() or button.disabled:
+        return
+    button.emit_signal("pressed")
 
 
 func _apply_mobile_management_layout(force: bool) -> void:
