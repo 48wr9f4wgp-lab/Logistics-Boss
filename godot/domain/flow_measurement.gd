@@ -5,6 +5,8 @@ const WINDOW_SECONDS := 25.0
 const HISTORY_SECONDS := 90.0
 const RESULT_IMPROVEMENT_RATIO := 0.05
 const RESULT_MIN_DELTA := 0.5
+const LOCAL_QUEUE_DELTA := 1.0
+const LOCAL_PRESSURE_DELTA := 0.08
 
 var _state_samples: Array[Dictionary] = []
 var _order_samples: Array[Dictionary] = []
@@ -35,7 +37,134 @@ static func classify_result(before: Dictionary, after: Dictionary) -> Dictionary
     }
 
 
-func record_state(at: float, dt: float, inbound: int, packing: int, outbound: int, orders: int = 0) -> void:
+static func classify_result_for_kind(kind: String, before: Dictionary, after: Dictionary) -> Dictionary:
+    var throughput := classify_result(before, after)
+    throughput["basis"] = "出荷ペース"
+    throughput["basis_key"] = "shipments_per_min"
+    throughput["basis_before"] = float(before.get("shipments_per_min", 0.0))
+    throughput["basis_after"] = float(after.get("shipments_per_min", 0.0))
+    throughput["basis_unit"] = "/分"
+
+    var local_metrics: Array[Dictionary] = []
+    if kind in [
+        "rank1_rack_wing",
+        "facility_fast_pick_rack",
+        "facility_high_density_rack",
+        "renovation_fast_pick_rack",
+        "renovation_high_density_rack",
+    ]:
+        local_metrics = [
+            _local_metric("保管圧", "rack_pressure", before, after, LOCAL_PRESSURE_DELTA, true, "%"),
+            _local_metric("注文待ち", "open_orders", before, after, LOCAL_QUEUE_DELTA, true, "件"),
+            _local_metric("入荷待ち", "inbound_queue", before, after, LOCAL_QUEUE_DELTA, true, "箱"),
+        ]
+    elif kind in [
+        "rank1_second_packing_bench",
+        "facility_parallel_pack",
+        "facility_fast_pack_cell",
+        "renovation_parallel_pack",
+        "renovation_fast_pack_cell",
+    ]:
+        local_metrics = [
+            _local_metric("梱包待ち", "packing_queue", before, after, LOCAL_QUEUE_DELTA, true, "箱"),
+        ]
+    elif kind in ["rank1_forklift_project", "forklift", "receiving_annex", "inbound_carrier_program"]:
+        local_metrics = [
+            _local_metric("入荷待ち", "inbound_queue", before, after, LOCAL_QUEUE_DELTA, true, "箱"),
+        ]
+    elif kind in ["rank1_worker_hire", "worker"]:
+        local_metrics = [
+            _local_metric("入荷待ち", "inbound_queue", before, after, LOCAL_QUEUE_DELTA, true, "箱"),
+            _local_metric("注文待ち", "open_orders", before, after, LOCAL_QUEUE_DELTA, true, "件"),
+            _local_metric("梱包待ち", "packing_queue", before, after, LOCAL_QUEUE_DELTA, true, "箱"),
+            _local_metric("出荷待ち", "outbound_queue", before, after, LOCAL_QUEUE_DELTA, true, "箱"),
+        ]
+
+    var best_improvement: Dictionary = {}
+    var worst_regression: Dictionary = {}
+    for metric in local_metrics:
+        var normalized := float(metric.get("normalized", 0.0))
+        if normalized >= 1.0 and (
+            best_improvement.is_empty()
+            or normalized > float(best_improvement.get("normalized", 0.0))
+        ):
+            best_improvement = metric
+        elif normalized <= -1.0 and (
+            worst_regression.is_empty()
+            or normalized < float(worst_regression.get("normalized", 0.0))
+        ):
+            worst_regression = metric
+
+    var throughput_state := String(throughput.get("state", "flat"))
+    if throughput_state == "improved":
+        return throughput
+
+    if not best_improvement.is_empty():
+        var result := throughput.duplicate(true)
+        _apply_basis(result, best_improvement)
+        if throughput_state == "regressed":
+            result["state"] = "flat"
+            result["headline"] = "効果混在"
+        else:
+            result["state"] = "improved"
+            result["headline"] = "改善"
+        return result
+
+    if throughput_state == "regressed":
+        return throughput
+
+    if not worst_regression.is_empty():
+        var result := throughput.duplicate(true)
+        result["state"] = "regressed"
+        result["headline"] = "要再判断"
+        _apply_basis(result, worst_regression)
+        return result
+
+    return throughput
+
+
+static func _local_metric(
+    label: String,
+    key: String,
+    before: Dictionary,
+    after: Dictionary,
+    threshold: float,
+    lower_is_better: bool,
+    unit: String
+) -> Dictionary:
+    var before_value := float(before.get(key, 0.0))
+    var after_value := float(after.get(key, 0.0))
+    var raw_delta := after_value - before_value
+    var favorable_delta := -raw_delta if lower_is_better else raw_delta
+    return {
+        "label": label,
+        "key": key,
+        "before": before_value,
+        "after": after_value,
+        "raw_delta": raw_delta,
+        "normalized": favorable_delta / maxf(0.0001, threshold),
+        "unit": unit,
+    }
+
+
+static func _apply_basis(result: Dictionary, metric: Dictionary) -> void:
+    result["basis"] = String(metric.get("label", "局所指標"))
+    result["basis_key"] = String(metric.get("key", ""))
+    result["basis_before"] = float(metric.get("before", 0.0))
+    result["basis_after"] = float(metric.get("after", 0.0))
+    result["basis_unit"] = String(metric.get("unit", ""))
+
+
+func record_state(
+    at: float,
+    dt: float,
+    inbound: int,
+    packing: int,
+    outbound: int,
+    orders: int = 0,
+    rack_stock: int = 0,
+    rack_capacity: int = 0
+) -> void:
     if dt <= 0.0:
         return
     _state_samples.append({
@@ -45,6 +174,13 @@ func record_state(at: float, dt: float, inbound: int, packing: int, outbound: in
         "packing": packing,
         "outbound": outbound,
         "orders": orders,
+        "rack_stock": rack_stock,
+        "rack_capacity": rack_capacity,
+        "rack_pressure": (
+            float(rack_stock) / float(rack_capacity)
+            if rack_capacity > 0
+            else 0.0
+        ),
     })
     _prune(at)
 
@@ -86,11 +222,12 @@ func collect_completed(at: float) -> Array[Dictionary]:
             remaining.append(measurement)
             continue
 
+        var kind := String(measurement.get("kind", ""))
         var before: Dictionary = measurement.get("before", {})
         var after := _metrics(started_at, started_at + WINDOW_SECONDS)
-        var verdict: Dictionary = classify_result(before, after)
+        var verdict: Dictionary = classify_result_for_kind(kind, before, after)
         completed.append({
-            "kind": String(measurement.get("kind", "")),
+            "kind": kind,
             "cost": int(measurement.get("cost", 0)),
             "window_seconds": WINDOW_SECONDS,
             "before": before,
@@ -125,6 +262,7 @@ func _metrics(start_at: float, end_at: float) -> Dictionary:
     var weighted_packing := 0.0
     var weighted_outbound := 0.0
     var weighted_state_orders := 0.0
+    var weighted_rack_pressure := 0.0
     var sampled_duration := 0.0
 
     for sample in _state_samples:
@@ -137,6 +275,7 @@ func _metrics(start_at: float, end_at: float) -> Dictionary:
         weighted_packing += float(sample.get("packing", 0)) * sample_dt
         weighted_outbound += float(sample.get("outbound", 0)) * sample_dt
         weighted_state_orders += float(sample.get("orders", 0)) * sample_dt
+        weighted_rack_pressure += float(sample.get("rack_pressure", 0.0)) * sample_dt
 
     var weighted_orders := 0.0
     var order_sampled_duration := 0.0
@@ -169,6 +308,7 @@ func _metrics(start_at: float, end_at: float) -> Dictionary:
         "outbound_queue": weighted_outbound / average_duration if sampled_duration > 0.0 else 0.0,
         "open_orders": order_average,
         "open_orders_sampled_seconds": order_sampled_duration,
+        "rack_pressure": weighted_rack_pressure / average_duration if sampled_duration > 0.0 else 0.0,
     }
 
 
