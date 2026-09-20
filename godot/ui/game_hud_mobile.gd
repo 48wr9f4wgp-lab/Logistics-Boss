@@ -16,6 +16,7 @@ var _mobile_scroll_touch_index := -1
 var _mobile_scroll_drag_distance := 0.0
 var _mobile_mouse_scroll_active := false
 var _mobile_mouse_drag_distance := 0.0
+var _v2_growth_goal: Button
 var _v2_overview_panel: PanelContainer
 var _v2_overview_label: Label
 var _v2_zone_nav_buttons: Dictionary = {}
@@ -29,6 +30,7 @@ var _v2_staffing_label: Label
 
 func _ready() -> void:
     super._ready()
+    _build_v2_growth_goal()
     _build_v2_management_overview()
     _apply_mobile_management_layout(true)
     _apply_mobile_progression_copy()
@@ -44,6 +46,7 @@ func _process(delta: float) -> void:
     _apply_mobile_rank3_compaction()
     _apply_v2_primary_hud()
     _apply_v2_management_scope()
+    _render_v2_growth_goal()
     _render_v2_management_overview()
     _render_v2_rank1_expansion()
     _render_v2_staffing_overview()
@@ -277,6 +280,109 @@ func _apply_mobile_progression_copy() -> void:
         _progression_label.text = "RANK 1  SMALL DEPOT\n物流評価 %d / 8" % sim.logistics_rating
 
 
+func _build_v2_growth_goal() -> void:
+    _v2_growth_goal = Button.new()
+    _v2_growth_goal.name = "V2GrowthGoal"
+    _v2_growth_goal.anchor_left = 0.0
+    _v2_growth_goal.anchor_right = 1.0
+    _v2_growth_goal.anchor_top = 0.0
+    _v2_growth_goal.anchor_bottom = 0.0
+    _v2_growth_goal.offset_left = 12.0
+    _v2_growth_goal.offset_right = -12.0
+    _v2_growth_goal.offset_top = 174.0
+    _v2_growth_goal.offset_bottom = 226.0
+    _v2_growth_goal.alignment = HORIZONTAL_ALIGNMENT_LEFT
+    _v2_growth_goal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _v2_growth_goal.add_theme_font_override("font", JAPANESE_UI_FONT)
+    _v2_growth_goal.add_theme_font_size_override("font_size", 10)
+    _v2_growth_goal.add_theme_color_override("font_color", Color(0.90, 0.98, 1.0))
+    _v2_growth_goal.add_theme_stylebox_override(
+        "normal",
+        _panel_style(Color(0.018, 0.050, 0.068, 0.96), Color(0.30, 0.84, 0.72, 0.92), 12)
+    )
+    _v2_growth_goal.add_theme_stylebox_override(
+        "hover",
+        _panel_style(Color(0.025, 0.070, 0.090, 0.98), Color(0.38, 0.94, 0.78, 0.98), 12)
+    )
+    _v2_growth_goal.add_theme_stylebox_override(
+        "pressed",
+        _panel_style(Color(0.012, 0.042, 0.058, 0.99), Color(1.0, 0.66, 0.24, 0.98), 12)
+    )
+    _v2_growth_goal.pressed.connect(_open_growth_management)
+    add_child(_v2_growth_goal)
+    _render_v2_growth_goal()
+
+
+func _render_v2_growth_goal() -> void:
+    if _v2_growth_goal == null:
+        return
+    if sim == null or sim.facility_rank != 1:
+        _v2_growth_goal.visible = false
+        return
+
+    _v2_growth_goal.visible = _sheet == null or not _sheet.visible
+    if not _v2_growth_goal.visible:
+        return
+
+    var projects := 0
+    var projects_required := 4
+    var rating := sim.logistics_rating
+    var rating_required := LogisticsProgression.RANK2_RATING
+    var expansion_cost := 10000
+    var ready := false
+    if sim.has_method("rank1_expansion_readiness"):
+        var readiness: Dictionary = sim.call("rank1_expansion_readiness")
+        projects = int(readiness.get("projects", 0))
+        projects_required = int(readiness.get("projects_required", 4))
+        rating = int(readiness.get("rating", rating))
+        rating_required = int(readiness.get("rating_required", rating_required))
+        expansion_cost = int(readiness.get("cost", expansion_cost))
+        ready = bool(readiness.get("ready", false))
+
+    if ready:
+        _v2_growth_goal.text = "NEXT｜RANK 2へ拡張可能 → 経営管理を開く\n設備 %d/%d｜評価 %d/%d｜拡張費 ¥%s" % [
+            projects,
+            projects_required,
+            rating,
+            rating_required,
+            _format_number(expansion_cost),
+        ]
+        return
+
+    var objective := (
+        "契約を選ぶ → 物流評価を上げる"
+        if not sim.contract_offers.is_empty()
+        else "次の契約を準備中"
+    )
+    if not sim.active_contract.is_empty():
+        var active: Dictionary = sim.active_contract
+        objective = "契約｜%s  %.0f/%.0f  残%d秒" % [
+            String(active.get("title", "契約")),
+            float(active.get("progress", 0.0)),
+            float(active.get("target", 0.0)),
+            ceili(float(active.get("remaining", 0.0))),
+        ]
+
+    _v2_growth_goal.text = "NEXT｜%s\nRANK 2条件｜設備 %d/%d｜評価 %d/%d｜拡張費 ¥%s" % [
+        objective,
+        projects,
+        projects_required,
+        rating,
+        rating_required,
+        _format_number(expansion_cost),
+    ]
+
+
+func _open_growth_management() -> void:
+    if _sheet == null:
+        return
+    if not _sheet.visible:
+        _toggle_sheet()
+    if _mobile_scroll != null:
+        _mobile_scroll.scroll_vertical = 0
+    _apply_v2_management_scope()
+
+
 func _build_v2_management_overview() -> void:
     var list := _find_upgrade_list(_sheet)
     if list == null:
@@ -443,7 +549,7 @@ func _render_v2_rank1_expansion() -> void:
     var rating_required := int(readiness.get("rating_required", 8))
     var cost := int(readiness.get("cost", 0))
 
-    _v2_rank1_expansion_label.text = "WAREHOUSE EXPANSION\n設備Project %d/%d｜物流評価 %d/%d\nSmall Depot → RANK 2 WAREHOUSE" % [
+    _v2_rank1_expansion_label.text = "WAREHOUSE EXPANSION\n設備Project %d/%d｜物流評価 %d/%d\n物流評価は契約達成で上昇｜Small Depot → RANK 2" % [
         projects,
         projects_required,
         rating,
@@ -658,8 +764,19 @@ func _apply_v2_management_scope() -> void:
     if _v2_overview_panel != null:
         _v2_overview_panel.visible = true
         var list := _find_upgrade_list(_sheet)
-        if list != null and _v2_overview_panel.get_parent() == list:
-            list.move_child(_v2_overview_panel, 0)
+        if list != null:
+            if sim != null and sim.facility_rank == 1:
+                if _progression_panel != null and _progression_panel.get_parent() == list:
+                    list.move_child(_progression_panel, 0)
+                if _v2_overview_panel.get_parent() == list:
+                    list.move_child(_v2_overview_panel, mini(1, list.get_child_count() - 1))
+                if (
+                    _v2_rank1_expansion_panel != null
+                    and _v2_rank1_expansion_panel.get_parent() == list
+                ):
+                    list.move_child(_v2_rank1_expansion_panel, mini(2, list.get_child_count() - 1))
+            elif _v2_overview_panel.get_parent() == list:
+                list.move_child(_v2_overview_panel, 0)
 
     _replace_v2_management_copy(_sheet)
 

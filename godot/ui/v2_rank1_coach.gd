@@ -36,8 +36,8 @@ func _ready() -> void:
     anchor_bottom = 0.0
     offset_left = 12.0
     offset_right = -12.0
-    offset_top = 128.0
-    offset_bottom = 194.0
+    offset_top = 232.0
+    offset_bottom = 302.0
     mouse_filter = Control.MOUSE_FILTER_STOP
     z_index = 55
     add_theme_stylebox_override("panel", _panel_style())
@@ -259,8 +259,8 @@ func _render_step() -> void:
 
     match _step:
         Step.OBSERVE:
-            _step_label.text = "START GUIDE  1/4  観察"
-            _body_label.text = "物流は自動で流れます。Directorと倉庫を見て、どこに仕事が溜まるか観察。"
+            _step_label.text = "START GUIDE  1/4  目的"
+            _body_label.text = "契約を達成して物流評価を上げ、設備Projectを進めてWarehouseへ拡大する。まず倉庫の詰まりを観察。"
         Step.INSPECT:
             _step_label.text = "START GUIDE  2/4  現場確認"
             if _inspect_zone.is_empty():
