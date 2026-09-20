@@ -48,9 +48,8 @@ func _verify_mobile_font_tree() -> bool:
     await process_frame
     await process_frame
 
-    var checked := 0
     var problems: Array[String] = []
-    _collect_font_problems(hud, checked, problems)
+    var checked := _collect_font_problems(hud, 0, problems)
 
     if checked < 10:
         _fail("mobile font smoke must inspect a meaningful set of text controls")
