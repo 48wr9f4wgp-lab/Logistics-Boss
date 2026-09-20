@@ -3,7 +3,7 @@
 Status: **Pre-GO / VERTICAL_SLICE — Core Experience v2 rework**
 Official title: **FLOTRA（フロトラ）**
 Former title / migration alias: `LOGISTICS BOSS`
-Last synchronized: 2026-09-18 JST
+Last synchronized: 2026-09-20 JST
 Canonical project rule: `GAME_DEV_MASTER_RULES.md`
 
 This document supersedes the earlier Web/PWA-first and Three.js vertical-slice assumptions. The production implementation is Godot-native-first, with Web used only as an engineering preview.
@@ -55,6 +55,17 @@ A normal play session must not collapse into **open Management → buy whatever 
 The long-term progression spine is:
 
 **contract / operating profit → cash + RP + logistics rating → larger facility rank → structural investment → new bottleneck → new operating decision → larger profit**
+
+Rank 1 must make that spine player-visible as:
+
+**choose / complete a contract → earn cash + Logistics Rating → complete the 4 structural Projects → satisfy the visible Warehouse Expansion requirements → expand Small Depot into Rank 2**
+
+Current Rank 1 Warehouse Expansion requirements:
+- structural Projects: 4 / 4;
+- Logistics Rating: 8;
+- expansion cash: ¥10,000.
+
+The player must not need to infer that ordinary shipment cash and contract-earned Logistics Rating are different progression resources.
 
 Growth must be visible in both the authoritative simulation and the 3D facility.
 
@@ -130,8 +141,8 @@ Discoverability is part of the Core Experience contract, not optional polish:
 - Management Overview must provide direct Zone navigation rather than only passive text;
 - a blocked Rank 1 Warehouse Expansion must expose the unfinished structural Projects and route each one to the relevant Zone;
 - completing a Project changes its route to a visible completed state instead of making the item silently disappear;
-- Rank 1 does not show the legacy logistics-policy controls as the primary obvious intervention;
-- Rank 2+ logistics-policy controls must state their meaning explicitly: 均等運用 / 入荷優先 / 出荷優先.
+- legacy BALANCED / INBOUND / SHIP policy controls are hidden from the Core Experience v2 player path while direct Zone staffing owns authoritative Rank 2 work assignment;
+- do not expose a player-facing control unless it has an authoritative gameplay effect in the current simulation.
 
 A player should not need prior knowledge of the implementation to discover where equipment decisions live.
 
@@ -139,7 +150,11 @@ A player should not need prior knowledge of the implementation to discover where
 
 Fresh-save onboarding is event-driven and should teach by play rather than by a long checklist.
 
-The first guided event may point the player toward a stressed Zone, but it must not solve the decision for them. The implementation may mark the actual stressed Zone as **ここをタップ** so the player learns the warehouse interaction surface; it must not identify which equipment is the correct answer. After the initial guided intervention, the simulation should be allowed to produce the next bottleneck naturally.
+The first step must establish the overall Rank 1 purpose before teaching a local intervention:
+
+**契約達成 → 物流評価を上げる → 設備Projectを進める → Warehouse Expansion**
+
+The first guided intervention may point the player toward a stressed Zone, but it must not solve the equipment decision for them. The implementation may mark the actual stressed Zone as **ここをタップ** so the player learns the warehouse interaction surface; it must not identify which equipment is the correct answer. After the initial guided intervention, the simulation should be allowed to produce the next bottleneck naturally.
 
 FTUE completion still waits for the authoritative measurement result.
 
@@ -147,7 +162,12 @@ FTUE completion still waits for the authoritative measurement result.
 
 Rank 1 ends with a visible **Warehouse Expansion** strategic project in Management.
 
-The project requires evidence that the Small Depot has been meaningfully developed and can sustain a minimum operating level. Exact cash/throughput thresholds remain balance parameters for the v2 slice.
+The player-facing gate must state both the requirements and how they are earned:
+- complete all 4 structural Projects;
+- reach Logistics Rating 8 by completing contracts;
+- hold ¥10,000 for the expansion.
+
+The main Rank 1 HUD must keep these requirements visible alongside the current contract objective so that warehouse interventions have an understandable growth purpose.
 
 Completing Warehouse Expansion must visibly enlarge/restructure the facility into Rank 2. A text-only Rank promotion is insufficient.
 ## 6. Bottleneck / Measurement UX
@@ -176,11 +196,22 @@ Major capital measurement window remains:
 Investment result classification:
 - 改善;
 - 横ばい;
+- 効果混在;
 - 要再判断.
 
+Investment judgment must use the authoritative metric that matches the intervention where available, rather than shipment rate alone.
+
+Examples:
+- STORAGE capacity investment may be judged from rack/storage pressure;
+- PACKING investment may be judged from packing queue pressure;
+- receiving automation may be judged from inbound queue pressure;
+- shipment rate / revenue remain important outcome metrics but are not the sole definition of success for every intervention.
+
+The HUD must show the basis used for the verdict so the player can understand **what improved**.
+
 Result hierarchy:
-1. judgment + shipment delta;
-2. operational context;
+1. judgment + authoritative basis;
+2. shipment / revenue context;
 3. explanation of what changed.
 
 The result may help the player understand consequences, but should not prescribe the next purchase.
@@ -461,10 +492,13 @@ Target information architecture:
 - **Staffing**
 
 For Vertical Slice v2:
-- Overview and Staffing are required;
+- Rank 1 Management places **Contracts / Progression first**, followed by operational Overview and Warehouse Expansion;
+- the primary Rank 1 HUD exposes a persistent NEXT objective showing current contract progress plus the Rank 2 Project / Rating / cash requirements;
+- tapping that NEXT objective opens Management at the contract/progression surface;
 - Overview contains tappable controls that open each physical warehouse Zone;
 - Rank 1 Warehouse Expansion keeps all four structural Project routes visible until completion;
-- Contracts may retain existing functionality with minimal restructuring;
+- Warehouse Expansion explicitly states that Logistics Rating is earned through contract completion;
+- Staffing remains a separate OPERATIONS layer for Rank 2;
 - full Assets history may be deferred if it does not block the Core Experience test.
 
 Normal Zone equipment is not purchased from Management. Management may navigate the player to the relevant Zone but must not recreate a hidden equipment store.
@@ -477,7 +511,8 @@ Facility-level Rank Expansion remains in Management because it is a strategic pr
 - touch drag/scroll works on iPhone Web and later native iOS;
 - all primary decisions use touch-sized targets;
 - warehouse Zone labels themselves communicate tap affordance;
-- Rank 1 Management shows five tappable Zone routes plus the four structural Project routes within the normal portrait scroll surface;
+- Rank 1 primary HUD shows a concise persistent growth objective without covering the warehouse;
+- Rank 1 Management shows contract/progression first, five tappable Zone routes, the four structural Project routes, and the Warehouse Expansion gate within the normal portrait scroll surface;
 - warehouse remains visible during normal Zone decisions;
 - no critical interaction depends on hover.
 ## 12. Art Direction
@@ -535,7 +570,11 @@ The slice fails if a normal playtest still feels like:
 
 **open Management → buy whatever is available → repeat**
 
-PASS requires that a player can describe the session approximately as:
+PASS first requires that, without coaching, the player can explain the Rank 1 purpose approximately as:
+
+> “I complete contracts to raise Logistics Rating and earn money, improve the warehouse with Projects, then expand to the next warehouse rank.”
+
+The operational loop should then be describable approximately as:
 
 > “I saw where the warehouse was backing up, changed that part of the facility, then the pressure moved and I had to deal with the next problem.”
 
@@ -567,8 +606,8 @@ For each implemented Zone:
 - Management can route directly to each Zone;
 - Rank 1 blocked Expansion visibly identifies unfinished Project routes;
 - normal Zone equipment is not bought from Management;
-- Rank 1 does not present ambiguous logistics-policy controls as the primary intervention;
-- Rank 2+ policy controls are labelled by their actual operational meaning;
+- non-authoritative legacy logistics-policy controls are not shown on the v2 player path;
+- player-facing Worker counts / labels describe authoritative current activity or direct staffing, not stale compatibility roles;
 - RP is absent from the primary HUD;
 - Director reports symptoms, not solutions;
 - the player can identify what physically changed after an investment;
@@ -577,7 +616,7 @@ For each implemented Zone:
 Fresh human playtest evidence outranks static screenshot-difference claims for reward/growth recognition.
 ## 16. Current Non-goals
 
-Not required for the current Pre-GO DEVICE_VALIDATION:
+Not required for the current Pre-GO VERTICAL_SLICE:
 - free-placement factory building editor
 - multiplayer
 - cloud save
@@ -627,22 +666,55 @@ This is a targeted return to VERTICAL_SLICE, not a full technical reset.
 
 Existing simulation, save/recovery, CI, export smoke, and reusable visual work remain valid assets unless superseded by v2.
 
-### Human iPhone Web retest — 2026-09-19
+### Human iPhone Web evidence
 
-Result: **FAIL — discoverability / navigation**
+#### 2026-09-19 — discoverability / navigation FAIL
 
 Observed without coaching:
 - the player could not tell which parts of the warehouse were tappable or what each visible control changed;
 - Management showed `設備Project 0/4` without an obvious actionable route to those Projects;
-- the bottom BALANCED / INBOUND / SHIP logistics-policy controls were interpreted as staffing changes;
-- equipment consequence / ghost / deeper decision quality could not be fairly judged because the player did not reliably reach the intended equipment decision surface.
+- the bottom BALANCED / INBOUND / SHIP controls were interpreted as staffing changes.
+
+PR #117 corrected that discoverability layer.
+
+#### 2026-09-19 / 2026-09-20 — Zone action touch
+
+The subsequent iPhone Web test exposed a narrower Zone Panel touch-input failure. PR #119 added the raw touch fallback. The user then confirmed the repaired preview → ghost → explicit commit path **passed on the real iPhone Web preview**.
+
+#### 2026-09-20 — Core purpose FAIL
+
+After the input path worked, normal play still produced the human reaction:
+
+**「何するゲームかよく分からん」**
+
+Audit finding:
+- contracts, rewards and Logistics Rating already existed in the authoritative Domain;
+- the failure was not absence of a contract system;
+- contracts / Rating / structural Projects / Warehouse Expansion were not presented as one understandable growth spine;
+- audit also found misleading Rank 1 Worker copy, non-authoritative policy controls, shipment-only investment verdicts and an in-flight inventory preservation gap.
+
+PR #121 repaired those consistency issues and added a fresh natural-progression gate. Verified natural run:
+- fresh canonical starting cash;
+- no direct cash or Rating injection;
+- Rank 2 reached in **144.9 simulated seconds**;
+- 5 contracts completed;
+- 46 authoritative shipments;
+- Logistics Rating 10;
+- all 4 Rank 1 Projects purchased;
+- explicit Warehouse Expansion used for Rank 2.
+
+PR #122 connects the existing systems visibly:
+- persistent Rank 1 NEXT objective;
+- current contract progress on the main HUD;
+- Rank 2 Project / Rating / expansion-cash requirements shown together;
+- contract/progression controls first in Rank 1 Management;
+- Warehouse Expansion explains that contracts raise Logistics Rating;
+- FTUE teaches contract → Rating → Project → warehouse expansion.
 
 Routing decision:
 - remain in **VERTICAL_SLICE**;
-- fix the smallest failing layer only;
-- do not add more equipment or Rank 3 content to mask the failure.
-
-PR #117 implements that discoverability-only correction. Human iPhone Web retest remains required.
+- do not add new contract types, penalties, deferred equipment or Rank 3 content;
+- next gate is a human iPhone Web **purpose / growth-spine retest**.
 
 ### Current implementation scope
 
@@ -663,9 +735,9 @@ The implemented slice now contains:
 - selected-Zone construction/reward emphasis;
 - authoritative Before/After measurement.
 
-The planned feature scope is complete for Vertical Slice v2, and PR #117 adds the targeted discoverability correction found by the 2026-09-19 human retest. The slice explicitly does not implement the remaining Rank 2 Zones or redesign Rank 3.
+The planned feature scope remains bounded to the current Vertical Slice v2. PR #121 repairs the audited implementation inconsistencies and proves normal Rank 1 progression without injected resources; PR #122 connects the existing contract/progression systems into a visible player goal. The slice explicitly does not implement the remaining Rank 2 Zones or redesign Rank 3.
 
-**Current gate:** repeat the human iPhone Web Core Experience playtest, starting with discoverability. Do not add deferred content merely because implementation work is otherwise complete.
+**Current gate:** human iPhone Web Core Purpose / Growth Spine retest. Before judging deeper polish, the player must be able to explain what they are trying to achieve and how contracts, Rating, Projects and Warehouse Expansion connect.
 
 ### Return to DEVICE_VALIDATION
 
