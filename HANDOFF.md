@@ -1,6 +1,6 @@
 # FLOTRA — Development Handoff
 
-Last updated: 2026-09-18 JST
+Last updated: 2026-09-20 JST
 
 ## 0. Core Experience v2 reset — 2026-09-18
 
@@ -210,6 +210,85 @@ Verified correction:
 
 Human iPhone Web retest is still required. Automated/visual PASS does not override the prior human FAIL.
 
+### Zone Panel Touch Path — HUMAN PASS
+
+PR #119 — `Fix Zone Panel touch input on iPhone Web`
+
+After PR #119, the user confirmed on the real iPhone Web preview that:
+- first tap enters preview;
+- planned ghost appears;
+- first tap does not spend cash;
+- second explicit tap commits successfully.
+
+The touch/input blocker is therefore human-verified as resolved for this path.
+
+### Core Purpose Retest — FAIL / 2026-09-20
+
+After the touch path worked, the user played normally and reported:
+
+> **何するゲームかよく分からん**
+
+This is a higher-level Core Experience failure, not another input failure.
+
+Audit result:
+- contract mechanics already existed and were authoritative;
+- contracts award cash / RP / Logistics Rating;
+- Rank 1 Warehouse Expansion already requires 4 structural Projects + Logistics Rating 8 + ¥10,000;
+- the problem was that these systems were presented as disconnected mechanics rather than one understandable growth goal.
+
+Audit also found concrete implementation mismatches:
+- Rank 1 Zone Panel could show Worker `0` from compatibility-role data while Workers were actively working;
+- legacy logistics-policy controls could be shown despite direct staffing owning authoritative Rank 2 work assignment;
+- investment verdicts judged shipment rate alone even when an investment improved its intended local constraint;
+- capacity-down renovation had an in-flight Worker/Forklift inventory-loss path;
+- Rank 1 v2 tests injected cash / Rating and therefore did not prove ordinary progression.
+
+### Consistency Repair — DONE
+
+PR #121 — `Repair Core Experience v2 consistency`
+- merge commit: `adfd58fa58ba379ac774ecde0513be0169779079`
+- Godot CI #288: **success**
+- iOS Export Smoke #102: **success**
+- Rendered Visual Capture #86: **success**
+- Android Export Smoke #100: **success** (historical technical reference only)
+
+Verified:
+- Rank 1 Worker UI uses authoritative current task activity;
+- legacy non-authoritative BALANCED / INBOUND / SHIP controls are hidden from the v2 player path;
+- investment verdict can use equipment-specific local operational metrics and exposes the verdict basis;
+- in-flight STORE / Forklift inventory is preserved through capacity-down renovation;
+- fresh normal progression is proven without injected resources.
+
+Natural progression evidence:
+- Rank 2 reached in **144.9 simulated seconds**;
+- 5 contracts completed;
+- 46 shipments;
+- Logistics Rating 10;
+- all 4 Rank 1 Projects purchased;
+- explicit Warehouse Expansion used.
+
+### Growth Objective Spine — DONE
+
+PR #122 — `Connect Rank 1 contracts to warehouse growth`
+- merge commit: `d94fc680b1c6a49f6f3f001e0d85d7fb6eed18f8`
+- Godot CI #290: **success**
+- iOS Export Smoke #103: **success**
+- Rendered Visual Capture #88: **success**
+- Android Export Smoke #102: **success** (historical technical reference only)
+- dedicated Rank 1 growth-objective smoke: **success**
+
+Verified presentation:
+- primary Rank 1 HUD persistently shows the current NEXT growth objective;
+- no active contract → `契約を選ぶ → 物流評価を上げる`;
+- active contract → live title / progress / remaining time;
+- Rank 2 conditions remain visible: Project count / Rating / expansion cash;
+- tapping NEXT opens Management at the contract/progression surface;
+- Rank 1 Management puts contract/progression first;
+- Warehouse Expansion states that contracts raise Logistics Rating;
+- FTUE teaches `契約達成 → 物流評価 → 設備Project → Warehouse expansion`.
+
+Human understanding is **not yet re-verified** after this correction.
+
 
 ## 1. Product / canonical intent
 
@@ -248,16 +327,26 @@ Repository: `48wr9f4wgp-lab/Logistics-Boss`
 Canonical branch: `main`
 
 Current verified main baseline:
-- PR #119 — `Fix Zone Panel touch input on iPhone Web`
-- merge commit: `f42348bf14bc4e5fb48b4dc2ddc0ce125afd903e`
-- Godot CI #286: **success**
-- iOS Export Smoke #101: **success**
-- Android Export Smoke #98: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
-- Rendered Visual Capture #84: **success**
-- dedicated real ScreenTouch / MouseButton Zone Panel smoke: **success**
+- PR #122 — `Connect Rank 1 contracts to warehouse growth`
+- merge commit: `d94fc680b1c6a49f6f3f001e0d85d7fb6eed18f8`
+- Godot CI #290: **success**
+- iOS Export Smoke #103: **success**
+- Android Export Smoke #102: **success** (historical technical evidence only; Android remains out of active Pre-GO scope)
+- Rendered Visual Capture #88: **success**
 - runtime save schema remains **9**
-- latest human iPhone Web result: **FAIL before PR #119 / CAPITAL visible but touch did not enter preview**
-- PR #117 discoverability fix, PR #115 construction presentation, PR #113 renovation, PR #111 staffing, PR #109 Rank 1 v2, and PR #107 Interaction Skeleton remain included
+- Rank 1 growth-objective smoke: **success**
+- Rank 1 natural progression gate from PR #121: **success**
+  - fresh canonical start
+  - no direct cash / Logistics Rating injection
+  - Rank 2 reached in 144.9 simulated seconds
+  - 5 contracts completed / 46 shipments / Logistics Rating 10
+  - all 4 structural Projects completed
+  - explicit Warehouse Expansion used
+- latest human iPhone Web state:
+  - Zone Panel preview / ghost / explicit second-tap commit: **PASS**
+  - overall Core Experience purpose: **FAIL before PR #121/#122** — user reported `何するゲームかよく分からん`
+  - purpose / growth-spine correction implemented; human retest pending
+- PR #121 consistency repair, PR #119 touch fix, PR #117 discoverability fix, PR #115 construction presentation, PR #113 renovation, PR #111 staffing, PR #109 Rank 1 v2, and PR #107 Interaction Skeleton remain included
 
 Latest product feature merge before presentation/native-prep work:
 - PR #76 — `Restore session context for returning players`
@@ -294,6 +383,8 @@ Recent QA/product milestones:
 - PR #115: construction/reward presentation — physical planned-equipment ghost, stale-preview clearing, authoritative commit → real geometry transition, selected-Zone reward emphasis, `rank2_preview.png`; CI #278 / iOS #95 / Render #76 passed and preview capture human-inspected
 - PR #117: discoverability/navigation correction after failed 2026-09-19 human retest — tappable Zone labels, Management→Zone routes, persistent Rank 1 Project routes, Rank 1 policy controls hidden, Rank 2+ policy labels clarified; CI #284 / iOS #100 / Render #82 passed and `rank1_management_navigation.png` human-inspected
 - PR #119: Zone Panel iPhone Web touch fallback — raw ScreenTouch / mouse hit-testing for actionable Zone controls, drag rejection, 450ms synthetic-mouse suppression; CI #286 / iOS #101 / Render #84 passed and real-input smoke verified preview/no-spend → explicit second-touch commit
+- PR #121: post-playtest consistency repair — authoritative Rank 1 Worker activity copy, non-authoritative legacy policy controls hidden, investment verdicts use equipment-relevant local metrics, in-flight inventory preserved on capacity-down renovation; fresh natural Rank 1→2 progression passed in 144.9s with 5 contracts / 46 shipments / Rating 10; CI #288 / iOS #102 / Render #86 passed
+- PR #122: Rank 1 growth objective spine — persistent NEXT objective, live contract progress, visible Rank 2 Project/Rating/cash requirements, contract/progression first in Management, FTUE teaches contract→Rating→Project→Warehouse expansion; CI #290 / iOS #103 / Render #88 passed
 
 Always re-check GitHub before editing; this document is a handoff snapshot, not a substitute for repository state.
 
@@ -652,55 +743,69 @@ FLOTRA remains in **ACTIVE_PHASE = VERTICAL_SLICE**.
 
 ### LAST VERIFIED DONE
 
-**Zone Panel iPhone Web Touch Fix — DONE / PR #119**
+**Consistency Repair + Rank 1 Growth Objective Spine — DONE / PR #121 + #122**
 
-Human evidence that triggered the fix:
-- discoverability had improved enough to reach the intended Zone Panel;
-- however, iPhone Web taps on the visible CAPITAL action did not advance `内容を見る` → `建設する`;
-- no planned ghost appeared and no commit occurred;
-- example observed: `内容を見る｜Forklift Project｜¥20,000` stayed unchanged after taps.
+Human evidence before these changes:
+- Zone Panel touch path after PR #119: **PASS** on iPhone Web;
+- broader Core Experience: **FAIL**;
+- user reaction: **「何するゲームかよく分からん」**.
 
-Verified fix:
-- WarehouseZonePanel now has a raw pointer fallback for actionable Zone controls only;
-- actual visible/enabled Button rectangles are hit-tested for `InputEventScreenTouch`;
-- mouse-only Web input is also supported;
-- drag motion is rejected as a tap;
-- synthetic mouse input is suppressed for 450ms after touch so one physical tap cannot preview+commit;
-- covered fallback actions: Rank 1 CAPITAL, Worker Hire, Rank 2 equipment, direct staffing;
-- dedicated real-input smoke pushes actual ScreenTouch / MouseButton events through the viewport and verifies:
-  - first touch → preview / no spend / button becomes `建設する`;
-  - synthetic mouse duplicate → ignored;
-  - second explicit touch → authoritative Forklift purchase;
-  - mouse-only Web fallback → same preview behavior;
-- Godot CI #286 / iOS Export Smoke #101 / Rendered Visual Capture #84 green.
+Audit conclusion:
+- contracts were already implemented;
+- the missing piece was the visible connection between **contract → Logistics Rating / cash → structural Projects → Warehouse Expansion**;
+- implementation mismatches also made some UI claims unreliable.
 
-### NEXT — iPhone Web Zone action touch retest
+Verified repair:
+- truthful Rank 1 Worker activity display;
+- non-authoritative legacy policy controls hidden;
+- investment verdicts use intervention-relevant authoritative metrics where appropriate;
+- in-flight inventory survives capacity-down renovation;
+- fresh normal Rank 1 → Rank 2 progression passes without injected money / Rating;
+- natural run evidence: **144.9s / 5 completed contracts / 46 shipments / Rating 10 / explicit Warehouse Expansion**;
+- persistent Rank 1 NEXT objective connects contracts to visible Rank 2 requirements;
+- active contract progress is shown on the main HUD;
+- contract/progression controls are first in Rank 1 Management;
+- Warehouse Expansion explains that contracts earn Logistics Rating;
+- FTUE teaches contract → Rating → Project → warehouse expansion;
+- Godot CI #290 / iOS Export Smoke #103 / Rendered Visual Capture #88 green.
 
-Do **not** judge the broader Core Experience yet. First verify the repaired touch path.
+### NEXT — iPhone Web Core Purpose / Growth Spine Retest
 
-On the current engineering Web preview:
+Do **not** add new contracts, penalties, equipment, deferred Rank 2 Zones or Rank 3 content before this result.
 
-1. Open a Rank 1 Zone with an unfinished structural Project.
-2. Tap `内容を見る` **once**.
-   - required: button immediately changes to `建設する`;
-   - required: physical planned ghost appears;
-   - required: cash does **not** decrease.
-3. Tap the same action a **second explicit time**.
-   - required: cash decreases by the Project cost;
-   - required: Project becomes owned / real geometry appears;
-   - required: preview clears into the existing measurement flow.
-4. Also test Worker Hire once.
-5. If Rank 2 is already reachable, test one Rank 2 equipment preview/commit pair.
+Use the current engineering Web preview from a fresh or representative Rank 1 state with no coaching.
 
-If this touch path passes, continue the broader discoverability / reward / decision-quality retest in the same session.
+First ask only the product-purpose question after a short normal play period:
 
-If it still fails:
+> **「このゲームで何を目指すゲームだと思う？」**
+
+PASS direction:
+- player independently understands approximately:
+  **契約を達成する → 物流評価 / 資金を得る → 倉庫の設備Projectを進める → Warehouseを拡張する**.
+
+Then verify the actual path:
+1. primary `NEXT` objective makes the current growth goal understandable;
+2. tapping NEXT naturally leads to contract selection;
+3. active contract progress remains understandable from the main warehouse screen;
+4. a bottleneck / Zone intervention feels connected to the current contract or warehouse-growth goal rather than arbitrary warning clearing;
+5. completing contracts visibly advances Logistics Rating toward the expansion requirement;
+6. structural Project completion and Warehouse Expansion requirements make sense together;
+7. if the purpose is understood, continue the same session into reward / decision-quality judgment.
+
+### Routing
+
+If the human purpose retest passes:
+- record evidence;
+- continue the same session to validate reward recognition / decision quality;
+- only when the complete Core Experience is credible should VERTICAL_SLICE route back to DEVICE_VALIDATION.
+
+If the purpose is still unclear:
 - remain in VERTICAL_SLICE;
-- capture exactly which visible control failed;
-- fix only that input path;
-- do not add content.
+- identify the smallest missing explanatory / feedback link;
+- fix that layer only;
+- do not compensate by adding more systems.
 
-**STOP / SCOPE CONDITION:** deferred Rank 2 INBOUND/PICKING/SHIPPING equipment, Rank 3 redesign, advanced sorter/ASRS/cross-dock content, and release work remain out of scope until the human touch retest result is known.
+**STOP / SCOPE CONDITION:** new contract types, failure penalties, deferred Rank 2 INBOUND/PICKING/SHIPPING equipment, Rank 3 redesign, advanced automation content, and release work remain out of scope until the human purpose retest result is known.
 
 PRODUCTION_DECISION remains **UNDECIDED**.
 RELEASE_APPROVAL remains **NOT_REQUESTED**.
