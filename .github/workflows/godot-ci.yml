@@ -189,6 +189,16 @@ jobs:
             exit 1
           fi
 
+      - name: Mobile UI foundation smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 35s godot --headless --path godot --script res://tests/mobile_ui_foundation_smoke.gd 2>&1 | tee /tmp/mobile-ui-foundation-smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/mobile-ui-foundation-smoke.log; then
+            echo 'Mobile UI foundation smoke emitted an engine/script error'
+            exit 1
+          fi
+
       - name: V2 consistency repair smoke
         shell: bash
         run: |
