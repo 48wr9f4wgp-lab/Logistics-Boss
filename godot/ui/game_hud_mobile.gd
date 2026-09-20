@@ -349,7 +349,11 @@ func _render_v2_growth_goal() -> void:
         ]
         return
 
-    var objective := "契約を選ぶ → 物流評価を上げる"
+    var objective := (
+        "契約を選ぶ → 物流評価を上げる"
+        if not sim.contract_offers.is_empty()
+        else "次の契約を準備中"
+    )
     if not sim.active_contract.is_empty():
         var active: Dictionary = sim.active_contract
         objective = "契約｜%s  %.0f/%.0f  残%d秒" % [
