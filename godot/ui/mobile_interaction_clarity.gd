@@ -22,6 +22,8 @@ var _normal: StyleBoxFlat
 var _primary: StyleBoxFlat
 var _pressed: StyleBoxFlat
 var _disabled: StyleBoxFlat
+var _ui_theme: Theme
+var _initialized := false
 
 
 func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2Rank1Coach = null, next_resume: Control = null) -> void:
@@ -30,9 +32,16 @@ func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2
     coach = next_coach
     resume_brief = next_resume
     process_priority = 100
-    # Runtime binding avoids project-theme font loading before a clean checkout
-    # has imported its TTF. The theme also covers UI attached after this bind.
-    hud.theme = load("res://ui/mobile_theme.tres") as Theme
+    # A CanvasLayer has no theme property. Apply the runtime-loaded theme to
+    # each Control root instead, including roots attached after this bind.
+    # Loading here also avoids TTF loading before a clean editor import.
+    _ui_theme = load("res://ui/mobile_theme.tres") as Theme
+    if _ui_theme == null:
+        push_error("Mobile interaction theme could not be loaded")
+        return
+    for child in hud.get_children():
+        _theme_control_root(child)
+    hud.child_entered_tree.connect(_theme_control_root)
     _normal = _style(Color(0.045, 0.12, 0.16), Color(0.28, 0.67, 0.82))
     _primary = _style(Color(0.055, 0.29, 0.25), Color(0.44, 0.95, 0.77))
     _pressed = _style(Color(0.32, 0.22, 0.075), Color(1.0, 0.76, 0.32))
@@ -56,11 +65,17 @@ func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2
     add_child(router)
     router.bind(hud, zone)
     router.action_activated.connect(_after_action)
+    _initialized = true
     refresh()
 
 
+func _theme_control_root(node: Node) -> void:
+    if node is Control:
+        (node as Control).theme = _ui_theme
+
+
 func _process(_delta: float) -> void:
-    if hud != null and hud.sim != null:
+    if _initialized and hud != null and hud.sim != null:
         refresh()
 
 
@@ -105,7 +120,7 @@ func _separate_contract_actions() -> void:
 
 
 func refresh() -> void:
-    if hud == null or hud.sim == null:
+    if not _initialized or hud == null or hud.sim == null:
         return
     var sim := hud.sim
     var rank := sim.facility_rank
