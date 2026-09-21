@@ -4,11 +4,88 @@ class_name FeedbackGameHud
 const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 
 var _measurement_followup_active := false
+var _toast_is_priority := false
+
+
+func _ready() -> void:
+    super._ready()
+    # These surfaces report outcomes; they must never consume a player's tap.
+    for control in [_toast_panel, _toast, _measurement_panel, _measurement_label]:
+        if control != null:
+            control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _sheet.visibility_changed.connect(_sync_feedback_visibility)
+    _reset_modal.visibility_changed.connect(_sync_feedback_visibility)
 
 
 func _process(delta: float) -> void:
-    super._process(delta)
+    var obscured := _feedback_is_obscured()
+    if obscured:
+        _discard_shipment_feedback()
+    # Only inherited HUD display clocks wait. Domain.step(), cash rendering,
+    # worker tasks and the separately owned onboarding nodes keep running.
+    super._process(0.0 if obscured else delta)
     _sync_measurement_followup_cta()
+    _sync_feedback_visibility()
+
+
+func _feedback_is_obscured() -> bool:
+    if _sheet != null and _sheet.visible:
+        return true
+    if _reset_modal != null and _reset_modal.visible:
+        return true
+    # Main attaches its Zone Panel after the HUD's _ready(), so do not cache a
+    # missing panel at startup. All these surfaces belong to this HUD instance.
+    for child in get_children():
+        if child is WarehouseZonePanel and (child as WarehouseZonePanel).is_open():
+            return true
+    return false
+
+
+func _discard_shipment_feedback() -> void:
+    # These counters are notification-only, never Domain inventory or money.
+    _shipment_toast_count = 0
+    _shipment_toast_value = 0
+    _shipment_toast_batch_elapsed = 0.0
+    if not _toast_is_priority:
+        _toast_timer = 0.0
+
+
+func _queue_shipment_toast(event: Dictionary) -> void:
+    if _feedback_is_obscured():
+        _discard_shipment_feedback()
+        return
+    super._queue_shipment_toast(event)
+
+
+func _flush_shipment_toast() -> void:
+    if _feedback_is_obscured():
+        _discard_shipment_feedback()
+        return
+    super._flush_shipment_toast()
+
+
+func _show_toast(text: String, priority: bool = true) -> void:
+    if not priority and _feedback_is_obscured():
+        _discard_shipment_feedback()
+        return
+    _toast_is_priority = priority
+    super._show_toast(text, priority)
+    _sync_feedback_visibility()
+
+
+func _show_measurement_status(text: String, seconds: float) -> void:
+    super._show_measurement_status(text, seconds)
+    _sync_feedback_visibility()
+
+
+func _sync_feedback_visibility() -> void:
+    var obscured := _feedback_is_obscured()
+    if obscured:
+        _discard_shipment_feedback()
+    if _toast_panel != null:
+        _toast_panel.visible = not obscured and _toast_timer > 0.0
+    if _measurement_panel != null:
+        _measurement_panel.visible = not obscured and _measurement_timer > 0.0
 
 
 func _on_sim_event(event: Dictionary) -> void:
