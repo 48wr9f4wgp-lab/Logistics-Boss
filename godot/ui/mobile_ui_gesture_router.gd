@@ -7,6 +7,8 @@ signal action_activated(button: Button)
 
 const DRAG_THRESHOLD := 6.0
 const MOUSE_SUPPRESSION_MS := 450
+# Godot InputEvent::DEVICE_ID_EMULATION in core/input/input_event.h.
+const EMULATED_MOUSE_DEVICE := -1
 
 var hud: MobileGameHud
 var zone: WarehouseZonePanel
@@ -31,6 +33,15 @@ func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel) -> void:
 
 func _input(event: InputEvent) -> void:
     if hud == null:
+        return
+    # Input dispatches its emulated mouse BEFORE the originating finger event.
+    # A time-based suppression window set by ScreenTouch is therefore too late.
+    # Never let this synthetic event acquire the genuine-mouse pointer (-2).
+    # Consume it on our UI surfaces; leave unrelated canvas input untouched.
+    if event is InputEventMouse and event.device == EMULATED_MOUSE_DEVICE:
+        var emulated := event as InputEventMouse
+        if _owns_emulated_mouse_at(emulated.position):
+            get_viewport().set_input_as_handled()
         return
     if event is InputEventScreenTouch:
         var touch := event as InputEventScreenTouch
@@ -73,6 +84,17 @@ func _input(event: InputEvent) -> void:
         return
     if event is InputEventMouseMotion and _pointer == -2:
         _move((event as InputEventMouseMotion).relative)
+
+
+func _owns_emulated_mouse_at(position: Vector2) -> bool:
+    if _pointer != -1 or not _blocked_touches.is_empty():
+        return true
+    if button_at(position) != null:
+        return true
+    return (
+        hud._sheet.visible and hud._mobile_scroll != null
+        and _contains_visible(hud._mobile_scroll, position)
+    )
 
 
 func _begin(position: Vector2, pointer: int) -> void:
