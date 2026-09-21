@@ -3,7 +3,7 @@ class_name FlotraV2Sim
 
 const SAVE_SCHEMA_RANK1_V2 := 8
 const SAVE_SCHEMA_DIRECT_STAFFING := 9
-const SAVE_SCHEMA_V2 := 10
+const SAVE_SCHEMA_V2 := 11
 
 const STAFF_ZONE_INBOUND := "inbound"
 const STAFF_ZONE_PICKING := "picking"
@@ -28,6 +28,18 @@ const CONVEYOR_COST := 9000
 const EXTRA_FORKLIFT_CYCLE := 4.8
 const CONVEYOR_TRAVEL_SECONDS := 2.4
 const CONVEYOR_CAPACITY := 4
+
+# Cumulative capacity is independent of the original equipment-mode choice.
+const PACKING_CELL_COSTS := [12000, 18000, 27000]
+const DISPATCH_LANE_COSTS := [16000, 24000]
+const CELL_SECONDS := 3.0
+const LANE_SECONDS := 6.0
+var packing_cells := 0
+var dispatch_lanes := 0
+var capacity_packed := 0
+var capacity_shipped := 0
+var _cell_jobs: Array[float] = []
+var _lane_jobs: Array[Dictionary] = []
 
 var extra_forklift_owned := false
 var conveyor_owned := false
@@ -609,6 +621,10 @@ func equipment_asset_value() -> int:
         value += EXTRA_FORKLIFT_COST
     if conveyor_owned:
         value += CONVEYOR_COST
+    for index in packing_cells:
+        value += PACKING_CELL_COSTS[index]
+    for index in dispatch_lanes:
+        value += DISPATCH_LANE_COSTS[index]
     return value
 
 
@@ -620,6 +636,7 @@ func snapshot() -> Dictionary:
     data["rank1_expansion_readiness"] = rank1_expansion_readiness()
     data["direct_zone_staffing"] = direct_staffing_summary()
     data["growth_automation"] = growth_automation_state()
+    data["capacity_growth"] = capacity_state()
     return data
 
 
@@ -633,6 +650,15 @@ func save_data() -> Dictionary:
         "extra_moved": extra_forklift_moved, "conveyor_moved": conveyor_moved,
         "forklift_book_value": forklift_book_value, "expansion_book_value": expansion_book_value,
     }
+    data["capacity_growth"] = {
+        "packing_cells": packing_cells, "dispatch_lanes": dispatch_lanes,
+        "packed": capacity_packed, "shipped": capacity_shipped,
+    }
+    for remaining in _cell_jobs:
+        if remaining > 0.0:
+            data["packing_queue"] = int(data["packing_queue"]) + 1
+    for job in _lane_jobs:
+        data["packed_queue"] = int(data["packed_queue"]) + int(job.get("cargo", 0))
     # The legacy save resumes jobs from queues. Project in-flight inventory into
     # durable queues without changing live state, completing work or granting cash.
     for worker in workers:
@@ -724,6 +750,14 @@ func load_data(data: Dictionary) -> bool:
     _extra_remaining = 0.0
     _extra_cargo = 0
     _conveyor_jobs.clear()
+    var capacity: Dictionary = data.get("capacity_growth", {}) if data.get("capacity_growth", {}) is Dictionary else {}
+    packing_cells = clampi(int(capacity.get("packing_cells", 0)), 0, PACKING_CELL_COSTS.size()) if source_schema >= 11 and facility_rank >= 2 else 0
+    dispatch_lanes = clampi(int(capacity.get("dispatch_lanes", 0)), 0, mini(DISPATCH_LANE_COSTS.size(), packing_cells)) if source_schema >= 11 and facility_rank >= 2 else 0
+    capacity_packed = maxi(0, int(capacity.get("packed", 0))) if source_schema >= 11 else 0
+    capacity_shipped = maxi(0, int(capacity.get("shipped", 0))) if source_schema >= 11 else 0
+    _cell_jobs.clear()
+    _lane_jobs.clear()
+    _sync_capacity_slots()
     if source_schema < SAVE_SCHEMA_V2:
         _emit("save_migrated", {"from_schema": source_schema, "to_schema": SAVE_SCHEMA_V2})
     _emit("save_loaded", {"schema_version": SAVE_SCHEMA_V2})
@@ -820,6 +854,7 @@ func _update_extra_forklift(dt: float) -> void:
 
 
 func _update_packing(dt: float) -> void:
+    _update_capacity(dt)
     for index in range(_conveyor_jobs.size() - 1, -1, -1):
         _conveyor_jobs[index] = maxf(0.0, _conveyor_jobs[index] - dt)
         if _conveyor_jobs[index] <= 0.0:
@@ -854,3 +889,122 @@ func _complete_task(worker: Dictionary) -> void:
     worker["duration"] = 0.0
     worker["remaining"] = 0.0
     worker["progress"] = 0.0
+
+
+func capacity_info(kind: StringName) -> Dictionary:
+    if kind not in [&"packing_cell", &"dispatch_lane"]:
+        return {}
+    var cell := kind == &"packing_cell"
+    var count := packing_cells if cell else dispatch_lanes
+    var costs: Array = PACKING_CELL_COSTS if cell else DISPATCH_LANE_COSTS
+    var maximum := count >= costs.size()
+    var available := facility_rank >= 2 and (cell or packing_cells > dispatch_lanes)
+    return {
+        "kind": String(kind), "label": "梱包セル" if cell else "自動出荷レーン",
+        "count": count, "limit": costs.size(), "maxed": maximum,
+        "cost": 0 if maximum else int(costs[count]), "unlocked": available,
+        "lock_reason": "最初の倉庫拡張で解放" if facility_rank < 2 else "梱包セルをもう1台増設すると解放",
+        "effect": "独立した作業台を追加。3秒で1箱を梱包" if cell else "6秒で最大2箱を自動出荷。通常便¥500/箱",
+        "tradeoff": "荷物がないと待機。出荷側の余力も必要" if cell else "梱包済みの荷物を使用。有人配送とは別系統",
+    }
+
+
+func purchase_capacity(kind: StringName, expected_count: int) -> Dictionary:
+    var info := capacity_info(kind)
+    if info.is_empty():
+        return {"ok": false, "reason": "unknown"}
+    if int(info["count"]) != expected_count:
+        return {"ok": false, "reason": "stale"}
+    if bool(info["maxed"]):
+        return {"ok": false, "reason": "max"}
+    if not bool(info["unlocked"]):
+        return {"ok": false, "reason": "rank"}
+    var cost := int(info["cost"])
+    if money < cost:
+        return {"ok": false, "reason": "funds", "cost": cost}
+    money -= cost
+    if kind == &"packing_cell":
+        packing_cells += 1
+    else:
+        dispatch_lanes += 1
+    _sync_capacity_slots()
+    _measurement.begin_investment(kind, cost, sim_time)
+    _emit("capacity_purchased", {"kind": String(kind), "label": info["label"], "zone": "packing" if kind == &"packing_cell" else "shipping", "count": expected_count + 1, "cost": cost})
+    return {"ok": true, "cost": cost, "count": expected_count + 1}
+
+
+func _sync_capacity_slots() -> void:
+    while _cell_jobs.size() < packing_cells:
+        _cell_jobs.append(0.0)
+    while _lane_jobs.size() < dispatch_lanes:
+        _lane_jobs.append({"remaining": 0.0, "cargo": 0})
+
+
+func capacity_state() -> Dictionary:
+    return {"packing_cells": packing_cells, "dispatch_lanes": dispatch_lanes,
+        "cell_jobs": _cell_jobs.duplicate(), "lane_jobs": _lane_jobs.duplicate(true),
+        "packed": capacity_packed, "shipped": capacity_shipped}
+
+
+func _update_capacity(dt: float) -> void:
+    _sync_capacity_slots()
+    # Process only already-reserved work; purchases do not fabricate queue items.
+    for index in _cell_jobs.size():
+        if _cell_jobs[index] > 0.0:
+            _cell_jobs[index] = maxf(0.0, _cell_jobs[index] - dt)
+            if _cell_jobs[index] <= 0.0:
+                packed_queue += 1
+                capacity_packed += 1
+                _emit("capacity_packed", {"unit": index, "packed_queue": packed_queue})
+        if _cell_jobs[index] <= 0.0 and packing_queue > 0:
+            packing_queue -= 1
+            _cell_jobs[index] = CELL_SECONDS
+    for index in _lane_jobs.size():
+        var job: Dictionary = _lane_jobs[index]
+        if int(job["cargo"]) > 0:
+            job["remaining"] = maxf(0.0, float(job["remaining"]) - dt)
+            if float(job["remaining"]) <= 0.0:
+                var count := int(job["cargo"])
+                job["cargo"] = 0
+                for _parcel in count:
+                    shipped += 1
+                    capacity_shipped += 1
+                    money += BASE_SHIPMENT_VALUE
+                    _shipment_times.append(sim_time)
+                    if shipped % 5 == 0:
+                        research_rp += 1
+                    _emit("shipment", {"value": BASE_SHIPMENT_VALUE, "shipped": shipped, "money": money, "automatic_lane": index})
+        if int(job["cargo"]) == 0 and packed_queue > 0:
+            job["cargo"] = mini(2, packed_queue)
+            packed_queue -= int(job["cargo"])
+            job["remaining"] = LANE_SECONDS
+
+
+func apply_staffing_distribution(draft: Dictionary, expected: Dictionary) -> Dictionary:
+    if facility_rank < 2 or not _direct_staffing_active:
+        return {"ok": false, "reason": "rank"}
+    if staffing_cooldown > 0.0:
+        return {"ok": false, "reason": "cooldown", "remaining": staffing_cooldown}
+    # Validate before mutation. No partial application and no stale-draft overwrite.
+    if draft.size() != 3 or expected.size() != 3:
+        return {"ok": false, "reason": "invalid"}
+    var total := 0
+    var changed := false
+    for key in direct_staffing_zone_keys():
+        if not draft.has(key) or typeof(draft[key]) != TYPE_INT or int(draft[key]) < DIRECT_STAFFING_MIN_PER_ZONE:
+            return {"ok": false, "reason": "invalid"}
+        if not expected.has(key) or expected[key] != zone_staffing[key]:
+            return {"ok": false, "reason": "stale"}
+        total += int(draft[key])
+        changed = changed or draft[key] != zone_staffing[key]
+    if total != worker_count:
+        return {"ok": false, "reason": "crew"}
+    if not changed:
+        return {"ok": false, "reason": "same"}
+    zone_staffing = draft.duplicate(true)
+    staffing_plan = "direct"
+    staffing_cooldown = LogisticsProgression.STAFFING_COOLDOWN_SECONDS
+    _apply_staffing_plan() # Assignment changes; in-flight tasks/cargo remain intact.
+    _measurement.note_intervention("staffing", sim_time)
+    _emit("staffing_changed", {"mode": "batch", "inbound": zone_staffing[STAFF_ZONE_INBOUND], "picking": zone_staffing[STAFF_ZONE_PICKING], "shipping": zone_staffing[STAFF_ZONE_SHIPPING], "cooldown": staffing_cooldown})
+    return {"ok": true, "staffing": zone_staffing.duplicate(true), "cooldown": staffing_cooldown}

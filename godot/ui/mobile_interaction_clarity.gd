@@ -24,6 +24,8 @@ var _pressed: StyleBoxFlat
 var _disabled: StyleBoxFlat
 var _ui_theme: Theme
 var _initialized := false
+var staffing: StaffingWorkspace
+var _capacity_panel: VBoxContainer
 
 
 func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2Rank1Coach = null, next_resume: Control = null) -> void:
@@ -90,7 +92,7 @@ func _build_sections() -> void:
     row.add_theme_constant_override("separation", 5)
     column.add_child(row)
     column.move_child(row, scroll.get_index())
-    for item in [["contracts", "契約(任意)"], ["field", "現場"], ["expansion", "拡張"], ["settings", "設定"]]:
+    for item in [["contracts", "契約(任意)"], ["field", "現場"], ["expansion", "増設"], ["staffing", "配置"], ["settings", "設定"]]:
         var button := Button.new()
         button.text = String(item[1])
         button.custom_minimum_size = Vector2(0, 44)
@@ -100,6 +102,25 @@ func _build_sections() -> void:
         row.add_child(button)
         _tabs[String(item[0])] = button
     var list := hud._find_upgrade_list(hud._sheet)
+    staffing = preload("res://ui/staffing_workspace.gd").new()
+    list.add_child(staffing)
+    staffing.bind(hud.sim as FlotraV2Sim)
+    staffing.actions.reparent(column)
+    staffing.applied.connect(func(): hud._sheet.visible = false; refresh())
+    staffing.cancelled.connect(func(): hud._sheet.visible = false; refresh())
+    zone.staffing_requested.connect(func(): open_section("staffing"))
+    _capacity_panel = VBoxContainer.new()
+    _capacity_panel.add_theme_constant_override("separation", 10)
+    list.add_child(_capacity_panel)
+    for entry in [["packing", "梱包セルを増設", "packing_cell"], ["shipping", "自動出荷レーンを増設", "dispatch_lane"]]:
+        var button := Button.new()
+        button.custom_minimum_size = Vector2(0, 74)
+        button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        button.set_meta("capacity_kind", entry[2])
+        button.pressed.connect(func():
+            hud._sheet.visible = false
+            zone.open_zone(entry[0]))
+        _capacity_panel.add_child(button)
     for child in list.get_children():
         if child is Label and (child as Label).text.contains("データ管理"):
             _settings_labels.append(child as Label)
@@ -147,13 +168,27 @@ func refresh() -> void:
         var title := String(button.get_meta("section_title"))
         button.text = "【%s】" % title if key == _section else title
         button.add_theme_stylebox_override("normal", _primary if key == _section else _normal)
-    (_tabs["expansion"] as Button).visible = rank != 2
-    if rank == 2 and _section == "expansion":
-        _select_section("field")
+    (_tabs["expansion"] as Button).visible = true
+    (_tabs["staffing"] as Button).visible = rank >= 2
+    staffing.visible = _section == "staffing" and rank >= 2
+    staffing.actions.visible = staffing.visible
+    var spacer := hud._find_upgrade_list(hud._sheet).get_node_or_null("MobileBottomSpacer") as Control
+    if spacer != null:
+        spacer.visible = not staffing.visible
+        spacer.get_parent().move_child(spacer, spacer.get_parent().get_child_count()-1)
+    _capacity_panel.visible = _section == "expansion" and rank >= 2
+    for child in _capacity_panel.get_children():
+        var button := child as Button
+        var info: Dictionary = sim.call("capacity_info", StringName(button.get_meta("capacity_kind")))
+        button.text = "%s %d/%d
+%s" % [info["label"], int(info["count"]), int(info["limit"]), "増設分 導入済み" if bool(info["maxed"]) else "現場で増設内容を見る ▶"]
     _render_contracts()
     _render_goal()
     _render_field()
     _render_zone()
+    if sim.facility_rank >= 2:
+        for button in zone._staffing_move_buttons:
+            button.visible = false
     _render_coach()
     if router != null:
         router.apply_pressed_visual()
@@ -212,7 +247,13 @@ func _render_goal() -> void:
             goal.text = "倉庫の拡張を目指す ▶\n出荷 %d/%d件｜資金 ¥%s / ¥%s" % [mini(sim.shipped, int(readiness["shipments_required"])), int(readiness["shipments_required"]), hud._format_number(sim.money), hud._format_number(int(readiness["cost"]))]
     else:
         var state: Dictionary = sim.call("growth_automation_state")
-        goal.text = ("設備を増やして流れを伸ばす ▶" if bool(state["extra_owned"]) and bool(state["conveyor_owned"]) else "次の自動化設備を見る ▶") + "\nフォーク %d台｜コンベア %s" % [(1 if sim.forklift_unlocked else 0) + (1 if bool(state["extra_owned"]) else 0), "稼働中" if bool(state["conveyor_owned"]) else "未導入"]
+        _goal_section = "expansion" if bool(state["extra_owned"]) and bool(state["conveyor_owned"]) else "field"
+        var capacity_sim := sim as FlotraV2Sim
+        var installed := "梱包セル %d基｜出荷レーン %d本｜フォーク %d台" % [capacity_sim.packing_cells, capacity_sim.dispatch_lanes, (1 if sim.forklift_unlocked else 0) + (1 if bool(state["extra_owned"]) else 0)]
+        goal.text = "増設の選択肢を見る ▶\n" + installed
+        if capacity_sim.packing_cells >= 1:
+            goal.text = "現場の流れを見る（任意） ▶\n" + installed
+            _goal_section = "field"
     if not sim.active_contract.is_empty():
         var active: Dictionary = sim.active_contract
         goal.text += "\n契約 %d/%d｜残り%d秒" % [int(active.get("progress", 0)), int(active.get("target", 0)), ceili(float(active.get("remaining", 0.0)))]
@@ -282,13 +323,22 @@ func open_section(section: String) -> void:
         zone.close()
     if not hud._sheet.visible:
         hud._toggle_sheet()
+        # Opening a fresh staffing session must still read current assignments.
+        if section == "staffing" and _section == section:
+            staffing.reset_draft()
     _select_section(section)
 
 
 func _select_section(section: String) -> void:
     if not _tabs.has(section):
         return
+    # Re-tapping staffing is not a new edit session. Preserve its draft,
+    # selected source and scroll position until the user changes sections.
+    if section == "staffing" and section == _section:
+        return
     _section = section
+    if section == "staffing":
+        staffing.reset_draft()
     hud._mobile_scroll.scroll_vertical = 0
     refresh()
 
@@ -355,5 +405,9 @@ func _reveal_purchase(kind: StringName) -> void:
     var label := String(PROJECTS.get(String(kind), "設備"))
     if kind in [&"extra_forklift", &"transfer_conveyor"]:
         label = String(hud.sim.call("growth_automation_info", kind).get("label", label))
+    if String(kind).begins_with("packing_cell_"):
+        label = "梱包セル"
+    elif String(kind).begins_with("dispatch_lane_"):
+        label = "自動出荷レーン"
     hud._show_toast("%s 導入！" % label)
     refresh()

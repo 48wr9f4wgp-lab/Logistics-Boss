@@ -23,6 +23,13 @@ func _ready() -> void:
     _apply_premium_hud_finish()
     if _bottleneck != null:
         _bottleneck.add_theme_font_size_override("font_size", 11)
+        _bottleneck.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        _bottleneck.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        _bottleneck.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        # The symptom and wave each own a line; a separate title stole text width.
+        for sibling in _bottleneck.get_parent().get_children():
+            if sibling is Label and sibling != _bottleneck:
+                sibling.hide()
 
 
 func _process(delta: float) -> void:
@@ -162,25 +169,25 @@ func _bottleneck_text(info: Dictionary) -> String:
     var text := ""
     match String(info.get("key", "stable")):
         "inbound":
-            text = "INBOUND高負荷｜待機 %d" % (sim.inbound_queue if sim != null else 0)
+            text = "入荷 高負荷｜待機 %d" % (sim.inbound_queue if sim != null else 0)
         "rack":
-            text = "STORAGE高負荷｜%d/%d" % [
+            text = "保管 高負荷｜%d/%d" % [
                 sim.rack_stock if sim != null else 0,
                 sim.rack_capacity if sim != null else 0,
             ]
         "packing":
-            text = "PACKING高負荷｜待機 %d" % (sim.packing_queue if sim != null else 0)
+            text = "梱包 高負荷｜待機 %d" % (sim.packing_queue if sim != null else 0)
         "outbound":
-            text = "SHIPPING高負荷｜待機 %d" % (sim.packed_queue if sim != null else 0)
+            text = "出荷 高負荷｜待機 %d" % (sim.packed_queue if sim != null else 0)
         "orders":
-            text = "PICKING高負荷｜注文 %d" % (sim.open_orders if sim != null else 0)
+            text = "ピッキング 高負荷｜注文 %d" % (sim.open_orders if sim != null else 0)
         "stable":
             text = "安定運転"
         _:
             text = super._bottleneck_text(info)
 
     var wave := _inline_wave_summary()
-    return text if wave.is_empty() else "%s ｜ %s" % [text, wave]
+    return text if wave.is_empty() else "%s\n%s" % [text, wave]
 
 
 func _inline_wave_summary() -> String:

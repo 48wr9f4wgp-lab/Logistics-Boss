@@ -87,7 +87,8 @@ func _build_extra_fork() -> void:
         _fork.remove_child(old_cargo)
         old_cargo.free()
     add_child(_fork)
-    _fork.scale = Vector3.ONE * 0.90
+    _fork.scale = Vector3.ONE
+    CapacityGrowthView.tag(_fork,"2号車",Vector3(0,1.85,0))
     for i in 2:
         _cargo.append(_box(_fork, "ActualCargo%d" % i, Vector3(0.35, 0.38, 0.48), Vector3(-0.20 + i * 0.40, 0.52, -0.90), PARCEL))
 

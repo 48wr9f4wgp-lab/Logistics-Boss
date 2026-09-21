@@ -198,9 +198,12 @@ func _populate_stage(stage: Node, sim) -> Dictionary:
     var composition = CompositionFixScript.new()
     view.add_child(composition)
     composition.bind(view)
+    # The recovered capacity candidate starts in a rank-aware work overview.
+    # Keep this capture on that runtime framing instead of the retired hero zoom.
+    var expected_distance := 20.5 if int(sim.facility_rank) >= 2 else 19.5
     assert(
-        is_equal_approx(view._camera_distance, CompositionFixScript.HERO_CAMERA_DISTANCE),
-        "visual capture must use the warehouse-hero portrait camera distance"
+        is_equal_approx(view._camera_distance, expected_distance),
+        "visual capture must use the candidate's rank-aware work overview distance"
     )
     return {
         "view": view,

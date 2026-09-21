@@ -38,6 +38,7 @@ var _rack_boxes: Node3D
 var _packed_boxes: Node3D
 
 var _worker_nodes: Array[Node3D] = []
+var _work_presentation: Dictionary = {}
 var _last_worker_count := -1
 var _last_rack_capacity := -1
 var _last_inbound := -1
@@ -295,20 +296,43 @@ func _sync_workers() -> void:
         var node := _worker_nodes[i]
         var task := int(data["task"])
 
+        var role := String(data.get("role", ""))
+        var task_role := "store" if task == WarehouseSim.Task.STORE else ("pick" if task == WarehouseSim.Task.PICK else "ship")
+        # A reassignment updates the next role while the current cargo job
+        # finishes. Show the active task until completion, then the new role.
+        var visual_role := task_role if task != WarehouseSim.Task.IDLE else role
+        var tint := Color(0.95,0.63,0.13) if visual_role == "store" else (Color(0.24,0.75,1.0) if visual_role == "pick" else Color(0.43,0.91,0.70))
+        var vest := node.get_node("RoleVest") as MeshInstance3D
+        (vest.material_override as StandardMaterial3D).albedo_color = tint
+        var caption := node.get_node("RoleLabel") as Label3D
+        var role_text := "入庫" if visual_role == "store" else ("ピッキング" if visual_role == "pick" else ("出荷" if visual_role == "ship" else "共通"))
+        caption.text = role_text + ("・待機" if task == WarehouseSim.Task.IDLE else "")
+        # At overview distance, cargo and vest color communicate the active task.
+        # Close inspection reveals the truthful role text without crowding zones.
+        caption.visible = _camera_distance <= 16.0
+        var progress := float(data["progress"])
+        var record: Dictionary = _work_presentation.get(i, {})
         if task == WarehouseSim.Task.IDLE:
-            var idle_x := 0.1 + float(i % 4) * 0.72
-            var idle_z := 2.0 + float(i / 4) * 0.65
-            node.position = Vector3(idle_x, 0.35, idle_z)
-            node.rotation.y = 0.0
+            var waiting := WorkRoutes.waiting(visual_role,i)
+            node.position = node.position.move_toward(waiting, maxf(0.0,get_process_delta_time()) * 2.5)
             node.get_node("Cargo").visible = false
+            _work_presentation[i] = {"task": task, "progress": 0.0, "origin": node.position}
             continue
-
+        if record.is_empty() or int(record.get("task",-1)) != task or progress < float(record.get("progress",0.0)):
+            record = {"task":task, "origin":node.position}
         var source: Vector3 = STATION_POSITIONS.get(String(data["source"]), STATION_POSITIONS["center"])
         var target: Vector3 = STATION_POSITIONS.get(String(data["target"]), STATION_POSITIONS["center"])
-        var t := smoothstep(0.0, 1.0, float(data["progress"]))
-        node.position = source.lerp(target, t)
-        node.look_at(Vector3(target.x, node.position.y, target.z), Vector3.UP, true)
-        node.get_node("Cargo").visible = true
+        var previous := node.position
+        var path := WorkRoutes.points(source,target)
+        node.position = (record["origin"] as Vector3).lerp(source, clampf(progress / 0.18,0,1)) if progress < 0.18 else WorkRoutes.at(path,(progress-0.18)/0.82)
+        var direction := node.position - previous
+        direction.y = 0.0
+        if direction.length_squared() > 0.00001:
+            node.rotation.y = atan2(-direction.x,-direction.z)
+        node.get_node("Cargo").visible = progress >= 0.18
+        record["progress"] = progress
+        _work_presentation[i] = record
+
 
 
 func _sync_rack_geometry() -> void:
@@ -401,6 +425,7 @@ func _create_worker(index: int) -> Node3D:
     root.add_child(body)
 
     var vest := MeshInstance3D.new()
+    vest.name = "RoleVest"
     var vest_mesh := BoxMesh.new()
     vest_mesh.size = Vector3(0.52, 0.32, 0.38)
     vest.mesh = vest_mesh
@@ -452,6 +477,15 @@ func _create_worker(index: int) -> Node3D:
     cargo.visible = false
     root.add_child(cargo)
 
+    var role_label := Label3D.new()
+    role_label.name = "RoleLabel"
+    role_label.position = Vector3(0,1.65,0)
+    role_label.font = preload("res://assets/fonts/MPLUS1p-Regular.ttf")
+    role_label.font_size = 28
+    role_label.pixel_size = 0.007
+    role_label.outline_size = 6
+    role_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+    root.add_child(role_label)
     return root
 
 

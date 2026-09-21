@@ -1,0 +1,225 @@
+{
+  "title": "FLOTRA",
+  "scope": "title-local",
+  "date": "2026-09-21",
+  "record_type": "CI_EVIDENCE_SNAPSHOT_NOT_DEVICE_ACCEPTANCE",
+  "repository": "48wr9f4wgp-lab/Logistics-Boss",
+  "draft_pr": 136,
+  "pr_url": "https://github.com/48wr9f4wgp-lab/Logistics-Boss/pull/136",
+  "verified_code_commit": "390787dcfc9ef5df19dd056e11637e93fc813219",
+  "initial_shared_commit": "71badab9e52ddcd6e4b276de0afd35b2639641ac",
+  "original_local_test_commit": "190f6d536965538c710075eaf7612a628e677395",
+  "initial_shared_tree": "8ccf83eae2f6dce1901b38baea3d7f480b24b641",
+  "original_local_verification": "CAPACITY_VERIFICATION_2026-09-21.json",
+  "verification_boundary": "The original manifest's60local checks and not_verified list describe the original local run. This record adds remote CI/export/render-generation evidence. Between71badab9 and390787d only rendered_visual_capture.gd and GDD wording changed; runtime files are identical.",
+  "working_head_resolution": "This documentation-only evidence commit follows verified_code_commit. Resolve the current exact branch tip through PR136 head_sha and confirm any difference is documentation only.",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "result": "SIX_REMOTE_WORKFLOWS_PASS",
+  "runs": [
+    {
+      "id": 35600426257,
+      "name": "FLOTRA Rendered Visual Capture",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 117,
+      "jobs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426257/jobs",
+      "logs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426257/logs",
+      "workflow_id": 360191994,
+      "url": "https://github.com/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426257"
+    },
+    {
+      "id": 35600426214,
+      "name": "FLOTRA Mobile Interaction Clarity",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 23,
+      "jobs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426214/jobs",
+      "logs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426214/logs",
+      "workflow_id": 362680458,
+      "url": "https://github.com/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426214"
+    },
+    {
+      "id": 35600426181,
+      "name": "FLOTRA Growth Slice",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 14,
+      "jobs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426181/jobs",
+      "logs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426181/logs",
+      "workflow_id": 363051691,
+      "url": "https://github.com/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426181"
+    },
+    {
+      "id": 35600426187,
+      "name": "FLOTRA Android Export Smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 131,
+      "jobs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426187/jobs",
+      "logs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426187/logs",
+      "workflow_id": 359598241,
+      "url": "https://github.com/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426187"
+    },
+    {
+      "id": 35600426276,
+      "name": "FLOTRA Godot CI",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 319,
+      "jobs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426276/jobs",
+      "logs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426276/logs",
+      "workflow_id": 358397210,
+      "url": "https://github.com/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426276"
+    },
+    {
+      "id": 35600426161,
+      "name": "FLOTRA iOS Export Smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 126,
+      "jobs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426161/jobs",
+      "logs_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426161/logs",
+      "workflow_id": 359170578,
+      "url": "https://github.com/48wr9f4wgp-lab/Logistics-Boss/actions/runs/35600426161"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 10638044953,
+      "name": "flotra-rendered-visual-captures",
+      "size_in_bytes": 589078,
+      "url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/artifacts/10638044953",
+      "archive_download_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/artifacts/10638044953/zip",
+      "expired": false,
+      "created_at": "2026-09-21T12:36:17Z",
+      "expires_at": "2026-09-28T12:36:16Z",
+      "updated_at": "2026-09-21T12:36:17Z",
+      "digest": "sha256:04abadc59da8284c461d83520c8139d72e016350c7dfeb635149e909c18a3f8f",
+      "workflow_run": {
+        "id": 35600426257,
+        "repository_id": 1368349494,
+        "head_repository_id": 1368349494,
+        "head_branch": "feat/capacity-repair-20260921",
+        "head_sha": "390787dcfc9ef5df19dd056e11637e93fc813219"
+      }
+    },
+    {
+      "id": 10639120350,
+      "name": "flotra-growth-evidence",
+      "size_in_bytes": 1741774,
+      "url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/artifacts/10639120350",
+      "archive_download_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/artifacts/10639120350/zip",
+      "expired": false,
+      "created_at": "2026-09-21T12:36:45Z",
+      "expires_at": "2026-09-28T12:36:44Z",
+      "updated_at": "2026-09-21T12:36:45Z",
+      "digest": "sha256:5dad2f7e0519394941921f6e6ddc7d5eac26bdc6b9e1ba7d978d831d40eb7871",
+      "workflow_run": {
+        "id": 35600426181,
+        "repository_id": 1368349494,
+        "head_repository_id": 1368349494,
+        "head_branch": "feat/capacity-repair-20260921",
+        "head_sha": "390787dcfc9ef5df19dd056e11637e93fc813219"
+      }
+    },
+    {
+      "id": 10638766498,
+      "name": "flotra-ios-xcode-smoke",
+      "size_in_bytes": 98991710,
+      "url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/artifacts/10638766498",
+      "archive_download_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/artifacts/10638766498/zip",
+      "expired": false,
+      "created_at": "2026-09-21T12:37:35Z",
+      "expires_at": "2026-09-24T12:36:43Z",
+      "updated_at": "2026-09-21T12:37:35Z",
+      "digest": "sha256:2e3ba3370ac21686833f4bb9fa084a9003c0d4034004f82870e9e8c97a0488ac",
+      "workflow_run": {
+        "id": 35600426161,
+        "repository_id": 1368349494,
+        "head_repository_id": 1368349494,
+        "head_branch": "feat/capacity-repair-20260921",
+        "head_sha": "390787dcfc9ef5df19dd056e11637e93fc813219"
+      }
+    },
+    {
+      "id": 10638229411,
+      "name": "flotra-godot-web-preview",
+      "size_in_bytes": 12397585,
+      "url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/artifacts/10638229411",
+      "archive_download_url": "https://api.github.com/repos/48wr9f4wgp-lab/Logistics-Boss/actions/artifacts/10638229411/zip",
+      "expired": false,
+      "created_at": "2026-09-21T12:36:51Z",
+      "expires_at": "2026-09-28T12:36:50Z",
+      "updated_at": "2026-09-21T12:36:51Z",
+      "digest": "sha256:fae99e9af6b72de1e593c3f96f74620267ef1cdf6712b65fdfc692a5a9afc7e4",
+      "workflow_run": {
+        "id": 35600426276,
+        "repository_id": 1368349494,
+        "head_repository_id": 1368349494,
+        "head_branch": "feat/capacity-repair-20260921",
+        "head_sha": "390787dcfc9ef5df19dd056e11637e93fc813219"
+      }
+    }
+  ],
+  "render_generation": {
+    "result": "PASS",
+    "expected_growth_pngs": 13,
+    "expected_legacy_pngs": 5,
+    "files_exist_checks": "PASS_IN_CI",
+    "png_contents_reviewed": false,
+    "target_comparison": "BLOCKED_CANONICAL_TARGET_PNG_TRUNCATED",
+    "scope": "Growth capture covers actual-main earned progression plus matched-view diagnostic equipment/staffing. Legacy capture covers synthetic Rank1-3, renovation preview and management. File generation is not visual acceptance."
+  },
+  "exports": {
+    "web": "PASS_ARTIFACT_ONLY_NOT_DEPLOYED",
+    "ios": "PASS_UNSIGNED_XCODE_PROJECT_GENERATION_ONLY_NOT_INSTALLED",
+    "android": "EXISTING_HISTORICAL_WORKFLOW_PASS_NOT_AN_ACTIVE_PRODUCTION_TARGET"
+  },
+  "initial_failure": {
+    "run_id": 35599921243,
+    "job_id": 106333332989,
+    "conclusion": "failure",
+    "cause": "Legacy rendered capture asserted retired hero camera distance15.2; recovered candidate has rank-aware overview19.5/20.5.",
+    "repair_commit": "390787dcfc9ef5df19dd056e11637e93fc813219",
+    "repair": "Updated capture fixture expectation; runtime framing unchanged.",
+    "rerun_id": 35600426257,
+    "rerun_result": "success"
+  },
+  "sharing_approval": {
+    "state": "EXPLICITLY_AUTHORIZED_IN_CURRENT_CONVERSATION",
+    "scope": "Existing repository feature-branch source/test/document sharing and Draft PR creation",
+    "prior_automatic_review_block": "RESOLVED_BY_USER_APPROVAL",
+    "main_merge": "NOT_AUTHORIZED",
+    "preview_deployment": "NOT_AUTHORIZED"
+  },
+  "not_verified": [
+    "PNG contents: artifact delivery blocked",
+    "Visual TARGET comparison: canonical PNG truncated",
+    "Physical iPhone interaction/performance/save continuity",
+    "Native installed iOS build",
+    "Human fun and longer-term growth"
+  ],
+  "deployed_state": {
+    "main": "b63d60a7d506a80ef8efe8e005c4e9196d21fbcb",
+    "preview": "PR132_SCHEMA10_UNCHANGED",
+    "candidate_schema": 11
+  },
+  "artifact_access": {
+    "repository": "48wr9f4wgp-lab/Logistics-Boss",
+    "run_id": 35599921234,
+    "artifact_id": 10638322402,
+    "expected_zip_bytes": 1742189,
+    "expected_zip_sha256": "19fffb2f1f33a4dc26cd6085edba83e0d88a567e7e0b129fe0a68f0aecf64066",
+    "download_workflow_artifact_result": "success_reusable_file_reference",
+    "request_utc": "2026-09-21T12:33:51.985649+00:00",
+    "signed_url_expiry_utc": "2026-09-21T12:38:34Z",
+    "http_status": 403,
+    "server": "cloudflare",
+    "body": "error code: 1010",
+    "zip_downloaded": false,
+    "crc_verified": false,
+    "sha256_verified": false,
+    "png_visually_inspected": false,
+    "action": "Stopped after access rejection; no header spoof, proxy, or third-party transfer."
+  }
+}

@@ -135,7 +135,7 @@ func _run() -> void:
         return
 
     hud._render()
-    if hud._bottleneck == null or not hud._bottleneck.text.contains("PACKING"):
+    if hud._bottleneck == null or not hud._bottleneck.text.contains("梱包"):
         _fail("v2 Director must report the active packing symptom")
         return
     if not hud._bottleneck.text.contains("待機 9"):

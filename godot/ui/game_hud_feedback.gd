@@ -115,6 +115,8 @@ func _sync_feedback_visibility() -> void:
 func _on_sim_event(event: Dictionary) -> void:
     super._on_sim_event(event)
     var event_type := String(event.get("type", ""))
+    if event_type == "capacity_purchased":
+        _show_toast("%s %d台目を増設" % [event.get("label", "設備"), int(event.get("count", 1))])
     if event_type == "measurement_completed":
         _show_measurement_feedback(event)
         return
@@ -202,7 +204,7 @@ func measurement_feedback(event: Dictionary) -> Dictionary:
     var names := {
         "rank1_rack_wing": "棚の増設", "rank1_second_packing_bench": "梱包台の増設",
         "rank1_worker_hire": "作業員採用", "rank1_forklift_project": "フォークリフト",
-        "extra_forklift": "フォークリフト2号車", "transfer_conveyor": "搬送コンベア",
+        "extra_forklift": "フォークリフト2号車", "transfer_conveyor": "搬送コンベア", "packing_cell": "梱包セル増設", "dispatch_lane": "自動出荷レーン増設",
         "facility_fast_pick_rack": "高速棚", "facility_high_density_rack": "高密度棚",
         "facility_parallel_pack": "並列梱包", "facility_fast_pack_cell": "高速梱包",
         "renovation_fast_pick_rack": "高速棚へ改装", "renovation_high_density_rack": "高密度棚へ改装",

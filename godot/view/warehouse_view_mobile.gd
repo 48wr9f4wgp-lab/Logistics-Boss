@@ -14,8 +14,10 @@ const MOBILE_PINCH_FILTER_WEIGHT := 0.75
 const MOBILE_MIN_DISTANCE := 14.0
 const MOBILE_MAX_DISTANCE := 32.0
 const MOBILE_DEFAULT_DISTANCE := 19.5
-const MOBILE_NEAR_FOV := 52.0
-const MOBILE_FAR_FOV := 46.0
+const OVERVIEW_YAW := -1.02
+const OVERVIEW_PITCH := -0.94
+const MOBILE_NEAR_FOV := 43.0
+const MOBILE_FAR_FOV := 49.0
 
 var _investment_focus_time := 0.0
 var _investment_focus_weight := 0.0
@@ -120,8 +122,8 @@ func _update_camera(delta: float) -> void:
         0.0,
         1.0
     )
-    var near_target := Vector3(0.0, 0.96, 0.08)
-    var far_target := Vector3(0.0, 0.60, 0.04)
+    var near_target := Vector3(0.35, 0.70, 0.55)
+    var far_target := Vector3(0.35, 0.60, 0.55)
     var target := near_target.lerp(far_target, zoom_t)
     var desired_fov := _desired_mobile_fov()
     _investment_focus_time = maxf(0.0, _investment_focus_time - delta)
@@ -165,3 +167,11 @@ func focus_investment(kind: String) -> void:
             _investment_target = Vector3(1.1, 0.85, 0.8)
         _:
             _investment_target = Vector3(0.0, 0.85, 0.7)
+
+
+func reset_work_overview() -> void:
+    _investment_focus_time = 0.0
+    _investment_focus_weight = 0.0
+    _camera_distance = 20.5 if sim != null and sim.facility_rank >= 2 else 19.5
+    _orbit_yaw = OVERVIEW_YAW
+    _orbit_pitch = OVERVIEW_PITCH

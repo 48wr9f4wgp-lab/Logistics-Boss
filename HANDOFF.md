@@ -1,91 +1,78 @@
-# FLOTRA: Current Development Handoff
+# FLOTRA current development handoff
+Date:2026-09-21 / scope:title-local / restart snapshot, not independent authority
+Canonical: Japanese project v2.4 set + GDD_FLOTRA.md + ART_BIBLE_FLOTRA.md.
 
-Last synchronized: 2026-09-21 / title-local / approved PR132 preview integration.
-Project authority: the three installed Japanese v2.4 canonical rule files. This handoff is a restart snapshot, not proof of a permanently latest GitHub head.
-
-## Current decision and delivery state
-
-- VERTICAL_SLICE; iPhone/iOS portrait touch; Godot4.7.2 standard/GL Compatibility.
+## Active state
+- iPhone/iOS portrait touch; Godot4.7.2; LITE; VERTICAL_SLICE.
 - PRODUCTION_DECISION=UNDECIDED; production RELEASE_APPROVAL=NOT_REQUESTED.
-- The user explicitly replied **「反映」** to the request to deploy the PR132 growth/automation candidate, after disclosure of the schema10 save-format change.
-- PR132 approved head `ed68763b7c4165bafc25af4ffe293d7934747462` was squash-merged with an expected-head guard at `7493e0a0ac897d168544bade55b16c408d92bf47`.
-- Existing engineering preview now contains PR132: published files `0ade51a9c1c885049e5bc37bc4e1e8b3e83ad6e1`. Web export and Pages build/deploy succeeded. No new destination, fees, services, data reset or Store/TestFlight action.
-- Native physical-iPhone lane remains deferred by the user until Mac/Xcode is available. No native-device acceptance is claimed.
-- The earlier video supports working basic navigation, purchases and Management notification clearance in observed PR130 intervals. The 96.94-second mid-session recording at4x is not first-session pacing or PR132 proof.
-- At01:25 of that video all4 projects and48,400 cash were blocked by Rating4/8. PR132 addresses that growth feedback; the old mandatory gate is no longer the current design or deployed implementation.
+- Existing preview remains PR132 / schema10. No replacement or user save reset in this change.
+- Candidate schema11 preserves the source-only WIP and audited corrections.
+- Do not require all5new purchases. A first packing cell exposes dispatch pressure; staffing or a lane can solve it. No new workload multiplier is adopted.
 
-## WORKING_HEAD / VERIFIED_BASELINE / RECOVERY_STATE
+## Working head
+- Shared repo:48wr9f4wgp-lab/Logistics-Boss / branch:feat/capacity-repair-20260921.
+- Draft PR: https://github.com/48wr9f4wgp-lab/Logistics-Boss/pull/136
+- Reviewed pre-repair shared head:1da82cb055009b0f6c1a27d172bc531f28afccd6; all6CI passed and13growth/capacity images inspected.
+- Current candidate adds runtime portrait-readability repairs. Resolve exact branch tip from PR136 head_sha; this is not a docs-only delta. See VISUAL_READABILITY_REPAIR.md and VISUAL_REPAIR_VERIFICATION.json.
+- Original local190f6d536965538c710075eaf7612a628e677395 tree matches shared71badab9e52ddcd6e4b276de0afd35b2639641ac exactly.
+- User explicitly approved feature-branch sharing and Draft PR creation after the prior automatic approval rejection; that blocker is resolved.
+- Main remains b63d60a7d506a80ef8efe8e005c4e9196d21fbcb; PR132 preview is unchanged.
 
-WORKING_HEAD: repository `48wr9f4wgp-lab/Logistics-Boss`, branch `main`. Synchronization input `0ade51a9c1c885049e5bc37bc4e1e8b3e83ad6e1`; the containing docs-only integration advances main. Resolve live main on restart. Validation status PARTIAL because physical-iPhone migration/performance and enjoyment remain pending.
+## Verified baseline
+Historical shared/deployed:
+- tested code:1b7a9e2e515bce9289658e4584cc250d3fb4591e
+- PR132 approved head:ed68763b7c4165bafc25af4ffe293d7934747462
+- merged:7493e0a0ac897d168544bade55b16c408d92bf47
+- preview files:0ade51a9c1c885049e5bc37bc4e1e8b3e83ad6e1
+- Old check/artifact ledger remains in DEV_STATUS.json and Git history.
+- User feedback in Issue134 is POSITIVE_INITIAL_HUMAN_FUN_FEEDBACK, not comprehensive acceptance.
 
-VERIFIED_BASELINE: code `1b7a9e2e515bce9289658e4584cc250d3fb4591e`, integrated through approved head `ed68763b7c4165bafc25af4ffe293d7934747462`.
-- Godot CI #315, run35563746655: SUCCESS.
-- Growth Slice #11, run35563746543: SUCCESS.
-- Mobile Interaction Clarity #19, run35563746537: SUCCESS.
-- iOS Export Smoke #123, run35563746526: SUCCESS, unsigned technical export only.
-- Rendered Visual Capture #113, run35563746538: SUCCESS.
-- Historical Android #127, run35563746530: SUCCESS; not an active platform or release approval.
-- These exact code checks were rechecked before integration. Approved head differs by one documentation-only commit; compare verified. Approved and squash-merge trees are both `b8a2c42cef17eaf734a0a0f29b6ea759150e5240`.
-- Growth artifact10622359763 ZIP SHA256 `333e5662b0fa516888ada58d3311b580bd04f94d7df43825bc5c92516e1a0099` and failures=0 logs were reverified during integration.
-- Six actual-main milestone images were inspected during implementation, not newly judged during this integration. No old image was relabeled as the new build.
+Candidate verification:
+- Godot4.7.2.stable.official.ed1daf0bf, Linux headless.
+- Editor import:PASS, no script/parse errors.
+-60tests:PASS, including existing repository Godot smoke tasks, capacity conservation/save migration, staffing atomicity/same-tab/current-task identity, growth and three-size engine-touch/navigation/notification checks.
+- Exact source fingerprint and per-test log SHA256:CAPACITY_VERIFICATION_2026-09-21.json.
+- Remote CI, render-file generation, exact run IDs and artifact metadata:CAPACITY_CI_EVIDENCE_2026-09-21.json. PNG generation does not establish native-iPhone/performance/fun or visual acceptance.
+-390787d only corrects a stale capture-fixture assertion (old hero distance versus candidate rank-aware overview) and stale GDD verification wording. Runtime source is unchanged from the60-test candidate.
 
-Engineering-preview delivery:
-- Godot Preview Pages #99, run35565739875: build-and-publish SUCCESS.
-- Published files `0ade51a9c1c885049e5bc37bc4e1e8b3e83ad6e1` are one direct descendant of merge7493e0a0, changing only preview index.html/index.pck.
-- Pages #279, run35565774244: build, deploy and report-build-status jobs SUCCESS.
-- Same destination: `https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/`.
-- Downloaded Pages artifact10624047550; ZIP SHA256 `5258e2d3cc8ca83f764b9c20228b665df9ae355d1b5f63467494477486af08ff` matched the API digest.
-- PCK **1,977,496 bytes**, matching export HTML; SHA256 `75f1cbe898efe158509ebe10b41a117116e1239ebf19b4d1ca5b10e348361084`.
-- Live HTTP probing was unavailable: the web tool could not access the page and a container HTTPS request failed DNS. No live-browser, iPhone runtime or enjoyment PASS follows from deployment/artifact integrity.
+## Recovery state
+- Preserved original handoff ZIP/source patch remains unchanged.
+- Original local commit is retained on recovery/local-capacity-190f6d5. Candidate source is now shared in PR136; no unshared runtime WIP remains.
+-15modified base files matched exact main Git blobs; source patch applied cleanly.
+- Working copy is materialized against a shallow Git checkout. Unmaterialized unrelated paths are skip-worktree, not deleted from candidate commits.
+- No generated .godot, .uid, .import, new font or preview binary included.
+- User/external-machine unsynced state remains unknown and untouched.
+- Deployed schema10 is protected. Candidate11 must use a compatible forward repair after adoption; no blind schema9/10 downgrade or save deletion.
 
-RECOVERY_STATE:
-- PR132 merged; feature branch retained. No additional game-code changes during integration; synchronization changes only state documents.
-- No user save reset, site-data deletion or external-machine sync. Other-machine uncommitted/unpushed WIP remains unknown and untouched.
-- Runtime schema10 is now deployed. Existing older saves are read by the new build; user-browser migration is still unverified. Partial task progress/animation restarts on load as documented below.
-- Schema9 executables cannot read schema10 saves. Do not blindly restore PR130 or clear saves to make a test pass. Prefer a schema-compatible forward repair or explicitly reviewed recovery.
-- Prior code `220207f06bb4fc9f76ccbc92422b5d8029a40bab` and PR130 preview `86bf3ba109c08994dae8063a9bdf3c37cada1d66` remain historical recovery references, not safe automatic rollback targets after migration.
-- Disposable source-transfer payloads and one-time workflow were removed from the feature tree. No font files were changed or shared. Preview binaries were regenerated only by the approved export workflow.
+## Implemented candidate
+- Three optional independent packing cells; two optional automatic dispatch lanes; real cargo processing and physical units.
+- One staffing workspace: three pools, free draft, atomic apply, minimum1each, one existing30s cooldown; in-flight jobs preserved.
+- Reselecting current staffing tab preserves edits; reopening after close starts a current draft.
+- Active worker label/tint follows actual task until completion, then assigned role.
+- Recovered selected-route/work-overview controls. Air/return route completeness and phone motion clarity remain unverified.
+- New tests and diagnostic are connected to growth-slice CI.
+- Stale mandatory Rating/contract/schema9/current-gate wording reconciled.
 
-## Implemented title-local design delta
+## Current diagnosis
+See CAPACITY_FLOW_EVIDENCE.md.
+Original300s86output in all4variants reproduced. After255s warmup +3complete255s cycles:
+- baseline:253 shipments; packing queue grows.
+- one cell:253; backlog moves to dispatch.
+- cell+lane:276.
+- cell+staffing1/2/2:276 (lane optional).
+- max5equipment:276; further total-output benefit not demonstrated.
+Rate multipliers remain test-only. Do not infer insufficient demand from flat300s totals or force all5purchases.
 
-GDD explicitly supersedes the old mandatory all4/Rating8/cash10,000 first-expansion gate.
-- Ordinary actual shipments and earned cash support growth; contracts are optional acceleration/challenge.
-- First expansion: any2 distinct structural projects, actual shipments20, cash8,000. Explicit purchase only; no automatic promotion.
-- First forklift8,000. Rack2,500, bench4,500, hire3,500 unchanged. Remaining valid projects stay available after Rank2, without selling a no-op hire when the expanded crew already contains five.
-- Expansion enlarges the floor from15.8x11.8 to19x13.4, adds4 storage capacity and the existing five-worker Rank2 crew. Existing ownership and investment book values are retained.
-- One extra forklift10,000 after expansion/first forklift. A separate vehicle reserves real inbound cargo/storage slots, delivers up to2 parcels per4.8-second trip and returns empty. No decorative fake jobs.
-- One PICKING-to-PACKING conveyor9,000 after expansion. Actual picked parcels travel2.4 seconds through a capacity4 buffer; picker walking is replaced by independent transfer; full belt backpressures the picker. Packing/dispatch are not magically upgraded.
-- Preview is free; a separate gesture buys once. Confirmation closes the large sheet; a three-second optional camera emphasis is cancellable and never locks input.
-- Routine income appears beside funds, not in front of working machinery. PR130 overlay-clearance behavior stays included.
-- Measurement identifies the investment and labels overlapping interventions as reference observations. It does not claim isolated causal effect, fake positive results or force25 seconds between purchases.
+## Visual access and latest repair
+TARGET: reattached 853×1844 JPEG viewed, SHA2565303409d35e0f5e465b43cf4fdb07a3b5a5ebc98b50eab776262bd1de91f1eb2. Git PNG remains truncated; do not retry it or claim byte-identical restoration. North Star mood/composition is guidance, not literal Rank3 counts/prices/UI.
+CURRENT: user-uploaded growth15 ZIP SHA2560553a5cb53fdd8f81e0db813a66d3fb1fc51b3f2184436045533f838989bc055 exactly matches HEAD1da82cb artifact10638502412; all13 PNGs inspected. Finding: NEEDS_REVISION, including bottom button/result overlap, clipped pressure copy, worker/zone text clutter, stale staffing directions and framing/material separation.
+Implemented repair: reserve feedback clearance for camera/route controls; two-line Japanese pressure/wave summary; current staffing entry copy; Japanese zone names and worker text only at close zoom; portrait camera heading/target and floor/wall contrast adjustment. No economics or save changes.
+Godot4.7.2 import and10 targeted tests PASS, including full-main layout/projection checks at375/390/430px and existing touch/staffing/discovery tests. Geometry checks do not imply visual acceptance.
+New capture fixtures include feedback+route controls and close worker-role inspection. New candidate CI/rendered image review is pending at this source checkpoint; exact runs/results are appended to PR136.
 
-Preserved: manager role rather than manual parcel carrying/driving, Zone-first inspection/purchase, Domain-owned money/logistics, saved ownership, iPhone-only target, existing engine-input router/cancel/scroll protections. No freeform factory editor, unlimited machinery, Rank3 redesign, new backend/platform/services or production release.
+## Last verified done / blocked / next
+DONE: current base image audit and bounded repair with10 targeted local test passes. Historical60-test mechanical evidence remains scoped to its earlier source.
+NEXT: review newly generated candidate renders before visual acceptance; then assess a separately approved preview replacement for ordinary-play iPhone validation. Main/deployed preview unchanged. No repeated old image download attempts without new evidence.
 
-## Evidence and limitations
-
-New natural-progression tests use fresh5,000 starting cash, 1x simulation, no accepted contracts, no injected money/rating, two different purchase orders.
-- Fork-first: automation31.5s, expansion94.9s.
-- Rack+bench-first: expansion79.9s, automation128.7s.
-- Real-main capture route: first fork31.5s, expansion94.9s, belt156.0s, second fork229.3s; at240.0s both have real cargo. These are scripted immediate-affordability simulation timings, not measured human completion times.
-- Closed fixture conserves all62 parcels; extra forklift delivers12 and belt40, including repeated save/load comparisons.
-- Engine-generated input tested at390x844,375x667,430x932. UI/boundary fixtures inject resources explicitly and are not pacing evidence.
-- Schema10 roundtrip and real disk backup recovery tested. Read schemas1-9; schema9 money/ownership/staffing/old book values retained; no free second forklift/conveyor. In-flight cargo is projected into waiting queues without modifying live state or granting revenue. Partial task progress/animation restarts on load.
-- Full repository services/export checks passed after the local text-only snapshot lacked some tooling files; no local failure was hidden as a pass.
-
-Still unverified: user's browser save migration, physical-iPhone input/render/performance for PR132, real-time motion delight, longer-term economy, and whether the new pace is actually enjoyable. Extra forklift benefit depends on receiving pressure; the conveyor can expose packing pressure. Real observations can show neutral/mixed/negative short-window outcomes.
-
-## Visual canonical
-
-CURRENT: deployed PR132 and its actual main-scene growth images in artifact10622359763: growth_00_fresh, growth_01_forklift, growth_02_expansion, growth_03_working_automation, growth_04_field, growth_05_rank2_ui. These are diagnostic real renders, not a completed art target or real-time human video. On restart reopen them before new visual judgments.
-TARGET-DIRECTION: retain the title Art Bible/GDD open-top portrait industrial warehouse, cyan/amber accents, readable actual logistics. Do not replace target references with the current screenshots.
-
-## LAST VERIFIED DONE / BLOCKED / NEXT
-
-LAST VERIFIED DONE: approved PR132 integrated and exported to the same engineering preview; Pages deployment and downloaded-artifact integrity verified. Development state synchronized. No additional gameplay change or user-data reset. This remains a trial candidate, not product completion.
-BLOCKED: no deployment blocker remains. Human save continuity, iPhone behavior and growth/enjoyment acceptance are pending. Native Mac/Xcode remains a separate later blocker.
-NEXT: refresh the existing page without resetting the save or deleting site data. Observe retained funds/equipment and whether expansion, purchase reveals and working automation are more satisfying. Prefer1x when judging tempo; a developed old save is not fresh-session pacing evidence. Do not coach a long fixed purchase sequence or demand another old-loop checklist.
-
-## Sources and history
-
-Active title sources: GDD_FLOTRA.md, ART_BIBLE_FLOTRA.md, GROWTH_FIRST_SLICE_CHANGE_PACKET.md, DEV_STATUS.json, this HANDOFF.md, actual code/evidence. GDD's dated growth delta supersedes conflicting old gate/mandatory contract language in older change packets; other preserved decisions remain. This delivery record supersedes the change packet's pre-integration approval-wait statements only, not its feature scope or test limitations.
-The complete previous status/check ledger remains byte-for-byte in `docs/history/DEV_STATUS_before_PR132_verification_2026-09-21.json`, original blob e77b9012348e6291626a807f48ec7d89964b31ce. The PR132 pre-integration handoff is retained in Git at ed68763b7c4165bafc25af4ffe293d7934747462, blob906df2b62b903049cf7ae296480ea1eb7d69fdac. Historical CI/failure evidence remains scoped to its original build, not automatically a new-design PASS.
+## Approval boundary
+The current user approval covers this candidate's existing-repository feature branch and Draft PR. Main merge/preview deployment, new destinations, resets, Store/TestFlight, fees and services need their own scoped approval. PR132 approval applies only to its historical preview replacement.

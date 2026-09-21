@@ -2,9 +2,13 @@
 
 Date: 2026-09-21 / title-local / VERTICAL_SLICE / PR132
 Base main: 220207f06bb4fc9f76ccbc92422b5d8029a40bab
-Status: IMPLEMENTED; REPOSITORY CHECKS PASS; NOT MERGED OR DEPLOYED; HUMAN FUN NOT ACCEPTED.
+Status: **HISTORICAL PR132 FEATURE / VERIFICATION PACKET**. PR132 was subsequently merged and delivered to the existing engineering preview; the original NOT MERGED OR DEPLOYED state and approval-wait next step are superseded by the integration record below. Human/device acceptance is not implied.
 
-## Authority and evidence
+Integration synchronization, 2026-09-21: `HANDOFF.md` records explicit user approval 「反映」 for the PR132/schema10 candidate, squash merge `7493e0a0ac897d168544bade55b16c408d92bf47`, published files `0ade51a9c1c885049e5bc37bc4e1e8b3e83ad6e1`, and successful existing-preview build/deploy. The audit/recovery baseline is main `b63d60a7d506a80ef8efe8e005c4e9196d21fbcb`. This is recorded integration evidence, not a new live-browser check.
+
+Current source-only repair work is governed by `CAPACITY_REPAIR_CHANGE_PACKET.md` and the dated GDD candidate section. Schema11 cumulative equipment/staffing is not covered by this packet's schema10 tests or the earlier preview approval.
+
+## Original development authority and evidence (historical)
 The user replied 実行 to the video audit's recommended growth-first revision. This authorizes the bounded development revision, not a new public preview/build, production release, fees or user-data reset. Project-wide v2.4 locks remain unchanged. Production UNDECIDED; Store/TestFlight NOT_REQUESTED.
 The96.94-second recording showed working navigation/purchases and no Management/Zone notification obstruction in observed intervals. At01:25, all4 projects and48,400 cash could not expand because Rating was4/8. The clip is mid-session and4x, not first-session pacing proof.
 
@@ -21,7 +25,7 @@ Keep manager role, actual inventory/money, Zone-first inspection, free preview t
 - Schema10 reads old schemas and preserves cash/ownership/staffing/purchase book values. In-flight cargo projects into durable waiting queues without mutation or fake revenue; partial task time/animation restarts. Old schema9 executables cannot read10; no blind rollback after future deployment.
 - No new input-router layer, fonts, backend, platform, ASRS, unlimited vehicle upgrade, freeform editor or Rank3 redesign.
 
-## Verified repository baseline
+## Historical PR132 repository verification (does not verify the capacity candidate)
 Code1b7a9e2e515bce9289658e4584cc250d3fb4591e:
 - Godot315/run35563746655 SUCCESS.
 - Growth11/run35563746543 SUCCESS.
@@ -39,6 +43,9 @@ Fresh5,000 cash, 1x simulation, no accepted contracts or injected resources:
 Tests buy immediately when affordable. These are deterministic simulation timings, not human completion times. Captures use accelerated stepping with rendered milestones, not a real-time1x human video.
 Closed fixture:62 parcels conserved, second forklift12 deliveries, belt40, repeated save/load comparisons. Disk backup recovery and schema9 migration pass. Engine-generated taps at390x844/375x667/430x932 check actual purchase preview/commit, expansion single charge and reveal. UI fixtures explicitly inject resources and are not natural pacing evidence.
 
-## Recovery / next gate
-PR132 branch only; main/current PR130 preview unchanged. No user data reset; external-machine WIP unknown/untouched. A schema10 preview replacement needs scoped approval and save safeguards. Human iPhone/render/performance, browser save migration, motion delight, long-term balance and fun remain untested. A working second forklift is not a guarantee that every warehouse becomes faster; packing bottlenecks remain meaningful.
-NEXT: explicit approval for this candidate at the same trial destination, then brief ordinary-play growth validation. Do not label the game complete from automated timing or render evidence.
+## Historical recovery / next gate (superseded)
+At the original packet's creation PR132 was branch-only, PR130 remained the preview, and a schema10 replacement awaited scoped approval. That approval and integration subsequently occurred as recorded above; do not use this paragraph to conclude PR132 is still awaiting deployment.
+
+The original checks did not establish human iPhone/render/performance, browser save migration, real-time motion delight, long-term balance or fun. A working second forklift is not a guarantee that every warehouse becomes faster; packing bottlenecks remain meaningful. Subsequent feedback and candidate verification must be read in current state documents, not inferred from these old tests.
+
+Current recovery constraint: schema10 is deployed; do not blindly revert to schema9 or reset saves. Source-only schema11 restoration is a separate candidate with its own verification and preview approval scope. Next development work follows `CAPACITY_REPAIR_CHANGE_PACKET.md`. Automated timing or render evidence alone never labels the game complete.

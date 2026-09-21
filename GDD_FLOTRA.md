@@ -3,7 +3,7 @@
 Status: **Pre-GO / VERTICAL_SLICE — Core Experience v2 rework**
 Official title: **FLOTRA（フロトラ）**
 Former title / migration alias: `LOGISTICS BOSS`
-Last synchronized: 2026-09-21 JST (PR132 development branch)
+Last synchronized: 2026-09-21 JST (PR132 baseline / capacity-repair candidate)
 Canonical project rules: `ゲーム開発共通ルール_v2.4.txt`, `プロジェクト適用範囲_v2.4.txt`, `ゲーム開発チャット引き継ぎルール_v2.4.txt`. The old repo Master filename is not current authority.
 
 This document supersedes the earlier Web/PWA-first and Three.js vertical-slice assumptions. The production implementation is Godot-native-first, with Web used only as an engineering preview.
@@ -32,6 +32,38 @@ This document supersedes the earlier Web/PWA-first and Three.js vertical-slice a
 The user's 実行 after the video audit authorizes a bounded growth-first development revision. This supersedes the old mandatory Rank1 Logistics Rating8/all-four-Projects gate and the requirement to read analysis before each meaningful purchase. It does not supersede the manager role, real logistics, Zone-first physical choices, iPhone target or release approval boundaries.
 
 Primary player reward: a growing working warehouse, not the completion of an analysis checklist. Ordinary shipments and earned cash support basic growth; contracts are optional acceleration/challenge. Equipment should reveal a change in how work is done. Analysis supports optimization, not a mandatory pause between investments. Exact numbers below are testable balance hypotheses, not a human fun acceptance.
+
+## 1.2 Capacity repair candidate, 2026-09-21
+
+Scope: **title-local / source-only development candidate**, authorized by the user's 実行 after the audit. The existing engineering preview remains PR132 / schema10. This candidate is not a merged or deployed build and has no human fun or device acceptance. See `CAPACITY_REPAIR_CHANGE_PACKET.md` for the bounded repair and diagnosis scope; see state documents for commit-specific verification.
+
+Candidate changes:
+- Add cumulative independent packing cells (maximum 3) and automatic dispatch lanes (maximum 2), with real waiting-cargo reservation, processing and physical equipment. These additions coexist with the existing STORAGE/PACKING mode pairs; they do not implement all deferred Rank2 Zone pairs.
+- Candidate prices: packing cells ¥12,000 / ¥18,000 / ¥27,000; dispatch lanes ¥16,000 / ¥24,000. These are balance hypotheses, not locked prices or evidence of satisfying long-term growth.
+- Allow one draft covering all three authoritative staffing pools, followed by one atomic application and the existing 30-second cooldown. Each pool keeps at least one worker. Cancel, invalid/stale-plan rejection and same-tab reselection must preserve correct draft/live-state separation. Active jobs keep their cargo and task; displayed current activity follows that task until completion.
+- Save candidate schema11 adds cumulative equipment ownership/counters while preserving schema10 progression, money, staffing and cargo without free machinery. Candidate migration, cargo conservation and backup recovery passed the Godot 4.7.2 headless checks recorded in `CAPACITY_VERIFICATION_2026-09-21.json`; physical iPhone save continuity remains unverified. Prior schema10 checks alone do not cover the candidate.
+- Restore route visibility and related input clarity without changing the art direction. The recovered routes are not proof that every motion segment already follows an aisle.
+
+The reported 300-second comparison with equal output is **not a diagnosis of insufficient arrivals or orders**. The controlled diagnostic below supports a packing/dispatch constraint under its declared workload; **workload growth is not adopted**. Buying all five candidate additions is not a player goal or evidence that the early growth ceiling is solved. After the first packing cell, including when no dispatch lane is owned, the candidate objective leads to optional field inspection; staffing changes and additional purchases remain choices, not a mandatory completion checklist.
+
+## 1.3 Capacity diagnosis, 2026-09-21
+
+Evidence: `godot/tests/capacity_flow_report.gd`, first run provisionally on Godot4.5.1, then reproduced on the matching **4.7.2** engine. The exact-engine import and60headless checks passed; see CAPACITY_VERIFICATION_2026-09-21.json. The fixture holds workload and initial state constant, warms up for one complete 255-second cycle, then measures three complete cycles (765 seconds). Arrival/order multipliers exist only in the diagnostic, not in production progression. This is deterministic simulation evidence, not human pacing, fun or iPhone acceptance.
+
+The original 300-second result was reproduced: all four equipment configurations shipped **86** parcels. With the full-cycle measurement:
+
+| Controlled configuration | Shipments in 765 measured seconds | Interpretation within this fixture |
+| --- | ---: | --- |
+| Baseline equipment and staffing | 253 | Reference |
+| First packing cell only | 253 | Work advances to the dispatch backlog; final output alone hides the packing effect |
+| First packing cell + first dispatch lane | 276 | 92 shipments in each measured cycle; sustained output benefit from automated dispatch |
+| First packing cell + staffing RECEIVING/PICKING/SHIPPING = 1/2/2 | 276 | Staffing also resolves the exposed dispatch constraint; a dispatch-lane purchase is not required |
+| All 3 cells + all 2 lanes | 276 | No further output benefit demonstrated over the first pair |
+| Baseline with arrivals ×2 only | 255 | Doubling arrivals alone does not reproduce the pair's benefit |
+| Baseline with orders ×2 only | 255 | Doubling orders alone does not reproduce the pair's benefit |
+| Baseline without a packing cell, with tested staffing changes | 253 | Staffing alone does not resolve the initial packing constraint |
+
+Measured conclusion: packing and dispatch are consecutive constraints in the tested initial state. A cell can move the backlog downstream; either a dispatch lane or staffing RECEIVING/PICKING/SHIPPING = 1/2/2 then improves completed flow. The lane purchase is optional. Keep production arrivals/orders unchanged. Further growth beyond this initial packing/dispatch improvement, and whether the improvement is visible and enjoyable in ordinary play, remain unproven. This result is scoped to its workload and engine and must not become a universal equipment or staffing recommendation. See `CAPACITY_VERIFICATION_2026-09-21.json` for the completed 4.7.2 headless verification and its remaining limits.
 
 ## 2. Canonical Core Loop
 
@@ -77,7 +109,7 @@ Current development balance hypotheses:
 - Unfinished structural projects remain buyable in Rank2 except a hire already covered by the five-worker crew or a bench superseded by advanced packing. Installed assets are never taken away to force repurchase.
 - Additional forklift: ¥10,000, Rank2 + first forklift; a real second vehicle reserves and carries up to two inbound parcels per 4.8-second roundtrip.
 - Transfer conveyor: ¥9,000, Rank2; PICKING to PACKING, at most four in-flight parcels, 2.4 seconds travel; replaces half the picker task time with actual independent transport and backpressure. It does not magically increase packing or final dispatch capacity.
-- Scope maximum: first forklift plus one additional forklift, one conveyor path. No unlimited vehicle upgrades or freeform layout editor in this slice.
+- PR132 automation scope: first forklift plus one additional forklift, one conveyor path. The separate bounded capacity candidate is listed in §1.2. No unlimited vehicle upgrades or freeform layout editor in this slice.
 
 The old all4 / Rating8 / ¥10,000 gate is **SUPERSEDED for current FLOTRA development**. Old tests/saves remain historical compatibility evidence, not active product requirements.
 
@@ -260,7 +292,7 @@ Exact renovation cost and downtime are balance hypotheses, not locked values.
 
 ### Vertical Slice v2 implementation scope
 
-Only two Rank 2 Zones are implemented in the current slice:
+The deployed PR132 baseline implements two Rank 2 equipment-mode pairs (the cumulative additions in §1.2 are separate candidate scope):
 
 #### STORAGE
 - **Fast Pick Rack**
@@ -272,7 +304,7 @@ Only two Rank 2 Zones are implemented in the current slice:
   - pick task duration ×1.14;
   - weakness: slower pick processing.
 
-Verified paired scenarios:
+Historical paired-scenario evidence from the earlier v2 slice (not a capacity-candidate rerun):
 - order backlog: Fast Pick **18** picks vs High Density **12**;
 - storage-pressure absorption: Fast Pick **4** boxes vs High Density **8**.
 
@@ -287,7 +319,7 @@ Verified paired scenarios:
   - strength: single-job latency.
 - a Rank 2 PACKING system supersedes the Rank 1 Second Packing Bench behavior; Fast Pack Cell therefore retains its intended one-job weakness.
 
-Verified paired scenarios:
+Historical paired-scenario evidence from the earlier v2 slice (not a capacity-candidate rerun):
 - 200-box / 180-second long queue: Parallel **106** completions vs Fast Cell **102**;
 - single-job latency: Parallel **3.35s** vs Fast Cell **1.75s**.
 
@@ -307,7 +339,7 @@ Current Vertical Slice renovation implementation:
 - renovation starts a new authoritative Before/After measurement;
 - 75% is the current tested implementation value and remains tunable after human playtest rather than a permanent economy constant.
 
-INBOUND, PICKING, and SHIPPING v2 equipment remain deferred until this slice passes playtest.
+The paired INBOUND, PICKING, and SHIPPING v2 equipment modes remain deferred until this slice passes playtest. The candidate automatic dispatch lanes in §1.2 are bounded cumulative additions, not completion of the SHIPPING mode pair.
 
 ### Staffing
 
@@ -327,13 +359,13 @@ Rank 2 starts at:
 - PICKING: 2;
 - SHIPPING: 1.
 
-A staffing action moves **one Worker from a source staffed flow to the inspected target flow**.
+In the deployed PR132 baseline, a staffing action moves **one Worker from a source staffed flow to the inspected target flow**. The candidate in §1.2 replaces that editing path with one warehouse-wide draft and atomic application; it preserves the minimum counts, cooldown and current-task continuity.
 
 Locked safety rules:
 - every staffed flow keeps at least 1 Worker;
 - a reassignment starts the existing 30-second observation cooldown;
 - current allocation is readable in the Zone Panel;
-- Management shows an executive staffing overview only;
+- Deployed PR132 Management shows an executive staffing overview; the §1.2 candidate adds the staffing draft workspace there;
 - legacy preset names remain compatibility/migration data and are not player-facing v2 controls.
 
 Staffing remains an **OPERATIONS** layer distinct from CAPITAL equipment.
@@ -386,13 +418,13 @@ Routing state is Domain-authoritative. A SHIP task freezes route, batch and valu
 - scheduled inbound interval ×0.85
 - counted in equipment assets
 - visible 3D state
-- persistence preserved through current runtime schema v9
+- introduced with schema9 and retained in the deployed schema10 progression
 
-Research showed that scheduled inbound cadence is the first post-routing lever that materially increases shipments. AGV / sorter / ASRS-style candidates are not automatically added unless measurement proves product value.
+Historical Rank3 research found that scheduled inbound cadence materially increased shipments in its tested post-routing scenario. That result does not diagnose the separate Rank2 capacity candidate. AGV / sorter / ASRS-style candidates are not automatically added unless measurement proves product value.
 
 ## 9. Save / Recovery
 
-Current runtime save schema: **v9**.
+Deployed PR132 runtime save schema: **v10**. Source-only capacity candidate: **v11, not deployed** (see §1.2).
 
 Persistence:
 - local JSON under `user://`
@@ -408,7 +440,11 @@ Migration baseline:
 - schema v7 and earlier legacy progression remains loadable through the layered migration path;
 - schema v8 Rank 1 v2 project state remains valid;
 - schema v8 named staffing presets migrate into equivalent schema v9 direct Zone counts;
-- schema v9 persists Rank 1 v2 project ownership plus direct Zone staffing.
+- schema v9 persists Rank 1 v2 project ownership plus direct Zone staffing;
+- schema v10 retains schemas1–9 and adds working automation ownership/counters and purchase book values as described in §5;
+- candidate schema v11 must additionally preserve cumulative cells/lanes and normalize in-flight cargo into durable waiting state without changing the live run or inventing shipments. Schema11 verification is separate from the historical schema10 baseline.
+
+Once a newer schema has written a save, do not assume an older executable can read it. Use compatible forward repair or reviewed recovery; never erase player data to make a migration check pass.
 
 ## 10. Camera / Mobile UX
 
@@ -477,7 +513,7 @@ Normal structural equipment uses:
 
 **equipment card → preview → ghost/planned geometry → explicit build/renovate confirmation → physical construction/change**
 
-Verified implementation:
+Historical baseline implementation evidence (not a capacity-candidate rerun):
 - Rank 1 and Rank 2 capital actions use a two-step preview → explicit commit flow;
 - Rank 2 preview shows equipment name, strength, weakness/trade-off, and real build/renovation cost;
 - first preview tap does **not** spend cash;
@@ -505,13 +541,13 @@ Target information architecture:
 - **Assets**
 - **Staffing**
 
-For Vertical Slice v2:
-- Rank 1 Management places **Contracts / Progression first**, followed by operational Overview and Warehouse Expansion;
-- the primary Rank 1 HUD exposes a persistent NEXT objective showing current contract progress plus the Rank 2 Project / Rating / cash requirements;
-- tapping that NEXT objective opens Management at the contract/progression surface;
+For the growth-first Vertical Slice:
+- Rank 1 Management and its navigation make ordinary growth and Warehouse Expansion legible; contracts are explicitly optional;
+- the primary Rank 1 HUD exposes a persistent NEXT objective showing distinct investments, actual shipments and expansion cash;
+- tapping that NEXT objective opens the relevant growth/expansion surface;
 - Overview contains tappable controls that open each physical warehouse Zone;
 - Rank 1 Warehouse Expansion keeps all four structural Project routes visible until completion;
-- Warehouse Expansion explicitly states that Logistics Rating is earned through contract completion;
+- Warehouse Expansion states the two-investment / 20-shipment / ¥8,000 gate; Logistics Rating and contract completion do not block it;
 - Staffing remains a separate OPERATIONS layer for Rank 2;
 - full Assets history may be deferred if it does not block the Core Experience test.
 
@@ -526,7 +562,7 @@ Facility-level Rank Expansion remains in Management because it is a strategic pr
 - all primary decisions use touch-sized targets;
 - warehouse Zone labels themselves communicate tap affordance;
 - Rank 1 primary HUD shows a concise persistent growth objective without covering the warehouse;
-- Rank 1 Management shows contract/progression first, five tappable Zone routes, the four structural Project routes, and the Warehouse Expansion gate within the normal portrait scroll surface;
+- Rank 1 Management makes growth/expansion discoverable, with five tappable Zone routes, the four structural Project routes, optional contracts and the Warehouse Expansion gate within the normal portrait scroll surface;
 - warehouse remains visible during normal Zone decisions;
 - no critical interaction depends on hover.
 ## 12. Art Direction
@@ -586,9 +622,9 @@ The slice fails if a normal playtest still feels like:
 
 PASS first requires that, without coaching, the player can explain the Rank 1 purpose approximately as:
 
-> “I complete contracts to raise Logistics Rating and earn money, improve the warehouse with Projects, then expand to the next warehouse rank.”
+> “I earn money by shipping, add two kinds of equipment or staffing improvements, then use my shipment progress and earned cash to expand the warehouse. Contracts are optional.”
 
-The operational loop should then be describable approximately as:
+The optional optimization loop should be describable approximately as follows. Reading a measurement is never a prerequisite for the next investment:
 
 > “I saw where the warehouse was backing up, changed that part of the facility, then the pressure moved and I had to deal with the next problem.”
 
@@ -627,7 +663,16 @@ For each implemented Zone:
 - the player can identify what physically changed after an investment;
 - the player can identify what operationally changed after an investment.
 
-Fresh human playtest evidence outranks static screenshot-difference claims for reward/growth recognition.
+### Capacity-candidate acceptance (not yet a result)
+
+- cumulative equipment has real cargo processing and a readable physical change;
+- at least one non-fork investment demonstrates sustained operational benefit under an explicit, appropriate workload, with limitations reported;
+- comparisons isolate arrivals, orders, workers and equipment before a workload change is selected;
+- staffing drafts apply atomically, cancel safely, survive same-tab reselection and keep current-task display consistent;
+- schema10→11 compatibility, cargo/cash conservation and relevant regression tests pass for the candidate itself;
+- after the first packing cell, even with no dispatch lane, the objective opens optional field inspection rather than urging another purchase or all five additions; staffing and automatic dispatch remain alternative responses. Further useful growth remains an open design question until supported by operational and human evidence.
+
+Fresh human playtest evidence outranks static screenshot-difference claims for reward/growth recognition. Historical test results and a user's early positive reaction do not constitute full acceptance of the current candidate.
 ## 16. Current Non-goals
 
 Not required for the current Pre-GO VERTICAL_SLICE:
@@ -657,7 +702,7 @@ Production implementation:
 
 The previous Three.js / PWA-first implementation direction is superseded and must not be restored as the production game path.
 
-## 18. Current Gate — VERTICAL_SLICE v2 REWORK
+## 18. Current Gate — growth-first capacity repair / VERTICAL_SLICE
 
 ACTIVE_PHASE: **VERTICAL_SLICE**
 
@@ -667,7 +712,15 @@ Platform / state:
 - RELEASE_APPROVAL: NOT_REQUESTED
 - PRIMARY_INPUT: touch
 
-### Why FLOTRA returned from DEVICE_VALIDATION
+### Current work and next gate, 2026-09-21
+
+Baseline: PR132 ordinary-shipment growth and working automation, merged into main and delivered to the existing engineering preview as recorded in `HANDOFF.md`. Runtime schema10 remains the deployed baseline. `GROWTH_FIRST_SLICE_CHANGE_PACKET.md` retains that change's feature/evidence history; its old pre-integration deployment-wait state is superseded.
+
+Active development packet: `CAPACITY_REPAIR_CHANGE_PACKET.md`, with source-only schema11 scope in §1.2. The diagnostic in §1.3 was reproduced on the matching Godot 4.7.2 engine and identifies consecutive packing/dispatch constraints under the tested workload; production workload growth is not adopted. Candidate repairs and CI test/capture integration are implemented. Local import and all 60 headless checks passed on Godot 4.7.2, with candidate-specific evidence in `CAPACITY_VERIFICATION_2026-09-21.json`; all six remote workflows passed for code `390787dcfc9ef5df19dd056e11637e93fc813219` in Draft PR136, including Web/unsigned-iOS export and PNG generation (see `CAPACITY_CI_EVIDENCE_2026-09-21.json`). PNG contents remain unreviewed because artifact delivery returned HTTP403. Next: obtain permitted access to the render evidence and restore TARGET access, then validate ordinary play with the first cell followed by either staffing or automatic dispatch through a separately approved preview. Human iPhone play, physical-device save continuity, performance and fun remain unverified; neither local headless PASS nor the historical tests below establish those results. Further useful growth beyond that initial packing/dispatch improvement remains unresolved.
+
+The latest reported user reaction includes **「面白くなってきた」**, alongside insufficient equipment variety/early ceiling and staffing/route clarity requests. This is useful early feedback, not an end-to-end fun or device acceptance. The human gate is understandable, visible growth through ordinary operation with useful investment choices; mandatory contracts/Rating do not return.
+
+### Historical reason FLOTRA returned from DEVICE_VALIDATION
 
 Repeated iPhone Web play exposed a Core Experience failure:
 - equipment/facility change was not clear enough during ordinary play;
@@ -680,7 +733,7 @@ This is a targeted return to VERTICAL_SLICE, not a full technical reset.
 
 Existing simulation, save/recovery, CI, export smoke, and reusable visual work remain valid assets unless superseded by v2.
 
-### Human iPhone Web evidence
+### Historical human iPhone Web evidence (PR117–122, not the current gate)
 
 #### 2026-09-19 — discoverability / navigation FAIL
 
@@ -717,7 +770,7 @@ PR #121 repaired those consistency issues and added a fresh natural-progression 
 - all 4 Rank 1 Projects purchased;
 - explicit Warehouse Expansion used for Rank 2.
 
-PR #122 connects the existing systems visibly:
+PR #122 connected the then-current systems visibly (the mandatory contract/Rating presentation below was superseded by PR132):
 - persistent Rank 1 NEXT objective;
 - current contract progress on the main HUD;
 - Rank 2 Project / Rating / expansion-cash requirements shown together;
@@ -725,17 +778,16 @@ PR #122 connects the existing systems visibly:
 - Warehouse Expansion explains that contracts raise Logistics Rating;
 - FTUE teaches contract → Rating → Project → warehouse expansion.
 
-Routing decision:
+Historical routing decision at PR122 (superseded next gate):
 - remain in **VERTICAL_SLICE**;
 - do not add new contract types, penalties, deferred equipment or Rank 3 content;
 - next gate is a human iPhone Web **purpose / growth-spine retest**.
 
-### Current implementation scope
+### Preserved v2 foundation
 
-Canonical implementation packet:
-- VERTICAL_SLICE_V2_CHANGE_PACKET.md
+Historical foundation packet: `VERTICAL_SLICE_V2_CHANGE_PACKET.md`. It does not override the growth-first decision or the dated capacity candidate.
 
-The implemented slice now contains:
+The reusable v2 foundation contains:
 - full Rank 1 v2 path;
 - 3D Zone interaction;
 - Zone Panel;
@@ -749,9 +801,7 @@ The implemented slice now contains:
 - selected-Zone construction/reward emphasis;
 - authoritative Before/After measurement.
 
-The planned feature scope remains bounded to the current Vertical Slice v2. PR #121 repairs the audited implementation inconsistencies and proves normal Rank 1 progression without injected resources; PR #122 connects the existing contract/progression systems into a visible player goal. The slice explicitly does not implement the remaining Rank 2 Zones or redesign Rank 3.
-
-**Current gate:** human iPhone Web Core Purpose / Growth Spine retest. Before judging deeper polish, the player must be able to explain what they are trying to achieve and how contracts, Rating, Projects and Warehouse Expansion connect.
+PR121/122 evidence above remains historical to those builds and the former progression gate. PR132 supersedes their mandatory contract/Rating growth path; the capacity candidate extends the bounded slice as specified in §1.2. Rank3 redesign and the remaining Rank2 equipment-mode pairs are still outside this candidate. The current gate is the dated repair/diagnosis and subsequent ordinary-growth human validation stated at the start of this section.
 
 ### Return to DEVICE_VALIDATION
 

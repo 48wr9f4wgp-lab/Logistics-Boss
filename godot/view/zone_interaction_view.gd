@@ -10,27 +10,27 @@ const RAY_LENGTH := 120.0
 
 const ZONE_DEFINITIONS := {
     "inbound": {
-        "label": "INBOUND",
+        "label": "入荷",
         "position": Vector3(-5.25, 1.05, 0.15),
         "size": Vector3(2.55, 2.1, 7.2),
     },
     "storage": {
-        "label": "STORAGE",
+        "label": "保管",
         "position": Vector3(-2.20, 1.05, 0.15),
         "size": Vector3(2.70, 2.1, 7.2),
     },
     "picking": {
-        "label": "PICKING",
+        "label": "ピッキング",
         "position": Vector3(0.25, 1.05, 0.15),
         "size": Vector3(1.70, 2.1, 7.2),
     },
     "packing": {
-        "label": "PACKING",
+        "label": "梱包",
         "position": Vector3(2.65, 1.05, 0.15),
         "size": Vector3(2.60, 2.1, 7.2),
     },
     "shipping": {
-        "label": "SHIPPING",
+        "label": "出荷",
         "position": Vector3(5.30, 1.05, 0.15),
         "size": Vector3(2.45, 2.1, 7.2),
     },
