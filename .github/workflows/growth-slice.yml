@@ -21,30 +21,41 @@ jobs:
           version: 4.7.2
           use-dotnet: false
           include-templates: false
-      - name: Collect text sources for isolated implementation review
-        shell: bash
-        run: |
-          mkdir -p /tmp/flotra-devkit
-          python3 - <<'PY'
-          import pathlib, subprocess, zipfile
-          paths = subprocess.check_output(['git','ls-files'], text=True).splitlines()
-          extensions = {'.gd','.tscn','.tres','.godot','.cfg','.md','.json','.yml','.txt','.uid','.svg','.import'}
-          with zipfile.ZipFile('/tmp/flotra-devkit/text-source.zip','w',zipfile.ZIP_DEFLATED) as z:
-              for name in paths:
-                  p=pathlib.Path(name)
-                  if p.suffix in extensions and not name.startswith('docs/godot-preview/') and '/fonts/' not in name:
-                      z.write(p, name)
-          PY
-          cp "$(command -v godot)" /tmp/flotra-devkit/godot
-          godot --version > /tmp/flotra-devkit/engine-version.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: flotra-isolated-text-devkit
-          path: /tmp/flotra-devkit/
-          retention-days: 1
-      - name: Import
+      - name: Import and compile
         shell: bash
         run: |
           set -euo pipefail
           timeout 120s godot --headless --audio-driver Dummy --path godot --editor --quit 2>&1 | tee /tmp/growth-import.log
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/growth-import.log; then exit 1; fi
+      - name: Natural growth, conservation, migration and engine-input checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test in growth_first_smoke growth_ui_smoke; do
+            XDG_DATA_HOME="/tmp/flotra-$test" timeout 100s godot --headless --audio-driver Dummy --path godot --script "res://tests/$test.gd" 2>&1 | tee "/tmp/growth-$test.log"
+            if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' "/tmp/growth-$test.log"; then exit 1; fi
+          done
+      - name: Install software render display
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0
+      - name: Capture real main scene through earned progression
+        shell: bash
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          FLOTRA_GROWTH_CAPTURE_DIR: ${{ github.workspace }}/growth-captures
+          XDG_DATA_HOME: /tmp/flotra-growth-capture-fresh
+        run: |
+          set -euo pipefail
+          mkdir -p growth-captures
+          timeout 120s xvfb-run -a -s '-screen 0 390x844x24' godot --path godot --audio-driver Dummy --display-driver x11 --rendering-method gl_compatibility --script res://tests/growth_capture.gd 2>&1 | tee /tmp/growth-capture.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/growth-capture.log; then exit 1; fi
+          for file in growth_00_fresh growth_01_forklift growth_02_expansion growth_03_working_automation growth_04_field growth_05_rank2_ui; do
+            test -s "growth-captures/$file.png"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flotra-growth-evidence
+          path: |
+            growth-captures/*.png
+            /tmp/growth-*.log
+          retention-days: 7
