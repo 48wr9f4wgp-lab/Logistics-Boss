@@ -44,6 +44,12 @@ jobs:
           set -euo pipefail
           timeout 90s godot --headless --audio-driver Dummy --path godot --script res://tests/mobile_engine_touch_smoke.gd 2>&1 | tee /tmp/clarity-engine-touch.log
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/clarity-engine-touch.log; then exit 1; fi
+      - name: Test notification clearance without pausing logistics
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 90s godot --headless --audio-driver Dummy --path godot --script res://tests/mobile_notification_clearance_smoke.gd 2>&1 | tee /tmp/clarity-notifications.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/clarity-notifications.log; then exit 1; fi
       - name: Install software-render display
         shell: bash
         run: |
@@ -64,6 +70,16 @@ jobs:
           test -s clarity-captures/clarity_contracts.png
           test -s clarity-captures/clarity_field.png
           test -s clarity-captures/clarity_installed_storage.png
+      - name: Capture actual main with shipment during Management
+        shell: bash
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          FLOTRA_NOTICE_CAPTURE_DIR: ${{ github.workspace }}/clarity-captures
+        run: |
+          set -euo pipefail
+          timeout 90s xvfb-run -a -s '-screen 0 390x844x24' godot --path godot --audio-driver Dummy --display-driver x11 --rendering-method gl_compatibility --script res://tests/mobile_notification_clearance_smoke.gd 2>&1 | tee /tmp/clarity-notification-capture.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/clarity-notification-capture.log; then exit 1; fi
+          test -s clarity-captures/notification_management_clear.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:
