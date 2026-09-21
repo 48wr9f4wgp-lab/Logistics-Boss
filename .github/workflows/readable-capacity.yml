@@ -1,0 +1,51 @@
+name: FLOTRA Readable Capacity
+on:
+  pull_request:
+    paths: ['godot/**', '.github/workflows/readable-capacity.yml', 'CAPACITY_GROWTH_CHANGE_PACKET.md']
+permissions:
+  contents: read
+jobs:
+  readable-capacity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+      - name: Isolated text-only review snapshot
+        run: |
+          python3 - <<'PY'
+          import pathlib, subprocess, zipfile
+          with zipfile.ZipFile('/tmp/flotra-capacity-sources.zip','w',zipfile.ZIP_DEFLATED) as archive:
+              for name in subprocess.check_output(['git','ls-files'],text=True).splitlines():
+                  p=pathlib.Path(name)
+                  if p.suffix in {'.gd','.tscn','.tres','.godot','.cfg','.md','.json','.yml','.py','.sh'} and not name.startswith('docs/godot-preview/'):
+                      archive.write(p,name)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flotra-capacity-text-sources
+          path: /tmp/flotra-capacity-sources.zip
+          retention-days: 1
+      - name: Compile and test capacity candidate when implemented
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path godot --editor --import --quit 2>&1 | tee /tmp/capacity-import.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/capacity-import.log; then exit 1; fi
+          if test -f godot/tests/capacity_growth_smoke.gd; then
+            for test in capacity_growth_smoke staffing_workspace_smoke; do
+              timeout 90s godot --headless --audio-driver Dummy --path godot --script res://tests/$test.gd 2>&1 | tee /tmp/$test.log
+              if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/$test.log; then exit 1; fi
+            done
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flotra-capacity-logs
+          path: /tmp/*smoke.log
+          if-no-files-found: ignore
+          retention-days: 7
