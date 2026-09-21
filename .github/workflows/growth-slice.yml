@@ -1,0 +1,50 @@
+name: FLOTRA Growth Slice
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'godot/**'
+      - '.github/workflows/growth-slice.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  growth-slice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+      - name: Collect text sources for isolated implementation review
+        shell: bash
+        run: |
+          mkdir -p /tmp/flotra-devkit
+          python3 - <<'PY'
+          import pathlib, subprocess, zipfile
+          paths = subprocess.check_output(['git','ls-files'], text=True).splitlines()
+          extensions = {'.gd','.tscn','.tres','.godot','.cfg','.md','.json','.yml','.txt','.uid','.svg','.import'}
+          with zipfile.ZipFile('/tmp/flotra-devkit/text-source.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for name in paths:
+                  p=pathlib.Path(name)
+                  if p.suffix in extensions and not name.startswith('docs/godot-preview/') and '/fonts/' not in name:
+                      z.write(p, name)
+          PY
+          cp "$(command -v godot)" /tmp/flotra-devkit/godot
+          godot --version > /tmp/flotra-devkit/engine-version.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flotra-isolated-text-devkit
+          path: /tmp/flotra-devkit/
+          retention-days: 1
+      - name: Import
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 120s godot --headless --audio-driver Dummy --path godot --editor --quit 2>&1 | tee /tmp/growth-import.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/growth-import.log; then exit 1; fi
