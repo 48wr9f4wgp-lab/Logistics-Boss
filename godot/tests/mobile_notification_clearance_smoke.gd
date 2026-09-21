@@ -12,11 +12,21 @@ func _run() -> void:
     Input.emulate_touch_from_mouse = false
     for viewport_size in [Vector2i(390, 844), Vector2i(375, 667), Vector2i(430, 932)]:
         get_root().size = viewport_size
+        print("Notification fixture window=%s" % str(viewport_size))
         await _verify_clearance()
     Input.emulate_mouse_from_touch = old_mouse
     Input.emulate_touch_from_mouse = old_touch
     print("Notification clearance checks finished; failures=%d" % _failures)
     quit(0 if _failures == 0 else 1)
+
+
+func _engine_tap(button: Button) -> void:
+    # Input.parse_input_event takes window/screen coordinates, not a Control's
+    # logical canvas coordinates. At 390x844 these coincide; resized tests must
+    # include the same stretch/window transform used by actual OS input.
+    var position := button.get_viewport().get_screen_transform() * button.get_global_transform_with_canvas() * (button.size * 0.5)
+    _engine_touch(position, true)
+    _engine_touch(position, false)
 
 
 func _verify_clearance() -> void:
