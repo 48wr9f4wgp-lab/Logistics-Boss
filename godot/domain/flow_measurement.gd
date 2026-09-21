@@ -61,6 +61,7 @@ static func classify_result_for_kind(kind: String, before: Dictionary, after: Di
             _local_metric("入荷待ち", "inbound_queue", before, after, LOCAL_QUEUE_DELTA, true, "箱"),
         ]
     elif kind in [
+        "packing_cell",
         "rank1_second_packing_bench",
         "facility_parallel_pack",
         "facility_fast_pack_cell",

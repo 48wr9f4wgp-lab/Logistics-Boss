@@ -1,0 +1,495 @@
+{
+  "title": "FLOTRA",
+  "scope": "title-local",
+  "date": "2026-09-21",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "platform": "Linux headless, not iPhone",
+  "source_fingerprint_sha256": "8cc888f10cd3f7ac72c777179ff963d09b046a2e9a54c5781a72b0a606dc3b21",
+  "import": "PASS_NO_PARSE_ERRORS",
+  "tests": [
+    {
+      "test": "sim_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.75,
+      "pass": true,
+      "log_sha256": "579f826399f21a09aacd6d5bc0f760ea370fd4eec70ddb921828d9829693dfd2"
+    },
+    {
+      "test": "flow_measurement_open_orders_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.54,
+      "pass": true,
+      "log_sha256": "f38034e55737eff15041dceb6a70799cde24b3a3249f5b8c370553c0e6d64f64"
+    },
+    {
+      "test": "economy_pacing_report",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.81,
+      "pass": true,
+      "log_sha256": "43ffa427a3e3680755a35522a11a22a798e528c080012adb962198fec09c8980"
+    },
+    {
+      "test": "economy_progression_pacing_audit",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 11.56,
+      "pass": true,
+      "log_sha256": "b97fe7da8ea76f66cc24b4ae65c2c40a7c881ea6077ab84b226baeaf9ee542ec"
+    },
+    {
+      "test": "rank2_readiness_scout",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.47,
+      "pass": true,
+      "log_sha256": "4ff727972fb4a958f9537ba91a7a3270c3feb949ca3405916d1de8b1dd1b4b72"
+    },
+    {
+      "test": "rank2_entry_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.71,
+      "pass": true,
+      "log_sha256": "a2a18b68014f2f839697fc230b578310d393e6c78b54458df4bb324a134dc273"
+    },
+    {
+      "test": "rank2_facility_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.27,
+      "pass": true,
+      "log_sha256": "20ad3abdcef4fe57bbfa47df437f477479911cd1952a14f7fd2633ddd2e07664"
+    },
+    {
+      "test": "rank2_zone_pacing_report",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.48,
+      "pass": true,
+      "log_sha256": "41bd237bdee1613fd3d94327f6665b7f211472697e764841933c564119c499af"
+    },
+    {
+      "test": "rank2_post_zone_frontier",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 2.84,
+      "pass": true,
+      "log_sha256": "62d1fefe1881de6b7f608ab5290610a1262da17da069b1a330c0e6437415673d"
+    },
+    {
+      "test": "workload_wave_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.27,
+      "pass": true,
+      "log_sha256": "e758ff97740b19506d4d8c3e06cc96b4e4acd5523bc4cbff70754f0f6ec90260"
+    },
+    {
+      "test": "workload_wave_pacing_report",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.03,
+      "pass": true,
+      "log_sha256": "3dadb15b1ce1807df729d0cda1a3f3341b0ea2701eba83139d118b94d14d8604"
+    },
+    {
+      "test": "rank3_readiness_scout",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.87,
+      "pass": true,
+      "log_sha256": "3156f19033c36eb9ad2b3c286a1d51eca0caedff57d77cb6e12013b983e92e84"
+    },
+    {
+      "test": "rank3_intervention_scout",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 5.45,
+      "pass": true,
+      "log_sha256": "fc94501b16501ecc554f64eb1fe2ee949d96d35476adeb526f2e8c465032733b"
+    },
+    {
+      "test": "rank3_intake_growth_scout",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.4,
+      "pass": true,
+      "log_sha256": "e92d8ae42173acb7b6a36227b2eaaee4338fe19860cf5d4f7997e44eb9225414"
+    },
+    {
+      "test": "rank3_receiving_annex_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.29,
+      "pass": true,
+      "log_sha256": "3cc3762f4a3d1cb7921072e4bf9dcd2798bce13bb95db3d4590e8fea91851b26"
+    },
+    {
+      "test": "rank3_receiving_annex_pacing_report",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.12,
+      "pass": true,
+      "log_sha256": "2bacff66c5b9417ea9e13f2de1514978acb26589a0adc8b4056719fb52950d79"
+    },
+    {
+      "test": "rank3_post_annex_frontier",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 3.63,
+      "pass": true,
+      "log_sha256": "a206a8f6d5dbf86d53bf05308d3d499e8c129b5881687d9cd62ae45682febaca"
+    },
+    {
+      "test": "rank3_receiving_orchestration_scout",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 3.19,
+      "pass": true,
+      "log_sha256": "059ef4166caeda857a7b42be3d5ace40db910a0927f8a0999b0a24b2a7a84816"
+    },
+    {
+      "test": "rank3_carrier_routing_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.47,
+      "pass": true,
+      "log_sha256": "836fd372bc6d7893acd1c7cdc7ed6fc2706607f8b32673ffb1717f7211640d24"
+    },
+    {
+      "test": "rank3_carrier_routing_pacing_report",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.49,
+      "pass": true,
+      "log_sha256": "e8a63175614913fd5fe0887e8109c6a1586f43070823cb5a479c05dc80b2b1a9"
+    },
+    {
+      "test": "runtime_startup_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.59,
+      "pass": true,
+      "log_sha256": "ab752962ec3550e2db2290b455bf81d4f0af70a8b0eb3e3752bac589de6965dc"
+    },
+    {
+      "test": "ftue_core_loop_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.96,
+      "pass": true,
+      "log_sha256": "c695c186894d6b66cdd4e7aca23dc4965a1dbfde03e79e62f4f7a93fdd7ce790"
+    },
+    {
+      "test": "release_services_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.69,
+      "pass": true,
+      "log_sha256": "cd8c6a6bda1f4ac68da4faa2c12dd1daca48955660c523c6f456dc2f704e0ee3"
+    },
+    {
+      "test": "release_hud_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.86,
+      "pass": true,
+      "log_sha256": "477d4c67f770fa18c3856164525a22e2ad5e84da7530bd54736cac5846b7a610"
+    },
+    {
+      "test": "mobile_input_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.39,
+      "pass": true,
+      "log_sha256": "a3e2d1c55972c04a0a5bfe83f9f0a9c28794f06dd023785330177b9dba80f55c"
+    },
+    {
+      "test": "v2_interaction_skeleton_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.85,
+      "pass": true,
+      "log_sha256": "e91c91cab97c5602d3b0ecc2ab88dc0101a4c7bc719154eb7b54394f43c7046d"
+    },
+    {
+      "test": "v2_discoverability_navigation_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.12,
+      "pass": true,
+      "log_sha256": "592f41b1799375d59cf212b43c76062779ce1a346d01dc0ce0566008ca060213"
+    },
+    {
+      "test": "zone_panel_touch_input_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.48,
+      "pass": true,
+      "log_sha256": "bbda81ed780c9bfa781682f88c94ce32641c4f72bf02a75b76c738bfebe86104"
+    },
+    {
+      "test": "mobile_ui_foundation_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.66,
+      "pass": true,
+      "log_sha256": "6b48e2b017e9b860ca475ed757fb4f8bc4bed03a0d2eb6efa82ba56cf29b9d44"
+    },
+    {
+      "test": "v2_consistency_repair_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.49,
+      "pass": true,
+      "log_sha256": "396deac4e20a4c586d9ddbf481ef4017e53f8c6319054052b3a261fe9643e448"
+    },
+    {
+      "test": "rank1_v2_natural_progression_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.47,
+      "pass": true,
+      "log_sha256": "baf7acd06567075598292154c7b0340b78d0331ee3ec76a7ce709bde45873833"
+    },
+    {
+      "test": "rank1_growth_objective_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.05,
+      "pass": true,
+      "log_sha256": "09bf92a06000d584d4f3e826a1280df1b3f3a95a96b3b03a71a854e29a556b37"
+    },
+    {
+      "test": "rank1_v2_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.49,
+      "pass": true,
+      "log_sha256": "d4e6e2c4eef14689716535b0cc89edb51d037a1b03f8a101d794cd19c9a5acbd"
+    },
+    {
+      "test": "direct_zone_staffing_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.09,
+      "pass": true,
+      "log_sha256": "0c777175e699402fb54a7edfbc3baabc170bb37f5043d2cd9d30f1a8e9259f4e"
+    },
+    {
+      "test": "rank2_v2_renovation_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.66,
+      "pass": true,
+      "log_sha256": "452aa453d9c44ad7e16db09cb798df4157263a183b424de8cd45376324c6b429"
+    },
+    {
+      "test": "rank2_v2_dominance_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.43,
+      "pass": true,
+      "log_sha256": "96fc6c04749eb6f9b0f53d768d81ab2e3178735e2632acf9458500227afe0b48"
+    },
+    {
+      "test": "construction_reward_presentation_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.56,
+      "pass": true,
+      "log_sha256": "c5d7549c92c204dc610cbdc4fe27215915a2d660ef2ee3edda513271f7f3dfa1"
+    },
+    {
+      "test": "save_recovery_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.36,
+      "pass": true,
+      "log_sha256": "2a94bb02cd5e31b308d43a4568dfa693ecd10e3b86f87714b929516d332cb60a"
+    },
+    {
+      "test": "release_candidate_soak",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.37,
+      "pass": true,
+      "log_sha256": "229c0fd41fccddaad3ffe0ce24cd06fff924e9fb807cea814be0751e84a4f235"
+    },
+    {
+      "test": "progression_dead_end_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.13,
+      "pass": true,
+      "log_sha256": "2a9405217a9d5812c6c75e1c1c59180766cfd545179d672bd0ca1fbd07295d59"
+    },
+    {
+      "test": "rank3_inbound_carrier_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.49,
+      "pass": true,
+      "log_sha256": "7848797a13f7fc98c2fc0c4ae391cf998e02dff38fafc69a98e1747929a7a8b0"
+    },
+    {
+      "test": "rank3_post_routing_frontier",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.87,
+      "pass": true,
+      "log_sha256": "104f3b4289db8aca57864f477d543090747c25d31e9f9505834c5460328c7d5d"
+    },
+    {
+      "test": "rank3_post_routing_supply_frontier",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 6.93,
+      "pass": true,
+      "log_sha256": "f55c49708237bce36b464c257f044bcb72c473fabaae678c8a5839ae7c133eb3"
+    },
+    {
+      "test": "rank3_inbound_supply_cadence_frontier",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 5.65,
+      "pass": true,
+      "log_sha256": "c0b107d341726366cc8438ef73430b469ac1a876b4fe65d112668ccd1935c846"
+    },
+    {
+      "test": "rank2_facility_ui_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.55,
+      "pass": true,
+      "log_sha256": "6f24bf749fd8fc444df5ab1d0c7f865c254b9b3f1c60d3358bf7e0886289bd63"
+    },
+    {
+      "test": "rank3_ui_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.88,
+      "pass": true,
+      "log_sha256": "9cbff13bc4e2522d71a79dd76738769ae9f736d61d1e7b588a947a4f62025b10"
+    },
+    {
+      "test": "rank3_inbound_carrier_ui_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.96,
+      "pass": true,
+      "log_sha256": "ec81a632160811eda598c5e066f6a6ffd3cc5965592aff728c221ad043cebf72"
+    },
+    {
+      "test": "rank2_facility_visual_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.6,
+      "pass": true,
+      "log_sha256": "8cad09f999d9a08e9d70af102953f943384037dbefdcd669b36453fa68bb62ae"
+    },
+    {
+      "test": "rank3_visual_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.39,
+      "pass": true,
+      "log_sha256": "9765868cca20a3ff1b09e344ef29503f0ae97229f0b4814ae69e6d09d705e2a6"
+    },
+    {
+      "test": "rank3_inbound_carrier_visual_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.36,
+      "pass": true,
+      "log_sha256": "3906e18c468bde5f1cf57d65bb7279e231b0386279af4749b2d0b99d41e3ba17"
+    },
+    {
+      "test": "font_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.28,
+      "pass": true,
+      "log_sha256": "71c4751f807ccbb1ecdd963563ac59a54845ef208be3c3107368740464e027a3"
+    },
+    {
+      "test": "visual_readability_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.61,
+      "pass": true,
+      "log_sha256": "f9c010535136bf9934e0a19745088ee512882a996cc059a4e56c1a41aa977694"
+    },
+    {
+      "test": "growth_first_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 0.92,
+      "pass": true,
+      "log_sha256": "ae1e427004368e6b1c4199d6ee560723526f6c0c2a2ebc807addda69d317b0cd"
+    },
+    {
+      "test": "growth_ui_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 3.67,
+      "pass": true,
+      "log_sha256": "f1a6fa170f492d981510fe62ceaed233b7fec8ed32cc521935bae1fbca3aef12"
+    },
+    {
+      "test": "capacity_growth_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 1.1,
+      "pass": true,
+      "log_sha256": "47a34f25ea2c8e34b69791258e249fd09ce420c705c014dd8f7c04afd7c16f4e"
+    },
+    {
+      "test": "staffing_workspace_smoke",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 3.91,
+      "pass": true,
+      "log_sha256": "63f64ba01025b75d8a6acc0e194cd139ca2170239ce4574a3462fffd5290ad14"
+    },
+    {
+      "test": "capacity_flow_report",
+      "exit": 0,
+      "error_lines": [],
+      "seconds": 18.95,
+      "pass": true,
+      "log_sha256": "377eca9f81090f77a152882d79315bad2f3e898106e6df92166fb45d3e394730"
+    },
+    {
+      "test": "mobile_interaction_clarity_smoke",
+      "exit": 0,
+      "pass": true,
+      "log_sha256": "06dbf9af9119c8fde599d2cce9b16c1b4779aa8b7e242fb27ef76aeb94284d9b"
+    },
+    {
+      "test": "mobile_engine_touch_smoke",
+      "exit": 0,
+      "pass": true,
+      "log_sha256": "240750d1fc734484be3c1aa1ae64a062e42c341eec4ebd5ce9388ccd40a10799"
+    },
+    {
+      "test": "mobile_notification_clearance_smoke",
+      "exit": 0,
+      "pass": true,
+      "log_sha256": "634f2dd66521b566ea1d186be174a7adbc1c1a1e109e8907c9cc59494c5d2b47"
+    }
+  ],
+  "passed": 60,
+  "failed": 0,
+  "not_verified": [
+    "real render capture",
+    "Web export",
+    "physical iPhone gestures/performance/save continuity",
+    "native iOS",
+    "human fun"
+  ],
+  "diagnosis": "255s warmup +3x255s: base253, cell253, cell+lane276, cell+staffing1/2/2 also276; max5 also276; no production workload change."
+}

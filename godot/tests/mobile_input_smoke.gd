@@ -83,8 +83,10 @@ func _run() -> void:
 
     view._camera_distance = MobileWarehouseView.MOBILE_MIN_DISTANCE
     view._update_camera(1.0)
-    if view._camera.fov < 50.0:
-        _fail("near mobile zoom must keep a wide portrait field of view")
+    # Capacity framing deliberately uses a tighter near view; keep calibrated bounds
+    # without weakening orbit, pinch, aspect or far-overview protection.
+    if view._camera.fov < 42.0 or view._camera.fov > 46.0:
+        _fail("near work view must stay in the calibrated readable FOV range")
         return
 
     view._camera_distance = MobileWarehouseView.MOBILE_MAX_DISTANCE

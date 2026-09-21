@@ -17,6 +17,7 @@ var _pointer := -1
 var _movement := 0.0
 var _dragging := false
 var _scrolling := false
+var _scroll_owner: ScrollContainer
 var _identity := ""
 var _normal_style: StyleBox
 var _suppress_until := 0
@@ -91,18 +92,13 @@ func _owns_emulated_mouse_at(position: Vector2) -> bool:
         return true
     if button_at(position) != null:
         return true
-    return (
-        hud._sheet.visible and hud._mobile_scroll != null
-        and _contains_visible(hud._mobile_scroll, position)
-    )
+    return _scroll_at(position) != null
 
 
 func _begin(position: Vector2, pointer: int) -> void:
     var target := button_at(position)
-    var in_scroll := (
-        hud._sheet.visible and hud._mobile_scroll != null
-        and _contains_visible(hud._mobile_scroll, position)
-    )
+    _scroll_owner = _scroll_at(position)
+    var in_scroll := _scroll_owner != null
     if target == null and not in_scroll:
         return
     _button = target
@@ -123,8 +119,8 @@ func _move(relative: Vector2) -> void:
     if _movement >= DRAG_THRESHOLD:
         _dragging = true
         _restore_visual()
-    if _dragging and _scrolling and hud._sheet.visible:
-        hud._scroll_management_by(relative.y)
+    if _dragging and _scrolling and is_instance_valid(_scroll_owner) and _scroll_owner.is_visible_in_tree():
+        _scroll_owner.scroll_vertical = maxi(0, _scroll_owner.scroll_vertical - int(round(relative.y * 1.15)))
     get_viewport().set_input_as_handled()
 
 
@@ -230,7 +226,7 @@ func _button_identity(button: Button) -> String:
             return "unavailable"
         var offer: Dictionary = hud.sim.contract_offers[index]
         return "contract:%s" % str(offer.get("id", -1))
-    return str(button.get_instance_id())
+    return str(button.get_instance_id()) + str(button.get_meta("action_identity", ""))
 
 
 func _notification(what: int) -> void:
@@ -248,3 +244,13 @@ func _exit_tree() -> void:
         hud.set_process_input(true)
     if is_instance_valid(zone):
         zone.set_process_input(true)
+
+
+func _scroll_at(position: Vector2) -> ScrollContainer:
+    if hud._reset_modal != null and hud._reset_modal.visible:
+        return null
+    if hud._sheet.visible and hud._mobile_scroll != null and _contains_visible(hud._mobile_scroll, position):
+        return hud._mobile_scroll
+    if zone != null and zone.is_open() and zone._scroll != null and _contains_visible(zone._scroll, position):
+        return zone._scroll
+    return null

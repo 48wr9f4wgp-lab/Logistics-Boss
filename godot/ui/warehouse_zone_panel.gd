@@ -1,6 +1,7 @@
 extends Control
 class_name WarehouseZonePanel
 
+signal staffing_requested
 signal opened(zone_key: String)
 signal closed
 signal construction_preview_changed(zone_key: String, kind: StringName)
@@ -13,6 +14,10 @@ const SYNTHETIC_MOUSE_SUPPRESS_MS := 450
 
 var sim: WarehouseSim
 var _selected_zone := ""
+var _scroll: ScrollContainer
+var _capacity_action: Button
+var _staffing_open: Button
+var _capacity_expected := -1
 
 var _panel: PanelContainer
 var _title: Label
@@ -58,6 +63,8 @@ func open_zone(zone_key: String) -> void:
     if _selected_zone != zone_key:
         _clear_construction_preview()
     _selected_zone = zone_key
+    if _scroll != null:
+        _scroll.scroll_vertical = 0
     if _panel != null:
         _panel.visible = true
     _render()
@@ -267,17 +274,31 @@ func _build_panel() -> void:
     _close_button.pressed.connect(close)
     head.add_child(_close_button)
 
+    _scroll = ScrollContainer.new()
+    _scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    _scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+    column.add_child(_scroll)
+    var body := VBoxContainer.new()
+    body.add_theme_constant_override("separation", 6)
+    body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    _scroll.add_child(body)
+    _capacity_action = Button.new()
+    _capacity_action.custom_minimum_size = Vector2(0, 62)
+    _capacity_action.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _capacity_action.pressed.connect(_on_capacity_action)
+    _capacity_action.visible = false
+    body.add_child(_capacity_action)
     _evidence = _label(12, Color(0.84, 0.93, 0.97))
     _evidence.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    column.add_child(_evidence)
+    body.add_child(_evidence)
 
     _equipment = _label(11, Color(1.0, 0.78, 0.40))
     _equipment.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    column.add_child(_equipment)
+    body.add_child(_equipment)
 
     var split := HBoxContainer.new()
     split.add_theme_constant_override("separation", 8)
-    column.add_child(split)
+    body.add_child(split)
 
     var operations_panel := _section_panel(Color(0.20, 0.68, 0.92, 0.80))
     operations_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -299,6 +320,13 @@ func _build_panel() -> void:
     _operations_action.pressed.connect(_on_operations_action)
     operations_box.add_child(_operations_action)
 
+    _staffing_open = Button.new()
+    _staffing_open.text = "全体の人員配置 ▶"
+    _staffing_open.custom_minimum_size = Vector2(0, 46)
+    _staffing_open.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _staffing_open.pressed.connect(func(): staffing_requested.emit())
+    column.add_child(_staffing_open)
+    column.move_child(_staffing_open, 1)
     for _index in 2:
         var move_button := Button.new()
         move_button.custom_minimum_size = Vector2(0, 38)
@@ -352,7 +380,7 @@ func _build_panel() -> void:
 
     _action_message = _label(10, Color(1.0, 0.78, 0.46))
     _action_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    column.add_child(_action_message)
+    body.add_child(_action_message)
 
 
 func _render() -> void:
@@ -369,6 +397,7 @@ func _render() -> void:
     _render_rank2_equipment_actions()
     _render_direct_staffing_actions()
     _render_growth_automation_action()
+    _render_capacity_action()
 
 
 func _set_notice(text: String, seconds: float = 5.0) -> void:
@@ -912,4 +941,57 @@ func _on_growth_automation_action() -> void:
         _set_notice("導入完了。倉庫で仕事を確認しよう")
     else:
         _set_notice(_purchase_failure_text(result))
+    _render()
+
+
+func _render_capacity_action() -> void:
+    _panel.anchor_top = 0.45 if sim != null and sim.facility_rank >= 2 else 0.56
+    _panel.offset_bottom = -100.0
+    _staffing_open.visible = sim != null and sim.facility_rank >= 2
+    if sim == null or sim.facility_rank < 2:
+        _capacity_action.visible = false
+        return
+    var kind: StringName = &"packing_cell" if _selected_zone == "packing" else (&"dispatch_lane" if _selected_zone == "shipping" else &"")
+    _capacity_action.visible = kind != &""
+    if kind == &"":
+        return
+    var info: Dictionary = sim.call("capacity_info", kind)
+    var count := int(info["count"])
+    var preview_key := StringName("%s_%d" % [String(kind), count + 1])
+    var preview := _preview_kind == preview_key
+    _capacity_action.set_meta("action_identity", "%s:%s" % [String(preview_key), str(preview)])
+    if bool(info["maxed"]):
+        _capacity_action.text = "%s %d台 導入済み
+この試作の増設分は完了" % [info["label"], count]
+        _capacity_action.disabled = true
+    elif not bool(info["unlocked"]):
+        _capacity_action.text = "%s
+%s" % [info["label"], info["lock_reason"]]
+        _capacity_action.disabled = true
+    else:
+        _capacity_action.text = "%s %d台目｜¥%s
+%s" % [info["label"], count + 1, _format_money(int(info["cost"])), "増設する" if preview else "増設予定を見る ▶"]
+        _capacity_action.disabled = preview and sim.money < int(info["cost"])
+        if preview:
+            _action_message.text = "%s
+%s" % [info["effect"], info["tradeoff"]]
+
+
+func _on_capacity_action() -> void:
+    var kind: StringName = &"packing_cell" if _selected_zone == "packing" else &"dispatch_lane"
+    var info: Dictionary = sim.call("capacity_info", kind)
+    var count := int(info["count"])
+    var preview_key := StringName("%s_%d" % [String(kind), count + 1])
+    if _preview_kind != preview_key:
+        _capacity_expected = count
+        _set_construction_preview(preview_key)
+        _render()
+        return
+    var result: Dictionary = sim.call("purchase_capacity", kind, _capacity_expected)
+    if bool(result.get("ok", false)):
+        _clear_construction_preview()
+        construction_committed.emit(_selected_zone, preview_key, "build")
+    else:
+        _clear_construction_preview()
+        _set_notice("増設できません。資金・現在の設備数を確認してください。")
     _render()

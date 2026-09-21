@@ -8,7 +8,7 @@
   "release_approval": "NOT_REQUESTED",
   "development_target": "iPhone / iOS",
   "primary_input": "touch",
-  "status_label": "PRE_GO_GROWTH_FIRST_SLICE_PR132_DEPLOYED_HUMAN_TRIAL_PENDING",
+  "status_label": "PRE_GO_CAPACITY_REPAIR_CANDIDATE_NOT_DEPLOYED",
   "updated_at": "2026-09-21",
   "real_device_access": "AVAILABLE_USER_IPHONE_REPEATED_TESTING",
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
@@ -20,10 +20,9 @@
   "working_head": {
     "repo": "48wr9f4wgp-lab/Logistics-Boss",
     "branch": "main",
-    "pr": 132,
-    "commit_at_sync_input": "0ade51a9c1c885049e5bc37bc4e1e8b3e83ad6e1",
+    "commit_sha": "b63d60a7d506a80ef8efe8e005c4e9196d21fbcb",
     "validation_status": "PARTIAL",
-    "note": "The containing documentation synchronization advances main without changing tested code or preview bytes. Resolve live main SHA on restart. PR132 is merged and its existing engineering preview is deployed; human acceptance is still pending."
+    "note": "Shared state unchanged; candidate source is LOCAL_ONLY under recovery_state, not pushed."
   },
   "verified_baseline": {
     "code_commit": "1b7a9e2e515bce9289658e4584cc250d3fb4591e",
@@ -43,12 +42,36 @@
   "checks": {
     "boot": "PASS_REPOSITORY_GODOT315",
     "ci_latest_verified": "PR132_CODE1b7a9e2_GODOT315_GROWTH11_CLARITY19_IOS123_RENDER113_SUCCESS",
-    "godot_ci": {"run": 35563746655, "number": 315, "result": "SUCCESS"},
-    "growth_slice": {"run": 35563746543, "number": 11, "result": "SUCCESS"},
-    "mobile_interaction": {"run": 35563746537, "number": 19, "result": "SUCCESS"},
-    "unsigned_ios_export": {"run": 35563746526, "number": 123, "result": "SUCCESS_TECHNICAL_ONLY"},
-    "render_capture": {"run": 35563746538, "number": 113, "result": "SUCCESS"},
-    "historical_android_smoke": {"run": 35563746530, "number": 127, "result": "SUCCESS_NOT_ACTIVE_PLATFORM"},
+    "godot_ci": {
+      "run": 35563746655,
+      "number": 315,
+      "result": "SUCCESS"
+    },
+    "growth_slice": {
+      "run": 35563746543,
+      "number": 11,
+      "result": "SUCCESS"
+    },
+    "mobile_interaction": {
+      "run": 35563746537,
+      "number": 19,
+      "result": "SUCCESS"
+    },
+    "unsigned_ios_export": {
+      "run": 35563746526,
+      "number": 123,
+      "result": "SUCCESS_TECHNICAL_ONLY"
+    },
+    "render_capture": {
+      "run": 35563746538,
+      "number": 113,
+      "result": "SUCCESS"
+    },
+    "historical_android_smoke": {
+      "run": 35563746530,
+      "number": 127,
+      "result": "SUCCESS_NOT_ACTIVE_PLATFORM"
+    },
     "natural_growth": "PASS_TWO_PURCHASE_ORDERS_1X_NO_CONTRACTS_NO_CASH_OR_RATING_INJECTION",
     "cargo_conservation": "PASS_CLOSED_FIXTURE62_PARCELS_EXTRA_FORK12_DELIVERIES_CONVEYOR40_DELIVERIES",
     "save": "PASS_SCHEMA10_ROUNDTRIP_INFLIGHT_QUEUE_PROJECTION_SCHEMA9_MIGRATION_ATOMIC_DISK_BACKUP_RECOVERY",
@@ -58,21 +81,42 @@
     "audio_haptics": "EXISTING_IMPLEMENTATION_RETAINED_PHYSICAL_IPHONE_VERIFY_PENDING",
     "analytics": "LOCAL_ONLY_NO_EXTERNAL_UPLOAD",
     "growth_automation_fun": "NOT_PASSED_HUMAN_TRIAL_PENDING",
-    "engineering_preview_export": {"run": 35565739875, "number": 99, "result": "SUCCESS"},
-    "engineering_preview_deployment": {"run": 35565774244, "number": 279, "result": "BUILD_DEPLOY_AND_REPORT_JOBS_SUCCESS"},
+    "engineering_preview_export": {
+      "run": 35565739875,
+      "number": 99,
+      "result": "SUCCESS"
+    },
+    "engineering_preview_deployment": {
+      "run": 35565774244,
+      "number": 279,
+      "result": "BUILD_DEPLOY_AND_REPORT_JOBS_SUCCESS"
+    },
     "deployed_artifact_integrity": "PASS_ARTIFACT10624047550_ZIP_DIGEST_MATCH_PCK1977496_BYTES_MATCH_EXPORT_HTML",
-    "live_http_runtime_probe": "UNVERIFIED_WEB_TOOL_INACCESSIBLE_CONTAINER_DNS_FAILED_NO_BROWSER_RUNTIME_PASS"
+    "live_http_runtime_probe": "UNVERIFIED_WEB_TOOL_INACCESSIBLE_CONTAINER_DNS_FAILED_NO_BROWSER_RUNTIME_PASS",
+    "capacity_candidate": "PASS_GODOT4.7.2_HEADLESS_IMPORT_60_TESTS"
   },
   "growth_first_slice": {
     "pr": 132,
     "change_packet": "GROWTH_FIRST_SLICE_CHANGE_PACKET.md",
     "status": "IMPLEMENTED_APPROVED_MERGED_DEPLOYED_HUMAN_TRIAL_PENDING",
-    "first_expansion": {"distinct_projects": 2, "actual_shipments": 20, "cash": 8000, "contract_or_rating_required": false},
+    "first_expansion": {
+      "distinct_projects": 2,
+      "actual_shipments": 20,
+      "cash": 8000,
+      "contract_or_rating_required": false
+    },
     "old_gate": "SUPERSEDED_IN_MAIN_AND_PR132_PREVIEW: all4/Rating8/cash10000. PR130 remains a historical recovery reference only.",
     "automation": "First forklift8000; one extra working forklift10000 after expansion/first forklift; one PICKING-to-PACKING conveyor9000 after expansion; no unlimited vehicle upgrade loop",
     "purchase_experience": "No-spend preview, separate paid confirmation, large sheet closes after commit, cancellable three-second camera emphasis, ordinary earnings beside funds",
     "scope_limit": "At most two total forklifts and one conveyor path; no freeform factory layout, Rank3 redesign, ASRS, backend or new platform",
-    "scripted_1x_pacing": {"fork_first_automation_seconds": 31.5, "fork_first_expansion_seconds": 94.9, "rack_bench_first_expansion_seconds": 79.9, "rack_bench_first_automation_seconds": 128.7, "capture_conveyor_seconds": 156.0, "capture_second_fork_seconds": 229.3},
+    "scripted_1x_pacing": {
+      "fork_first_automation_seconds": 31.5,
+      "fork_first_expansion_seconds": 94.9,
+      "rack_bench_first_expansion_seconds": 79.9,
+      "rack_bench_first_automation_seconds": 128.7,
+      "capture_conveyor_seconds": 156.0,
+      "capture_second_fork_seconds": 229.3
+    },
     "pacing_limit": "Deterministic tests buy immediately when affordable. These are simulation times, not measured human completion times or a fun guarantee.",
     "save_schema": 10,
     "migration": "Read1-9; preserve cash, ownership, staffing and old purchase-book values. Project in-flight cargo into durable queues without changing live state or inventing completed shipments. Partial work/animation restarts.",
@@ -83,12 +127,37 @@
   "vertical_slice_v2": {
     "change_packet": "GROWTH_FIRST_SLICE_CHANGE_PACKET.md",
     "implementation_state": "GROWTH_FIRST_PR132_DEPLOYED_HUMAN_TRIAL_PENDING",
-    "locked_scope": ["iPhone manager role, no manual parcel carrying/driving", "3D warehouse primary board", "Zone-first physical preview/purchase", "Domain-owned work/inventory/cash", "ordinary earnings support first expansion", "contracts optional acceleration", "working limited automation growth", "analysis optional mastery with observational measurement", "existing input/router and notification protections retained"],
-    "deferred": ["other Rank2 v2 equipment pairs", "Rank3 redesign", "ASRS/cross-dock", "freeform layout editor", "native-device lane until Mac access"],
-    "next_step": "HUMAN_PR132_SAVE_CONTINUITY_AND_GROWTH_TRIAL_WITHOUT_RESET",
-    "return_to_device_validation_when": ["new slice playable and regression checks green", "ordinary-play growth understood and enjoyable on iPhone", "actual equipment effects legible", "native access available for the native acceptance lane"]
+    "locked_scope": [
+      "iPhone manager role, no manual parcel carrying/driving",
+      "3D warehouse primary board",
+      "Zone-first physical preview/purchase",
+      "Domain-owned work/inventory/cash",
+      "ordinary earnings support first expansion",
+      "contracts optional acceleration",
+      "working limited automation growth",
+      "analysis optional mastery with observational measurement",
+      "existing input/router and notification protections retained"
+    ],
+    "deferred": [
+      "other Rank2 v2 equipment pairs",
+      "Rank3 redesign",
+      "ASRS/cross-dock",
+      "freeform layout editor",
+      "native-device lane until Mac access"
+    ],
+    "next_step": "VALIDATE_CAPACITY_REPAIR_CANDIDATE_NOT_REPLAY_OLD_RATING_GATE",
+    "return_to_device_validation_when": [
+      "new slice playable and regression checks green",
+      "ordinary-play growth understood and enjoyable on iPhone",
+      "actual equipment effects legible",
+      "native access available for the native acceptance lane"
+    ]
   },
-  "latest_vertical_slice_v2_merge": {"pr": 132, "merge_commit": "7493e0a0ac897d168544bade55b16c408d92bf47", "note": "Approved head ed68763b and merge have identical tree b8a2c42cef17eaf734a0a0f29b6ea759150e5240. Post-merge publish changes only preview HTML/PCK."},
+  "latest_vertical_slice_v2_merge": {
+    "pr": 132,
+    "merge_commit": "7493e0a0ac897d168544bade55b16c408d92bf47",
+    "note": "Approved head ed68763b and merge have identical tree b8a2c42cef17eaf734a0a0f29b6ea759150e5240. Post-merge publish changes only preview HTML/PCK."
+  },
   "engineering_preview": {
     "url": "https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/",
     "deployed_pr": 132,
@@ -112,11 +181,13 @@
     "local_artifacts": "Downloaded growth and deployment evidence; no new game-code WIP during integration and no claim about the user's other-machine WIP",
     "other_machine_uncommitted_or_unpushed_state": "UNKNOWN_UNTOUCHED",
     "user_data_reset": "NOT_PERFORMED",
-    "save_schema_change": "10_DEPLOYED_OLDER_SCHEMA9_EXECUTABLES_CANNOT_READ_NEW_SAVES",
+    "save_schema_change": "SCHEMA10_DEPLOYED_SCHEMA11_CANDIDATE_ONLY",
     "source_transfer_tools": "DISPOSABLE_TRANSFER_PAYLOADS_AND_ONE_TIME_WORKFLOW_REMOVED_FROM_FINAL_TREE; no font files or preview bytes added to the feature PR",
     "prior_code_baseline": "220207f06bb4fc9f76ccbc92422b5d8029a40bab",
     "prior_preview_commit": "86bf3ba109c08994dae8063a9bdf3c37cada1d66",
-    "action": "Protect unsynced external state. Keep the user's existing save and site data. Do not blindly restore a schema9 executable over schema10 progress or reset to force a test pass. Browser migration remains unverified until user observation."
+    "action": "Protect unsynced external state. Keep the user's existing save and site data. Do not blindly restore a schema9 executable over schema10 progress or reset to force a test pass. Browser migration remains unverified until user observation.",
+    "capacity_wip": "32 intended staged files, local-only; source fingerprint in candidate_verification. Remote push auto-review rejected because remote trust and explicit disclosure authorization were not established. No workaround attempted.",
+    "capacity_local_branch": "feat/capacity-repair-20260921"
   },
   "device_validation_access": {
     "representative_device": "USER_IPHONE_MODEL_UNRECORDED",
@@ -125,11 +196,48 @@
     "native_device_lane": "DEFERRED_BY_USER_UNTIL_MAC_AVAILABLE",
     "resume_condition": "MAC_XCODE_ACCESS_BECOMES_AVAILABLE"
   },
-  "phase_return": {"from": "DEVICE_VALIDATION", "to": "VERTICAL_SLICE", "date": "2026-09-18", "reason": "Core Experience failures from real iPhone Web play; latest revision follows the 2026-09-21 growth audit"},
-  "last_verified_done": "PR132 approved head ed68763b was merged with expected-head guard at7493e0a0; its tree matches the approved candidate. Tested code1b7a9e2 checks Godot315/Growth11/Clarity19/iOS123/Render113 were rechecked successful and the growth evidence ZIP/logs reverified. Preview export99 run35565739875 published0ade51a9; Pages279 run35565774244 build/deploy/report jobs succeeded. Downloaded artifact10624047550 passed ZIP digest and PCK1977496-byte/export-HTML checks. Only state docs change during synchronization. No user-data reset. Human iPhone migration/performance and enjoyment remain pending; live HTTP probing was unavailable.",
-  "blocked": "No deployment blocker remains. Human PR132 save continuity, iPhone behavior and growth enjoyment are pending. Native Mac/Xcode remains a separate later blocker.",
-  "next": "Refresh the same engineering preview without resetting the save or deleting site data. Observe whether existing funds/equipment remain and whether expansion and working automation feel clearer and more satisfying, preferably at1x for tempo assessment. A saved mature warehouse is not fresh-start pacing proof. Do not repeat the old mandatory Rating8 gate as current design.",
+  "phase_return": {
+    "from": "DEVICE_VALIDATION",
+    "to": "VERTICAL_SLICE",
+    "date": "2026-09-18",
+    "reason": "Core Experience failures from real iPhone Web play; latest revision follows the 2026-09-21 growth audit"
+  },
+  "last_verified_done": "Candidate source restored and repaired; Godot4.7.2 import and60headless tests pass, including save/cargo, three-size engine-input and current-role transition. Controlled full-cycle diagnosis identifies packing then dispatch constraints; lane or staffing improves253to276. No production workload change; PR132 remains deployed.",
+  "blocked": "Automatic approval review blocked candidate push; explicit approval for this source disclosure to the existing repository is required before retry. Candidate CI/render and physical-iPhone checks pending. Canonical TARGET PNG is truncated. Native Mac/Xcode separately deferred.",
+  "next": "Obtain explicit authorization for candidate feature-branch push and draft PR to48wr9f4wgp-lab/Logistics-Boss. Then complete CI/render. No main merge or preview deployment included.",
   "greenlight_after_device_validation": "Record GO/HOLD/KILL with evidence. PRODUCTION_DECISION remains UNDECIDED.",
-  "post_go_only": ["production release enablement", "final production signing/AppID/BundleID", "App Store/TestFlight production workflow", "store submission assets", "Android production expansion decision"],
-  "external_actions_require_approval": ["new preview deployment or public destination", "fees/contracts", "production signing operations", "Store/TestFlight distribution", "IAP/ads activation", "external analytics upload", "user data destruction"]
+  "post_go_only": [
+    "production release enablement",
+    "final production signing/AppID/BundleID",
+    "App Store/TestFlight production workflow",
+    "store submission assets",
+    "Android production expansion decision"
+  ],
+  "external_actions_require_approval": [
+    "new preview deployment or public destination",
+    "fees/contracts",
+    "production signing operations",
+    "Store/TestFlight distribution",
+    "IAP/ads activation",
+    "external analytics upload",
+    "user data destruction"
+  ],
+  "capacity_repair": {
+    "change_packet": "CAPACITY_REPAIR_CHANGE_PACKET.md",
+    "status": "LOCAL_60_TESTS_PASS_PUSH_BLOCKED_BY_AUTO_REVIEW",
+    "runtime_schema": 11,
+    "deployed_schema": 10,
+    "growth": "Optional cumulative packing3/dispatch2 units; prices are hypotheses, no requirement to purchase all5. A cell exposes dispatch constraints; staffing or a lane can address them.",
+    "staffing": "Non-authoritative draft, one atomic apply, existing30s cooldown, same-tab preservation and current-task visual identity.",
+    "diagnosis": "255s warmup +3x255s: base253, cell253, cell+lane276, cell+staffing1/2/2 also276; max5 also276; no production workload change.",
+    "test_scope": "Godot4.7.2 headless import and60tests PASS; includes full repository Godot smoke list, capacity/staffing/growth plus engine touch/navigation/notification. Linux tests are not iPhone acceptance.",
+    "remaining": "Meaningful growth beyond first cell/dispatch solution, real iPhone motion/performance/save continuity, TARGET image restoration."
+  },
+  "candidate_verification": {
+    "manifest": "CAPACITY_VERIFICATION_2026-09-21.json",
+    "source_fingerprint_sha256": "8cc888f10cd3f7ac72c777179ff963d09b046a2e9a54c5781a72b0a606dc3b21",
+    "engine": "4.7.2.stable.official.ed1daf0bf",
+    "tests_passed": 60,
+    "scope": "Linux headless; CI/render and physical iPhone pending"
+  }
 }

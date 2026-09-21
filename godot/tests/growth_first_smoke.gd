@@ -97,7 +97,7 @@ func test_automation_and_saves() -> void:
     expect(restored.load_data(legacy), "Existing schema9 accepted")
     expect(restored.money == int(legacy["money"]) and restored.forklift_unlocked, "Existing money and purchased forklift retained")
     expect(not restored.extra_forklift_owned and not restored.conveyor_owned, "Migration grants no unpurchased machinery")
-    expect(restored.save_data()["schema_version"] == 10, "Explicit version migration")
+    expect(restored.save_data()["schema_version"] == 11, "Explicit version migration")
     expect(restored.forklift_book_value == 20000 and restored.expansion_book_value == 10000, "Legacy investment values are retained")
     expect(restored.zone_staffing == sim.zone_staffing, "Schema9 direct staffing is preserved")
 func test_measurement() -> void:

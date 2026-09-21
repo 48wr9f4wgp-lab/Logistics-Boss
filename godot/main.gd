@@ -133,6 +133,14 @@ func _ready() -> void:
     hud.add_child(interaction_clarity)
     interaction_clarity.bind(hud as MobileGameHud, zone_panel, v2_rank1_coach, resume_brief)
 
+    var capacity_view := preload("res://view/capacity_growth_view.gd").new()
+    view.add_child(capacity_view)
+    capacity_view.bind(sim as FlotraV2Sim)
+    var selected_routes := preload("res://view/selected_work_routes.gd").new()
+    selected_routes.name = "SelectedWorkRoutes"
+    view.add_child(selected_routes)
+    selected_routes.bind(view, zone_panel, hud as MobileGameHud)
+
     var visual_pass_3: WarehouseVisualPass3 = WarehouseVisualPass3Script.new()
     view.add_child(visual_pass_3)
     visual_pass_3.bind(view, hud)

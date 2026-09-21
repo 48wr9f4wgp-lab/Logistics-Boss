@@ -3,23 +3,26 @@
 Status: **Canonical visual implementation specification**
 Official title: **FLOTRA（フロトラ）**
 Former title / migration alias: `LOGISTICS BOSS`
-Last synchronized: 2026-09-16 JST
+Last synchronized: 2026-09-21 JST (authority/platform reconciliation; art direction unchanged)
 Applies only to: **FLOTRA**
-Related: `GDD_FLOTRA.md`, `GAME_DEV_MASTER_RULES.md`
+Related: `GDD_FLOTRA.md`
+Canonical project rules: `ゲーム開発共通ルール_v2.4.txt`, `プロジェクト適用範囲_v2.4.txt`, `ゲーム開発チャット引き継ぎルール_v2.4.txt`. The old repo Master filename is not current authority.
 
 ## 1. Purpose
 
 This document converts the approved completion visual into a production-ready visual implementation target.
 
-The target image is a **North Star**, not a literal pixel-for-pixel runtime requirement. The production goal is to preserve the same player impression while remaining readable, performant, maintainable and feasible on native iOS / Android.
+The target image is a **North Star**, not a literal pixel-for-pixel runtime requirement. The production goal is to preserve the same player impression while remaining readable, performant, maintainable and feasible on iPhone / native iOS. Android is not an active production target; Web remains an engineering preview only.
 
 Primary visual promise:
 
 > A premium portrait 3D logistics diorama where the player can read flow, congestion and growth at a glance.
 
-The scene must communicate the core loop visually:
+The scene must communicate the growth-first GDD loop visually:
 
-**observe flow → find bottleneck → intervene → watch autonomous logistics react → measure improvement → expand.**
+**ship and earn → invest → watch real equipment and work change → expand.**
+
+Observation of flow, bottlenecks and measured results supports optional optimization; it does not block the next investment. This wording aligns with the GDD and does not change the visual target.
 
 ## 2. Visual North Star
 
@@ -385,6 +388,8 @@ At actual phone scale:
 - do not assume concept-art detail remains visible in runtime
 
 ## 17. Concept image interpretation rules
+
+Reference availability checkpoint, 2026-09-21: the canonical TARGET path is `docs/visual/logistics_boss_visual_north_star_2026-09-16.png` (see `docs/visual/README.md`). The recovered bytes match the canonical Git blob, but decoding fails with **`Truncated File Read`**. Therefore the target image is **not visually accessible or verified** in this repair session; locating the path or matching the blob does not resolve that blocker. Retain the written art direction and CURRENT/WIP references for bounded consistency repairs. Target-fidelity judgment and a new art-direction decision require a readable recovery or reattachment of the actual approved image; do not substitute a current render or invent a target.
 
 The approved visual concept is authoritative for:
 

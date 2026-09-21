@@ -31,16 +31,16 @@ var warehouse_view: WarehouseView
 
 func bind(view: WarehouseView) -> void:
     warehouse_view = view
-    warehouse_view._camera_distance = HERO_CAMERA_DISTANCE
-    warehouse_view._orbit_pitch = -0.69
-    warehouse_view._orbit_yaw = -0.80
+    warehouse_view._camera_distance = 20.5 if warehouse_view.sim != null and warehouse_view.sim.facility_rank >= 2 else 19.5
+    warehouse_view._orbit_pitch = -0.84
+    warehouse_view._orbit_yaw = -0.48
     if warehouse_view.sim != null and not warehouse_view.sim.event_emitted.is_connected(_on_domain_event):
         warehouse_view.sim.event_emitted.connect(_on_domain_event)
     call_deferred("_apply_composition")
 
 
 func _process(_delta: float) -> void:
-    if warehouse_view == null:
+    if warehouse_view == null or warehouse_view is MobileWarehouseView:
         return
 
     var camera := get_viewport().get_camera_3d()
@@ -62,7 +62,7 @@ func _process(_delta: float) -> void:
 
 func _apply_composition() -> void:
     var camera := get_viewport().get_camera_3d()
-    if camera != null:
+    if camera != null and warehouse_view is not MobileWarehouseView:
         camera.fov = BASE_FOV
 
     _reduce_foreground_structure()

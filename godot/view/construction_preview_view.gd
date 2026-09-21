@@ -94,6 +94,14 @@ func preview_child_count() -> int:
 
 func _build_kind_ghost(parent: Node3D, kind: StringName) -> void:
     var color := _preview_color(kind)
+    if String(kind).begins_with("packing_cell_"):
+        var index := clampi(String(kind).get_slice("_",2).to_int()-1,0,2)
+        _box(parent,"GhostAddedCell",Vector3(1.85,1.35,1.8),CapacityGrowthView.CELL_POS[index]+Vector3(0,0.7,0),color)
+        return
+    if String(kind).begins_with("dispatch_lane_"):
+        var index := clampi(String(kind).get_slice("_",2).to_int()-1,0,1)
+        _box(parent,"GhostAddedDispatch",Vector3(2.1,1.1,1.6),CapacityGrowthView.LANE_POS[index]+Vector3(0,0.6,0),color)
+        return
     match kind:
         &"rack_wing":
             _box(parent, "Ghost_RackWingPad", Vector3(1.55, 0.055, 3.35), Vector3(-3.92, 0.045, -1.05), color)
