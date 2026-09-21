@@ -38,6 +38,12 @@ jobs:
           set -euo pipefail
           timeout 90s godot --headless --audio-driver Dummy --path godot --script res://tests/mobile_interaction_clarity_smoke.gd 2>&1 | tee /tmp/clarity-smoke.log
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/clarity-smoke.log; then exit 1; fi
+      - name: Test engine-generated touch and mouse emulation
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 90s godot --headless --audio-driver Dummy --path godot --script res://tests/mobile_engine_touch_smoke.gd 2>&1 | tee /tmp/clarity-engine-touch.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/clarity-engine-touch.log; then exit 1; fi
       - name: Install software-render display
         shell: bash
         run: |
