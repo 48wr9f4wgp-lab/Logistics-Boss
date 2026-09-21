@@ -13,13 +13,13 @@
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
     "boot": "pass",
-    "ci_latest_verified": "pr128_code_9f0a1d0_godot306_ios116_render104_clarity10_success_main_merge_engine_and_composed_clarity12_success",
+    "ci_latest_verified": "pr130_head619ebff_godot311_ios120_render109_clarity15_success",
     "core_loop_e2e": "pass_pr74",
     "meta_loop_e2e": "pass_pr75_rank1_to_rank3_with_earned_cash",
     "session_resume": "pass_pr76_domain_derived_resume_brief",
-    "device_web_ios": "post_pr126_human_input_FAIL_post_pr128_retest_PENDING_not_native",
+    "device_web_ios": "post_pr128_positive_basic_usability_report_popup_overlap_remaining_post_pr130_recheck_pending_not_native",
     "mobile_camera": "verified_web_ios_and_regression_covered",
-    "mobile_management_scroll": "historical_web_ios_and_automated_regressions_pass_post_pr128_human_retest_pending",
+    "mobile_management_scroll": "historical_web_ios_and_automated_regressions_pass_latest_human_report_is_basic_usability_not_exhaustive_gesture_acceptance",
     "save": "schema_v9_primary_backup_recovery_pass_schema8_staffing_migration_verified",
     "measurement_feedback": "domain_verdict_shared_by_hud_gamefeel_and_3d",
     "visual_progression": "pass_pr103_rank1_rank2_rank3_fresh_render_human_inspected_rank2_growth_strengthened_rank3_larger_no_foreground_obstruction",
@@ -37,7 +37,7 @@
     "ftue_core_loop_comprehension": "pass_pr99_ftue_stays_active_until_authoritative_measurement_completed_then_teaches_verdict_and_next_loop",
     "economy_progression_pacing": "pass_pr101_rank2_510s_frontier_best_adaptive_212_vs_best_fixed_shipping_202_after_storage_buffer_tune",
     "core_experience_v2_playtest": "fail_2026_09_18_ios_web_management_clicker_growth_not_legible_management_hard_to_parse_repetition_exposed",
-    "core_loop_e2e_v2": "automated_slice_and_natural_progression_pass_human_input_failed_after_pr126_post_pr128_retest_pending_growth_first_design_review_required",
+    "core_loop_e2e_v2": "automated_slice_and_natural_progression_pass_post_pr128_basic_usability_improved_human_growth_and_fun_not_passed",
     "management_readability_v2": "fail_2026_09_18_ios_web_information_hierarchy_action_effect_unclear",
     "reward_growth_recognition_v2": "fail_2026_09_18_ios_web_equipment_and_facility_change_not_clear_during_normal_play",
     "legacy_core_loop_automation": "pass_pr74_valid_for_legacy_flow_not_v2_product_proof",
@@ -69,12 +69,14 @@
     "mobile_interaction_clarity_v2": "pass_pr126_composed_screen_touch_failures0_late_font_visible_press_contract_start_live_progress_field_navigation_preview_commit_rank2_renovation_staffing_cancel_multitouch_scroll_clipping_and_duplicate_rejection",
     "mobile_interaction_clarity_visuals": "actual_main_390x844_fresh_completed_equipment_resume_contracts_field_installed_storage_captures_inspected_during_implementation_not_iphone_acceptance",
     "post_pr126_human_ui_foundation": "FAIL_2026_09_21_user_reports_no_controls_could_be_pressed",
-    "engineering_preview_deployment": "pass_export_publish97_run35548966966_pages273_run35548992216_at_d642a4b06ea5220d41e0212f94883f2deff78298",
-    "engineering_preview_live_http_probe": "UNVERIFIED_container_DNS_unavailable_web_tool_inaccessible_local_Chromium_navigation_blocked_no_runtime_pass_claimed",
+    "engineering_preview_deployment": "pass_pages276_run35558380778_at_86bf3ba109c08994dae8063a9bdf3c37cada1d66_direct_child_of_pr130_merge4a398a4",
+    "engineering_preview_live_http_probe": "UNVERIFIED_live_Pages_web_tool_inaccessible_container_raw_source_DNS_failed_no_browser_or_iphone_runtime_pass_claimed",
     "engine_touch_emulation": "RED_unchanged_app_f62b828_clarity9_engine_parser_failures3_GREEN_9f0a1d0_clarity10_main_e892e56_clarity12_success",
-    "post_pr128_human_ui_foundation": "PENDING_NOT_PASSED",
-    "deployed_artifact_integrity": "Pages_artifact10617173408_zip_sha256_matches_3c518b27d44d3425c8b018939ad436acab46ba5a30e4bb9b10afec00b4aeb496_index_pck1936860_bytes_verified",
-    "growth_automation_fun": "NOT_PASSED_user_requests_faster_visible_expansion_and_accumulating_functional_forklifts_conveyors_design_revision_not_implemented"
+    "post_pr128_human_ui_foundation": "POSITIVE_2026_09_21_user_reports_improved_usability_IMG_2615_shows_expansion_navigation_popup_overlap_remaining_not_exhaustive_input_acceptance",
+    "deployed_artifact_integrity": "Pages_artifact10620554995_zip_sha256_matches_37302145b34dade3c97d64bef030c118e6a56a9f01d1f4d4c8c7762c7bccd1d5_index_pck1944592_bytes_matches_export_HTML",
+    "growth_automation_fun": "NOT_PASSED_user_requests_faster_visible_expansion_and_accumulating_functional_forklifts_conveyors_design_revision_not_implemented",
+    "notification_clearance": "PR130_head619ebff_clarity15_success_390x844_375x667_430x932_engine_taps_no_logistics_or_cash_pause_no_shipment_backlog_priority_measurement_timers_retained_zone_reset_coverage",
+    "post_pr130_human_notification_clearance": "PENDING_NOT_PASSED"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -91,9 +93,9 @@
     "merge_commit": "1661e87fc372d6b1ca4fa8b28da82f08579c69a4",
     "title": "Add synthetic Android native export smoke"
   },
-  "last_verified_done": "User explicitly approved PR128 integration and replacement of the same engineering preview with 実行. PR128 merged with expected-head guard at e892e56ef75d6e7e0d491eb8ccb04e555f5abb6b. Tested code 9f0a1d0d9a6d4fa11a094c8eb1741cde87f3de56 passed Godot CI306, iOS116, Render104 and Clarity10; its one later PR-head commit was documentation only. The main-merge Clarity12 run35548966977 also passed composed input, engine-parser input and actual-main capture steps. Preview export97 run35548966966 published d642a4b06ea5220d41e0212f94883f2deff78298; Pages deployment273 run35548992216 succeeded. Downloaded deployed Pages artifact10617173408 and verified ZIP digest and changed index.pck size1936860. Live HTTP and browser runtime inspection were unavailable; human iPhone input, comprehension and fun remain unverified. No gameplay/economy/save changes were added during integration.",
-  "blocked": "Human iPhone Web input retest after PR128 is pending. Post-PR126 human test FAILED. Native physical-iPhone validation remains separately deferred for Mac/Xcode. Automated/deployment/artifact success is not human acceptance.",
-  "next": "On the same existing preview, without resetting the save, first check only repeated normal taps: open and close Management, then start one contract. Confirm taps do not lock after the first press. Any remaining failure stays an input blocker; preserve the actual build/device evidence and do not coach around it. Separately prepare a bounded growth-first GDD/change-packet revision centered on visible expansion and functional automation; do not silently change the current Rank1 gate or mix conveyor/economy work into this input fix.",
+  "last_verified_done": "User explicitly approved PR130 and replacement of the same engineering preview with 反映しよう. Approved and tested head619ebff77a4446587739b6ae1f8bd3fcb2a57be0 was squash-merged with expected-head guard at4a398a417aa53b1deee009cb344bce273e2035db. Rechecked Clarity15 run35555431030, Godot311 run35555431033, iOS120 run35555431035 and Render109 run35555431046: success. Preview publish86bf3ba109c08994dae8063a9bdf3c37cada1d66 is one direct descendant commit changing only preview HTML/PCK. Pages276 run35558380778 succeeded for that publish commit. Downloaded artifact10620554995, verified its ZIP SHA256 and index.pck size1944592 against export HTML. Human post-PR128 improved-usability report is recorded as limited positive evidence, not every-gesture or fun acceptance. PR130 iPhone notification recheck remains pending. No input-router, Domain, economy, progression or save changes were added during this integration.",
+  "blocked": "No new implementation blocker for the bounded next design task. PR130 human iPhone notification-clearance recheck is pending; post-PR128 basic usability was reported improved. Native physical-iPhone validation remains separately deferred for Mac/Xcode. Automated/deployment/artifact success is not comprehensive human acceptance.",
+  "next": "Briefly verify that shipment notifications no longer cover Management tabs or Zone purchase controls in the current iPhone preview; keep the save. Do not repeat the earlier no-input diagnosis as the latest state. Next product task is the separate bounded growth-first GDD/change-packet revision centered on visible expansion and functional automation; do not require lengthy validation of the old loop before addressing this feedback. No conveyor, economy or Rank1-gate change is implemented by PR130.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -146,7 +148,7 @@
   },
   "vertical_slice_v2": {
     "change_packet": "VERTICAL_SLICE_V2_CHANGE_PACKET.md",
-    "implementation_state": "PR128_INPUT_FIX_DEPLOYED_HUMAN_RETEST_PENDING_GROWTH_DIRECTION_REVIEW",
+    "implementation_state": "PR130_NOTIFICATION_FIX_DEPLOYED_BASIC_USABILITY_IMPROVED_NOTIFICATION_RECHECK_PENDING_GROWTH_DIRECTION_REVIEW",
     "locked_scope": [
       "3D warehouse as primary game board",
       "Zone-first normal equipment decisions",
@@ -254,59 +256,62 @@
       "readiness-aware primary action and authoritative accepted-contract progress",
       "PR126 exported and deployed to the same existing Web engineering-preview destination after explicit user approval",
       "PR128 engine-generated mouse-before-touch lock reproduced before fix and guarded by Input.parse_input_event regression",
-      "PR128 scoped input repair exported and deployed after user approval; physical iPhone acceptance remains pending"
+      "PR128 scoped input repair exported and deployed after user approval; later human report confirms improved basic usability only",
+      "PR130 hides routine shipment popups during controls without pausing logistics; current important results resume after closing controls",
+      "PR130 approved head integrated and same existing preview deployed; human notification-clearance recheck pending"
     ],
-    "next_step": "IPHONE_WEB_PR128_REPEATED_TAP_RETEST"
+    "next_step": "IPHONE_WEB_PR130_NOTIFICATION_RECHECK_THEN_BOUNDED_GROWTH_FIRST_DESIGN"
   },
   "latest_vertical_slice_v2_merge": {
-    "pr": 128,
-    "merge_commit": "e892e56ef75d6e7e0d491eb8ccb04e555f5abb6b",
-    "title": "Repair engine mouse-before-touch input lock",
-    "evidence": "Code9f0a1d0: Clarity10 Godot306 iOS116 Render104 and historical Android118 success. Main merge Clarity12 also passed. Preview97 and Pages273 success. Downloaded deployment artifact verified; human acceptance pending."
+    "pr": 130,
+    "merge_commit": "4a398a417aa53b1deee009cb344bce273e2035db",
+    "title": "Keep mobile controls clear of shipment notifications",
+    "evidence": "Approved head619ebff: Clarity15 Godot311 iOS120 Render109 and historical Android123 success. Publish86bf3ba is a direct preview-only child of the merge. Pages276 run35558380778 success and downloaded artifact10620554995 integrity verified. Human notification recheck pending."
   },
   "working_head": {
     "repo": "48wr9f4wgp-lab/Logistics-Boss",
     "branch": "main",
-    "commit_at_sync_input": "d642a4b06ea5220d41e0212f94883f2deff78298",
+    "commit_at_sync_input": "86bf3ba109c08994dae8063a9bdf3c37cada1d66",
     "validation_status": "PARTIAL",
     "note": "The containing docs-only synchronization commit advances main. Resolve live main SHA on restart; game code baseline and preview files are unchanged by that docs commit."
   },
   "verified_baseline": {
-    "code_commit": "9f0a1d0d9a6d4fa11a094c8eb1741cde87f3de56",
-    "main_merge_commit": "e892e56ef75d6e7e0d491eb8ccb04e555f5abb6b",
-    "web_publish_commit": "d642a4b06ea5220d41e0212f94883f2deff78298",
+    "code_commit": "619ebff77a4446587739b6ae1f8bd3fcb2a57be0",
+    "main_merge_commit": "4a398a417aa53b1deee009cb344bce273e2035db",
+    "web_publish_commit": "86bf3ba109c08994dae8063a9bdf3c37cada1d66",
     "verified_at": "2026-09-21",
-    "scope": "Engine-parser input reproduction/fix; composed touch/navigation regressions, existing Godot/save/progression/iOS-export checks, automated actual-main capture, Web export, Pages deployment and downloaded deployment-artifact integrity. No live-browser or physical-iPhone verification in this integration session.",
-    "human_iphone_acceptance": "PENDING_AFTER_PR128_PRIOR_PR126_FAILED",
+    "scope": "Approved-head composed and engine-parser input tests, notification clearance at three window sizes, live earnings comparison, existing Godot/save/progression/iOS-export checks, actual-main capture from implementation, Pages deployment and downloaded deployment-artifact integrity. No live-browser or physical-iPhone verification of PR130 in this integration session.",
+    "human_iphone_acceptance": "PR128_BASIC_USABILITY_POSITIVE_REPORT_ONLY_PR130_NOTIFICATION_RECHECK_PENDING",
     "native_iphone_acceptance": "DEFERRED_MAC_XCODE"
   },
   "engineering_preview": {
     "url": "https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/",
     "approval": "EXPLICIT_USER_APPROVAL",
-    "approval_source": "User replied 実行 to the explicit request to integrate PR128 and replace the same existing trial URL",
-    "approved_head": "e9ac90c3cb3aef1f5b6e5bf04a4e1dc9f36d0871",
-    "approval_scope": "PR128 input repair, integration/state synchronization and replacement of existing engineering preview only; no production release, new destination, growth/economy implementation or user data reset",
-    "publish_run_id": 35548966966,
-    "publish_commit": "d642a4b06ea5220d41e0212f94883f2deff78298",
-    "pages_run_id": 35548992216,
+    "approval_source": "User replied 反映しよう to the explicit request to integrate PR130 and replace the same existing trial URL",
+    "approved_head": "619ebff77a4446587739b6ae1f8bd3fcb2a57be0",
+    "approval_scope": "PR130 notification repair, integration/state synchronization and replacement of existing engineering preview only; no production release, new destination, growth/economy implementation or user data reset",
+    "source_merge_commit": "4a398a417aa53b1deee009cb344bce273e2035db",
+    "publish_commit": "86bf3ba109c08994dae8063a9bdf3c37cada1d66",
+    "pages_run_id": 35558380778,
     "pages_deployment": "SUCCESS",
-    "live_http_runtime_probe": "UNAVAILABLE_DNS_AND_WEB_ACCESS_FAILURE_LOCAL_BROWSER_NAVIGATION_BLOCKED",
-    "downloaded_pages_artifact_id": 10617173408,
-    "artifact_zip_sha256": "3c518b27d44d3425c8b018939ad436acab46ba5a30e4bb9b10afec00b4aeb496",
-    "index_pck_bytes": 1936860,
-    "index_pck_sha256": "568ac1b0245afdcbd1a4550bf03f6f3acc455177577519ce964604fe0b0f9572"
+    "live_http_runtime_probe": "UNVERIFIED_LIVE_PAGES_NOT_ACCESSIBLE_VIA_WEB_TOOL_NO_BROWSER_OR_IPHONE_RUNTIME_PASS",
+    "downloaded_pages_artifact_id": 10620554995,
+    "artifact_zip_sha256": "37302145b34dade3c97d64bef030c118e6a56a9f01d1f4d4c8c7762c7bccd1d5",
+    "index_pck_bytes": 1944592,
+    "index_pck_sha256": "347aece2a365854084d54d806fc90c2bd8be5fdbfcf80adff073734337ceccc1"
   },
   "recovery_state": {
     "pr126": "MERGED_REPAIR_BRANCH_RETAINED",
     "pr128": "MERGED_REPAIR_BRANCH_RETAINED",
+    "pr130": "MERGED_REPAIR_BRANCH_RETAINED",
     "integration_session_game_code_wip": "NONE",
     "other_machine_uncommitted_or_unpushed_state": "UNKNOWN_NOT_INFERRED_FROM_GITHUB",
     "user_data_reset": "NOT_PERFORMED",
     "save_schema_change": "NONE_V9_RETAINED",
-    "prior_preview_commit": "9aa0500a5f4fdd65a823c87e618895ba110ab88a",
-    "prior_code_baseline": "4e2318464d21e7c53767fbd8e1a85b7095d2614a",
-    "user_side_pending": "Human iPhone Web repeated-tap retest after PR128",
-    "action": "Protect external local state. The preceding PR126 preview was human-input FAIL and is only a recovery reference, not a known-good device baseline. Prefer reviewed forward fixes; no automatic reset or data deletion."
+    "prior_preview_commit": "d642a4b06ea5220d41e0212f94883f2deff78298",
+    "prior_code_baseline": "e892e56ef75d6e7e0d491eb8ccb04e555f5abb6b",
+    "user_side_pending": "Brief iPhone Web notification-clearance recheck after PR130",
+    "action": "Protect external local state. PR128 has positive basic-usability evidence but known popup overlap; it is not a comprehensive accepted product baseline. No automatic rollback, reset or data deletion."
   },
   "growth_direction_review": {
     "status": "USER_REQUEST_RECORDED_DESIGN_REVISION_NOT_IMPLEMENTED",
