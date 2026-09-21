@@ -1,0 +1,34 @@
+{
+  "approved_head": "a82567b31cea63559db53b95df3c47d2c0e940c5",
+  "merge_commit": "5d00b41a072aaa3ca9dce55e25c6e62f921a7415",
+  "merge_tree": "e34a834ca52c9ebbd7262bca49638f7dfb3d811f",
+  "publish_commit": "513aa108c2e06593f151cccff1bc9d0cfbd02f16",
+  "source_publish_run": 35631883579,
+  "pages_run": 35631932528,
+  "pages_result": "SUCCESS_BUILD_DEPLOY_REPORT",
+  "approved_head_ci_runs": [
+    35621280943,
+    35621281062,
+    35621280970,
+    35621280962,
+    35621280968,
+    35621281024
+  ],
+  "approved_head_ci_result": "6_SUCCESS",
+  "post_merge_ci_runs": [
+    35631883526,
+    35631883446,
+    35631883537,
+    35631883561
+  ],
+  "post_merge_ci_result": "4_SUCCESS",
+  "render_review_artifact": 10649616069,
+  "render_review_sha256": "e148d50f08e0f15a26b97cf296cf389a8aaaf1591e40f5001196b0508f2820cd",
+  "render_review": "ALL15PNG_VIEWED_SCOPED_UI_FIXES_CONFIRMED",
+  "preview_url": "https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/",
+  "save_schema": 11,
+  "save_reset": false,
+  "browser_observation": "Missing WebGL2 in cloud browser; no gameplay claim",
+  "iphone_acceptance": "PENDING",
+  "production_decision": "UNDECIDED"
+}
