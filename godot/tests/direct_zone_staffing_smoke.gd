@@ -182,7 +182,7 @@ func _verify_ui() -> bool:
     if hud._v2_staffing_panel == null or not hud._v2_staffing_panel.visible:
         _fail("Rank 2 Management must expose executive staffing overview")
         return false
-    if hud._v2_staffing_label == null or not hud._v2_staffing_label.text.contains("RECEIVING/STORAGE 1人"):
+    if hud._v2_staffing_label == null or not hud._v2_staffing_label.text.contains("入荷・保管 1人"):
         _fail("Management staffing overview must reflect live direct allocation")
         return false
     if hud._staffing_grid != null and hud._staffing_grid.visible:

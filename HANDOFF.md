@@ -67,11 +67,11 @@ Rate multipliers remain test-only. Do not infer insufficient demand from flat300
 TARGET: reattached 853×1844 JPEG viewed, SHA2565303409d35e0f5e465b43cf4fdb07a3b5a5ebc98b50eab776262bd1de91f1eb2. Git PNG remains truncated; do not retry it or claim byte-identical restoration. North Star mood/composition is guidance, not literal Rank3 counts/prices/UI.
 CURRENT: user-uploaded growth15 ZIP SHA2560553a5cb53fdd8f81e0db813a66d3fb1fc51b3f2184436045533f838989bc055 exactly matches HEAD1da82cb artifact10638502412; all13 PNGs inspected. Finding: NEEDS_REVISION, including bottom button/result overlap, clipped pressure copy, worker/zone text clutter, stale staffing directions and framing/material separation.
 Implemented repair: reserve feedback clearance for camera/route controls; two-line Japanese pressure/wave summary; current staffing entry copy; Japanese zone names and worker text only at close zoom; portrait camera heading/target and floor/wall contrast adjustment. No economics or save changes.
-Godot4.7.2 import and9 targeted tests PASS, including full-main layout/projection checks at375/390/430px and existing touch/staffing/discovery tests. Geometry checks do not imply visual acceptance.
+Godot4.7.2 import and10 targeted tests PASS, including full-main layout/projection checks at375/390/430px and existing touch/staffing/discovery tests. Geometry checks do not imply visual acceptance.
 New capture fixtures include feedback+route controls and close worker-role inspection. New candidate CI/rendered image review is pending at this source checkpoint; exact runs/results are appended to PR136.
 
 ## Last verified done / blocked / next
-DONE: current base image audit and bounded repair with9 targeted local test passes. Historical60-test mechanical evidence remains scoped to its earlier source.
+DONE: current base image audit and bounded repair with10 targeted local test passes. Historical60-test mechanical evidence remains scoped to its earlier source.
 NEXT: review newly generated candidate renders before visual acceptance; then assess a separately approved preview replacement for ordinary-play iPhone validation. Main/deployed preview unchanged. No repeated old image download attempts without new evidence.
 
 ## Approval boundary

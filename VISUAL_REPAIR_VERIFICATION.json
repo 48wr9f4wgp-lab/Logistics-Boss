@@ -2,7 +2,7 @@
   "scope": "FLOTRA source-only portrait readability candidate",
   "base_commit": "1da82cb055009b0f6c1a27d172bc531f28afccd6",
   "engine": "4.7.2.stable.official.ed1daf0bf",
-  "tests_passed": 9,
+  "tests_passed": 10,
   "source_sha256": {
     ".github/workflows/growth-slice.yml": "536007108ab5d5628f6db8118988fe2c1e54160fafcbb82b5ea834fa3cbd6f5f",
     "godot/tests/capacity_capture.gd": "2a582c9ac2abdc9914ed18a447f888e624d71f9cffc2ad5ed0373c479e2630bb",
@@ -16,7 +16,8 @@
     "godot/view/visual_composition_fix.gd": "e2cc7303f6b278fc0376a38d7ed5b573523da1ef1f92bad8798e99b906eccd13",
     "godot/view/warehouse_view.gd": "a02e06c6c754aaaa055822f99eee8a78ae6c74709b0ac8d7d560d8a23cdf220f",
     "godot/view/warehouse_view_mobile.gd": "979606aca083d2fa4a52f2706b532e9dad4daf9377eaad883c31b23d6032c6fa",
-    "godot/view/zone_interaction_view.gd": "93c42ce597a1cbef6039910bcabfd6dce116e4e44cd5effe6433c525b9b98020"
+    "godot/view/zone_interaction_view.gd": "93c42ce597a1cbef6039910bcabfd6dce116e4e44cd5effe6433c525b9b98020",
+    "godot/tests/direct_zone_staffing_smoke.gd": "54c93d34127fd0690f82bfa989f7dc965e5fc762eee255ed7977c85299fd669a"
   },
   "logs_sha256": {
     "ftue_core_loop_smoke.log": "c695c186894d6b66cdd4e7aca23dc4965a1dbfde03e79e62f4f7a93fdd7ce790",
@@ -27,13 +28,15 @@
     "staffing_workspace_smoke.log": "63f64ba01025b75d8a6acc0e194cd139ca2170239ce4574a3462fffd5290ad14",
     "v2_discoverability_navigation_smoke.log": "592f41b1799375d59cf212b43c76062779ce1a346d01dc0ce0566008ca060213",
     "v2_interaction_skeleton_smoke.log": "e91c91cab97c5602d3b0ecc2ab88dc0101a4c7bc719154eb7b54394f43c7046d",
-    "visual_readability_smoke.log": "f9c010535136bf9934e0a19745088ee512882a996cc059a4e56c1a41aa977694"
+    "visual_readability_smoke.log": "f9c010535136bf9934e0a19745088ee512882a996cc059a4e56c1a41aa977694",
+    "direct_zone_staffing_smoke.log": "0c777175e699402fb54a7edfbc3baabc170bb37f5043d2cd9d30f1a8e9259f4e"
   },
   "rendered_review": "PENDING_NEW_CANDIDATE",
   "device_acceptance": "NOT_CLAIMED",
   "notes": [
     "Initial local layout run caught CanvasLayer viewport accessor error; fixed before passing tests.",
     "Existing60-test and6CI records apply to earlier source only.",
-    "New camera geometry pass is not an art-quality verdict."
+    "New camera geometry pass is not an art-quality verdict.",
+    "CI on e54d0fb passed5/6 workflows; Godot stopped at old RECEIVING/STORAGE text assertion. Updated Japanese text expectation, retained actual live allocation check; targeted test passes. Runtime unchanged by follow-up."
   ]
 }

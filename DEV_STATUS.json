@@ -207,7 +207,7 @@
     "date": "2026-09-18",
     "reason": "Core Experience failures from real iPhone Web play; latest revision follows the 2026-09-21 growth audit"
   },
-  "last_verified_done": "Reviewed all13 current-head growth/capacity PNGs from uploaded exact-digest growth15 artifact against reattached TARGET. Implemented bounded portrait-readability repair; Godot4.7.2 import and9 targeted tests pass. See VISUAL_REPAIR_VERIFICATION.json for source/log hashes.",
+  "last_verified_done": "Reviewed all13 current-head growth/capacity PNGs from uploaded exact-digest growth15 artifact against reattached TARGET. Implemented bounded portrait-readability repair; Godot4.7.2 import and10 targeted tests pass. See VISUAL_REPAIR_VERIFICATION.json for source/log hashes.",
   "blocked": "Old artifact-delivery failure was resolved by user upload for HEAD1da82cb. New repair rendered review and physical-iPhone validation remain pending; native Mac/Xcode deferred.",
   "next": "Review new candidate CI captures, especially measurement overlay and framing at all equipment levels. Source/PR approval does not include main merge or preview deployment.",
   "greenlight_after_device_validation": "Record GO/HOLD/KILL with evidence. PRODUCTION_DECISION remains UNDECIDED.",
@@ -257,7 +257,7 @@
     "base_commit": "1da82cb055009b0f6c1a27d172bc531f28afccd6",
     "change_packet": "VISUAL_READABILITY_REPAIR.md",
     "manifest": "VISUAL_REPAIR_VERIFICATION.json",
-    "local_tests_passed": 9,
+    "local_tests_passed": 10,
     "visual_acceptance": "PENDING_NEW_RENDERED_REVIEW",
     "source_scope": "Presentation only; no domain/save/config dependency changes",
     "target_viewed": true,
