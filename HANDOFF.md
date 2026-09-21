@@ -10,11 +10,13 @@ Canonical: Japanese project v2.4 set + GDD_FLOTRA.md + ART_BIBLE_FLOTRA.md.
 - Do not require all5new purchases. A first packing cell exposes dispatch pressure; staffing or a lane can solve it. No new workload multiplier is adopted.
 
 ## Working head
-- Shared repo:48wr9f4wgp-lab/Logistics-Boss / branch:main
-- Shared commit:b63d60a7d506a80ef8efe8e005c4e9196d21fbcb (unchanged)
-- Candidate branch:feat/capacity-repair-20260921 is LOCAL ONLY, in RECOVERY_STATE.
-- Remote push was rejected by automatic approval review: remote trust and explicit source-disclosure authorization were not established. No indirect retry performed.
-- Candidate verification:headless tests passed; CI/render/device pending.
+- Shared repo:48wr9f4wgp-lab/Logistics-Boss / branch:feat/capacity-repair-20260921.
+- Draft PR: https://github.com/48wr9f4wgp-lab/Logistics-Boss/pull/136
+- Verified shared code/test commit:390787dcfc9ef5df19dd056e11637e93fc813219.
+- This state/evidence-only record follows that commit. Resolve the exact current branch tip from PR136 head_sha; confirm its difference is documentation only.
+- Original local190f6d536965538c710075eaf7612a628e677395 tree matches shared71badab9e52ddcd6e4b276de0afd35b2639641ac exactly.
+- User explicitly approved feature-branch sharing and Draft PR creation after the prior automatic approval rejection; that blocker is resolved.
+- Main remains b63d60a7d506a80ef8efe8e005c4e9196d21fbcb; PR132 preview is unchanged.
 
 ## Verified baseline
 Historical shared/deployed:
@@ -25,15 +27,17 @@ Historical shared/deployed:
 - Old check/artifact ledger remains in DEV_STATUS.json and Git history.
 - User feedback in Issue134 is POSITIVE_INITIAL_HUMAN_FUN_FEEDBACK, not comprehensive acceptance.
 
-Candidate local verification:
+Candidate verification:
 - Godot4.7.2.stable.official.ed1daf0bf, Linux headless.
 - Editor import:PASS, no script/parse errors.
 -60tests:PASS, including existing repository Godot smoke tasks, capacity conservation/save migration, staffing atomicity/same-tab/current-task identity, growth and three-size engine-touch/navigation/notification checks.
 - Exact source fingerprint and per-test log SHA256:CAPACITY_VERIFICATION_2026-09-21.json.
-- This is no native-iPhone/render/performance/fun acceptance. Candidate CI and renders remain pending.
+- Remote CI, render-file generation, exact run IDs and artifact metadata:CAPACITY_CI_EVIDENCE_2026-09-21.json. PNG generation does not establish native-iPhone/performance/fun or visual acceptance.
+-390787d only corrects a stale capture-fixture assertion (old hero distance versus candidate rank-aware overview) and stale GDD verification wording. Runtime source is unchanged from the60-test candidate.
 
 ## Recovery state
 - Preserved original handoff ZIP/source patch remains unchanged.
+- Original local commit is retained on recovery/local-capacity-190f6d5. Candidate source is now shared in PR136; no unshared runtime WIP remains.
 -15modified base files matched exact main Git blobs; source patch applied cleanly.
 - Working copy is materialized against a shallow Git checkout. Unmaterialized unrelated paths are skip-worktree, not deleted from candidate commits.
 - No generated .godot, .uid, .import, new font or preview binary included.
@@ -60,13 +64,13 @@ Original300s86output in all4variants reproduced. After255s warmup +3complete255s
 Rate multipliers remain test-only. Do not infer insufficient demand from flat300s totals or force all5purchases.
 
 ## Visual access
-CURRENT: four original current/WIP images were reopened during audit; fresh candidate render pending.
+CURRENT: four original current/WIP images were reopened during audit. Candidate PNGs were generated in CI, but file delivery returned HTTP403/Cloudflare1010; their contents have not been viewed. This is separate from successful renderer/test execution.
 TARGET:docs/visual/logistics_boss_visual_north_star_2026-09-16.png matches the repository blob but is truncated and cannot decode. VISUAL BLOCKED for major TARGET/art-direction judgment. No substitute image has been invented.
 
 ## Last verified done / blocked / next
-LAST VERIFIED DONE: source recovery, audited repairs and exact4.7.2headless60test run, controlled diagnosis and state/spec reconciliation.
-BLOCKED: automatic review rejected remote push. Candidate CI/render and iPhone acceptance; unreadable TARGET; native Mac/Xcode remains deferred.
-NEXT: explicit authorization for this candidate source push and draft PR to the existing repository, then CI/render. Main merge and preview deployment remain separate. Keep user saves. Do not repeat old Rating-gate trials or add workload growth without a new justified need.
+LAST VERIFIED DONE: source recovery and repairs; exact4.7.2headless60tests; controlled flow diagnosis; Draft PR136; corrected camera capture fixture; remote evidence recorded in CAPACITY_CI_EVIDENCE_2026-09-21.json.
+BLOCKED: artifact PNG download/access and image review; unreadable TARGET; physical-iPhone acceptance; native Mac/Xcode remains deferred. The earlier source-sharing approval block is resolved.
+NEXT: view the recorded render artifacts through a permitted path and restore TARGET access, then evaluate a separately approved preview replacement for ordinary-play iPhone validation. Preserve saves; do not repeat retired Rating gates or add workload growth without evidence.
 
 ## Approval boundary
-PR132 approval covers only its historical preview replacement. No approval for this candidate's main merge/preview deployment, new destination, reset, Store/TestFlight, fees or services is implied.
+The current user approval covers this candidate's existing-repository feature branch and Draft PR. Main merge/preview deployment, new destinations, resets, Store/TestFlight, fees and services need their own scoped approval. PR132 approval applies only to its historical preview replacement.
