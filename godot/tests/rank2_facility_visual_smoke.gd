@@ -63,7 +63,7 @@ func _assert_rank2_promotion_changes_silhouette() -> void:
     assert(crown_mesh != null and crown_mesh.size.x >= 6.3, "Rank 2 control crown must be wide enough to separate it from Rank 1 at phone scale")
     assert(crown.position.y >= 3.2, "Rank 2 control crown must create an unmistakable vertical step above Rank 1")
 
-    var wings := spine.find_children("OpsWing", "MeshInstance3D", true, false)
+    var wings := spine.find_children("OpsWing_*", "MeshInstance3D", true, false)
     assert(wings.size() == 2, "Rank 2 promotion must add two rear service modules so growth reads as building mass, not only a thin rail")
     for wing_variant in wings:
         var wing := wing_variant as MeshInstance3D

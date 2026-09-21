@@ -104,6 +104,7 @@ func _verify_rank2_policy_controls_hidden() -> bool:
             _fail("Rank 2 policy-control seed must complete Rank 1 project: %s" % String(kind))
             return false
     sim.logistics_rating = LogisticsProgression.RANK2_RATING
+    sim.shipped = maxi(sim.shipped, FlotraV2Sim.EXPANSION_SHIPMENTS) # Explicit Rank2 fixture, not pacing evidence.
     if not bool(sim.purchase_warehouse_expansion().get("ok", false)):
         _fail("Rank 2 policy-control seed must expand to Rank 2")
         return false

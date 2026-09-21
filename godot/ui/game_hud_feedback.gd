@@ -5,6 +5,8 @@ const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
 
 var _measurement_followup_active := false
 var _toast_is_priority := false
+var _earnings_timer := 0.0
+var _earnings_caption: Label
 
 
 func _ready() -> void:
@@ -15,9 +17,14 @@ func _ready() -> void:
             control.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _sheet.visibility_changed.connect(_sync_feedback_visibility)
     _reset_modal.visibility_changed.connect(_sync_feedback_visibility)
+    if _money != null and _money.get_parent().get_child_count() > 0:
+        _earnings_caption = _money.get_parent().get_child(0) as Label
 
 
 func _process(delta: float) -> void:
+    _earnings_timer = maxf(0.0, _earnings_timer - delta)
+    if _earnings_timer <= 0.0 and _earnings_caption != null:
+        _earnings_caption.text = "資金"
     var obscured := _feedback_is_obscured()
     if obscured:
         _discard_shipment_feedback()
@@ -65,8 +72,11 @@ func _flush_shipment_toast() -> void:
 
 
 func _show_toast(text: String, priority: bool = true) -> void:
-    if not priority and _feedback_is_obscured():
-        _discard_shipment_feedback()
+    if not priority:
+        if _earnings_caption != null:
+            var amount := text.find("+¥")
+            _earnings_caption.text = "資金  %s" % text.substr(amount) if amount >= 0 else "資金"
+            _earnings_timer = 1.5
         return
     _toast_is_priority = priority
     super._show_toast(text, priority)
@@ -84,6 +94,20 @@ func _sync_feedback_visibility() -> void:
         _discard_shipment_feedback()
     if _toast_panel != null:
         _toast_panel.visible = not obscured and _toast_timer > 0.0
+        if _toast_is_priority:
+            _toast_panel.anchor_top = 0.0
+            _toast_panel.anchor_bottom = 0.0
+            _toast_panel.anchor_left = 0.0
+            _toast_panel.anchor_right = 1.0
+            _toast_panel.offset_left = 12.0
+            _toast_panel.offset_right = -12.0
+            var lower_edge := 200.0
+            for child in get_children():
+                if child is Button and child.name == "V2GrowthGoal" and (child as Button).visible:
+                    lower_edge = maxf(lower_edge, (child as Button).get_global_rect().end.y + 6.0)
+            _toast_panel.offset_top = lower_edge
+            _toast_panel.offset_bottom = lower_edge + 30.0
+            _toast.add_theme_font_size_override("font_size", 11)
     if _measurement_panel != null:
         _measurement_panel.visible = not obscured and _measurement_timer > 0.0
 
@@ -175,7 +199,17 @@ func measurement_feedback(event: Dictionary) -> Dictionary:
         action_short,
     ]
     var action_line := "次: %s" % action_short
-    var text := "%s\n%s" % [result_line, context_line]
+    var names := {
+        "rank1_rack_wing": "棚の増設", "rank1_second_packing_bench": "梱包台の増設",
+        "rank1_worker_hire": "作業員採用", "rank1_forklift_project": "フォークリフト",
+        "extra_forklift": "フォークリフト2号車", "transfer_conveyor": "搬送コンベア",
+        "facility_fast_pick_rack": "高速棚", "facility_high_density_rack": "高密度棚",
+        "facility_parallel_pack": "並列梱包", "facility_fast_pack_cell": "高速梱包",
+        "renovation_fast_pick_rack": "高速棚へ改装", "renovation_high_density_rack": "高密度棚へ改装",
+        "renovation_parallel_pack": "並列梱包へ改装", "renovation_fast_pack_cell": "高速梱包へ改装" }
+    var equipment := String(names.get(String(event.get("kind", "")), "設備変更"))
+    var attribution := "複数変更を含む参考値" if int(event.get("overlapping_changes", 0)) > 0 else "前後の観測値"
+    var text := "%s後｜%s\n%s\n%s" % [equipment, attribution, result_line, context_line]
     var needs_followup := state != "improved" or bottleneck_key != "stable"
 
     return {

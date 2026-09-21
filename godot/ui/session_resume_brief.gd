@@ -80,6 +80,18 @@ func brief_text() -> String:
         return ""
 
     var rank := int(sim.facility_rank)
+    if sim.has_method("rank1_expansion_readiness") and rank == 1:
+        var growth: Dictionary = sim.call("rank1_expansion_readiness")
+        var detail := "設備 %d/%d｜出荷 %d/%d｜拡張費 ¥%s" % [
+            int(growth.get("projects", 0)), int(growth.get("projects_required", 2)),
+            int(growth.get("shipments", 0)), int(growth.get("shipments_required", 20)),
+            _format_amount(int(growth.get("cost", 8000)))]
+        return "再開｜%s\n%s" % ["倉庫を拡張できます" if bool(growth.get("ready", false)) else "出荷と設備投資で倉庫を広げよう", detail]
+    if sim.has_method("growth_automation_state") and rank == 2:
+        var automation: Dictionary = sim.call("growth_automation_state")
+        return "再開｜倉庫の自動化を育てよう\nフォーク %d台｜コンベア %s" % [
+            (1 if sim.forklift_unlocked else 0) + (1 if bool(automation["extra_owned"]) else 0),
+            "稼働中" if bool(automation["conveyor_owned"]) else "未導入"]
     if rank <= 1:
         if not sim.active_contract.is_empty():
             var active: Dictionary = sim.active_contract

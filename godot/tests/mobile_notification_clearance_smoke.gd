@@ -37,7 +37,7 @@ func _verify_clearance() -> void:
     var clarity: MobileInteractionClarity = context["clarity"]
     hud._on_sim_event({"type": "shipment", "value": 500})
     hud._flush_shipment_toast()
-    _expect(hud._toast_panel.visible, "Warehouse still shows ordinary shipment feedback")
+    _expect(not hud._toast_panel.visible and hud._earnings_caption.text.contains("+¥500"), "Ordinary shipment feedback belongs in the cash metric, never over the warehouse")
 
     clarity.open_section("expansion")
     await _settle()

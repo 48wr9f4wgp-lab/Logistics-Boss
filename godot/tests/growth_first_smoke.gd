@@ -1,0 +1,137 @@
+extends SceneTree
+const SimScript = preload("res://domain/flotra_v2_sim.gd")
+const MeasureScript = preload("res://domain/flow_measurement.gd")
+var failures := 0
+func _init() -> void:
+    call_deferred("run")
+func expect(ok: bool, text: String) -> void:
+    if not ok:
+        failures += 1
+        push_error(text)
+func run() -> void:
+    for order in [[&"forklift_project", &"rack_wing"], [&"rack_wing", &"second_packing_bench"]]:
+        var sim: FlotraV2Sim = SimScript.new()
+        var i := 0
+        var expanded_at := -1.0
+        var auto_at := -1.0
+        while sim.sim_time < 300.0:
+            if i < order.size() and sim.money >= sim.rank1_project_cost(order[i]):
+                expect(bool(sim.purchase_rank1_project(order[i])["ok"]), "Natural project purchase")
+                i += 1
+            if i == order.size() and sim.facility_rank == 1 and bool(sim.rank1_expansion_readiness()["ready"]):
+                expect(bool(sim.purchase_warehouse_expansion()["ok"]), "Natural expansion")
+                expanded_at = sim.sim_time
+            if sim.facility_rank >= 2 and not sim.forklift_unlocked and sim.money >= sim.rank1_project_cost(&"forklift_project"):
+                expect(bool(sim.purchase_rank1_project(&"forklift_project")["ok"]), "Unfinished Rank1 forklift remains available after expansion")
+            if sim.forklift_unlocked and auto_at < 0.0:
+                auto_at = sim.sim_time
+            if expanded_at >= 0.0 and auto_at >= 0.0:
+                break
+            sim.step(0.10)
+        expect(expanded_at >= 0.0 and auto_at >= 0.0, "Two distinct no-contract routes reach expansion/automation within 300s")
+        expect(sim.logistics_rating == 0 and sim.completed_contracts == 0, "No mandatory contract or injected rating")
+        expect(sim.money >= 0, "No debt/cash injection")
+        print("GROWTH_ROUTE order=%s expansion=%.1fs automation=%.1fs shipped=%d money=%d" % [str(order), expanded_at, auto_at, sim.shipped, sim.money])
+    test_gate()
+    test_automation_and_saves()
+    test_measurement()
+    test_disk_recovery()
+    print("Growth-first checks finished; failures=%d" % failures)
+    quit(1 if failures else 0)
+func test_gate() -> void:
+    var sim: FlotraV2Sim = SimScript.new()
+    sim.money = 100000 # Explicit boundary fixture, not pacing evidence.
+    expect(not bool(sim.purchase_warehouse_expansion()["ok"]), "Cash alone cannot skip experience")
+    sim.purchase_rank1_project(&"rack_wing")
+    sim.purchase_rank1_project(&"forklift_project")
+    expect(not bool(sim.purchase_warehouse_expansion()["ok"]), "Projects alone cannot skip real throughput")
+    sim.shipped = sim.EXPANSION_SHIPMENTS
+    var before := sim.money
+    expect(bool(sim.purchase_warehouse_expansion()["ok"]), "Rating0 and 2 projects can explicitly expand")
+    expect(sim.money == before - sim.WAREHOUSE_EXPANSION_COST, "Expansion charged once")
+    before = sim.money
+    expect(not bool(sim.purchase_warehouse_expansion()["ok"]) and sim.money == before, "Duplicate expansion no charge")
+func inventory(sim: FlotraV2Sim) -> int:
+    var n := sim.inbound_queue + sim.rack_stock + sim.packing_queue + sim.packed_queue + sim.shipped + sim._packing_jobs.size()
+    n += (1 if sim.forklift_active else 0) + sim._extra_cargo + sim._conveyor_jobs.size()
+    for w in sim.workers:
+        if int(w["task"]) != WarehouseSim.Task.IDLE:
+            n += maxi(1, int(w.get("routing_batch", 1)))
+    return n
+func test_automation_and_saves() -> void:
+    var sim: FlotraV2Sim = SimScript.new()
+    sim.money = 100000
+    sim.purchase_rank1_project(&"rack_wing")
+    sim.purchase_rank1_project(&"forklift_project")
+    sim.shipped = sim.EXPANSION_SHIPMENTS
+    sim.purchase_warehouse_expansion()
+    for kind in [&"extra_forklift", &"transfer_conveyor"]:
+        var before := sim.money
+        var cost := int(sim.growth_automation_info(kind)["cost"])
+        expect(bool(sim.purchase_growth_automation(kind)["ok"]) and sim.money == before-cost, "Automation purchase real cost")
+        before = sim.money
+        expect(not bool(sim.purchase_growth_automation(kind)["ok"]) and sim.money == before, "Automation duplicate does not bill")
+    sim.inbound_queue = 40
+    sim.rack_capacity = 64
+    sim.open_orders = 40
+    sim._inbound_timer = 1000.0
+    sim._order_timer = 1000.0
+    var total := inventory(sim)
+    for i in 900:
+        sim.step(0.1)
+        expect(inventory(sim) == total, "Every cargo remains conserved through automation")
+        if i % 53 == 0:
+            var data := sim.save_data()
+            var restored: FlotraV2Sim = SimScript.new()
+            expect(restored.load_data(data), "Schema10 loads")
+            expect(inventory(restored) == total, "Save projection preserves all cargo without a fabricated shipment")
+            expect(restored.money == sim.money and restored.shipped == sim.shipped, "Save preserves earnings")
+            expect(restored.extra_forklift_owned and restored.conveyor_owned, "Automation ownership survives save")
+            expect(restored.save_data() == restored.save_data(), "Save projection idempotent")
+    expect(sim.extra_forklift_moved > 0 and sim.conveyor_moved > 0, "Both machines must actually transport work")
+    print("AUTOMATION_WORK extra=%d conveyor=%d conserved=%d" % [sim.extra_forklift_moved, sim.conveyor_moved, total])
+    var legacy := sim.save_data()
+    legacy["schema_version"] = 9
+    legacy.erase("growth_automation")
+    var restored: FlotraV2Sim = SimScript.new()
+    expect(restored.load_data(legacy), "Existing schema9 accepted")
+    expect(restored.money == int(legacy["money"]) and restored.forklift_unlocked, "Existing money and purchased forklift retained")
+    expect(not restored.extra_forklift_owned and not restored.conveyor_owned, "Migration grants no unpurchased machinery")
+    expect(restored.save_data()["schema_version"] == 10, "Explicit version migration")
+    expect(restored.forklift_book_value == 20000 and restored.expansion_book_value == 10000, "Legacy investment values are retained")
+    expect(restored.zone_staffing == sim.zone_staffing, "Schema9 direct staffing is preserved")
+func test_measurement() -> void:
+    var measurement: FlowMeasurement = MeasureScript.new()
+    measurement.begin_investment(&"rank1_worker_hire", 3500, 30.0)
+    measurement.begin_investment(&"rank1_rack_wing", 2500, 35.0)
+    var done := measurement.collect_completed(65.0)
+    expect(done.size() == 2, "Both measurements remain")
+    for result in done:
+        expect(int(result.get("overlapping_changes", 0)) > 0, "Overlapping measurements must be labeled reference")
+
+func test_disk_recovery() -> void:
+    # The workflow supplies a dedicated XDG_DATA_HOME. Only this test's local files are used.
+    var store := LogisticsSaveStore.new()
+    var sim: FlotraV2Sim = SimScript.new()
+    sim.money = 100000 # Save boundary fixture, not pacing.
+    sim.purchase_rank1_project(&"forklift_project")
+    sim.purchase_rank1_project(&"rack_wing")
+    sim.shipped = 20
+    sim.purchase_warehouse_expansion()
+    sim.purchase_growth_automation(&"extra_forklift")
+    sim.purchase_growth_automation(&"transfer_conveyor")
+    for i in 47:
+        sim.step(0.1)
+    var expected := sim.save_data()
+    var live_inventory := inventory(sim)
+    expect(store.save_sim(sim) and store.save_sim(sim), "Atomic primary and backup save succeed")
+    expect(inventory(sim) == live_inventory, "Saving never mutates live inventory")
+    var primary := FileAccess.open(LogisticsSaveStore.SAVE_PATH, FileAccess.WRITE)
+    expect(primary != null, "Isolated corrupt-primary fixture opens")
+    if primary != null:
+        primary.store_string("[]") # Valid JSON, wrong root type: corrupt save without an expected parser error.
+        primary.close()
+    var restored: FlotraV2Sim = SimScript.new()
+    expect(store.load_into(restored), "Schema10 backup recovers from corrupt primary")
+    expect(restored.money == int(expected["money"]) and restored.shipped == int(expected["shipped"]), "Disk recovery does not invent revenue or shipments")
+    expect(inventory(restored) == live_inventory and restored.extra_forklift_owned and restored.conveyor_owned, "Disk recovery retains cargo and machines")

@@ -17,6 +17,10 @@ const MOBILE_DEFAULT_DISTANCE := 19.5
 const MOBILE_NEAR_FOV := 52.0
 const MOBILE_FAR_FOV := 46.0
 
+var _investment_focus_time := 0.0
+var _investment_focus_weight := 0.0
+var _investment_target := Vector3.ZERO
+var _investment_expansion := false
 var _filtered_touch_drag := Vector2.ZERO
 var _filtered_pinch_delta := 0.0
 
@@ -33,6 +37,10 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+    # Looking elsewhere immediately cancels the optional purchase framing.
+    if event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton or event is InputEventMouseMotion:
+        _investment_focus_time = 0.0
+        _investment_focus_weight = 0.0
     if event is InputEventMouseButton:
         if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
             _camera_distance = maxf(MOBILE_MIN_DISTANCE, _camera_distance - 0.8)
@@ -116,9 +124,13 @@ func _update_camera(delta: float) -> void:
     var far_target := Vector3(0.0, 0.60, 0.04)
     var target := near_target.lerp(far_target, zoom_t)
     var desired_fov := _desired_mobile_fov()
-
-    var horizontal := cos(_orbit_pitch) * _camera_distance
-    var height := -sin(_orbit_pitch) * _camera_distance
+    _investment_focus_time = maxf(0.0, _investment_focus_time - delta)
+    _investment_focus_weight = move_toward(_investment_focus_weight, 1.0 if _investment_focus_time > 0.0 else 0.0, delta * 3.0)
+    target = target.lerp(_investment_target, _investment_focus_weight * 0.65)
+    var focus_distance := maxf(_camera_distance, 18.0) if _investment_expansion else minf(_camera_distance, 16.0)
+    var distance := lerpf(_camera_distance, focus_distance, _investment_focus_weight)
+    var horizontal := cos(_orbit_pitch) * distance
+    var height := -sin(_orbit_pitch) * distance
     var desired_position := target + Vector3(
         sin(_orbit_yaw) * horizontal,
         height,
@@ -139,3 +151,17 @@ func _update_camera(delta: float) -> void:
         _camera.fov = lerpf(_camera.fov, desired_fov, clampf(fov_weight, 0.0, 1.0))
 
     _camera.look_at(target, Vector3.UP)
+
+
+func focus_investment(kind: String) -> void:
+    _investment_focus_time = 3.0
+    _investment_expansion = kind == "warehouse_expansion"
+    match kind:
+        "forklift_project", "extra_forklift":
+            _investment_target = Vector3(-2.0, 0.85, 1.0)
+        "rack_wing", "fast_pick_rack", "high_density_rack":
+            _investment_target = Vector3(-1.7, 1.0, -0.4)
+        "second_packing_bench", "parallel_pack", "fast_pack_cell", "transfer_conveyor":
+            _investment_target = Vector3(1.1, 0.85, 0.8)
+        _:
+            _investment_target = Vector3(0.0, 0.85, 0.7)

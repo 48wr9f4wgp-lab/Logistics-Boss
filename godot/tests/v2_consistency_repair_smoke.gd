@@ -183,6 +183,8 @@ func _prepared_rank2_high_density() -> FlotraV2Sim:
             return sim
 
     sim.logistics_rating = LogisticsProgression.RANK2_RATING
+
+    sim.shipped = maxi(sim.shipped, FlotraV2Sim.EXPANSION_SHIPMENTS) # Explicit Rank2 fixture, not pacing evidence.
     var expansion: Dictionary = sim.purchase_warehouse_expansion()
     if not bool(expansion.get("ok", false)):
         _fail("consistency seed must expand to Rank 2")

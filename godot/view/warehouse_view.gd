@@ -2,6 +2,7 @@ extends Node3D
 class_name WarehouseView
 
 const STATION_POSITIONS := {
+    "conveyor": Vector3(-0.35, 0.35, 1.85),
     "center": Vector3(0.0, 0.35, 2.6),
     "inbound": Vector3(-5.25, 0.35, 2.4),
     "rack": Vector3(-1.6, 0.35, -0.15),

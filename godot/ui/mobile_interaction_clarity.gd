@@ -13,7 +13,7 @@ var zone: WarehouseZonePanel
 var router: MobileUiGestureRouter
 var coach: V2Rank1Coach
 var resume_brief: Control
-var _section := "contracts"
+var _section := "field"
 var _goal_section := "contracts"
 var _tabs: Dictionary = {}
 var _descriptions: Array[Label] = []
@@ -65,6 +65,9 @@ func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2
     add_child(router)
     router.bind(hud, zone)
     router.action_activated.connect(_after_action)
+    if zone != null:
+        zone.construction_committed.connect(_on_construction_committed)
+    hud.sim.event_emitted.connect(_on_growth_event)
     _initialized = true
     refresh()
 
@@ -87,7 +90,7 @@ func _build_sections() -> void:
     row.add_theme_constant_override("separation", 5)
     column.add_child(row)
     column.move_child(row, scroll.get_index())
-    for item in [["contracts", "契約"], ["field", "現場"], ["expansion", "拡張"], ["settings", "設定"]]:
+    for item in [["contracts", "契約(任意)"], ["field", "現場"], ["expansion", "拡張"], ["settings", "設定"]]:
         var button := Button.new()
         button.text = String(item[1])
         button.custom_minimum_size = Vector2(0, 44)
@@ -165,7 +168,7 @@ func _render_contracts() -> void:
             String(contract.get("title", "契約")), float(contract.get("progress", 0.0)),
             float(contract.get("target", 0.0)), ceili(float(contract.get("remaining", 0.0))) ]
     else:
-        hud._contract_status.text = "達成条件を見て、引き受ける契約を1つ選ぼう。"
+        hud._contract_status.text = "追加報酬で成長を早める、任意の挑戦。\n契約なしでも倉庫を拡張できます。"
     for index in hud._contract_buttons.size():
         var button := hud._contract_buttons[index]
         var available := not active and index < sim.contract_offers.size()
@@ -185,39 +188,35 @@ func _render_contracts() -> void:
 func _render_goal() -> void:
     var sim := hud.sim
     var goal := hud._v2_growth_goal
-    goal.visible = sim.facility_rank == 1 and not hud._sheet.visible and not hud._reset_modal.visible
-    if sim.facility_rank != 1:
+    goal.visible = sim.facility_rank <= 2 and not hud._sheet.visible and not hud._reset_modal.visible
+    if not goal.visible:
         return
-    var readiness: Dictionary = sim.call("rank1_expansion_readiness")
-    var projects_left := maxi(0, int(readiness.get("projects_required", 4)) - int(readiness.get("projects", 0)))
-    var rating_left := maxi(0, int(readiness.get("rating_required", 8)) - sim.logistics_rating)
-    _goal_section = "contracts"
-    if bool(readiness.get("ready", false)):
-        _goal_section = "expansion"
-        goal.text = "倉庫の拡張を確認する ▶\n条件達成！ 拡張費 ¥%s" % hud._format_number(int(readiness.get("cost", 10000)))
-    elif not sim.active_contract.is_empty():
-        var active: Dictionary = sim.active_contract
-        goal.text = "進行中：%s ▶\n達成 %.0f / %.0f｜残り%d秒" % [
-            String(active.get("title", "契約")), float(active.get("progress", 0.0)),
-            float(active.get("target", 0.0)), ceili(float(active.get("remaining", 0.0))) ]
-    elif rating_left > 0:
-        goal.text = "契約を選ぶ ▶\n%s" % (
-            "設備はすべて導入済み。拡張まであと評価%d" % rating_left if projects_left == 0
-            else "契約で評価を上げ、倉庫を大きくしよう。")
-    elif projects_left > 0:
-        _goal_section = "field"
-        goal.text = "現場・設備を確認する ▶\n拡張まで、未導入の設備があと%d件" % projects_left
+    var upper_band_busy := coach != null and coach.visible
+    for child in hud.get_children():
+        if child is LogisticsSessionResumeBrief and (child as Control).visible:
+            upper_band_busy = true
+    # A disappearing resume/coach band must not move an action under a held finger.
+    if router == null or not router.is_pressing(goal):
+        goal.offset_top = 196.0 if upper_band_busy else 128.0
+    goal.offset_bottom = goal.offset_top + 56.0
+    _goal_section = "field"
+    if sim.facility_rank == 1:
+        var readiness: Dictionary = sim.call("rank1_expansion_readiness")
+        if bool(readiness["ready"]):
+            _goal_section = "expansion"
+            goal.text = "倉庫を拡張する ▶\n準備完了｜¥%s｜増車とコンベアを解放" % hud._format_number(int(readiness["cost"]))
+        elif not bool(readiness["projects_ready"]):
+            goal.text = "現場で設備を増やす ▶\nあと%d種類と出荷実績で、倉庫拡張へ" % (int(readiness["projects_required"]) - int(readiness["projects"]))
+        else:
+            _goal_section = "expansion"
+            goal.text = "倉庫の拡張を目指す ▶\n出荷 %d/%d件｜資金 ¥%s / ¥%s" % [mini(sim.shipped, int(readiness["shipments_required"])), int(readiness["shipments_required"]), hud._format_number(sim.money), hud._format_number(int(readiness["cost"]))]
     else:
-        _goal_section = "expansion"
-        goal.text = "倉庫の拡張条件を見る ▶\n設備・評価は達成。拡張費を確認しよう。"
-    var status := "未導入設備 あと%d件｜評価 %d/%d" % [projects_left, sim.logistics_rating, int(readiness.get("rating_required", 8))]
-    if projects_left == 0:
-        status = "設備はすべて導入済み ✓\n拡張まであと物流評価 %d" % rating_left
-    if bool(readiness.get("ready", false)):
-        status = "設備・物流評価の条件を達成 ✓"
-    hud._v2_rank1_expansion_label.text = "倉庫を大きくする\n%s\n拡張費 ¥%s" % [status, hud._format_number(int(readiness.get("cost", 10000)))]
-    if bool(readiness.get("ready", false)):
-        hud._v2_rank1_expansion_button.text = "倉庫を拡張する｜¥%s" % hud._format_number(int(readiness.get("cost", 10000)))
+        var state: Dictionary = sim.call("growth_automation_state")
+        goal.text = ("設備を増やして流れを伸ばす ▶" if bool(state["extra_owned"]) and bool(state["conveyor_owned"]) else "次の自動化設備を見る ▶") + "\nフォーク %d台｜コンベア %s" % [(1 if sim.forklift_unlocked else 0) + (1 if bool(state["extra_owned"]) else 0), "稼働中" if bool(state["conveyor_owned"]) else "未導入"]
+    if not sim.active_contract.is_empty():
+        var active: Dictionary = sim.active_contract
+        goal.text += "\n契約 %d/%d｜残り%d秒" % [int(active.get("progress", 0)), int(active.get("target", 0)), ceili(float(active.get("remaining", 0.0)))]
+        goal.offset_bottom = goal.offset_top + 72.0
     goal.add_theme_stylebox_override("normal", _primary)
 
 
@@ -237,44 +236,39 @@ func _render_field() -> void:
 
 
 func _render_zone() -> void:
-    if zone == null or not zone.is_open() or hud.sim.facility_rank != 1:
+    if zone == null or not zone.is_open() or hud.sim.facility_rank > 2:
         return
     var sim := hud.sim
     var worker: Dictionary = sim.call("rank1_project_info", &"worker_hire")
-    if bool(worker.get("owned", false)):
+    if bool(worker.get("owned", false)) or sim.worker_count >= 4:
         zone._operations_action.visible = false
-        zone._operations.text = zone._operations.text.replace("全Worker", "作業員")
-        if not zone._operations.text.ends_with("増員済み ✓"):
-            zone._operations.text += "\n増員済み ✓"
     else:
-        zone._operations_action.text = "作業員を1人採用\n¥%s" % hud._format_number(int(worker.get("cost", 0)))
+        zone._operations_action.text = "倉庫全体に1人採用\n¥%s" % hud._format_number(int(worker.get("cost", 0)))
     var kind := StringName(sim.call("rank1_project_for_zone", zone.selected_zone()))
-    if kind == &"":
-        zone._capital.text = "この現場の追加設備は現在ありません。"
-        return
-    var info: Dictionary = sim.call("rank1_project_info", kind)
-    var title := String(PROJECTS.get(String(kind), info.get("label", "設備")))
-    if bool(info.get("owned", false)):
-        zone._capital_action.visible = false
-        zone._capital.text = "%s\n導入済み ✓\n追加設備は倉庫拡張後に解放" % title
-        return
-    zone._capital.text = "配置を確認してから建設できます。"
-    var cost := int(info.get("cost", 0))
-    if sim.money < cost:
-        zone._capital.text = "資金不足｜¥%s必要" % hud._format_number(cost)
-    zone._capital_action.text = "%s\n%s｜¥%s" % [
-        "この設備を建設する" if zone.preview_kind() == kind else "配置を確認する ▶",
-        title, hud._format_number(cost) ]
+    if kind != &"" and zone._capital_action.visible:
+        var info: Dictionary = sim.call("rank1_project_info", kind)
+        var title := String(PROJECTS.get(String(kind), info.get("label", "設備")))
+        zone._capital.text = "%s\n%s" % [title, String(info.get("strength", ""))]
+        var cost := int(info.get("cost", 0))
+        var preview := zone.preview_kind() == kind
+        zone._capital_action.text = "%s｜¥%s" % ["この設備を建設する" if preview else "設備を見る ▶", hud._format_number(cost)]
+        if preview and sim.money < cost:
+            zone._capital_action.text = "資金があと ¥%s必要" % hud._format_number(cost - sim.money)
+    elif sim.facility_rank == 1:
+        if kind != &"":
+            zone._capital.text = "%s\n導入済み ✓" % String(PROJECTS.get(String(kind), "設備"))
+        else:
+            zone._capital.text = "追加設備は倉庫拡張後に解放"
 
 
 func _render_coach() -> void:
     if coach == null or not coach.visible:
         return
     var texts := {
-        "observe": "荷物の流れを見て、滞留している現場を探そう。",
+        "observe": "出荷で稼ぎ、設備を2種類増やして倉庫を広げよう。",
         "inspect": "倉庫の「タップ」を押して、現場の状態を確認。",
         "act": "設備の配置を確認してから建設。最初のタップでは購入しません。",
-        "measure": "建設後の倉庫を見よう。25秒後に効果を表示。",
+        "measure": "新しい設備の仕事を見よう。続けて投資してもOK。",
         "complete": "流れがどう変わった？ 次の現場も確認してみよう。" }
     coach._body_label.text = String(texts.get(coach.current_step_key(), coach.body_text()))
 
@@ -312,7 +306,7 @@ func _style_buttons(node: Node) -> void:
     if node is Button:
         var button := node as Button
         button.add_theme_font_override("font", FONT)
-        button.add_theme_font_size_override("font_size", 12)
+        button.add_theme_font_size_override("font_size", 11)
         button.add_theme_stylebox_override("normal", _normal)
         button.add_theme_stylebox_override("hover", _normal)
         button.add_theme_stylebox_override("pressed", _pressed)
@@ -342,3 +336,24 @@ func _style(background: Color, border: Color) -> StyleBoxFlat:
     style.content_margin_top = 6.0
     style.content_margin_bottom = 6.0
     return style
+
+
+func _on_construction_committed(_zone_key: String, kind: StringName, _action: String) -> void:
+    call_deferred("_reveal_purchase", kind)
+
+
+func _on_growth_event(event: Dictionary) -> void:
+    if String(event.get("type", "")) == "rank1_project_purchased" and String(event.get("kind", "")) == "worker_hire":
+        call_deferred("_reveal_purchase", &"worker_hire")
+
+
+func _reveal_purchase(kind: StringName) -> void:
+    # No animation lock. The existing input router immediately remains usable.
+    if zone != null:
+        zone.close()
+    hud._sheet.visible = false
+    var label := String(PROJECTS.get(String(kind), "設備"))
+    if kind in [&"extra_forklift", &"transfer_conveyor"]:
+        label = String(hud.sim.call("growth_automation_info", kind).get("label", label))
+    hud._show_toast("%s 導入！" % label)
+    refresh()

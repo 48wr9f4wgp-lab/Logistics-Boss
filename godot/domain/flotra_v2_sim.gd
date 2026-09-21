@@ -2,7 +2,8 @@ extends "res://domain/rank3_inbound_carrier_sim.gd"
 class_name FlotraV2Sim
 
 const SAVE_SCHEMA_RANK1_V2 := 8
-const SAVE_SCHEMA_V2 := 9
+const SAVE_SCHEMA_DIRECT_STAFFING := 9
+const SAVE_SCHEMA_V2 := 10
 
 const STAFF_ZONE_INBOUND := "inbound"
 const STAFF_ZONE_PICKING := "picking"
@@ -18,8 +19,25 @@ const PROJECT_WAREHOUSE_EXPANSION := &"warehouse_expansion"
 const RACK_WING_COST := 2500
 const SECOND_PACKING_BENCH_COST := 4500
 const WORKER_HIRE_COST := 3500
-const FORKLIFT_PROJECT_COST := 20000
-const WAREHOUSE_EXPANSION_COST := 10000
+const FORKLIFT_PROJECT_COST := 8000
+const WAREHOUSE_EXPANSION_COST := 8000
+const EXPANSION_SHIPMENTS := 20
+const EXPANSION_PROJECTS := 2
+const EXTRA_FORKLIFT_COST := 10000
+const CONVEYOR_COST := 9000
+const EXTRA_FORKLIFT_CYCLE := 4.8
+const CONVEYOR_TRAVEL_SECONDS := 2.4
+const CONVEYOR_CAPACITY := 4
+
+var extra_forklift_owned := false
+var conveyor_owned := false
+var extra_forklift_moved := 0
+var conveyor_moved := 0
+var forklift_book_value := CapitalCatalog.FORKLIFT_COST
+var expansion_book_value := 10000
+var _extra_remaining := 0.0
+var _extra_cargo := 0
+var _conveyor_jobs: Array[float] = []
 
 var rank1_projects: Dictionary = {
     "rack_wing": false,
@@ -93,6 +111,7 @@ func reassign_zone_staffing(from_zone: String, to_zone: String) -> Dictionary:
     staffing_cooldown = LogisticsProgression.STAFFING_COOLDOWN_SECONDS
     _apply_staffing_plan()
 
+    _measurement.note_intervention("staffing", sim_time)
     var summary := direct_staffing_summary()
     _emit("staffing_changed", {
         "mode": "direct",
@@ -445,25 +464,23 @@ func rank1_project_for_zone(zone_key: String) -> StringName:
 
 func rank1_expansion_readiness() -> Dictionary:
     var projects := rank1_projects_completed()
-    var rating_ready := logistics_rating >= LogisticsProgression.RANK2_RATING
-    var projects_ready := projects >= rank1_project_kinds().size()
-    var funds_ready := money >= WAREHOUSE_EXPANSION_COST
+    var projects_ready := projects >= EXPANSION_PROJECTS
+    var shipments_ready := shipped >= EXPANSION_SHIPMENTS
     return {
-        "ready": facility_rank >= 2 or (projects_ready and rating_ready and funds_ready),
-        "projects": projects,
-        "projects_required": rank1_project_kinds().size(),
-        "rating": logistics_rating,
-        "rating_required": LogisticsProgression.RANK2_RATING,
-        "cash": money,
-        "cost": WAREHOUSE_EXPANSION_COST,
+        "ready": facility_rank >= 2 or (projects_ready and shipments_ready and money >= WAREHOUSE_EXPANSION_COST),
+        "projects": projects, "projects_required": EXPANSION_PROJECTS,
         "projects_ready": projects_ready,
-        "rating_ready": rating_ready,
-        "funds_ready": funds_ready,
+        "shipments": shipped, "shipments_required": EXPANSION_SHIPMENTS,
+        "shipments_ready": shipments_ready,
+        # Retained read-only fields for older integrations. Rating is no longer a gate.
+        "rating": logistics_rating, "rating_required": 0, "rating_ready": true,
+        "cash": money, "cost": WAREHOUSE_EXPANSION_COST,
+        "funds_ready": money >= WAREHOUSE_EXPANSION_COST,
     }
 
 
 func purchase_rank1_project(kind: StringName) -> Dictionary:
-    if facility_rank != 1:
+    if facility_rank > 2:
         return {"ok": false, "reason": "rank", "cost": rank1_project_cost(kind)}
     if kind not in rank1_project_kinds():
         return {"ok": false, "reason": "unknown", "cost": 0}
@@ -474,6 +491,10 @@ func purchase_rank1_project(kind: StringName) -> Dictionary:
     if money < cost:
         return {"ok": false, "reason": "funds", "cost": cost}
 
+    if kind == PROJECT_SECOND_PACKING_BENCH and not selected_facility_for_group("packing").is_empty():
+        return {"ok": false, "reason": "superseded", "cost": cost}
+    if kind == PROJECT_WORKER_HIRE and worker_count >= 4:
+        return {"ok": false, "reason": "owned", "cost": cost}
     money -= cost
     rank1_projects[String(kind)] = true
 
@@ -488,6 +509,7 @@ func purchase_rank1_project(kind: StringName) -> Dictionary:
             _sync_worker_roster()
         PROJECT_FORKLIFT:
             forklift_unlocked = true
+            forklift_book_value = cost
 
     var measurement_kind := StringName("rank1_%s" % String(kind))
     var before := _measurement.begin_investment(measurement_kind, cost, sim_time)
@@ -516,22 +538,22 @@ func purchase_warehouse_expansion() -> Dictionary:
     if facility_rank >= 2:
         return {"ok": false, "reason": "owned", "cost": WAREHOUSE_EXPANSION_COST}
     var readiness := rank1_expansion_readiness()
-    if not bool(readiness.get("projects_ready", false)):
-        return {"ok": false, "reason": "projects", "cost": WAREHOUSE_EXPANSION_COST, "readiness": readiness}
-    if not bool(readiness.get("rating_ready", false)):
-        return {"ok": false, "reason": "rating", "cost": WAREHOUSE_EXPANSION_COST, "readiness": readiness}
-    if money < WAREHOUSE_EXPANSION_COST:
-        return {"ok": false, "reason": "funds", "cost": WAREHOUSE_EXPANSION_COST, "readiness": readiness}
-
+    for requirement in ["projects", "shipments", "funds"]:
+        if not bool(readiness.get("%s_ready" % requirement, false)):
+            return {"ok": false, "reason": requirement, "cost": WAREHOUSE_EXPANSION_COST, "readiness": readiness}
     money -= WAREHOUSE_EXPANSION_COST
+    rack_capacity += 4
+    expansion_book_value = WAREHOUSE_EXPANSION_COST
     rank1_projects[String(PROJECT_WAREHOUSE_EXPANSION)] = true
-    _emit("warehouse_expansion_purchased", {
-        "kind": String(PROJECT_WAREHOUSE_EXPANSION),
-        "label": "Warehouse Expansion",
-        "cost": WAREHOUSE_EXPANSION_COST,
-    })
+    _measurement.note_intervention("warehouse_expansion", sim_time)
     super._rank_up_to_warehouse()
+    # The expanded facility includes a five-person crew. Never sell a no-op hire.
+    rank1_projects[String(PROJECT_WORKER_HIRE)] = true
     _activate_direct_staffing_from_current_roles()
+    _emit("warehouse_expansion_purchased", {
+        "kind": String(PROJECT_WAREHOUSE_EXPANSION), "label": "倉庫拡張",
+        "cost": WAREHOUSE_EXPANSION_COST, "rack_capacity": rack_capacity,
+    })
     return {"ok": true, "cost": WAREHOUSE_EXPANSION_COST, "rank": facility_rank}
 
 
@@ -565,7 +587,7 @@ func _packing_capacity() -> int:
 
 func _rank_up_to_warehouse() -> void:
     # Core Experience v2 makes Rank 2 a deliberate facility project.
-    # Rating still matters, but it no longer silently promotes from a contract.
+    # Contract ratings are optional; expansion always remains an explicit purchase.
     if not rank1_project_owned(PROJECT_WAREHOUSE_EXPANSION):
         _emit("warehouse_expansion_readiness_changed", rank1_expansion_readiness())
         return
@@ -580,7 +602,13 @@ func equipment_asset_value() -> int:
     if rank1_project_owned(PROJECT_SECOND_PACKING_BENCH):
         value += SECOND_PACKING_BENCH_COST
     if rank1_project_owned(PROJECT_WAREHOUSE_EXPANSION):
-        value += WAREHOUSE_EXPANSION_COST
+        value += expansion_book_value
+    if forklift_unlocked:
+        value += forklift_book_value - CapitalCatalog.FORKLIFT_COST
+    if extra_forklift_owned:
+        value += EXTRA_FORKLIFT_COST
+    if conveyor_owned:
+        value += CONVEYOR_COST
     return value
 
 
@@ -591,6 +619,7 @@ func snapshot() -> Dictionary:
     data["rank1_projects_completed"] = rank1_projects_completed()
     data["rank1_expansion_readiness"] = rank1_expansion_readiness()
     data["direct_zone_staffing"] = direct_staffing_summary()
+    data["growth_automation"] = growth_automation_state()
     return data
 
 
@@ -599,6 +628,24 @@ func save_data() -> Dictionary:
     data["schema_version"] = SAVE_SCHEMA_V2
     data["rank1_projects"] = rank1_projects.duplicate(true)
     data["zone_staffing"] = zone_staffing.duplicate(true)
+    data["growth_automation"] = {
+        "extra_forklift": extra_forklift_owned, "conveyor": conveyor_owned,
+        "extra_moved": extra_forklift_moved, "conveyor_moved": conveyor_moved,
+        "forklift_book_value": forklift_book_value, "expansion_book_value": expansion_book_value,
+    }
+    # The legacy save resumes jobs from queues. Project in-flight inventory into
+    # durable queues without changing live state, completing work or granting cash.
+    for worker in workers:
+        match int(worker.get("task", Task.IDLE)):
+            Task.STORE:
+                data["inbound_queue"] = int(data["inbound_queue"]) + 1
+            Task.PICK:
+                data["rack_stock"] = int(data["rack_stock"]) + 1
+                data["open_orders"] = int(data["open_orders"]) + 1
+            Task.SHIP:
+                data["packed_queue"] = int(data["packed_queue"]) + maxi(1, int(worker.get("routing_batch", 1)))
+    data["inbound_queue"] = int(data["inbound_queue"]) + (1 if forklift_active else 0) + _extra_cargo
+    data["packing_queue"] = int(data["packing_queue"]) + _packing_jobs.size() + _conveyor_jobs.size()
     return data
 
 
@@ -637,7 +684,7 @@ func load_data(data: Dictionary) -> bool:
         rank1_projects["warehouse_expansion"] = true
         rank1_projects["worker_hire"] = true
 
-        if source_schema >= SAVE_SCHEMA_V2:
+        if source_schema >= SAVE_SCHEMA_DIRECT_STAFFING:
             var saved_staffing: Variant = data.get("zone_staffing", {})
             if saved_staffing is Dictionary:
                 zone_staffing = {
@@ -667,7 +714,143 @@ func load_data(data: Dictionary) -> bool:
     if facility_rank >= 2 and _direct_staffing_active:
         _apply_staffing_plan()
 
+    var growth: Dictionary = data.get("growth_automation", {}) if data.get("growth_automation", {}) is Dictionary else {}
+    extra_forklift_owned = source_schema >= 10 and facility_rank >= 2 and forklift_unlocked and bool(growth.get("extra_forklift", false))
+    conveyor_owned = source_schema >= 10 and facility_rank >= 2 and bool(growth.get("conveyor", false))
+    extra_forklift_moved = maxi(0, int(growth.get("extra_moved", 0)))
+    conveyor_moved = maxi(0, int(growth.get("conveyor_moved", 0)))
+    forklift_book_value = clampi(int(growth.get("forklift_book_value", CapitalCatalog.FORKLIFT_COST)), 0, CapitalCatalog.FORKLIFT_COST)
+    expansion_book_value = clampi(int(growth.get("expansion_book_value", 10000)), 0, 10000)
+    _extra_remaining = 0.0
+    _extra_cargo = 0
+    _conveyor_jobs.clear()
     if source_schema < SAVE_SCHEMA_V2:
         _emit("save_migrated", {"from_schema": source_schema, "to_schema": SAVE_SCHEMA_V2})
     _emit("save_loaded", {"schema_version": SAVE_SCHEMA_V2})
     return true
+
+
+func growth_automation_for_zone(zone_key: String) -> StringName:
+    if zone_key == "inbound":
+        return &"extra_forklift"
+    if zone_key == "picking":
+        return &"transfer_conveyor"
+    return &""
+
+
+func growth_automation_info(kind: StringName) -> Dictionary:
+    if kind not in [&"extra_forklift", &"transfer_conveyor"]:
+        return {}
+    var extra := kind == &"extra_forklift"
+    return {
+        "kind": String(kind), "label": "フォークリフト2号車" if extra else "搬送コンベア",
+        "zone": "inbound" if extra else "picking",
+        "owned": extra_forklift_owned if extra else conveyor_owned,
+        "unlocked": facility_rank >= 2 and (forklift_unlocked or not extra),
+        "lock_reason": "倉庫拡張で解放" if facility_rank < 2 else "最初のフォークリフトを導入すると解放",
+        "cost": EXTRA_FORKLIFT_COST if extra else CONVEYOR_COST,
+        "effect": "もう1台が最大2箱ずつ入荷→棚へ搬送" if extra else "ピッキング後の歩行搬送をベルトに置換",
+        "tradeoff": "棚や梱包が詰まると増車の効果は小さい" if extra else "梱包能力は増えない。次は梱包側の余力が必要",
+    }
+
+
+func purchase_growth_automation(kind: StringName) -> Dictionary:
+    var info := growth_automation_info(kind)
+    if info.is_empty():
+        return {"ok": false, "reason": "unknown"}
+    if bool(info["owned"]):
+        return {"ok": false, "reason": "owned"}
+    if not bool(info["unlocked"]):
+        return {"ok": false, "reason": "rank"}
+    var cost := int(info["cost"])
+    if money < cost:
+        return {"ok": false, "reason": "funds", "cost": cost}
+    money -= cost
+    if kind == &"extra_forklift":
+        extra_forklift_owned = true
+    else:
+        conveyor_owned = true
+    _measurement.begin_investment(kind, cost, sim_time)
+    _emit("growth_automation_purchased", {"kind": String(kind), "label": info["label"], "zone": info["zone"], "cost": cost})
+    return {"ok": true, "kind": String(kind), "cost": cost}
+
+
+func growth_automation_state() -> Dictionary:
+    return {
+        "extra_owned": extra_forklift_owned, "extra_active": _extra_remaining > 0.0,
+        "extra_progress": 1.0 - _extra_remaining / EXTRA_FORKLIFT_CYCLE if _extra_remaining > 0.0 else 0.0,
+        "extra_cargo": _extra_cargo, "extra_moved": extra_forklift_moved,
+        "conveyor_owned": conveyor_owned, "conveyor_jobs": _conveyor_jobs.duplicate(),
+        "conveyor_duration": CONVEYOR_TRAVEL_SECONDS, "conveyor_moved": conveyor_moved,
+    }
+
+
+func _reserved_store_slots() -> int:
+    return super._reserved_store_slots() + _extra_cargo
+
+
+func _update_forklift(dt: float) -> void:
+    # Dispatch the two-place vehicle first when available. Otherwise the old
+    # single-place dispatch can consume every arrival before the second vehicle
+    # is offered work. Both reserve real inventory and storage slots.
+    _update_extra_forklift(dt)
+    super._update_forklift(dt)
+
+
+func _update_extra_forklift(dt: float) -> void:
+    if not extra_forklift_owned:
+        return
+    if _extra_remaining > 0.0:
+        _extra_remaining = maxf(0.0, _extra_remaining - dt)
+        # Deliver at the end of the loaded outward leg, then return empty.
+        if _extra_cargo > 0 and _extra_remaining <= EXTRA_FORKLIFT_CYCLE * 0.5:
+            rack_stock += _extra_cargo
+            extra_forklift_moved += _extra_cargo
+            _emit("extra_forklift_stored", {"count": _extra_cargo, "rack_stock": rack_stock})
+            _extra_cargo = 0
+    if _extra_remaining > 0.0:
+        return
+    var available := mini(inbound_queue, rack_capacity - rack_stock - _reserved_store_slots())
+    if available <= 0:
+        return
+    _extra_cargo = mini(2, available)
+    inbound_queue -= _extra_cargo
+    _extra_remaining = EXTRA_FORKLIFT_CYCLE
+    _emit("extra_forklift_started", {"count": _extra_cargo})
+
+
+func _update_packing(dt: float) -> void:
+    for index in range(_conveyor_jobs.size() - 1, -1, -1):
+        _conveyor_jobs[index] = maxf(0.0, _conveyor_jobs[index] - dt)
+        if _conveyor_jobs[index] <= 0.0:
+            _conveyor_jobs.remove_at(index)
+            packing_queue += 1
+            conveyor_moved += 1
+            _emit("conveyor_delivered", {"packing_queue": packing_queue})
+    super._update_packing(dt)
+
+
+func _start_task(worker: Dictionary, task: int) -> void:
+    super._start_task(worker, task)
+    if conveyor_owned and task == Task.PICK and int(worker.get("task", Task.IDLE)) == Task.PICK:
+        # Walking to packing is replaced by a powered handoff. Picking remains
+        # real work; conveyor travel occurs independently after the pick finishes.
+        worker["duration"] = float(worker["duration"]) * 0.50
+        worker["remaining"] = worker["duration"]
+        worker["target"] = "conveyor"
+
+
+func _complete_task(worker: Dictionary) -> void:
+    if not conveyor_owned or int(worker.get("task", Task.IDLE)) != Task.PICK:
+        super._complete_task(worker)
+        return
+    if _conveyor_jobs.size() >= CONVEYOR_CAPACITY:
+        return # Backpressure: the picker keeps the reserved parcel, never loses it.
+    _conveyor_jobs.append(CONVEYOR_TRAVEL_SECONDS)
+    _emit("conveyor_loaded", {"in_transit": _conveyor_jobs.size()})
+    worker["task"] = int(Task.IDLE)
+    worker["source"] = "center"
+    worker["target"] = "center"
+    worker["duration"] = 0.0
+    worker["remaining"] = 0.0
+    worker["progress"] = 0.0

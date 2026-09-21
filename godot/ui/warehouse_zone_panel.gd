@@ -24,6 +24,7 @@ var _capital: Label
 var _operations_action: Button
 var _staffing_move_buttons: Array[Button] = []
 var _capital_action: Button
+var _automation_action: Button
 var _rank2_capital_buttons: Array[Button] = []
 var _action_message: Label
 var _close_button: Button
@@ -340,6 +341,15 @@ func _build_panel() -> void:
         capital_box.add_child(equipment_button)
         _rank2_capital_buttons.append(equipment_button)
 
+    _automation_action = Button.new()
+    _automation_action.custom_minimum_size = Vector2(0, 58)
+    _automation_action.add_theme_font_override("font", JAPANESE_UI_FONT)
+    _automation_action.add_theme_font_size_override("font_size", 11)
+    _automation_action.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _automation_action.pressed.connect(_on_growth_automation_action)
+    _automation_action.visible = false
+    capital_box.add_child(_automation_action)
+
     _action_message = _label(10, Color(1.0, 0.78, 0.46))
     _action_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     column.add_child(_action_message)
@@ -358,6 +368,7 @@ func _render() -> void:
     _render_rank1_actions()
     _render_rank2_equipment_actions()
     _render_direct_staffing_actions()
+    _render_growth_automation_action()
 
 
 func _set_notice(text: String, seconds: float = 5.0) -> void:
@@ -384,13 +395,13 @@ func _render_rank1_actions() -> void:
     _capital_action.visible = false
     _render_notice()
 
-    if sim == null or sim.facility_rank != 1 or not sim.has_method("rank1_project_info"):
+    if sim == null or sim.facility_rank > 2 or not sim.has_method("rank1_project_info"):
         return
 
     var worker_info: Dictionary = sim.call("rank1_project_info", StringName("worker_hire"))
     if not worker_info.is_empty():
-        var worker_owned := bool(worker_info.get("owned", false))
-        _operations_action.visible = true
+        var worker_owned := bool(worker_info.get("owned", false)) or sim.worker_count >= 4
+        _operations_action.visible = not worker_owned
         _operations_action.disabled = worker_owned
         _operations_action.text = (
             "✓ Worker Hire｜採用済み"
@@ -409,9 +420,10 @@ func _render_rank1_actions() -> void:
         return
 
     var owned := bool(info.get("owned", false))
-    _capital_action.visible = true
-    _capital_action.disabled = owned
-    if owned:
+    var superseded := project_kind == &"second_packing_bench" and not sim.selected_facility_for_group("packing").is_empty()
+    _capital_action.visible = not owned and not superseded
+    _capital_action.disabled = owned or superseded
+    if owned or superseded:
         _capital_action.text = "✓ %s｜稼働中" % String(info.get("label", "Project"))
         if _preview_kind == project_kind:
             _clear_construction_preview()
@@ -419,7 +431,8 @@ func _render_rank1_actions() -> void:
 
     var cost := int(info.get("cost", 0))
     var affordable := sim.money >= cost
-    _capital_action.disabled = not affordable
+    # Inspection is always available; only the actual paid commit needs funds.
+    _capital_action.disabled = _preview_kind == project_kind and not affordable
     if _preview_kind == project_kind:
         _capital_action.text = "建設する｜%s｜¥%s" % [
             String(info.get("label", "Project")),
@@ -852,3 +865,51 @@ func _section_style(border: Color) -> StyleBoxFlat:
     style.content_margin_top = 6.0
     style.content_margin_bottom = 6.0
     return style
+
+
+func _render_growth_automation_action() -> void:
+    if _automation_action == null:
+        return
+    _automation_action.visible = false
+    if sim == null or not sim.has_method("growth_automation_for_zone"):
+        return
+    var kind := StringName(sim.call("growth_automation_for_zone", _selected_zone))
+    var info: Dictionary = sim.call("growth_automation_info", kind)
+    if info.is_empty():
+        return
+    if bool(info["owned"]):
+        _capital.text = "%s\n導入済み ✓\n%s" % [info["label"], info["effect"]]
+        return
+    _automation_action.visible = true
+    var unlocked := bool(info["unlocked"])
+    var preview := _preview_kind == kind
+    var cost := int(info["cost"])
+    _automation_action.disabled = not unlocked or (preview and sim.money < cost)
+    _automation_action.text = "%s\n%s" % [info["label"], String(info["lock_reason"]) if not unlocked else ("建設する｜¥%s" if preview else "設備を見る ▶｜¥%s") % _format_money(cost)]
+    if unlocked:
+        _capital.text = "%s\n%s" % [info["label"], info["effect"]]
+    if preview:
+        _action_message.text = String(info["tradeoff"])
+        if sim.money < cost:
+            _action_message.text += "\n資金があと ¥%s必要" % _format_money(cost - sim.money)
+
+
+func _on_growth_automation_action() -> void:
+    if sim == null or not sim.has_method("purchase_growth_automation"):
+        return
+    var kind := StringName(sim.call("growth_automation_for_zone", _selected_zone))
+    var info: Dictionary = sim.call("growth_automation_info", kind)
+    if info.is_empty() or not bool(info["unlocked"]) or bool(info["owned"]):
+        return
+    if _preview_kind != kind:
+        _set_construction_preview(kind)
+        _render()
+        return
+    var result: Dictionary = sim.call("purchase_growth_automation", kind)
+    if bool(result.get("ok", false)):
+        _clear_construction_preview()
+        construction_committed.emit(_selected_zone, kind, "build")
+        _set_notice("導入完了。倉庫で仕事を確認しよう")
+    else:
+        _set_notice(_purchase_failure_text(result))
+    _render()

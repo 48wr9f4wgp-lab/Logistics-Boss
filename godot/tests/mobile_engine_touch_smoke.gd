@@ -63,6 +63,9 @@ func _verify_engine_input() -> void:
         await _settle()
         _expect(hud._sheet.visible, "Repeated engine tap must reopen Management")
 
+    # Contracts remain optional; navigate to their explicit tab.
+    _engine_tap(clarity._tabs["contracts"] as Button)
+    await _settle()
     var contract := hud._contract_buttons[0]
     var count := {"value": 0}
     contract.pressed.connect(func(): count["value"] = int(count["value"]) + 1)
@@ -86,9 +89,12 @@ func _verify_engine_input() -> void:
     _engine_tap(zone._capital_action)
     await _settle()
     _expect(sim.money < before and sim.rank1_project_owned(&"rack_wing"), "Next engine gesture must build exactly once")
+    _expect(not zone.is_open(), "Construction reveals the warehouse immediately")
+    zone.open_zone("storage")
+    await _settle()
     _engine_tap(zone._close_button)
     await _settle()
-    _expect(not zone.is_open(), "Engine touch must close the Zone Panel")
+    _expect(not zone.is_open(), "Engine touch must close the reopened Zone Panel")
 
     # Ordinary desktop mouse input must still work after the touch cooldown.
     await create_timer(0.5).timeout

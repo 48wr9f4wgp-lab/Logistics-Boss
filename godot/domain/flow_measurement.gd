@@ -12,6 +12,8 @@ var _state_samples: Array[Dictionary] = []
 var _order_samples: Array[Dictionary] = []
 var _shipment_events: Array[Dictionary] = []
 var _active_measurements: Array[Dictionary] = []
+var _interventions: Array[Dictionary] = []
+var _intervention_sequence := 0
 
 
 static func classify_result(before: Dictionary, after: Dictionary) -> Dictionary:
@@ -203,7 +205,9 @@ func record_shipment(at: float, value: int) -> void:
 
 func begin_investment(kind: StringName, cost: int, at: float) -> Dictionary:
     var before := _metrics(at - WINDOW_SECONDS, at)
+    note_intervention(String(kind), at)
     _active_measurements.append({
+        "intervention_id": _intervention_sequence,
         "kind": String(kind),
         "cost": cost,
         "started_at": at,
@@ -226,7 +230,13 @@ func collect_completed(at: float) -> Array[Dictionary]:
         var before: Dictionary = measurement.get("before", {})
         var after := _metrics(started_at, started_at + WINDOW_SECONDS)
         var verdict: Dictionary = classify_result_for_kind(kind, before, after)
+        var overlaps := 0
+        for change in _interventions:
+            if int(change["id"]) != int(measurement.get("intervention_id", -1)) and float(change["at"]) > started_at - WINDOW_SECONDS and float(change["at"]) <= started_at + WINDOW_SECONDS:
+                overlaps += 1
         completed.append({
+            "overlapping_changes": overlaps,
+            "observational": true,
             "kind": kind,
             "cost": int(measurement.get("cost", 0)),
             "window_seconds": WINDOW_SECONDS,
@@ -320,3 +330,10 @@ func _prune(at: float) -> void:
         _order_samples.pop_front()
     while not _shipment_events.is_empty() and float(_shipment_events[0].get("at", 0.0)) < cutoff:
         _shipment_events.pop_front()
+
+
+func note_intervention(kind: String, at: float) -> void:
+    _intervention_sequence += 1
+    _interventions.append({"id": _intervention_sequence, "kind": kind, "at": at})
+    while not _interventions.is_empty() and at - float(_interventions[0]["at"]) > HISTORY_SECONDS:
+        _interventions.pop_front()

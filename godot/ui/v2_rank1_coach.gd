@@ -260,7 +260,7 @@ func _render_step() -> void:
     match _step:
         Step.OBSERVE:
             _step_label.text = "START GUIDE  1/4  目的"
-            _body_label.text = "契約を達成して物流評価を上げ、設備Projectを進めてWarehouseへ拡大する。まず倉庫の詰まりを観察。"
+            _body_label.text = "出荷で稼ぎ、設備を好きな2種類導入して倉庫を拡張しよう。契約は任意。"
         Step.INSPECT:
             _step_label.text = "START GUIDE  2/4  現場確認"
             if _inspect_zone.is_empty():
@@ -269,10 +269,10 @@ func _render_step() -> void:
                 _body_label.text = "倉庫上の「%s｜ここをタップ」を押して現場を確認。" % _zone_label(_inspect_zone)
         Step.ACT:
             _step_label.text = "START GUIDE  3/4  判断"
-            _body_label.text = "Zone Panelの数値と設備を見比べる。必要ならProject内容を確認して実行。"
+            _body_label.text = "現場で設備の姿と効果を見る。購入前に内容を確認できる。"
         Step.MEASURE:
             _step_label.text = "START GUIDE  4/4  結果"
-            _body_label.text = "倉庫の見た目と物流の動きを観察。25秒後のBefore / Afterまで確認する。"
+            _body_label.text = "増えた設備の仕事を見よう。結果は自動計測。次の投資に進んでもOK。"
         Step.COMPLETE:
             _step_label.text = "CORE LOOP  習得"
             _body_label.text = "観察 → Zone確認 → 介入 → 結果。次に詰まる場所は倉庫から探す。"

@@ -150,11 +150,11 @@ func _run() -> void:
     if not resume_brief.visible:
         _fail("experienced restored saves must surface the continuity brief on startup")
         return
-    if resume_brief._label == null or not resume_brief._label.text.contains("RANK 3まで"):
-        _fail("Rank 2 resume brief must expose the next facility milestone")
+    if resume_brief._label == null or not resume_brief._label.text.contains("倉庫の自動化"):
+        _fail("Rank2 resume brief must expose the active automation milestone")
         return
-    if not resume_brief._label.text.contains("拡張 1/3"):
-        _fail("resume brief must read restored structural progress from the authoritative Domain")
+    if not resume_brief._label.text.contains("コンベア 未導入"):
+        _fail("resume brief must read actual automation ownership without inventing an installed conveyor")
         return
 
     if main.analytics == null or not _has_analytics_event(main.analytics.events(), "session_resume"):

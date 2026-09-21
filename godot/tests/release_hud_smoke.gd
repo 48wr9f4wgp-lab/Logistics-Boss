@@ -81,8 +81,8 @@ func _run() -> void:
         "verdict": {"state": "improved", "headline": "改善", "delta": 4.8, "threshold": 1.0},
     })
     var feedback_text := String(feedback.get("text", ""))
-    if feedback_text.count("\n") != 1:
-        _fail("measurement feedback must stay within two compact lines")
+    if feedback_text.count("\n") != 2:
+        _fail("measurement feedback must stay within three compact lines including investment identity")
         return
     if not feedback_text.contains("改善 ↑ +4.8/分"):
         _fail("measurement feedback must front-load the improvement result")
@@ -177,8 +177,8 @@ func _run() -> void:
         return
     hud._shipment_toast_batch_elapsed = GameHud.SHIPMENT_TOAST_BATCH_SECONDS
     hud._flush_shipment_toast()
-    if hud._toast.text != "出荷 ×3  +¥1,500":
-        _fail("shipment toast batching must present a single compact aggregate")
+    if hud._earnings_caption.text != "資金  +¥1,500":
+        _fail("shipment batching must present the exact cash-metric aggregate")
         return
     if hud._shipment_toast_count != 0 or hud._shipment_toast_value != 0:
         _fail("shipment toast batch must clear after display")
@@ -193,8 +193,8 @@ func _run() -> void:
         return
     hud._priority_toast_timer = 0.0
     hud._flush_shipment_toast()
-    if hud._toast.text != "出荷  +¥500":
-        _fail("deferred shipment toast must appear after priority feedback clears")
+    if hud._earnings_caption.text != "資金  +¥500" or hud._toast.text != "重要通知":
+        _fail("deferred ordinary income goes to cash without overwriting important feedback")
         return
 
     hud._toast_panel.visible = false

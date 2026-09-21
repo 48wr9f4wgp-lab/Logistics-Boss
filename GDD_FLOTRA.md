@@ -3,8 +3,8 @@
 Status: **Pre-GO / VERTICAL_SLICE — Core Experience v2 rework**
 Official title: **FLOTRA（フロトラ）**
 Former title / migration alias: `LOGISTICS BOSS`
-Last synchronized: 2026-09-20 JST
-Canonical project rule: `GAME_DEV_MASTER_RULES.md`
+Last synchronized: 2026-09-21 JST (PR132 development branch)
+Canonical project rules: `ゲーム開発共通ルール_v2.4.txt`, `プロジェクト適用範囲_v2.4.txt`, `ゲーム開発チャット引き継ぎルール_v2.4.txt`. The old repo Master filename is not current authority.
 
 This document supersedes the earlier Web/PWA-first and Three.js vertical-slice assumptions. The production implementation is Godot-native-first, with Web used only as an engineering preview.
 
@@ -27,9 +27,17 @@ This document supersedes the earlier Web/PWA-first and Three.js vertical-slice a
 - Monetization: not activated; outside the current Pre-GO VERTICAL_SLICE v2 scope
 - Analytics: provider-neutral local instrumentation only; no external transmission
 
+## 1.1 Growth-first title decision, 2026-09-21
+
+The user's 実行 after the video audit authorizes a bounded growth-first development revision. This supersedes the old mandatory Rank1 Logistics Rating8/all-four-Projects gate and the requirement to read analysis before each meaningful purchase. It does not supersede the manager role, real logistics, Zone-first physical choices, iPhone target or release approval boundaries.
+
+Primary player reward: a growing working warehouse, not the completion of an analysis checklist. Ordinary shipments and earned cash support basic growth; contracts are optional acceleration/challenge. Equipment should reveal a change in how work is done. Analysis supports optimization, not a mandatory pause between investments. Exact numbers below are testable balance hypotheses, not a human fun acceptance.
+
 ## 2. Canonical Core Loop
 
-**Observe warehouse flow → notice a physical symptom → inspect the relevant Zone → choose an operational or capital response → the facility physically changes → authoritative logistics react → measure the outcome → discover the next constraint.**
+**Ship and earn → choose where to invest → see real equipment and work change → expand the warehouse → add working automation → reinvest.**
+
+Optional mastery loop: observe a physical symptom → inspect its Zone → change equipment/staffing → compare observational results → address the next constraint. New investments do not wait for measurement completion.
 
 The player is not asked to manually carry parcels, drive forklifts or perform worker-level actions.
 
@@ -54,18 +62,24 @@ A normal play session must not collapse into **open Management → buy whatever 
 
 The long-term progression spine is:
 
-**contract / operating profit → cash + RP + logistics rating → larger facility rank → structural investment → new bottleneck → new operating decision → larger profit**
+**ordinary operating profit (plus optional contracts) → cash → physical capacity and automation → larger facility → increased working scale → another meaningful investment**
 
-Rank 1 must make that spine player-visible as:
+Rank1 player-visible growth spine:
 
-**choose / complete a contract → earn cash + Logistics Rating → complete the 4 structural Projects → satisfy the visible Warehouse Expansion requirements → expand Small Depot into Rank 2**
+**ordinary shipments + 2 distinct structural investments + earned expansion cash → explicitly expand into Rank2 → choose unfinished projects, a second forklift or a working conveyor.**
 
-Current Rank 1 Warehouse Expansion requirements:
-- structural Projects: 4 / 4;
-- Logistics Rating: 8;
-- expansion cash: ¥10,000.
+Current development balance hypotheses:
+- Initial funds: ¥5,000; no automatic money or rating grant.
+- First expansion: any 2 of the 4 distinct Rank1 projects, at least 20 total actual shipments, ¥8,000.
+- No Logistics Rating or contract-completion gate for first expansion; no auto-promotion.
+- Rack Wing ¥2,500; Second Packing Bench ¥4,500; one Worker Hire ¥3,500; first Forklift ¥8,000.
+- Expansion permanently enlarges the floor from 15.8×11.8 to 19×13.4 world units, adds 4 storage capacity and brings the existing Rank2 crew to at least five.
+- Unfinished structural projects remain buyable in Rank2 except a hire already covered by the five-worker crew or a bench superseded by advanced packing. Installed assets are never taken away to force repurchase.
+- Additional forklift: ¥10,000, Rank2 + first forklift; a real second vehicle reserves and carries up to two inbound parcels per 4.8-second roundtrip.
+- Transfer conveyor: ¥9,000, Rank2; PICKING to PACKING, at most four in-flight parcels, 2.4 seconds travel; replaces half the picker task time with actual independent transport and backpressure. It does not magically increase packing or final dispatch capacity.
+- Scope maximum: first forklift plus one additional forklift, one conveyor path. No unlimited vehicle upgrades or freeform layout editor in this slice.
 
-The player must not need to infer that ordinary shipment cash and contract-earned Logistics Rating are different progression resources.
+The old all4 / Rating8 / ¥10,000 gate is **SUPERSEDED for current FLOTRA development**. Old tests/saves remain historical compatibility evidence, not active product requirements.
 
 Growth must be visible in both the authoritative simulation and the 3D facility.
 
@@ -152,24 +166,24 @@ Fresh-save onboarding is event-driven and should teach by play rather than by a 
 
 The first step must establish the overall Rank 1 purpose before teaching a local intervention:
 
-**契約達成 → 物流評価を上げる → 設備Projectを進める → Warehouse Expansion**
+**出荷で稼ぐ → 設備を2種類増やす → 出荷20件と拡張費を満たす → 倉庫拡張**
 
 The first guided intervention may point the player toward a stressed Zone, but it must not solve the equipment decision for them. The implementation may mark the actual stressed Zone as **ここをタップ** so the player learns the warehouse interaction surface; it must not identify which equipment is the correct answer. After the initial guided intervention, the simulation should be allowed to produce the next bottleneck naturally.
 
-FTUE completion still waits for the authoritative measurement result.
+The guide may finish after an authoritative measurement result, but it never blocks other investments or expansion while the observation runs.
 
 ### Warehouse Expansion
 
 Rank 1 ends with a visible **Warehouse Expansion** strategic project in Management.
 
-The player-facing gate must state both the requirements and how they are earned:
-- complete all 4 structural Projects;
-- reach Logistics Rating 8 by completing contracts;
-- hold ¥10,000 for the expansion.
+The gate states the two-investment count, actual shipment count and money, with the benefit shown before confirming. It does not require every possible starting purchase. Expansion is an explicit paid action and immediately changes the floor, capacity and crew. A text-only rank promotion is insufficient.
 
-The main Rank 1 HUD must keep these requirements visible alongside the current contract objective so that warehouse interventions have an understandable growth purpose.
+### Purchase reveal and notification hierarchy
+Confirmed construction closes the large Zone sheet and returns to the actual warehouse. A cancellable three-second camera emphasis can show the real installation; it never blocks tapping or starts another automatic purchase. Ordinary shipment earnings stay beside funds, not over machinery or controls. Important results retain the PR130 control-clearance behavior. Ownership/status and reason-for-unavailability remain explicit.
 
-Completing Warehouse Expansion must visibly enlarge/restructure the facility into Rank 2. A text-only Rank promotion is insufficient.
+### Save compatibility
+Runtime schema10 adds new automation ownership/work counters and purchase-book values. Read schemas1-9. Preserve money, owned investments, staffing, completed work and existing contract state. Do not grant new machinery during migration. Preserve the original nominal book values of pre-revision forklifts/expansions instead of silently devaluing them. Save in-flight cargo into durable waiting queues without changing live state or inventing completed shipments; animation and partial task time restart on load. Old schema9 executables cannot load schema10, so do not silently revert a deployed schema10 build or delete saves.
+
 ## 6. Bottleneck / Measurement UX
 
 The player-facing Director reports the dominant symptom with concise evidence.
@@ -207,7 +221,7 @@ Examples:
 - receiving automation may be judged from inbound queue pressure;
 - shipment rate / revenue remain important outcome metrics but are not the sole definition of success for every intervention.
 
-The HUD must show the basis used for the verdict so the player can understand **what improved**.
+The HUD must show the target investment and basis used for the verdict. These are before/after observations, not proof of isolated causation. If another investment, staffing move or expansion falls in the before/after window, label the result **複数変更を含む参考値**. Never require the player to stop investing for 25 seconds to produce a cleaner metric.
 
 Result hierarchy:
 1. judgment + authoritative basis;
