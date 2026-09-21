@@ -1,0 +1,92 @@
+name: FLOTRA One-Time Growth Source Integration
+
+on:
+  push:
+    branches: [feat/growth-first-slice]
+    paths:
+      - '.github/workflows/growth-source-sync.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: flotra-growth-source-integration
+  cancel-in-progress: false
+
+jobs:
+  integrate-local-text:
+    if: github.ref == 'refs/heads/feat/growth-first-slice'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate every input and output before changing sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/feat/growth-first-slice'
+          git merge-base --is-ancestor 4a2e3057a9ec34ce292be24921430593c062c5a8 HEAD
+          python3 - <<'PY'
+          import hashlib, pathlib, subprocess
+          hashes = [
+              '9ba40e6bd9c579571dfff6be817f1e24e306c9221a0eaa46fc91d6849b67939e',
+              'ef40fe558db5a028f832cfe2c5190c8bd4140cf20ac47d5d616ce73384f2677a',
+              'd7fd05f36e8d98fbe9d8e0f5a50359db67f61149597fd4ae7c0406a1231877cf',
+              '1664360587dd182a311a75bf0c3ad71ccd4eb8209d17c0710e9c8edf3ef73b10',
+              '4a986b2bfb5098645399e726a9f4e783aba8b04e06d10ff86fe675add3ebe79d',
+              '371d019f0b30e6d67b51fc89c5980f8536eaa49526dc6a9d44640a65d6f8c24c',
+          ]
+          result = {}
+          for index, expected in enumerate(hashes):
+              payload = pathlib.Path(f'tools/growth-edits{index:02d}.txt')
+              raw = payload.read_bytes()
+              assert hashlib.sha256(raw).hexdigest() == expected, f'transfer mismatch: {payload}'
+              lines = iter(raw.decode('utf-8').splitlines(keepends=True))
+              for header in lines:
+                  marker, name, before_sha, after_sha = header.strip().split()
+                  assert marker == 'FILE' and name not in result
+                  path = pathlib.Path(name)
+                  assert not path.is_absolute() and '..' not in path.parts and not path.is_symlink()
+                  assert (name.startswith(('godot/domain/', 'godot/ui/', 'godot/view/', 'godot/tests/')) and path.suffix == '.gd') or name in {'godot/main.gd', 'GDD_FLOTRA.md', 'GROWTH_FIRST_SLICE_CHANGE_PACKET.md', '.github/workflows/growth-slice.yml'}, name
+                  old = path.read_bytes() if path.exists() else b''
+                  if before_sha == '-':
+                      assert not path.exists(), f'unexpected existing file: {name}'
+                  else:
+                      assert hashlib.sha256(old).hexdigest() == before_sha, f'base mismatch: {name}'
+                  edits = []
+                  for command in lines:
+                      if command == 'END_FILE\n':
+                          break
+                      tag, start, end = command.strip().split()
+                      assert tag == 'EDIT'
+                      replacement = []
+                      for line in lines:
+                          if line == 'END_EDIT\n':
+                              break
+                          replacement.append(line)
+                      edits.append((int(start), int(end), ''.join(replacement)))
+                  original = old.decode('utf-8').splitlines(keepends=True)
+                  for start, end, replacement in reversed(edits):
+                      assert 0 <= start <= end <= len(original)
+                      original[start:end] = [replacement]
+                  new = ''.join(original).encode('utf-8')
+                  assert hashlib.sha256(new).hexdigest() == after_sha, f'output mismatch: {name}'
+                  result[name] = new
+          assert len(result) == 35, len(result)
+          for name, data in result.items():
+              pathlib.Path(name).parent.mkdir(parents=True, exist_ok=True)
+              pathlib.Path(name).write_bytes(data)
+          subprocess.run(['git', 'add', '--', *result], check=True)
+          # Remove only disposable artifacts made by this development session.
+          scratch = [f'tools/growth-edits{i:02d}.txt' for i in range(6)]
+          scratch += ['tools/growth-sync.part00', 'tools/growth-sync.part01', '.github/workflows/growth-source-sync.yml']
+          subprocess.run(['git', 'rm', '--', *scratch], check=True)
+          print(f'Verified and staged {len(result)} exact text source files; no fonts, preview bytes or main branch writes.')
+          PY
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Implement verified growth-first slice and remove disposable source-transfer artifacts'
+          git push origin HEAD:refs/heads/feat/growth-first-slice
