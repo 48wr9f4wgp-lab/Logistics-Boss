@@ -1,9 +1,9 @@
 # FLOTRA: Development Handoff
 
-Last synchronized: 2026-09-20 JST
-Scope: title-local / current restart state after PR #126 integration.
+Last synchronized: 2026-09-21 JST
+Scope: title-local / current restart state after approved PR #128 integration.
 
-The complete prior handoff is preserved byte-for-byte in `docs/history/HANDOFF_pre_PR126_2026-09-20.md` (original blob `c226c842d6b5e0faf6b5fe3e7e00af931e31dab0`). Its milestones and historical evidence remain available, but its PR #124 current-state/NEXT statements are superseded by this file. No design, code, or save data was discarded by this documentation synchronization.
+Historical evidence remains in Git. The prior PR126 handoff is available at commit `7e6839d207f309aca3272bc9226d6bef7186b784`, blob `9b71ca5f9d04847ca58d9ca5465f3a667f551080`. The complete pre-PR126 handoff remains in `docs/history/HANDOFF_pre_PR126_2026-09-20.md`, original blob `c226c842d6b5e0faf6b5fe3e7e00af931e31dab0`. Their historical milestones are not current input-acceptance evidence.
 
 ## 1. Current state
 
@@ -14,110 +14,104 @@ The complete prior handoff is preserved byte-for-byte in `docs/history/HANDOFF_p
 - DEVELOPMENT_TARGET: **iPhone / iOS**; portrait, touch-first, reference viewport 390x844.
 - PRODUCTION_DECISION: **UNDECIDED**.
 - RELEASE_APPROVAL: **NOT_REQUESTED** for production/App Store/TestFlight.
-- REAL_DEVICE_ACCESS: user's iPhone, repeated Web testing available; exact representative device/OS not yet recorded in title canonical.
-- MAC_XCODE_ACCESS_PATH: **BLOCKED_NO_MAC_AVAILABLE**.
-- Native physical-iPhone lane: **DEFERRED_BY_USER_UNTIL_MAC_AVAILABLE**.
-- Runtime save schema: **v9**, unchanged by PR #126.
+- REAL_DEVICE_ACCESS: user's iPhone; exact representative device/OS not recorded in title canonical.
+- MAC_XCODE_ACCESS_PATH: **BLOCKED_NO_MAC_AVAILABLE**; native physical-iPhone lane **DEFERRED_BY_USER_UNTIL_MAC_AVAILABLE**.
+- Runtime save schema: **v9**, unchanged.
+- Latest human input evidence: **FAIL after PR126**, user reported nothing could be pressed.
+- Human input acceptance after PR128: **PENDING**, not passed.
+- Core Experience / enjoyment: **NOT PASSED**. The user also requests faster visible expansion and accumulating functional automation.
 
-Engineering-preview permission is separate from production release permission. In this chat the user explicitly replied **「反映」** to the request to integrate PR #126 and replace the same existing trial URL. This authorizes that exact repair, integration/state synchronization, and existing preview replacement only. It does not authorize a new public destination, Store/TestFlight distribution, fees, SDK activation, or data reset.
+The user explicitly replied **「実行」** to the request to integrate PR128 and replace the same trial URL. This authorizes this exact input repair, required integration/state synchronization and the existing engineering preview only. It does not authorize new destinations, Store/TestFlight, fees, SDK activation, data reset, or silently changing growth/economy rules. The prior 「反映」 approval covered PR126, not production release.
 
 ## 2. WORKING_HEAD / VERIFIED_BASELINE / RECOVERY_STATE
 
 ### WORKING_HEAD
 
-Latest shared main content at this synchronization input:
-- commit: `9aa0500a5f4fdd65a823c87e618895ba110ab88a`;
-- role: publish Web engineering preview after PR #126;
-- parent/code merge: `4e2318464d21e7c53767fbd8e1a85b7095d2614a`;
-- validation_status: **PARTIAL** (automated code and deployment evidence, human iPhone acceptance pending).
+Synchronization input: main `d642a4b06ea5220d41e0212f94883f2deff78298`, the published Web files following PR128 code merge `e892e56ef75d6e7e0d491eb8ccb04e555f5abb6b`. Status: **PARTIAL**.
 
-The documentation commit containing this handoff advances main without changing game or preview content. Resolve the actual live main SHA on restart rather than treating the synchronization-input SHA above as an immutable latest head.
+The containing documentation synchronization advances main without changing game or preview bytes. Resolve live main SHA at restart; do not conflate this input reference with a permanently latest head.
 
 ### VERIFIED_BASELINE
 
-PR #126: **Make mobile actions legible and fix late Japanese font coverage**.
-- Tested branch code: `cea981657140c84a0a27db8cdb475ee3ecece2d6`.
-- Approved PR head: `efea195745a4ea181783cb721744eab19a841083`; the one additional commit only records evidence in the change packet.
-- Squash merge to main: `4e2318464d21e7c53767fbd8e1a85b7095d2614a`.
-- Mobile Interaction Clarity #6, run `35515354686`: **SUCCESS**; integrated ScreenTouch checks reported failures=0.
-- Godot CI #302, run `35515354738`: **SUCCESS**.
-- iOS Export Smoke #113, run `35515354641`: **SUCCESS**, unsigned technical evidence, not native-device acceptance.
-- Rendered Visual Capture #100, run `35515354667`: **SUCCESS**.
-- Android Export Smoke #114, run `35515354665`: **SUCCESS**, historical technical reference only; Android remains outside active Pre-GO scope.
-- Actual main-scene 390x844 evidence: fresh, completed-equipment/resume, contracts, field, installed storage; artifact `10607285012`. These were inspected during implementation. A new chat must reopen actual images before making new visual judgments.
+PR #128: **Repair engine mouse-before-touch input lock**.
+- Tested code: `9f0a1d0d9a6d4fa11a094c8eb1741cde87f3de56`.
+- Approved PR head: `e9ac90c3cb3aef1f5b6e5bf04a4e1dc9f36d0871`; one later documentation-only commit relative to tested code, compared before integration.
+- Squash merge: `e892e56ef75d6e7e0d491eb8ccb04e555f5abb6b`, with expected-head guard.
+- Branch-code checks: Mobile Interaction Clarity #10 (`35547981638`), Godot CI #306 (`35547981567`), iOS Export Smoke #116 (`35547981548`), Rendered Visual Capture #104 (`35547981574`): **SUCCESS**.
+- Historical Android Export Smoke #118 (`35547981800`): **SUCCESS**, not active production scope.
+- Main-merge Mobile Interaction Clarity #12 (`35548966977`): **SUCCESS**, including composed input, engine-generated mouse/touch regression and actual-main capture.
+- These are automated/export checks, not physical-iPhone or enjoyment acceptance.
 
 Engineering preview:
-- export/publish workflow **Godot Preview Pages #96**, run `35515872829`: **SUCCESS**;
-- published files commit: `9aa0500a5f4fdd65a823c87e618895ba110ab88a`;
-- GitHub Pages **build and deployment #270**, run `35515899408`: **SUCCESS**, for the published-files commit;
-- destination unchanged: `https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/`;
-- direct HTTP/runtime inspection from this integration environment was unavailable. Deployment success is not human Safari/runtime or fun acceptance.
+- Godot Preview Pages #97, run `35548966966`: **SUCCESS**.
+- Published-files commit: `d642a4b06ea5220d41e0212f94883f2deff78298`.
+- Pages build/deployment #273, run `35548992216`: **SUCCESS**; build and deploy jobs checked.
+- Same destination: `https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/`.
+- Downloaded actual Pages artifact `10617173408` and matched its ZIP SHA256: `3c518b27d44d3425c8b018939ad436acab46ba5a30e4bb9b10afec00b4aeb496`.
+- Extracted `godot-preview/index.pck`: **1,936,860 bytes**, matching the export HTML; SHA256 `568ac1b0245afdcbd1a4550bf03f6f3acc455177577519ce964604fe0b0f9572`.
+- Direct live HTTP inspection unavailable: container DNS failed and web-tool access failed. A local Chromium replay attempt was blocked at navigation by the environment and is **NOT** a runtime test pass. No restriction bypass attempted.
 
 ### RECOVERY_STATE
 
-- PR #126: merged; repair branch retained, not deleted.
-- No user save reset or save-schema change was performed.
-- This integration session created no game-code WIP or local game commits.
-- User/other implementation-machine uncommitted or unpushed state cannot be inferred from GitHub; protect it before any later reset/sync.
-- Prior engineering-preview files are recoverable at `82f2097b6d57e6bacb1a88946a8d65e4604355f9`; prior code baseline is PR #124 merge `6a3bfc173e3113368d8929cbe312f0e06aaff3de`.
-- No rollback was executed. Prefer a reviewed forward fix or deliberate revert of the scoped repair; do not blindly reset main or delete user data.
+- PR126 and PR128 merged; repair branches retained.
+- No game-code edits beyond the approved PR128 were introduced during integration.
+- No user-data reset, save-schema change, automatic rollback or destructive sync.
+- External-machine uncommitted/unpushed state is unknown; protect before any later sync/reset.
+- Pre-PR128 code `4e2318464d21e7c53767fbd8e1a85b7095d2614a` and preview `9aa0500a5f4fdd65a823c87e618895ba110ab88a` are recovery references only: their human input test FAILED.
+- Prefer reviewed forward fixes over blindly restoring a failed preview.
 
-## 3. Human evidence and implemented repair
+## 3. Human evidence and repair
 
-The post-PR #124 iPhone Web test **FAILED**. The user could not tell whether buttons registered, where equipment was bought, or what action to take. The third supplied screenshot also showed missing Japanese glyphs in the resume message. The observed saved state was Rank 1 equipment 4/4, Logistics Rating 0/8, with sufficient expansion money. This is not evidence of missing Rank 1 equipment.
+After PR124 the user could not identify actions, equipment routes or the next step. The supplied resume message showed missing Japanese glyphs; the saved state was equipment4/4, rating0/8 and sufficient cash. PR126 addressed late font coverage, explicit contract start buttons, persistent navigation, installed statuses and a composed raw gesture router.
 
-PR #126 implements the bounded input/text/navigation repair:
-- shared bundled Japanese theme on actual Control roots beneath CanvasLayer, including late-created surfaces;
-- one composed raw gesture owner, visible held-press feedback, clipping checks, cancellation, multitouch/scroll rejection, held-touch and synthetic-mouse protection;
-- persistent Management tabs: contracts / field / expansion / settings;
-- contract descriptions separated from explicit **「この契約を開始」** actions;
-- authoritative contract acceptance returns to the warehouse with persistent live progress;
-- readiness-aware main action routes to contracts, unfinished equipment, or expansion;
-- installed Rank 1 equipment/staff becomes status rather than a disabled purchase affordance;
-- existing Zone-first equipment preview then explicit construction/renovation retained;
-- expansion navigation itself does not spend money.
+After PR126 deployment the user reported **「何も押せなかった」**. Earlier automated results did not override this FAIL.
 
-No Domain/economy/contract-condition changes, new equipment, Rank 3 redesign, account/backend/analytics SDK changes, or save-format changes are part of this repair.
+PR128 first added a regression without changing app code: commit `f62b8280115c20728830e92d82ef05c2285b8797`, Clarity #9 (`35547911847`). The old Viewport-injected test passed, while the new `Input.parse_input_event` path failed three assertions. Logs showed a mouse pointer stuck at -2 after touch, blocking Management opening.
+
+The bounded 22-line router fix recognizes engine-emulated mouse events before they acquire real-mouse ownership. No Domain, economy, equipment, save or UI-layout changes. The same engine-parser regression then passed, alongside existing cancellation/drag/multitouch/clipping/preview/commit and Rank2 tests. This reproduced engine failure matches the user's symptom; it is not a captured device trace or proof that no other iPhone issues remain.
+
+PR126's presentation improvements remain included: bundled Japanese font on Control roots, contract descriptions separate from start actions, contracts/field/expansion/settings navigation, accepted-contract progress, installed equipment as status, and explicit Zone preview before construction.
 
 ## 4. LAST VERIFIED DONE / BLOCKED / NEXT
 
-**LAST VERIFIED DONE:** PR #126 merged with an expected-head guard; its Web export was committed and the same GitHub Pages engineering-preview destination deployed successfully. State synchronization records the earlier human FAIL and leaves new human acceptance pending.
+**LAST VERIFIED DONE:** approved PR128 integrated; existing engineering preview exported, deployed, and its downloaded Pages artifact integrity verified. Canonical state updated without changing gameplay or save data.
 
-**BLOCKED:** short human iPhone Web UI foundation/clarity retest after PR #126. Native Mac/Xcode access is a separate later blocker, not grounds to declare the current UI passed.
+**BLOCKED:** human iPhone repeated-tap acceptance after PR128. Native Mac/Xcode remains a separate later blocker.
 
-**NEXT:** open the current engineering preview on the iPhone without resetting the save. First verify that Japanese is readable, a normal press has clear feedback, contracts/field/expansion are findable, contracts actually start and show progress, equipment preview/commit remains distinct, and button-origin scrolling does not activate actions. Do not coach a long playthrough merely to force success.
+**NEXT:** refresh the same preview without resetting saves. Check a short sequence only: open Management, close it, reopen it, then start one contract. Verify subsequent normal taps still work and contract state changes. Do not request a long checklist or explain around a remaining input failure.
 
-- Any basic text/input/navigation failure: remain VERTICAL_SLICE and fix that layer only.
-- Foundation passes: resume Core Purpose / Growth Spine testing on the same build. Record whether the player independently understands what to do and recognizes how decisions affect warehouse growth.
-- Human comprehension, Core Experience, and enjoyment remain **NOT PASSED** until observed. Automated fixtures with injected funds/rating are UI tests, not natural-progression/fun evidence.
+- Any continued input failure: remain VERTICAL_SLICE, preserve build/device evidence and repair the actual input path; no blind repeat of the old tests.
+- If input works: record input PASS for that build only. It is not a Core Experience/fun PASS.
+- Separately prepare the bounded growth-first design revision below. Do not ask the user to validate the old slow loop at length before addressing their product feedback.
 
-## 5. Locked product and scope
+## 5. Locked implementation and separate design review
 
-- Player is the logistics-center owner/operations manager, not a manual parcel carrier or forklift driver.
-- 3D warehouse is the primary board.
-- Observe flow -> notice symptom -> inspect Zone -> choose OPERATIONS/CAPITAL response -> visible physical and authoritative logistics change -> measure -> next constraint.
+Unchanged by this input release:
+- Logistics owner/manager role; no manual parcel carrying or forklift driving.
+- 3D warehouse primary board; Zone-first equipment inspection/purchase.
 - Director reports symptoms/evidence, not the correct equipment answer.
 - Management is an executive dashboard, not the normal equipment store.
-- Major equipment requires visible identity, actual Domain effect, readable trade-offs, and measured consequences.
-- Warehouse growth is the primary reward fantasy.
-- Rank 1: Rack Wing / Second Packing Bench / one Worker Hire / Forklift Project.
-- Rank 1 -> 2 requires explicit Warehouse Expansion: 4/4 projects, Logistics Rating 8, and 10,000 cash; no silent auto-promotion.
-- Rank 2 staffing: RECEIVING (INBOUND/STORAGE), PICKING, SHIPPING; start 2/2/1, one-worker floor, 30-second observation cooldown; no fake PACKING Worker allocation.
-- Slice equipment: STORAGE Fast Pick Rack <-> High Density Rack; PACKING Parallel Pack Line <-> Fast Pack Cell; paid renovation, no refund. Current tested price is 75% of target fresh-build cost.
-- Other Rank 2 v2 Zones and Rank 3 redesign/new content remain deferred until the slice passes.
-- Web is engineering/prototype/diagnostic only. No active Android production, backend/account/cloud save/IAP/ads/external analytics or release enablement is authorized.
+- Major equipment has visible identity, authoritative effects, readable trade-offs and measured consequences.
+- Warehouse growth remains the primary reward fantasy.
+- Rank1 projects: Rack Wing, Second Packing Bench, one Worker Hire, Forklift Project.
+- Current Rank1 -> 2 gate: explicit Warehouse Expansion with projects4/4, Rating8 and cash10,000; no silent auto-promotion.
+- Rank2 direct staffing: RECEIVING/PICKING/SHIPPING, initial2/2/1, floor1, 30-second observation cooldown. No fake PACKING Worker allocation.
+- Slice equipment: STORAGE Fast Pick Rack <-> High Density Rack; PACKING Parallel Pack Line <-> Fast Pack Cell. Paid renovation, no refund; current tested renovation price75%.
+- Other Rank2 v2 zones and Rank3 new content remain deferred. Web is engineering only; no new platforms, backend/cloud/account/IAP/ads/external analytics or release enablement.
 
-## 6. Canonical files / next edit scope
+**Product feedback recorded, exact revision NOT IMPLEMENTED/LOCKED:** the user wants visible warehouse expansion and increasing forklift/conveyor automation at a better tempo, rather than analysis and staffing changes dominating the experience. The proposal in `INPUT_EMULATION_REPAIR_2026-09-21.md` targets meaningful automation and unmistakable expansion within the first five minutes, smaller visible changes between milestones, real transported work rather than decorative machinery, and analysis as an optimization aid. The proposed removal of mandatory contract-rating progression needs an explicit GDD/decision delta; contracts as optional acceleration, prices, counts, conveyor behavior and exact pacing are still proposals. Do not implement all late-game systems or change saves under this input approval.
 
-Project-wide: the three installed v2.4 project canonical rule files.
-Title-local: `GDD_FLOTRA.md`, `ART_BIBLE_FLOTRA.md`, `DEV_STATUS.json`, this `HANDOFF.md`, `VERTICAL_SLICE_V2_CHANGE_PACKET.md`, and `MOBILE_INTERACTION_CLARITY_CHANGE_PACKET.md`.
+## 6. Canonical / files in scope
 
-Relevant implementation: `godot/main.gd`, `godot/ui/mobile_interaction_clarity.gd`, `godot/ui/mobile_ui_gesture_router.gd`, `godot/ui/mobile_theme.tres`, existing HUD/Zone components, `godot/ui/session_resume_brief.gd`, and composed mobile-clarity smoke/capture tests.
+Project-wide: the three installed v2.4 canonical rule files.
+Title: `GDD_FLOTRA.md`, `ART_BIBLE_FLOTRA.md`, `DEV_STATUS.json`, `HANDOFF.md`, `VERTICAL_SLICE_V2_CHANGE_PACKET.md`, `MOBILE_INTERACTION_CLARITY_CHANGE_PACKET.md`, `INPUT_EMULATION_REPAIR_2026-09-21.md`.
 
-The change packet's pre-integration approval-wait statements are historical as of its recorded branch head. The explicit approval and deployment evidence in sections 1-2 above supersede that delivery status, not its implementation acceptance criteria.
+Input: `godot/ui/mobile_ui_gesture_router.gd`, `godot/tests/mobile_engine_touch_smoke.gd`, composed clarity smoke/capture, `godot/main.gd` and relevant mobile HUD/Zone code.
+
+This handoff's approval, deployment and NEXT supersede the older change packets' pre-integration status only; their tested scope and product proposals are not silently rewritten.
 
 ## 7. Visual canonical
 
-- CURRENT: PR #126 actual-main captures and deployed engineering preview; not a guarantee of TARGET quality.
-- TARGET-DIRECTION: open-top portrait cutaway warehouse, dark navy industrial base, cyan tech accents, amber safety accents, warm local task lighting, readable logistics flow, per title Art Bible/GDD.
-- Target imagery and current imagery are not interchangeable. On a new chat reset verified_access to NO and reopen the actual relevant image before layout/art/motion judgment. Missing target imagery blocks only dependent visual decisions.
+CURRENT is the PR128 engineering preview with the retained PR126 presentation. Main-merge captures were generated by CI, but no new visual-quality or iPhone-rendering PASS is claimed during integration. Prior PR126 captures remain historical references, not TARGET guarantees.
+
+TARGET-DIRECTION remains the title Art Bible/GDD: open-top portrait cutaway warehouse, dark navy industrial base, cyan technology and amber safety accents, warm task lighting and readable flow. Reopen actual current/target images before new art/layout/motion decisions. New chat verified_access resets to NO.
