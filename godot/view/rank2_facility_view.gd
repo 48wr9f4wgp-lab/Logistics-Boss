@@ -95,7 +95,7 @@ func _build_operations_spine() -> void:
     # rather than only a thin glowing rail. They are management infrastructure,
     # not logistics capacity, and stay behind the active process floor.
     for x in [-3.05, 3.05]:
-        _box(root, "OpsWing", Vector3(0.72, 1.18, 0.92), Vector3(x, 1.54, -4.10), STEEL_LIGHT)
+        _box(root, "OpsWing_%s" % ("L" if x < 0 else "R"), Vector3(0.72, 1.18, 0.92), Vector3(x, 1.54, -4.10), STEEL_LIGHT)
         _box(root, "OpsWingAccent", Vector3(0.08, 0.72, 0.72), Vector3(x, 1.64, -3.62), CYAN)
 
     _box(root, "OpsConsoleBank", Vector3(2.60, 0.52, 0.34), Vector3(0.0, 2.49, -4.15), STEEL)

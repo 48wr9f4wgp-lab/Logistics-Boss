@@ -63,8 +63,8 @@ func _verify_goal_and_contract() -> void:
         _expect(bool(result.get("ok", false)), "Completed-equipment fixture must use real purchase API")
     sim.logistics_rating = 0
     await _settle()
-    _expect(hud._v2_growth_goal.text.contains("契約を選ぶ"), "Projects4/4 rating0 must lead to contracts")
-    _expect(hud._v2_growth_goal.text.contains("導入済み"), "Goal must explain that equipment is already complete")
+    _expect(hud._v2_growth_goal.text.contains("拡張"), "Installed projects lead to ordinary-shipment expansion, not mandatory contracts")
+    _expect(hud._v2_growth_goal.text.contains("出荷"), "Goal must show remaining ordinary shipment progress")
 
     var resume: LogisticsSessionResumeBrief = ResumeScript.new()
     hud.add_child(resume)
@@ -83,7 +83,7 @@ func _verify_goal_and_contract() -> void:
     _expect(goal.get_theme_stylebox("normal") == goal.get_theme_stylebox("pressed"), "Raw touch must show pressed styling")
     _touch(point, false)
     await _settle()
-    _expect(hud._sheet.visible and hud._progression_panel.visible, "Goal must open the contract section directly")
+    _expect(hud._sheet.visible and hud._v2_rank1_expansion_panel.visible, "Goal must open the current expansion objective directly")
     _expect(not hud._v2_overview_panel.visible, "Contract section must not bury field navigation beneath offers")
     _expect((clarity._tabs["field"] as Button).is_visible_in_tree(), "Field tab must remain visible outside scroll")
     _tap(clarity._tabs["field"] as Button)
@@ -117,10 +117,11 @@ func _verify_goal_and_contract() -> void:
     _expect(int(count["value"]) == 1, "Touch plus synthetic mouse must activate once")
     _expect(not sim.active_contract.is_empty(), "Contract button must change authoritative active contract")
     _expect(not hud._sheet.visible, "Accepted contract must return to warehouse observation")
-    _expect(hud._v2_growth_goal.text.contains("進行中"), "Accepted contract must have persistent progress feedback")
+    _expect(hud._v2_growth_goal.text.contains("契約"), "Accepted contract must have persistent progress feedback")
 
     sim.active_contract.clear()
     sim.logistics_rating = 8
+    sim.shipped = maxi(sim.shipped, FlotraV2Sim.EXPANSION_SHIPMENTS) # Explicit Rank2 fixture, not pacing evidence.
     await _settle()
     var before := sim.money
     _tap(hud._v2_growth_goal)
@@ -202,7 +203,7 @@ func _verify_zone_purchase() -> void:
     zone.open_zone("storage")
     await _settle()
     var button := zone._capital_action
-    _expect(button.text.contains("配置を確認"), "Unowned equipment must offer preview, not ambiguous CAPITAL")
+    _expect(button.text.contains("設備を見る"), "Unowned equipment must offer preview, not ambiguous CAPITAL")
     _expect(clarity.router.button_at(button.get_global_rect().get_center()) == button, "Zone purchase action must be on-screen and hittable")
     var before := sim.money
     _tap(button)
@@ -212,7 +213,10 @@ func _verify_zone_purchase() -> void:
     _tap(button)
     await _settle()
     _expect(sim.money < before and sim.rank1_project_owned(&"rack_wing"), "Second gesture must perform authoritative construction")
-    _expect(not button.visible and zone._capital.text.contains("導入済み"), "Successful construction must become installed status")
+    _expect(not zone.is_open(), "Successful construction must reveal the warehouse")
+    zone.open_zone("storage")
+    await _settle()
+    _expect(not button.visible and zone._capital.text.contains("導入済み"), "Reopening shows installed status without a fake purchase")
     hud.queue_free()
     await _settle()
 
@@ -227,12 +231,15 @@ func _verify_rank2_actions() -> void:
     for kind in [&"rack_wing", &"second_packing_bench", &"worker_hire", &"forklift_project"]:
         sim.purchase_rank1_project(kind)
     sim.logistics_rating = 8
+    sim.shipped = maxi(sim.shipped, FlotraV2Sim.EXPANSION_SHIPMENTS) # Explicit Rank2 fixture, not pacing evidence.
     var expansion: Dictionary = sim.purchase_warehouse_expansion()
     _expect(bool(expansion.get("ok", false)), "Rank2 fixture expansion must succeed")
     for zone_key in ["storage", "packing"]:
         zone.open_zone(zone_key)
         await _settle()
         for button in zone._rank2_capital_buttons:
+            zone.open_zone(zone_key)
+            await _settle()
             var kind := StringName(button.get_meta("kind", ""))
             var money_before := sim.money
             _expect(clarity.router.button_at(button.get_global_rect().get_center()) == button, "Rank2 equipment must be visibly hittable: %s" % String(kind))

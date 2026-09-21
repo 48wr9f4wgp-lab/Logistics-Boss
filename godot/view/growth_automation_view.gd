@@ -1,5 +1,3 @@
-FILE godot/view/growth_automation_view.gd - 6dfdce0afd4ffa62d469a50035fff957439e2c660a17132f032c5e1ee2805708
-EDIT 0 0
 extends Node3D
 class_name GrowthAutomationView
 
@@ -146,54 +144,3 @@ func _box(parent: Node, title: String, size: Vector3, position: Vector3, color: 
     node.material_override = material
     parent.add_child(node)
     return node
-END_EDIT
-END_FILE
-FILE godot/view/rank2_facility_view.gd 6248736a976bd7fa0930b5f061bf9e96a892aa82d361cf3ea8ba1d6ce5699619 4bfa0088725e470acdf6edc43e00caa45065711a86b6beb513b422d9c396f2a6
-EDIT 97 98
-        _box(root, "OpsWing_%s" % ("L" if x < 0 else "R"), Vector3(0.72, 1.18, 0.92), Vector3(x, 1.54, -4.10), STEEL_LIGHT)
-END_EDIT
-END_FILE
-FILE godot/view/warehouse_view.gd a0877bfd8d0d737286236549974fac4f722abf908ec6abbb7ddf9bf05d24b391 5a33ffff4dc29275a7a67273d148130410c8b87805b54c8e929a110c318591ff
-EDIT 4 4
-    "conveyor": Vector3(-0.35, 0.35, 1.85),
-END_EDIT
-END_FILE
-FILE godot/view/warehouse_view_mobile.gd 87379dbbdde26771485da628187f51e770b8631c45744c573217ea4605b1ed68 0aea9d9f68e80ac9c97a8f3ce800200d44046c1127b1013b54af1a1dbe69733c
-EDIT 19 19
-var _investment_focus_time := 0.0
-var _investment_focus_weight := 0.0
-var _investment_target := Vector3.ZERO
-var _investment_expansion := false
-END_EDIT
-EDIT 35 35
-    # Looking elsewhere immediately cancels the optional purchase framing.
-    if event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton or event is InputEventMouseMotion:
-        _investment_focus_time = 0.0
-        _investment_focus_weight = 0.0
-END_EDIT
-EDIT 118 121
-    _investment_focus_time = maxf(0.0, _investment_focus_time - delta)
-    _investment_focus_weight = move_toward(_investment_focus_weight, 1.0 if _investment_focus_time > 0.0 else 0.0, delta * 3.0)
-    target = target.lerp(_investment_target, _investment_focus_weight * 0.65)
-    var focus_distance := maxf(_camera_distance, 18.0) if _investment_expansion else minf(_camera_distance, 16.0)
-    var distance := lerpf(_camera_distance, focus_distance, _investment_focus_weight)
-    var horizontal := cos(_orbit_pitch) * distance
-    var height := -sin(_orbit_pitch) * distance
-END_EDIT
-EDIT 141 141
-
-
-func focus_investment(kind: String) -> void:
-    _investment_focus_time = 3.0
-    _investment_expansion = kind == "warehouse_expansion"
-    match kind:
-        "forklift_project", "extra_forklift":
-            _investment_target = Vector3(-2.0, 0.85, 1.0)
-        "rack_wing", "fast_pick_rack", "high_density_rack":
-            _investment_target = Vector3(-1.7, 1.0, -0.4)
-        "second_packing_bench", "parallel_pack", "fast_pack_cell", "transfer_conveyor":
-            _investment_target = Vector3(1.1, 0.85, 0.8)
-        _:
-            _investment_target = Vector3(0.0, 0.85, 0.7)
-END_EDIT
-END_FILE

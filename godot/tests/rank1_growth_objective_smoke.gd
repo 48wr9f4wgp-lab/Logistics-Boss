@@ -24,10 +24,10 @@ func _run() -> void:
     if hud._v2_growth_goal == null or not hud._v2_growth_goal.visible:
         _fail("fresh Rank 1 must expose the persistent growth objective")
         return
-    if not hud._v2_growth_goal.text.contains("契約を選ぶ"):
-        _fail("fresh Rank 1 objective must tell the player to choose a contract")
+    if not hud._v2_growth_goal.text.contains("倉庫を育てる"):
+        _fail("fresh Rank 1 objective must lead to warehouse growth rather than mandatory contracts")
         return
-    if not hud._v2_growth_goal.text.contains("設備 0/4") or not hud._v2_growth_goal.text.contains("評価 0/8"):
+    if not hud._v2_growth_goal.text.contains("設備 0/2") or not hud._v2_growth_goal.text.contains("出荷 0/20"):
         _fail("growth objective must expose the two Rank 2 progression requirements")
         return
 
@@ -45,8 +45,8 @@ func _run() -> void:
     if list.get_child_count() < 2 or list.get_child(0) != hud._progression_panel:
         _fail("Rank 1 Management must put contract/progression controls first")
         return
-    if hud._v2_rank1_expansion_label == null or not hud._v2_rank1_expansion_label.text.contains("物流評価は契約達成で上昇"):
-        _fail("Warehouse Expansion must explain how Logistics Rating is earned")
+    if hud._v2_rank1_expansion_label == null or not hud._v2_rank1_expansion_label.text.contains("契約は任意"):
+        _fail("Warehouse Expansion must explain that contracts are optional")
         return
 
     if hud._contract_buttons.is_empty() or sim.contract_offers.is_empty():
@@ -62,8 +62,8 @@ func _run() -> void:
 
     hud._sheet.visible = false
     hud._process(0.0)
-    if not hud._v2_growth_goal.text.contains("契約｜速配 8件"):
-        _fail("active contract must replace the generic objective with live contract progress")
+    if sim.active_contract.is_empty() or not hud._v2_growth_goal.text.contains("出荷"):
+        _fail("optional contract must not replace the fundamental shipment-growth objective")
         return
 
     var elapsed := 0.0
@@ -79,8 +79,8 @@ func _run() -> void:
         return
 
     hud._process(0.0)
-    if not hud._v2_growth_goal.text.contains("評価 2/8"):
-        _fail("growth objective must immediately reflect earned Logistics Rating")
+    if not hud._v2_growth_goal.text.contains("出荷"):
+        _fail("growth objective must immediately retain the ordinary shipment objective after an optional reward")
         return
 
     hud.queue_free()

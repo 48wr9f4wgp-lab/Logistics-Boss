@@ -106,6 +106,12 @@ func _build_kind_ghost(parent: Node3D, kind: StringName) -> void:
             _box(parent, "Ghost_ForkliftLane", Vector3(2.10, 0.055, 1.00), Vector3(-3.70, 0.045, 1.45), color)
             _box(parent, "Ghost_ForkliftBody", Vector3(0.95, 0.70, 0.72), Vector3(-3.70, 0.42, 1.45), color)
             _box(parent, "Ghost_ForkliftMast", Vector3(0.12, 1.15, 0.58), Vector3(-3.18, 0.68, 1.45), color)
+        &"extra_forklift":
+            _box(parent, "Ghost_SecondForklift", Vector3(0.95, 1.20, 1.50), Vector3(-5.8, 0.65, 3.35), color)
+        &"transfer_conveyor":
+            _box(parent, "Ghost_ConveyorFeed", Vector3(1.10, 0.20, 0.58), Vector3(0.20, 0.86, 1.85), color)
+            _box(parent, "Ghost_ConveyorMain", Vector3(0.58, 0.20, 1.90), Vector3(0.75, 0.86, 0.90), color)
+            _box(parent, "Ghost_ConveyorExit", Vector3(0.80, 0.20, 0.58), Vector3(1.15, 0.86, -0.05), color)
         &"fast_pick_rack":
             _box(parent, "Ghost_FastPickPad", Vector3(2.55, 0.055, 1.25), Vector3(0.15, 0.045, -2.65), color)
             for x in [-0.35, 0.70]:

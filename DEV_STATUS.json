@@ -8,7 +8,7 @@
   "release_approval": "NOT_REQUESTED",
   "development_target": "iPhone / iOS",
   "primary_input": "touch",
-  "status_label": "PRE_GO_VERTICAL_SLICE_V2_REWORK",
+  "status_label": "PRE_GO_GROWTH_FIRST_SLICE_PR132_DEVELOPMENT",
   "real_device_access": "AVAILABLE_USER_IPHONE_REPEATED_TESTING",
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
   "checks": {
@@ -74,9 +74,9 @@
     "engine_touch_emulation": "RED_unchanged_app_f62b828_clarity9_engine_parser_failures3_GREEN_9f0a1d0_clarity10_main_e892e56_clarity12_success",
     "post_pr128_human_ui_foundation": "POSITIVE_2026_09_21_user_reports_improved_usability_IMG_2615_shows_expansion_navigation_popup_overlap_remaining_not_exhaustive_input_acceptance",
     "deployed_artifact_integrity": "Pages_artifact10620554995_zip_sha256_matches_37302145b34dade3c97d64bef030c118e6a56a9f01d1f4d4c8c7762c7bccd1d5_index_pck1944592_bytes_matches_export_HTML",
-    "growth_automation_fun": "NOT_PASSED_user_requests_faster_visible_expansion_and_accumulating_functional_forklifts_conveyors_design_revision_not_implemented",
+    "growth_automation_fun": "PR132_GROWTH_IMPLEMENTED_HUMAN_FUN_NOT_YET_TESTED",
     "notification_clearance": "PR130_head619ebff_clarity15_success_390x844_375x667_430x932_engine_taps_no_logistics_or_cash_pause_no_shipment_backlog_priority_measurement_timers_retained_zone_reset_coverage",
-    "post_pr130_human_notification_clearance": "PENDING_NOT_PASSED"
+    "post_pr130_human_notification_clearance": "PASS_IN_OBSERVED_VIDEO_INTERVALS_ONLY_NOT_EXHAUSTIVE_DEVICE_ACCEPTANCE"
   },
   "latest_feature_merge": {
     "pr": 76,
@@ -94,8 +94,8 @@
     "title": "Add synthetic Android native export smoke"
   },
   "last_verified_done": "User explicitly approved PR130 and replacement of the same engineering preview with 反映しよう. Approved and tested head619ebff77a4446587739b6ae1f8bd3fcb2a57be0 was squash-merged with expected-head guard at4a398a417aa53b1deee009cb344bce273e2035db. Rechecked Clarity15 run35555431030, Godot311 run35555431033, iOS120 run35555431035 and Render109 run35555431046: success. Preview publish86bf3ba109c08994dae8063a9bdf3c37cada1d66 is one direct descendant commit changing only preview HTML/PCK. Pages276 run35558380778 succeeded for that publish commit. Downloaded artifact10620554995, verified its ZIP SHA256 and index.pck size1944592 against export HTML. Human post-PR128 improved-usability report is recorded as limited positive evidence, not every-gesture or fun acceptance. PR130 iPhone notification recheck remains pending. No input-router, Domain, economy, progression or save changes were added during this integration.",
-  "blocked": "No new implementation blocker for the bounded next design task. PR130 human iPhone notification-clearance recheck is pending; post-PR128 basic usability was reported improved. Native physical-iPhone validation remains separately deferred for Mac/Xcode. Automated/deployment/artifact success is not comprehensive human acceptance.",
-  "next": "Briefly verify that shipment notifications no longer cover Management tabs or Zone purchase controls in the current iPhone preview; keep the save. Do not repeat the earlier no-input diagnosis as the latest state. Next product task is the separate bounded growth-first GDD/change-packet revision centered on visible expansion and functional automation; do not require lengthy validation of the old loop before addressing this feedback. No conveyor, economy or Rank1-gate change is implemented by PR130.",
+  "blocked": "No source-implementation blocker. PR132 repository checks pending; native physical-device lane remains separately deferred for Mac/Xcode.",
+  "next": "Complete PR132 repository CI and actual-main review; request build-specific preview replacement approval. Do not repeat the resolved Management input/popup diagnosis or silently deploy schema10.",
   "greenlight_after_device_validation": "Record GO / HOLD / KILL with evidence. PRODUCTION_DECISION remains UNDECIDED until this GREENLIGHT decision.",
   "post_go_only": [
     "RELEASE_ENABLEMENT",
@@ -148,7 +148,7 @@
   },
   "vertical_slice_v2": {
     "change_packet": "VERTICAL_SLICE_V2_CHANGE_PACKET.md",
-    "implementation_state": "PR130_NOTIFICATION_FIX_DEPLOYED_BASIC_USABILITY_IMPROVED_NOTIFICATION_RECHECK_PENDING_GROWTH_DIRECTION_REVIEW",
+    "implementation_state": "GROWTH_FIRST_PR132_BRANCH_IMPLEMENTED_REMOTE_VERIFICATION_PENDING",
     "locked_scope": [
       "3D warehouse as primary game board",
       "Zone-first normal equipment decisions",
@@ -260,7 +260,7 @@
       "PR130 hides routine shipment popups during controls without pausing logistics; current important results resume after closing controls",
       "PR130 approved head integrated and same existing preview deployed; human notification-clearance recheck pending"
     ],
-    "next_step": "IPHONE_WEB_PR130_NOTIFICATION_RECHECK_THEN_BOUNDED_GROWTH_FIRST_DESIGN"
+    "next_step": "VERIFY_PR132_GROWTH_BRANCH_THEN_SCOPED_PREVIEW_APPROVAL"
   },
   "latest_vertical_slice_v2_merge": {
     "pr": 130,
@@ -270,10 +270,10 @@
   },
   "working_head": {
     "repo": "48wr9f4wgp-lab/Logistics-Boss",
-    "branch": "main",
-    "commit_at_sync_input": "86bf3ba109c08994dae8063a9bdf3c37cada1d66",
+    "branch": "feat/growth-first-slice",
+    "commit_at_sync_input": "924e3c6ab410880d6bb4270587944309b300cbea",
     "validation_status": "PARTIAL",
-    "note": "The containing docs-only synchronization commit advances main. Resolve live main SHA on restart; game code baseline and preview files are unchanged by that docs commit."
+    "note": "Containing source integration advances this feature branch; resolve live head. Main and engineering preview are unchanged."
   },
   "verified_baseline": {
     "code_commit": "619ebff77a4446587739b6ae1f8bd3fcb2a57be0",
@@ -307,16 +307,30 @@
     "integration_session_game_code_wip": "NONE",
     "other_machine_uncommitted_or_unpushed_state": "UNKNOWN_NOT_INFERRED_FROM_GITHUB",
     "user_data_reset": "NOT_PERFORMED",
-    "save_schema_change": "NONE_V9_RETAINED",
+    "save_schema_change": "SCHEMA10_ON_PR132_ONLY_NOT_DEPLOYED_OLD_SCHEMA9_EXECUTABLE_CANNOT_READ_SCHEMA10",
     "prior_preview_commit": "d642a4b06ea5220d41e0212f94883f2deff78298",
     "prior_code_baseline": "e892e56ef75d6e7e0d491eb8ccb04e555f5abb6b",
     "user_side_pending": "Brief iPhone Web notification-clearance recheck after PR130",
-    "action": "Protect external local state. PR128 has positive basic-usability evidence but known popup overlap; it is not a comprehensive accepted product baseline. No automatic rollback, reset or data deletion."
+    "action": "Protect external local state. PR128 has positive basic-usability evidence but known popup overlap; it is not a comprehensive accepted product baseline. No automatic rollback, reset or data deletion.",
+    "pr132": "OPEN_FEATURE_BRANCH_MAIN_AND_PREVIEW_UNCHANGED"
   },
   "growth_direction_review": {
-    "status": "USER_REQUEST_RECORDED_DESIGN_REVISION_NOT_IMPLEMENTED",
+    "status": "IMPLEMENTED_ON_PR132_LOCAL_PASS_REMOTE_CI_PENDING_NOT_DEPLOYED",
     "source": "User requested faster visible warehouse expansion with accumulating forklifts and conveyors rather than analysis and staffing changes dominating play",
-    "proposal_locator": "INPUT_EMULATION_REPAIR_2026-09-21.md#separate-product-direction-proposal-not-implemented",
-    "next_design_task": "Prepare a bounded growth-first slice and explicit GDD delta; five-minute automation/expansion pacing and optional contract acceleration remain proposals. Preserve actual logistics, save safety and iPhone-only target."
+    "proposal_locator": "GROWTH_FIRST_SLICE_CHANGE_PACKET.md",
+    "next_design_task": "Verify repository CI and actual-main captures, then request a scoped preview approval. User fun and physical iPhone checks remain pending."
+  },
+  "growth_first_slice": {
+    "pr": 132,
+    "change_packet": "GROWTH_FIRST_SLICE_CHANGE_PACKET.md",
+    "implementation": "ordinary20_shipments_any2_projects_cash8000_gate_no_rating_contract_optional_extra_working_forklift_and_transfer_conveyor",
+    "save_schema": 10,
+    "migration": "read1_to9_preserve_money_ownership_staffing_book_values_project_inflight_to_queues_partial_work_restarts",
+    "local_tests": "two_no_contract_1x_earned_money_routes_automation_expansion_under300s_conservation_engine_input_and_backup_recovery_PASS",
+    "repository_ci": "PENDING",
+    "human_iphone": "NOT_TESTED",
+    "fun": "NOT_PASSED",
+    "preview_approval": "NOT_REQUESTED_FOR_PR132",
+    "old_gate": "SUPERSEDED_ON_BRANCH_RATING8_ALL4_CASH10000_REMAINS_IN_DEPLOYED_PR130"
   }
 }

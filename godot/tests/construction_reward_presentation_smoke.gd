@@ -209,6 +209,7 @@ func _rank2_sim() -> FlotraV2Sim:
             _fail("preview seed must complete Rank 1 project: %s" % String(kind))
             return sim
     sim.logistics_rating = LogisticsProgression.RANK2_RATING
+    sim.shipped = maxi(sim.shipped, FlotraV2Sim.EXPANSION_SHIPMENTS) # Explicit Rank2 fixture, not pacing evidence.
     var expansion: Dictionary = sim.purchase_warehouse_expansion()
     if not bool(expansion.get("ok", false)):
         _fail("preview seed must expand to Rank 2")

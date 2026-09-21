@@ -25,6 +25,7 @@ var _mobile_action_mouse_button: Button
 var _mobile_action_mouse_movement := 0.0
 var _mobile_suppress_mouse_until_msec := 0
 var _v2_growth_goal: Button
+var _v2_project_hint: Label
 var _v2_overview_panel: PanelContainer
 var _v2_overview_label: Label
 var _v2_zone_nav_buttons: Dictionary = {}
@@ -413,7 +414,7 @@ func _apply_mobile_progression_copy() -> void:
             sim.completed_contracts,
         ]
     else:
-        _progression_label.text = "RANK 1  SMALL DEPOT\n物流評価 %d / 8" % sim.logistics_rating
+        _progression_label.text = "RANK 1  SMALL DEPOT\n契約の物流評価 %d｜拡張条件ではありません" % sim.logistics_rating
 
 
 func _build_v2_growth_goal() -> void:
@@ -452,61 +453,18 @@ func _build_v2_growth_goal() -> void:
 func _render_v2_growth_goal() -> void:
     if _v2_growth_goal == null:
         return
-    if sim == null or sim.facility_rank != 1:
-        _v2_growth_goal.visible = false
-        return
-
-    _v2_growth_goal.visible = _sheet == null or not _sheet.visible
+    _v2_growth_goal.visible = sim != null and sim.has_method("rank1_expansion_readiness") and sim.facility_rank <= 2 and not _sheet.visible
     if not _v2_growth_goal.visible:
         return
-
-    var projects := 0
-    var projects_required := 4
-    var rating := sim.logistics_rating
-    var rating_required := LogisticsProgression.RANK2_RATING
-    var expansion_cost := 10000
-    var ready := false
-    if sim.has_method("rank1_expansion_readiness"):
-        var readiness: Dictionary = sim.call("rank1_expansion_readiness")
-        projects = int(readiness.get("projects", 0))
-        projects_required = int(readiness.get("projects_required", 4))
-        rating = int(readiness.get("rating", rating))
-        rating_required = int(readiness.get("rating_required", rating_required))
-        expansion_cost = int(readiness.get("cost", expansion_cost))
-        ready = bool(readiness.get("ready", false))
-
-    if ready:
-        _v2_growth_goal.text = "NEXT｜RANK 2へ拡張可能 → 経営管理を開く\n設備 %d/%d｜評価 %d/%d｜拡張費 ¥%s" % [
-            projects,
-            projects_required,
-            rating,
-            rating_required,
-            _format_number(expansion_cost),
-        ]
+    if sim.facility_rank == 2:
+        _v2_growth_goal.text = "自動化設備を見る ▶\n増車や搬送コンベアで、次の規模へ"
         return
-
-    var objective := (
-        "契約を選ぶ → 物流評価を上げる"
-        if not sim.contract_offers.is_empty()
-        else "次の契約を準備中"
-    )
-    if not sim.active_contract.is_empty():
-        var active: Dictionary = sim.active_contract
-        objective = "契約｜%s  %.0f/%.0f  残%d秒" % [
-            String(active.get("title", "契約")),
-            float(active.get("progress", 0.0)),
-            float(active.get("target", 0.0)),
-            ceili(float(active.get("remaining", 0.0))),
-        ]
-
-    _v2_growth_goal.text = "NEXT｜%s\nRANK 2条件｜設備 %d/%d｜評価 %d/%d｜拡張費 ¥%s" % [
-        objective,
-        projects,
-        projects_required,
-        rating,
-        rating_required,
-        _format_number(expansion_cost),
-    ]
+    var readiness: Dictionary = sim.call("rank1_expansion_readiness")
+    var headline := "倉庫を拡張する ▶" if bool(readiness.get("ready", false)) else "倉庫を育てる ▶"
+    _v2_growth_goal.text = "%s\n設備 %d/%d種類｜出荷 %d/%d件｜拡張 ¥%s" % [
+        headline, mini(int(readiness["projects"]), int(readiness["projects_required"])),
+        int(readiness["projects_required"]), mini(sim.shipped, int(readiness["shipments_required"])),
+        int(readiness["shipments_required"]), _format_number(int(readiness["cost"])) ]
 
 
 func _open_growth_management() -> void:
@@ -596,7 +554,8 @@ func _build_v2_management_overview() -> void:
     expansion_column.add_child(_v2_rank1_expansion_label)
 
     var project_hint := Label.new()
-    project_hint.text = "未完了Project → 該当Zoneを開く"
+    _v2_project_hint = project_hint
+    project_hint.text = "設備は好きな2種類から。残りは拡張後も導入できます"
     project_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     project_hint.add_theme_font_override("font", JAPANESE_UI_FONT)
     project_hint.add_theme_font_size_override("font_size", 9)
@@ -671,38 +630,27 @@ func _render_v2_management_overview() -> void:
 
 
 func _render_v2_rank1_expansion() -> void:
-    if _v2_rank1_expansion_panel == null or _v2_rank1_expansion_label == null or _v2_rank1_expansion_button == null:
+    if _v2_rank1_expansion_panel == null or sim == null or not sim.has_method("rank1_expansion_readiness"):
         return
-    if sim == null or sim.facility_rank != 1 or not sim.has_method("rank1_expansion_readiness"):
-        _v2_rank1_expansion_panel.visible = false
+    _v2_rank1_expansion_panel.visible = sim.facility_rank == 1
+    if sim.facility_rank != 1:
         return
-
-    _v2_rank1_expansion_panel.visible = true
     var readiness: Dictionary = sim.call("rank1_expansion_readiness")
-    var projects := int(readiness.get("projects", 0))
-    var projects_required := int(readiness.get("projects_required", 4))
-    var rating := int(readiness.get("rating", 0))
-    var rating_required := int(readiness.get("rating_required", 8))
-    var cost := int(readiness.get("cost", 0))
-
-    _v2_rank1_expansion_label.text = "WAREHOUSE EXPANSION\n設備Project %d/%d｜物流評価 %d/%d\n物流評価は契約達成で上昇｜Small Depot → RANK 2" % [
-        projects,
-        projects_required,
-        rating,
-        rating_required,
-    ]
-
-    var ready_except_funds := bool(readiness.get("projects_ready", false)) and bool(readiness.get("rating_ready", false))
-    _v2_rank1_expansion_button.disabled = not ready_except_funds or sim.money < cost
-    if not bool(readiness.get("projects_ready", false)):
-        _v2_rank1_expansion_button.text = "拡張条件未達｜下の未完了Projectを先に実施"
-    elif not bool(readiness.get("rating_ready", false)):
-        _v2_rank1_expansion_button.text = "拡張条件未達｜物流評価 %d/%d" % [rating, rating_required]
+    var cost := int(readiness["cost"])
+    _v2_rank1_expansion_label.text = "倉庫を大きくする\n設備 %d/%d種類｜出荷 %d/%d件\n拡張費 ¥%s｜契約は任意\n床面積拡大・保管+4・5人編成\n増車と搬送コンベアを解放" % [
+        mini(int(readiness["projects"]), int(readiness["projects_required"])), int(readiness["projects_required"]),
+        mini(sim.shipped, int(readiness["shipments_required"])), int(readiness["shipments_required"]), _format_number(cost)]
+    _v2_rank1_expansion_button.disabled = not bool(readiness["ready"])
+    if not bool(readiness["projects_ready"]):
+        _v2_rank1_expansion_button.text = "あと%d種類の設備を導入" % (int(readiness["projects_required"]) - int(readiness["projects"]))
+    elif not bool(readiness["shipments_ready"]):
+        _v2_rank1_expansion_button.text = "あと%d件出荷で拡張へ" % (int(readiness["shipments_required"]) - sim.shipped)
     elif sim.money < cost:
-        _v2_rank1_expansion_button.text = "資金不足｜Warehouse拡張 ¥%s" % _format_number(cost)
+        _v2_rank1_expansion_button.text = "拡張まであと ¥%s" % _format_number(cost - sim.money)
     else:
-        _v2_rank1_expansion_button.text = "Warehouseへ拡張｜¥%s" % _format_number(cost)
-
+        _v2_rank1_expansion_button.text = "倉庫を拡張する｜¥%s" % _format_number(cost)
+    if _v2_project_hint != null:
+        _v2_project_hint.visible = int(readiness["projects"]) < 4
     _render_rank1_project_navigation()
 
 
@@ -796,9 +744,9 @@ func _purchase_v2_warehouse_expansion() -> void:
     else:
         match String(result.get("reason", "")):
             "projects":
-                _show_toast("設備Projectが未完了")
-            "rating":
-                _show_toast("物流評価が不足")
+                _show_toast("あと設備2種類まで導入が必要です")
+            "shipments":
+                _show_toast("出荷実績が不足しています")
             "funds":
                 _show_toast("資金不足  ¥%s必要" % _format_number(int(result.get("cost", 0))))
             _:

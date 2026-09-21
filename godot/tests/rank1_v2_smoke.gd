@@ -88,6 +88,8 @@ func _verify_domain_and_save() -> bool:
         return false
 
     sim.logistics_rating = LogisticsProgression.RANK2_RATING
+
+    sim.shipped = maxi(sim.shipped, FlotraV2Sim.EXPANSION_SHIPMENTS) # Explicit Rank2 fixture, not pacing evidence.
     sim.call("_rank_up_to_warehouse")
     if sim.facility_rank != 1:
         _fail("Logistics Rating alone must no longer auto-promote Rank 1 in Core Experience v2")
@@ -113,6 +115,7 @@ func _verify_domain_and_save() -> bool:
 
     round_trip.money = maxi(round_trip.money, FlotraV2Sim.WAREHOUSE_EXPANSION_COST)
     round_trip.logistics_rating = LogisticsProgression.RANK2_RATING
+    round_trip.shipped = maxi(round_trip.shipped, FlotraV2Sim.EXPANSION_SHIPMENTS) # Explicit Rank2 fixture, not pacing evidence.
     var expansion := round_trip.purchase_warehouse_expansion()
     if not bool(expansion.get("ok", false)) or round_trip.facility_rank != 2:
         _fail("Warehouse Expansion must be the explicit action that promotes Small Depot to Rank 2")
@@ -207,6 +210,7 @@ func _verify_zone_panel_and_management() -> bool:
     var management_sim: FlotraV2Sim = SimScript.new()
     management_sim.money = 100000
     management_sim.logistics_rating = LogisticsProgression.RANK2_RATING
+    management_sim.shipped = maxi(management_sim.shipped, FlotraV2Sim.EXPANSION_SHIPMENTS) # Explicit Rank2 fixture, not pacing evidence.
     for kind in management_sim.rank1_project_kinds():
         if not bool(management_sim.purchase_rank1_project(kind).get("ok", false)):
             _fail("management smoke must seed all Rank 1 projects")
@@ -224,7 +228,7 @@ func _verify_zone_panel_and_management() -> bool:
     if hud._v2_rank1_expansion_button == null or hud._v2_rank1_expansion_button.disabled:
         _fail("Warehouse Expansion must become actionable after project/rating/funds gates")
         return false
-    if not hud._v2_rank1_expansion_label.text.contains("4/4"):
+    if not hud._v2_rank1_expansion_label.text.contains("2/2"):
         _fail("Warehouse Expansion must show structural project readiness")
         return false
 

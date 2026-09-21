@@ -11,6 +11,7 @@ const WarehouseConstructionPreviewViewScript = preload("res://view/construction_
 const WarehouseVisualCompositionFixScript = preload("res://view/visual_composition_fix.gd")
 const ForkliftAutomationViewScript = preload("res://view/forklift_automation_view.gd")
 const WarehouseDomainLivenessViewScript = preload("res://view/domain_liveness_view.gd")
+const GrowthAutomationViewScript = preload("res://view/growth_automation_view.gd")
 const Rank1ProjectViewScript = preload("res://view/rank1_project_view.gd")
 const Rank2FacilityViewScript = preload("res://view/rank2_facility_view.gd")
 const Rank3ReceivingAnnexViewScript = preload("res://view/rank3_receiving_annex_view.gd")
@@ -63,6 +64,11 @@ func _ready() -> void:
     var domain_liveness: WarehouseDomainLivenessView = WarehouseDomainLivenessViewScript.new()
     view.add_child(domain_liveness)
     domain_liveness.bind(view, sim)
+
+    var growth_automation: GrowthAutomationView = GrowthAutomationViewScript.new()
+    growth_automation.name = "GrowthAutomation"
+    view.add_child(growth_automation)
+    growth_automation.bind(view, sim as FlotraV2Sim)
 
     var rank1_projects: Rank1ProjectView = Rank1ProjectViewScript.new()
     view.add_child(rank1_projects)
