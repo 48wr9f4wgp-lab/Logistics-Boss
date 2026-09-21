@@ -12,8 +12,8 @@ Canonical: Japanese project v2.4 set + GDD_FLOTRA.md + ART_BIBLE_FLOTRA.md.
 ## Working head
 - Shared repo:48wr9f4wgp-lab/Logistics-Boss / branch:feat/capacity-repair-20260921.
 - Draft PR: https://github.com/48wr9f4wgp-lab/Logistics-Boss/pull/136
-- Verified shared code/test commit:390787dcfc9ef5df19dd056e11637e93fc813219.
-- This state/evidence-only record follows that commit. Resolve the exact current branch tip from PR136 head_sha; confirm its difference is documentation only.
+- Reviewed pre-repair shared head:1da82cb055009b0f6c1a27d172bc531f28afccd6; all6CI passed and13growth/capacity images inspected.
+- Current candidate adds runtime portrait-readability repairs. Resolve exact branch tip from PR136 head_sha; this is not a docs-only delta. See VISUAL_READABILITY_REPAIR.md and VISUAL_REPAIR_VERIFICATION.json.
 - Original local190f6d536965538c710075eaf7612a628e677395 tree matches shared71badab9e52ddcd6e4b276de0afd35b2639641ac exactly.
 - User explicitly approved feature-branch sharing and Draft PR creation after the prior automatic approval rejection; that blocker is resolved.
 - Main remains b63d60a7d506a80ef8efe8e005c4e9196d21fbcb; PR132 preview is unchanged.
@@ -63,14 +63,16 @@ Original300s86output in all4variants reproduced. After255s warmup +3complete255s
 - max5equipment:276; further total-output benefit not demonstrated.
 Rate multipliers remain test-only. Do not infer insufficient demand from flat300s totals or force all5purchases.
 
-## Visual access
-CURRENT: four original current/WIP images were reopened during audit. Candidate PNGs were generated in CI, but file delivery returned HTTP403/Cloudflare1010; their contents have not been viewed. This is separate from successful renderer/test execution.
-TARGET:docs/visual/logistics_boss_visual_north_star_2026-09-16.png matches the repository blob but is truncated and cannot decode. VISUAL BLOCKED for major TARGET/art-direction judgment. No substitute image has been invented.
+## Visual access and latest repair
+TARGET: reattached 853×1844 JPEG viewed, SHA2565303409d35e0f5e465b43cf4fdb07a3b5a5ebc98b50eab776262bd1de91f1eb2. Git PNG remains truncated; do not retry it or claim byte-identical restoration. North Star mood/composition is guidance, not literal Rank3 counts/prices/UI.
+CURRENT: user-uploaded growth15 ZIP SHA2560553a5cb53fdd8f81e0db813a66d3fb1fc51b3f2184436045533f838989bc055 exactly matches HEAD1da82cb artifact10638502412; all13 PNGs inspected. Finding: NEEDS_REVISION, including bottom button/result overlap, clipped pressure copy, worker/zone text clutter, stale staffing directions and framing/material separation.
+Implemented repair: reserve feedback clearance for camera/route controls; two-line Japanese pressure/wave summary; current staffing entry copy; Japanese zone names and worker text only at close zoom; portrait camera heading/target and floor/wall contrast adjustment. No economics or save changes.
+Godot4.7.2 import and9 targeted tests PASS, including full-main layout/projection checks at375/390/430px and existing touch/staffing/discovery tests. Geometry checks do not imply visual acceptance.
+New capture fixtures include feedback+route controls and close worker-role inspection. New candidate CI/rendered image review is pending at this source checkpoint; exact runs/results are appended to PR136.
 
 ## Last verified done / blocked / next
-LAST VERIFIED DONE: source recovery and repairs; exact4.7.2headless60tests; controlled flow diagnosis; Draft PR136; corrected camera capture fixture; remote evidence recorded in CAPACITY_CI_EVIDENCE_2026-09-21.json.
-BLOCKED: artifact PNG download/access and image review; unreadable TARGET; physical-iPhone acceptance; native Mac/Xcode remains deferred. The earlier source-sharing approval block is resolved.
-NEXT: view the recorded render artifacts through a permitted path and restore TARGET access, then evaluate a separately approved preview replacement for ordinary-play iPhone validation. Preserve saves; do not repeat retired Rating gates or add workload growth without evidence.
+DONE: current base image audit and bounded repair with9 targeted local test passes. Historical60-test mechanical evidence remains scoped to its earlier source.
+NEXT: review newly generated candidate renders before visual acceptance; then assess a separately approved preview replacement for ordinary-play iPhone validation. Main/deployed preview unchanged. No repeated old image download attempts without new evidence.
 
 ## Approval boundary
 The current user approval covers this candidate's existing-repository feature branch and Draft PR. Main merge/preview deployment, new destinations, resets, Store/TestFlight, fees and services need their own scoped approval. PR132 approval applies only to its historical preview replacement.

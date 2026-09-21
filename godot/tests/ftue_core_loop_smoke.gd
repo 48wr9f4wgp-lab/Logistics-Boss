@@ -219,7 +219,7 @@ func _run() -> void:
 
     _force_packing_bottleneck(e2e_sim)
     e2e_hud._render()
-    if e2e_hud._bottleneck == null or not e2e_hud._bottleneck.text.contains("PACKING"):
+    if e2e_hud._bottleneck == null or not e2e_hud._bottleneck.text.contains("梱包"):
         _fail("E2E core loop must begin from a readable observed packing symptom")
         return
     if e2e_hud._bottleneck.text.contains("強化") or e2e_hud._bottleneck.text.contains("→"):

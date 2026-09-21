@@ -307,6 +307,9 @@ func _sync_workers() -> void:
         var caption := node.get_node("RoleLabel") as Label3D
         var role_text := "入庫" if visual_role == "store" else ("ピッキング" if visual_role == "pick" else ("出荷" if visual_role == "ship" else "共通"))
         caption.text = role_text + ("・待機" if task == WarehouseSim.Task.IDLE else "")
+        # At overview distance, cargo and vest color communicate the active task.
+        # Close inspection reveals the truthful role text without crowding zones.
+        caption.visible = _camera_distance <= 16.0
         var progress := float(data["progress"])
         var record: Dictionary = _work_presentation.get(i, {})
         if task == WarehouseSim.Task.IDLE:

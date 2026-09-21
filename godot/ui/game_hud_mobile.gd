@@ -769,7 +769,7 @@ func _render_v2_staffing_overview() -> void:
     _v2_staffing_panel.visible = true
     var cooldown := float(summary.get("cooldown", 0.0))
     var lock_text := "変更可" if cooldown <= 0.0 else "観察中 %d秒" % int(ceil(cooldown))
-    _v2_staffing_label.text = "STAFFING｜現在配置\nRECEIVING/STORAGE %d人｜PICKING %d人｜SHIPPING %d人\n%s｜変更は各ZoneのOPERATIONSから" % [
+    _v2_staffing_label.text = "現在の人員配置\n入荷・保管 %d人｜ピッキング %d人｜出荷 %d人\n%s｜上の「配置」から変更" % [
         int(summary.get("inbound", 0)),
         int(summary.get("picking", 0)),
         int(summary.get("shipping", 0)),

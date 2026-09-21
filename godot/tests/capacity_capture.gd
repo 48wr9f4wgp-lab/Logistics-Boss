@@ -59,6 +59,13 @@ func run() -> void:
     clarity.zone.close()
     clarity.zone.open_zone("picking");clarity.zone.close()
     await capture("capacity_06_selected_route")
+    hud._show_measurement_status("搬送コンベア後｜前後の観測値\n要再判断｜出荷14.4→12.0/分\n入庫6.9→13.9｜次: 入荷確認", 10.0)
+    await capture("capacity_07_feedback_clearance")
+    hud._measurement_timer = 0
+    view._camera_distance = 15.0
+    view._camera_pose_initialized = false
+    await capture("capacity_08_close_roles")
+    view.reset_work_overview()
     # Real runtime motion on a fixed timestep; output only on explicit capture flag.
     if OS.get_environment("FLOTRA_CAPACITY_MOTION") == "1":
         for i in 120:

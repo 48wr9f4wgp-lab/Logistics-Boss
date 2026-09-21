@@ -288,7 +288,7 @@ func _run() -> void:
 
     sim.inbound_queue = 10
     hud._render()
-    if not hud._bottleneck.text.contains("INBOUND") or not hud._bottleneck.text.contains("待機 10"):
+    if not hud._bottleneck.text.contains("入荷") or not hud._bottleneck.text.contains("待機 10"):
         _fail("v2 Director must report the inbound symptom with concrete evidence")
         return
     if hud._bottleneck.text.contains("強化") or hud._bottleneck.text.contains("→"):

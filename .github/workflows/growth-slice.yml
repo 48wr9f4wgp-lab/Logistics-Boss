@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for test in growth_first_smoke growth_ui_smoke capacity_growth_smoke staffing_workspace_smoke capacity_flow_report; do
+          for test in growth_first_smoke growth_ui_smoke capacity_growth_smoke staffing_workspace_smoke portrait_readability_smoke capacity_flow_report; do
             XDG_DATA_HOME="/tmp/flotra-$test" timeout 100s godot --headless --audio-driver Dummy --path godot --script "res://tests/$test.gd" 2>&1 | tee "/tmp/growth-$test.log"
             if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' "/tmp/growth-$test.log"; then exit 1; fi
           done
@@ -61,7 +61,7 @@ jobs:
           set -euo pipefail
           timeout 120s xvfb-run -a -s '-screen 0 390x844x24' godot --path godot --audio-driver Dummy --display-driver x11 --rendering-method gl_compatibility --script res://tests/capacity_capture.gd 2>&1 | tee /tmp/growth-capacity-capture.log
           if grep -E 'SCRIPT ERROR|Parse Error|Invalid call|ERROR:' /tmp/growth-capacity-capture.log; then exit 1; fi
-          for file in capacity_00_before capacity_01_first_cell capacity_02_five_additions capacity_03_staffing capacity_04_staffing_draft capacity_05_zone capacity_06_selected_route; do
+          for file in capacity_00_before capacity_01_first_cell capacity_02_five_additions capacity_03_staffing capacity_04_staffing_draft capacity_05_zone capacity_06_selected_route capacity_07_feedback_clearance capacity_08_close_roles; do
             test -s "growth-captures/$file.png"
           done
       - uses: actions/upload-artifact@v4

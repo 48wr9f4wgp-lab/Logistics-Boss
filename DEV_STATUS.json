@@ -8,7 +8,7 @@
   "release_approval": "NOT_REQUESTED",
   "development_target": "iPhone / iOS",
   "primary_input": "touch",
-  "status_label": "PRE_GO_CAPACITY_REPAIR_DRAFT_PR136_NOT_DEPLOYED",
+  "status_label": "PRE_GO_PORTRAIT_READABILITY_REPAIR_PR136_NOT_DEPLOYED",
   "updated_at": "2026-09-21",
   "real_device_access": "AVAILABLE_USER_IPHONE_REPEATED_TESTING",
   "mac_xcode_access_path": "BLOCKED_NO_MAC_AVAILABLE",
@@ -20,12 +20,12 @@
   "working_head": {
     "repo": "48wr9f4wgp-lab/Logistics-Boss",
     "branch": "feat/capacity-repair-20260921",
-    "commit_sha": "390787dcfc9ef5df19dd056e11637e93fc813219",
+    "commit_sha": "1da82cb055009b0f6c1a27d172bc531f28afccd6",
     "shared_at": "2026-09-21",
     "validation_status": "PARTIAL",
     "pr": 136,
     "pr_url": "https://github.com/48wr9f4wgp-lab/Logistics-Boss/pull/136",
-    "note": "Exact shared code/test commit verified before this state-only record. The following evidence-record commit may be the branch tip; resolve its exact SHA from PR136 head_sha. It must contain only the documented state/evidence changes."
+    "note": "Pinned reviewed pre-repair baseline. Current candidate includes runtime readability changes described in VISUAL_READABILITY_REPAIR.md; resolve exact new head from PR136. Do not assume a docs-only delta."
   },
   "verified_baseline": {
     "code_commit": "1b7a9e2e515bce9289658e4584cc250d3fb4591e",
@@ -207,9 +207,9 @@
     "date": "2026-09-18",
     "reason": "Core Experience failures from real iPhone Web play; latest revision follows the 2026-09-21 growth audit"
   },
-  "last_verified_done": "Draft PR136 created; local verified source tree matched shared71badab9. Corrected the old rendered-capture camera assertion in390787d without changing runtime framing. Detailed remote checks and artifact metadata are in CAPACITY_CI_EVIDENCE_2026-09-21.json.",
-  "blocked": "Rendered artifact file access returned HTTP403/Cloudflare1010, so PNG contents and visual quality remain unreviewed. Canonical TARGET PNG is truncated. Physical iPhone acceptance and native Mac/Xcode access remain pending/deferred.",
-  "next": "View PR136 rendered evidence through a permitted access path and restore the canonical TARGET; then assess the candidate for a separately approved preview replacement and ordinary-play iPhone validation. No main merge or preview deployment is authorized by Draft PR approval.",
+  "last_verified_done": "Reviewed all13 current-head growth/capacity PNGs from uploaded exact-digest growth15 artifact against reattached TARGET. Implemented bounded portrait-readability repair; Godot4.7.2 import and9 targeted tests pass. See VISUAL_REPAIR_VERIFICATION.json for source/log hashes.",
+  "blocked": "Old artifact-delivery failure was resolved by user upload for HEAD1da82cb. New repair rendered review and physical-iPhone validation remain pending; native Mac/Xcode deferred.",
+  "next": "Review new candidate CI captures, especially measurement overlay and framing at all equipment levels. Source/PR approval does not include main merge or preview deployment.",
   "greenlight_after_device_validation": "Record GO/HOLD/KILL with evidence. PRODUCTION_DECISION remains UNDECIDED.",
   "post_go_only": [
     "production release enablement",
@@ -229,14 +229,14 @@
   ],
   "capacity_repair": {
     "change_packet": "CAPACITY_REPAIR_CHANGE_PACKET.md",
-    "status": "DRAFT_PR136_SIX_CI_PASS_IMAGE_REVIEW_BLOCKED",
+    "status": "DRAFT_PR136_MECHANICS_PASS_BASE_IMAGES_REVIEWED_VISUAL_REPAIR_PENDING_REVIEW",
     "runtime_schema": 11,
     "deployed_schema": 10,
     "growth": "Optional cumulative packing3/dispatch2 units; prices are hypotheses, no requirement to purchase all5. A cell exposes dispatch constraints; staffing or a lane can address them.",
     "staffing": "Non-authoritative draft, one atomic apply, existing30s cooldown, same-tab preservation and current-task visual identity.",
     "diagnosis": "255s warmup +3x255s: base253, cell253, cell+lane276, cell+staffing1/2/2 also276; max5 also276; no production workload change.",
     "test_scope": "Original Godot4.7.2 local headless import and60tests PASS; runtime unchanged in the capture-fixture correction. Exact remote CI and render-generation results are in the CI evidence manifest. No physical-iPhone or human fun acceptance.",
-    "remaining": "Meaningful growth beyond first cell/dispatch solution, real iPhone motion/performance/save continuity, TARGET image restoration."
+    "remaining": "New readability candidate rendered review; meaningful growth beyond first cell/dispatch solution; real iPhone motion/performance/save continuity."
   },
   "candidate_verification": {
     "manifest": "CAPACITY_VERIFICATION_2026-09-21.json",
@@ -251,6 +251,16 @@
     "remote_workflows_passed": 6,
     "web_export": "PASS_NOT_DEPLOYED",
     "unsigned_ios_export": "PASS_NOT_INSTALLED",
-    "render_generation": "PASS_PNG_CONTENTS_UNREVIEWED"
+    "render_generation": "Historical1da82cb: growth15 ZIP hash matched; all13 PNGs reviewed; NEEDS_REVISION. Latest repair render review pending."
+  },
+  "portrait_readability_repair": {
+    "base_commit": "1da82cb055009b0f6c1a27d172bc531f28afccd6",
+    "change_packet": "VISUAL_READABILITY_REPAIR.md",
+    "manifest": "VISUAL_REPAIR_VERIFICATION.json",
+    "local_tests_passed": 9,
+    "visual_acceptance": "PENDING_NEW_RENDERED_REVIEW",
+    "source_scope": "Presentation only; no domain/save/config dependency changes",
+    "target_viewed": true,
+    "target_jpeg_sha256": "5303409d35e0f5e465b43cf4fdb07a3b5a5ebc98b50eab776262bd1de91f1eb2"
   }
 }

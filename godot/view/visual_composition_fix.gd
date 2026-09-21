@@ -7,8 +7,8 @@ const OVERVIEW_FOV := 38.5
 const OVERVIEW_START_DISTANCE := 19.5
 const OVERVIEW_MAX_DISTANCE := 25.0
 
-const PREMIUM_FLOOR := Color(0.072, 0.095, 0.112)
-const PREMIUM_NAVY := Color(0.018, 0.038, 0.052)
+const PREMIUM_FLOOR := Color(0.115, 0.155, 0.180)
+const PREMIUM_NAVY := Color(0.045, 0.082, 0.110)
 const PREMIUM_STEEL := Color(0.080, 0.125, 0.150)
 const BRUSHED_STEEL := Color(0.185, 0.245, 0.270)
 const DARK_EQUIPMENT := Color(0.047, 0.075, 0.090)
@@ -32,8 +32,8 @@ var warehouse_view: WarehouseView
 func bind(view: WarehouseView) -> void:
     warehouse_view = view
     warehouse_view._camera_distance = 20.5 if warehouse_view.sim != null and warehouse_view.sim.facility_rank >= 2 else 19.5
-    warehouse_view._orbit_pitch = -0.84
-    warehouse_view._orbit_yaw = -0.48
+    warehouse_view._orbit_pitch = MobileWarehouseView.OVERVIEW_PITCH if warehouse_view is MobileWarehouseView else -0.84
+    warehouse_view._orbit_yaw = MobileWarehouseView.OVERVIEW_YAW if warehouse_view is MobileWarehouseView else -0.48
     if warehouse_view.sim != null and not warehouse_view.sim.event_emitted.is_connected(_on_domain_event):
         warehouse_view.sim.event_emitted.connect(_on_domain_event)
     call_deferred("_apply_composition")

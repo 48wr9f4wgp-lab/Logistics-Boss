@@ -7,8 +7,11 @@ var selected := ""
 var lines: Array[MeshInstance3D] = []
 var materials: Array[StandardMaterial3D] = []
 var toggle: Button
+var overview: Button
+var _hud: MobileGameHud
 
 func bind(next_view: WarehouseView, next_zone: WarehouseZonePanel, hud: MobileGameHud) -> void:
+    _hud = hud
     view = next_view
     zone = next_zone
     zone.opened.connect(func(key: String): selected = key)
@@ -33,7 +36,7 @@ func bind(next_view: WarehouseView, next_zone: WarehouseZonePanel, hud: MobileGa
     toggle.offset_bottom = -104
     toggle.pressed.connect(func(): selected = "")
     hud.add_child(toggle)
-    var overview := Button.new()
+    overview = Button.new()
     overview.text = "作業全体へ"
     overview.anchor_left = 1.0
     overview.anchor_right = 1.0
@@ -57,9 +60,10 @@ func bind(next_view: WarehouseView, next_zone: WarehouseZonePanel, hud: MobileGa
         if hud._sheet.visible: selected = "")
 
 func _process(_delta: float) -> void:
+    _layout_controls()
     for line in lines:
         line.visible = false
-    toggle.visible = not selected.is_empty() and not zone.is_open()
+    toggle.visible = not selected.is_empty() and not zone.is_open() and not _hud._sheet.visible
     if selected.is_empty() or view == null or view.sim == null:
         return
     var task := WarehouseSim.Task.STORE if selected in ["inbound", "storage"] else (WarehouseSim.Task.PICK if selected == "picking" else (WarehouseSim.Task.SHIP if selected == "shipping" else WarehouseSim.Task.IDLE))
@@ -91,3 +95,16 @@ func _place_line(index: int, a: Vector3, b: Vector3) -> void:
     line.position = (a+b)*0.5
     line.scale.z = length
     line.rotation.y = atan2((b-a).x,(b-a).z)
+
+func _layout_controls() -> void:
+    if _hud == null or overview == null:
+        return
+    overview.visible = not zone.is_open() and not _hud._sheet.visible
+    var bottom := -104.0
+    var result := _hud._measurement_panel
+    if result != null and result.is_visible_in_tree():
+        # Use the actual grown panel rectangle, including wrapped result text.
+        bottom = minf(bottom, result.get_global_rect().position.y - _hud.get_viewport().get_visible_rect().size.y - 8.0)
+    for button in [overview, toggle]:
+        button.offset_bottom = bottom
+        button.offset_top = bottom - 44.0
