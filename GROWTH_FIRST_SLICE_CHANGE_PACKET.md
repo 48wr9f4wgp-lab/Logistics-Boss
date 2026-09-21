@@ -1,39 +1,44 @@
 # FLOTRA: Growth-first slice
 
-Date: 2026-09-21 / title-local / VERTICAL_SLICE
-Base: 220207f06bb4fc9f76ccbc92422b5d8029a40bab
-Status: LOCAL IMPLEMENTATION AND CHECKS COMPLETE; remote CI pending; not deployed, not human accepted.
+Date: 2026-09-21 / title-local / VERTICAL_SLICE / PR132
+Base main: 220207f06bb4fc9f76ccbc92422b5d8029a40bab
+Status: IMPLEMENTED; REPOSITORY CHECKS PASS; NOT MERGED OR DEPLOYED; HUMAN FUN NOT ACCEPTED.
 
 ## Authority and evidence
-The user replied 実行 to the video audit's recommended growth-first revision. This authorizes implementing the bounded design change on a development branch, not replacement of the public engineering preview, production release, fees or data reset. Project-wide v2.4 locks remain unchanged. Production decision UNDECIDED; Store/TestFlight release NOT_REQUESTED.
-The 96.94-second user recording showed working navigation/purchases and no Management/Zone notification obstruction in observed intervals. At 01:25, all four projects and 48,400 cash could not expand because Rating was 4/8. The clip is mid-session and 4x, not first-session pacing proof.
+The user replied 実行 to the video audit's recommended growth-first revision. This authorizes the bounded development revision, not a new public preview/build, production release, fees or user-data reset. Project-wide v2.4 locks remain unchanged. Production UNDECIDED; Store/TestFlight NOT_REQUESTED.
+The96.94-second recording showed working navigation/purchases and no Management/Zone notification obstruction in observed intervals. At01:25, all4 projects and48,400 cash could not expand because Rating was4/8. The clip is mid-session and4x, not first-session pacing proof.
 
-## Bounded target
-Replace mandatory contract-rating/all-four-project progression for the first expansion with ordinary logistics and earned cash. Contracts become optional acceleration. Preserve the manager role, Zone-first purchase preview/confirmation, actual Domain-owned inventory/money and existing investment ownership.
-Show new equipment working after purchase without a mandatory animation or measurement wait. Move ordinary shipment feedback off the warehouse work area. Identify measured investments and flag overlapping interventions as observational rather than isolated causal effects.
-The only new automation in this slice is a working additional forklift and one actual conveyor transfer path. No Rank3 redesign, freeform factory editor, ASRS or new platform/service. Numerical targets, prices, unlock counts and timing are tuning hypotheses, not validated outcomes.
+## Explicit title-local decision
+Primary loop: earn through actual logistics, invest, see work change, expand, add working automation. Analysis is an optional optimization aid; contracts are optional acceleration. The old all4/Rating8/10,000 gate is superseded on the development branch, not silently changed in a UI-only repair.
+Keep manager role, actual inventory/money, Zone-first inspection, free preview then paid confirmation, and saved investments. Do not add fake favorable measurement or manual parcel carrying/driving.
 
-## Validation
-Fresh save, 1x, ordinary earned money, no contract acceptance or injected cash/rating: two different purchase orders must reach automation and first expansion; provisional target <=300 seconds. Verify cargo conservation, actual extra automation work, no double billing, preview no-spend, schema migration, save round trip/recovery, input/parser/cancel/scroll regression and real main-scene renders. Human delight and iPhone performance remain pending.
+## Implemented delta
+- Any2 structural projects +20 actual shipments +8,000 cash first expansion, no contract/rating requirement. First forklift8,000; smaller projects retain previous prices.
+- Valid unfinished projects remain available after expansion. No paid no-op hire when Rank2 already has five staff.
+- Floor enlargement, storage+4, existing five-worker Rank2 crew; no silent promotion.
+- One actual additional forklift10,000; finite2-cargo reservation/transport and empty return. One actual PICKING-to-PACKING conveyor9,000; finite4-parcel transport and backpressure, not a fake throughput multiplier.
+- Paid purchase reveals the warehouse, cancellable brief camera emphasis, earnings beside funds, named observational measurement with overlapping-change warning.
+- Schema10 reads old schemas and preserves cash/ownership/staffing/purchase book values. In-flight cargo projects into durable waiting queues without mutation or fake revenue; partial task time/animation restarts. Old schema9 executables cannot read10; no blind rollback after future deployment.
+- No new input-router layer, fonts, backend, platform, ASRS, unlimited vehicle upgrade, freeform editor or Rank3 redesign.
 
-## Recovery / delivery
-Baseline stays on main. Branch WIP is separate. Existing user saves and external-machine WIP are untouched. Commit/push/PR before reporting implementation complete. Update GDD and state with explicit superseded decisions, tested scope and remaining risks. Do not merge code or publish a new build without scoped preview approval.
+## Verified repository baseline
+Code1b7a9e2e515bce9289658e4584cc250d3fb4591e:
+- Godot315/run35563746655 SUCCESS.
+- Growth11/run35563746543 SUCCESS.
+- Clarity19/run35563746537 SUCCESS.
+- iOS123/run35563746526 SUCCESS, unsigned technical export only.
+- Render113/run35563746538 SUCCESS.
+- Historical Android127/run35563746530 SUCCESS, not an active platform.
+Downloaded growth artifact10622359763, ZIP SHA256333e5662b0fa516888ada58d3311b580bd04f94d7df43825bc5c92516e1a0099 matched. Growth-first failures0, growth UI failures0, six actual-main captures present and reopened for review. Transfer artifacts and temporary source-write workflow are absent from the final source tree. Final verification/state changes are documentation only and must be compared before integration.
 
-## Implemented development delta
-- Any2 projects +20 actual shipments +¥8,000 expansion; no Rating/contract gate. New forklift ¥8,000. Existing optional contract API retained.
-- Remaining valid projects can be bought after expansion; no paid no-op hire when Rank2 already has five staff.
-- Real second forklift and PICKING→PACKING conveyor; finite in-flight cargo, capacity reservations and backpressure.
-- Confirmed purchase returns to the warehouse, with cancellable short equipment framing. Routine earnings beside funds; named measurements flag overlapping changes.
-- Schema10 migration preserves ownership, money, staffing and old purchase book values. In-flight cargo projects to waiting queues; partial task time/animation restarts. No user reset. Older schema9 clients cannot read schema10.
+## Actual tests, not human promises
+Fresh5,000 cash, 1x simulation, no accepted contracts or injected resources:
+- Fork-first: automation31.5s, expansion94.9s.
+- Rack/bench-first: expansion79.9s, automation128.7s.
+- Real-main capture route: belt156.0s, second forklift229.3s; both working with actual cargo captured at240.0s.
+Tests buy immediately when affordable. These are deterministic simulation timings, not human completion times. Captures use accelerated stepping with rendered milestones, not a real-time1x human video.
+Closed fixture:62 parcels conserved, second forklift12 deliveries, belt40, repeated save/load comparisons. Disk backup recovery and schema9 migration pass. Engine-generated taps at390x844/375x667/430x932 check actual purchase preview/commit, expansion single charge and reveal. UI fixtures explicitly inject resources and are not natural pacing evidence.
 
-## Local evidence before remote CI
-Exact repository-pinned Godot4.7.2 used in an isolated XDG data directory. Engine/source obtained through the connected GitHub Actions artifact, not an alternative implementation.
-- Two different earned-money/no-contract/1x simulation routes: fork-first automation31.5s/expansion94.9s; rack+bench-first expansion79.9s/automation128.7s. These are deterministic scripted purchase timings, not human onboarding performance.
-- Natural real-main capture route: forklift31.5s, expansion94.9s, conveyor156.0s, extra forklift229.3s. Both machines captured carrying real jobs at240.0s.
-- Closed-inventory fixture: total62 parcels conserved, extra forklift12 parcels delivered, conveyor40 delivered, including repeated schema10 save/load comparisons. UI fixtures explicitly inject money and are NOT natural pacing proof.
-- Engine-parser tests at390x844/375x667/430x932: preview no spend, separate commit, purchase reveal, extra/belt, expansion single charge, named mixed-result text.
-- Existing local tests rerun. One local services check lacks excluded tooling .py files from the text snapshot; authoritative repository CI must cover that rather than declaring it passed locally.
-- A touch held when the resume banner disappears now keeps the goal button stationary until release. Existing input-router code is untouched.
-
-## Remaining limits
-No physical iPhone/native performance, save migration on the user's browser, long-term economy or human fun acceptance. Capture is accelerated deterministic simulation with rendered milestone frames, not a real-time 1x human video. Extra forklift usefulness depends on actual receiving pressure; conveyor can expose PACKING congestion. Two new machines do not complete the full late game. Do not enlarge scope or label the game finished from these tests.
+## Recovery / next gate
+PR132 branch only; main/current PR130 preview unchanged. No user data reset; external-machine WIP unknown/untouched. A schema10 preview replacement needs scoped approval and save safeguards. Human iPhone/render/performance, browser save migration, motion delight, long-term balance and fun remain untested. A working second forklift is not a guarantee that every warehouse becomes faster; packing bottlenecks remain meaningful.
+NEXT: explicit approval for this candidate at the same trial destination, then brief ordinary-play growth validation. Do not label the game complete from automated timing or render evidence.
