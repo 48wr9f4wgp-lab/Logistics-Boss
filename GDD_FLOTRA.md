@@ -3,7 +3,7 @@
 Status: **Pre-GO / VERTICAL_SLICE — Core Experience v2 rework**
 Official title: **FLOTRA（フロトラ）**
 Former title / migration alias: `LOGISTICS BOSS`
-Last synchronized: 2026-09-21 JST (PR132 baseline / capacity-repair candidate)
+Last synchronized: 2026-09-24 UTC (post-PR136 audit; deployment evidence in `PR136_DEPLOYMENT_EVIDENCE.json`)
 Canonical project rules: `ゲーム開発共通ルール_v2.4.txt`, `プロジェクト適用範囲_v2.4.txt`, `ゲーム開発チャット引き継ぎルール_v2.4.txt`. The old repo Master filename is not current authority.
 
 This document supersedes the earlier Web/PWA-first and Three.js vertical-slice assumptions. The production implementation is Godot-native-first, with Web used only as an engineering preview.
@@ -33,18 +33,18 @@ The user's 実行 after the video audit authorizes a bounded growth-first develo
 
 Primary player reward: a growing working warehouse, not the completion of an analysis checklist. Ordinary shipments and earned cash support basic growth; contracts are optional acceleration/challenge. Equipment should reveal a change in how work is done. Analysis supports optimization, not a mandatory pause between investments. Exact numbers below are testable balance hypotheses, not a human fun acceptance.
 
-## 1.2 Capacity repair candidate, 2026-09-21
+## 1.2 Capacity repair implementation, 2026-09-21
 
-Scope: **title-local / source-only development candidate**, authorized by the user's 実行 after the audit. The existing engineering preview remains PR132 / schema10. This candidate is not a merged or deployed build and has no human fun or device acceptance. See `CAPACITY_REPAIR_CHANGE_PACKET.md` for the bounded repair and diagnosis scope; see state documents for commit-specific verification.
+Scope: **bounded title-local development implementation**, authorized by the user's 実行 after the audit and merged in PR136. The existing engineering preview now contains schema11; this is not production or human fun/device acceptance. `CAPACITY_REPAIR_CHANGE_PACKET.md` records the original candidate scope; `PR136_DEPLOYMENT_EVIDENCE.json` and `HANDOFF.md` record integration and preview publication.
 
-Candidate changes:
+Implemented changes (prices and balance remain hypotheses):
 - Add cumulative independent packing cells (maximum 3) and automatic dispatch lanes (maximum 2), with real waiting-cargo reservation, processing and physical equipment. These additions coexist with the existing STORAGE/PACKING mode pairs; they do not implement all deferred Rank2 Zone pairs.
-- Candidate prices: packing cells ¥12,000 / ¥18,000 / ¥27,000; dispatch lanes ¥16,000 / ¥24,000. These are balance hypotheses, not locked prices or evidence of satisfying long-term growth.
+- Implemented prices: packing cells ¥12,000 / ¥18,000 / ¥27,000; dispatch lanes ¥16,000 / ¥24,000. These remain balance hypotheses, not evidence of satisfying long-term growth.
 - Allow one draft covering all three authoritative staffing pools, followed by one atomic application and the existing 30-second cooldown. Each pool keeps at least one worker. Cancel, invalid/stale-plan rejection and same-tab reselection must preserve correct draft/live-state separation. Active jobs keep their cargo and task; displayed current activity follows that task until completion.
-- Save candidate schema11 adds cumulative equipment ownership/counters while preserving schema10 progression, money, staffing and cargo without free machinery. Candidate migration, cargo conservation and backup recovery passed the Godot 4.7.2 headless checks recorded in `CAPACITY_VERIFICATION_2026-09-21.json`; physical iPhone save continuity remains unverified. Prior schema10 checks alone do not cover the candidate.
+- Deployed preview schema11 adds cumulative equipment ownership/counters while preserving schema10 progression, money, staffing and cargo without free machinery. Migration, cargo conservation and backup recovery passed the Godot 4.7.2 headless checks recorded in `CAPACITY_VERIFICATION_2026-09-21.json`; physical iPhone save continuity remains unverified. Prior schema10 checks alone do not cover schema11.
 - Restore route visibility and related input clarity without changing the art direction. The recovered routes are not proof that every motion segment already follows an aisle.
 
-The reported 300-second comparison with equal output is **not a diagnosis of insufficient arrivals or orders**. The controlled diagnostic below supports a packing/dispatch constraint under its declared workload; **workload growth is not adopted**. Buying all five candidate additions is not a player goal or evidence that the early growth ceiling is solved. After the first packing cell, including when no dispatch lane is owned, the candidate objective leads to optional field inspection; staffing changes and additional purchases remain choices, not a mandatory completion checklist.
+The reported 300-second comparison with equal output is **not a diagnosis of insufficient arrivals or orders**. The controlled diagnostic below supports a packing/dispatch constraint under its declared workload; **workload growth is not adopted**. Buying all five additions is not a player goal or evidence that the early growth ceiling is solved. After the first packing cell, including when no dispatch lane is owned, the objective leads to optional field inspection; staffing changes and additional purchases remain choices, not a mandatory completion checklist.
 
 ## 1.3 Capacity diagnosis, 2026-09-21
 
@@ -109,7 +109,7 @@ Current development balance hypotheses:
 - Unfinished structural projects remain buyable in Rank2 except a hire already covered by the five-worker crew or a bench superseded by advanced packing. Installed assets are never taken away to force repurchase.
 - Additional forklift: ¥10,000, Rank2 + first forklift; a real second vehicle reserves and carries up to two inbound parcels per 4.8-second roundtrip.
 - Transfer conveyor: ¥9,000, Rank2; PICKING to PACKING, at most four in-flight parcels, 2.4 seconds travel; replaces half the picker task time with actual independent transport and backpressure. It does not magically increase packing or final dispatch capacity.
-- PR132 automation scope: first forklift plus one additional forklift, one conveyor path. The separate bounded capacity candidate is listed in §1.2. No unlimited vehicle upgrades or freeform layout editor in this slice.
+- PR132 automation scope: first forklift plus one additional forklift, one conveyor path. The later bounded capacity additions are listed in §1.2. No unlimited vehicle upgrades or freeform layout editor in this slice.
 
 The old all4 / Rating8 / ¥10,000 gate is **SUPERSEDED for current FLOTRA development**. Old tests/saves remain historical compatibility evidence, not active product requirements.
 
@@ -292,7 +292,7 @@ Exact renovation cost and downtime are balance hypotheses, not locked values.
 
 ### Vertical Slice v2 implementation scope
 
-The deployed PR132 baseline implements two Rank 2 equipment-mode pairs (the cumulative additions in §1.2 are separate candidate scope):
+The PR132 baseline implemented two Rank 2 equipment-mode pairs; the deployed preview now also includes the cumulative additions in §1.2:
 
 #### STORAGE
 - **Fast Pick Rack**
@@ -339,7 +339,7 @@ Current Vertical Slice renovation implementation:
 - renovation starts a new authoritative Before/After measurement;
 - 75% is the current tested implementation value and remains tunable after human playtest rather than a permanent economy constant.
 
-The paired INBOUND, PICKING, and SHIPPING v2 equipment modes remain deferred until this slice passes playtest. The candidate automatic dispatch lanes in §1.2 are bounded cumulative additions, not completion of the SHIPPING mode pair.
+The paired INBOUND, PICKING, and SHIPPING v2 equipment modes remain deferred until this slice passes playtest. The automatic dispatch lanes in §1.2 are bounded cumulative additions, not completion of the SHIPPING mode pair.
 
 ### Staffing
 
@@ -359,13 +359,13 @@ Rank 2 starts at:
 - PICKING: 2;
 - SHIPPING: 1.
 
-In the deployed PR132 baseline, a staffing action moves **one Worker from a source staffed flow to the inspected target flow**. The candidate in §1.2 replaces that editing path with one warehouse-wide draft and atomic application; it preserves the minimum counts, cooldown and current-task continuity.
+In the historical PR132 baseline, a staffing action moved **one Worker from a source staffed flow to the inspected target flow**. The deployed PR136 preview replaces that editing path with one warehouse-wide draft and atomic application; it preserves the minimum counts, cooldown and current-task continuity.
 
 Locked safety rules:
 - every staffed flow keeps at least 1 Worker;
 - a reassignment starts the existing 30-second observation cooldown;
 - current allocation is readable in the Zone Panel;
-- Deployed PR132 Management shows an executive staffing overview; the §1.2 candidate adds the staffing draft workspace there;
+- Management shows an executive staffing overview and the §1.2 staffing draft workspace;
 - legacy preset names remain compatibility/migration data and are not player-facing v2 controls.
 
 Staffing remains an **OPERATIONS** layer distinct from CAPITAL equipment.
@@ -420,11 +420,11 @@ Routing state is Domain-authoritative. A SHIP task freezes route, batch and valu
 - visible 3D state
 - introduced with schema9 and retained in the deployed schema10 progression
 
-Historical Rank3 research found that scheduled inbound cadence materially increased shipments in its tested post-routing scenario. That result does not diagnose the separate Rank2 capacity candidate. AGV / sorter / ASRS-style candidates are not automatically added unless measurement proves product value.
+Historical Rank3 research found that scheduled inbound cadence materially increased shipments in its tested post-routing scenario. That result does not diagnose the separate Rank2 capacity repair. AGV / sorter / ASRS-style candidates are not automatically added unless measurement proves product value.
 
 ## 9. Save / Recovery
 
-Deployed PR132 runtime save schema: **v10**. Source-only capacity candidate: **v11, not deployed** (see §1.2).
+Current engineering-preview runtime save schema: **v11** (PR136). PR132 schema v10 is the preceding deployed baseline. Physical iPhone continuity across the upgrade remains unverified.
 
 Persistence:
 - local JSON under `user://`
@@ -442,7 +442,7 @@ Migration baseline:
 - schema v8 named staffing presets migrate into equivalent schema v9 direct Zone counts;
 - schema v9 persists Rank 1 v2 project ownership plus direct Zone staffing;
 - schema v10 retains schemas1–9 and adds working automation ownership/counters and purchase book values as described in §5;
-- candidate schema v11 must additionally preserve cumulative cells/lanes and normalize in-flight cargo into durable waiting state without changing the live run or inventing shipments. Schema11 verification is separate from the historical schema10 baseline.
+- schema v11 additionally preserves cumulative cells/lanes and normalizes in-flight cargo into durable waiting state without changing the live run or inventing shipments. Automated schema11 verification is recorded separately from the historical schema10 baseline; device verification remains open.
 
 Once a newer schema has written a save, do not assume an older executable can read it. Use compatible forward repair or reviewed recovery; never erase player data to make a migration check pass.
 
@@ -663,16 +663,16 @@ For each implemented Zone:
 - the player can identify what physically changed after an investment;
 - the player can identify what operationally changed after an investment.
 
-### Capacity-candidate acceptance (not yet a result)
+### Capacity repair acceptance (partially verified; human/device gates remain open)
 
 - cumulative equipment has real cargo processing and a readable physical change;
 - at least one non-fork investment demonstrates sustained operational benefit under an explicit, appropriate workload, with limitations reported;
 - comparisons isolate arrivals, orders, workers and equipment before a workload change is selected;
 - staffing drafts apply atomically, cancel safely, survive same-tab reselection and keep current-task display consistent;
-- schema10→11 compatibility, cargo/cash conservation and relevant regression tests pass for the candidate itself;
+- schema10→11 compatibility, cargo/cash conservation and relevant regression tests pass for the deployed preview implementation;
 - after the first packing cell, even with no dispatch lane, the objective opens optional field inspection rather than urging another purchase or all five additions; staffing and automatic dispatch remain alternative responses. Further useful growth remains an open design question until supported by operational and human evidence.
 
-Fresh human playtest evidence outranks static screenshot-difference claims for reward/growth recognition. Historical test results and a user's early positive reaction do not constitute full acceptance of the current candidate.
+Fresh human playtest evidence outranks static screenshot-difference claims for reward/growth recognition. The fifteen PR136 render PNGs were reviewed for scoped UI fixes; small in-world labels and the wider reference-art gap remain. Automated tests and a user's early positive reaction do not constitute full human/device acceptance of the deployed preview.
 ## 16. Current Non-goals
 
 Not required for the current Pre-GO VERTICAL_SLICE:
@@ -712,11 +712,11 @@ Platform / state:
 - RELEASE_APPROVAL: NOT_REQUESTED
 - PRIMARY_INPUT: touch
 
-### Current work and next gate, 2026-09-21
+### Current work and next gate, audited 2026-09-24 UTC
 
-Baseline: PR132 ordinary-shipment growth and working automation, merged into main and delivered to the existing engineering preview as recorded in `HANDOFF.md`. Runtime schema10 remains the deployed baseline. `GROWTH_FIRST_SLICE_CHANGE_PACKET.md` retains that change's feature/evidence history; its old pre-integration deployment-wait state is superseded.
+PR132 ordinary-shipment growth and working automation preceded the bounded PR136 capacity repair. PR136 was merged into main at `5d00b41a072aaa3ca9dce55e25c6e62f921a7415` and published to the existing engineering preview at `513aa108c2e06593f151cccff1bc9d0cfbd02f16`. The preview now uses schema11; no progress reset is part of the deployment. `PR136_DEPLOYMENT_EVIDENCE.json` records CI, Pages and render review. The dated change packets retain their development history, not the current deployment status.
 
-Active development packet: `CAPACITY_REPAIR_CHANGE_PACKET.md`, with source-only schema11 scope in §1.2. The diagnostic in §1.3 was reproduced on the matching Godot 4.7.2 engine and identifies consecutive packing/dispatch constraints under the tested workload; production workload growth is not adopted. Candidate repairs and CI test/capture integration are implemented. Local import and all 60 headless checks passed on Godot 4.7.2, with candidate-specific evidence in `CAPACITY_VERIFICATION_2026-09-21.json`; all six remote workflows passed for code `390787dcfc9ef5df19dd056e11637e93fc813219` in Draft PR136, including Web/unsigned-iOS export and PNG generation (see `CAPACITY_CI_EVIDENCE_2026-09-21.json`). PNG contents remain unreviewed because artifact delivery returned HTTP403. Next: obtain permitted access to the render evidence and restore TARGET access, then validate ordinary play with the first cell followed by either staffing or automatic dispatch through a separately approved preview. Human iPhone play, physical-device save continuity, performance and fun remain unverified; neither local headless PASS nor the historical tests below establish those results. Further useful growth beyond that initial packing/dispatch improvement remains unresolved.
+The §1.3 controlled diagnostic identifies consecutive packing/dispatch constraints under its tested workload; production workload growth is not adopted. The first cell plus a dispatch lane or staffing adjustment reached 276 versus 253 baseline shipments over 765 measured seconds, while all five additions still reached only 276. Thus further useful growth is unresolved, and issue #134 remains open. Local import and all 60 headless checks passed on Godot 4.7.2; approved-head and post-merge CI plus preview Pages publication succeeded. All fifteen render PNGs were reviewed and scoped UI fixes confirmed, but the overall visual target has not been accepted. Next: observe ordinary growth and save continuity on a real iPhone, including the first cell followed by a staffing or dispatch choice, then assess growth variety and visual legibility. Human iPhone play, physical-device save continuity, performance and fun remain unverified. Production decision remains UNDECIDED.
 
 The latest reported user reaction includes **「面白くなってきた」**, alongside insufficient equipment variety/early ceiling and staffing/route clarity requests. This is useful early feedback, not an end-to-end fun or device acceptance. The human gate is understandable, visible growth through ordinary operation with useful investment choices; mandatory contracts/Rating do not return.
 
@@ -785,7 +785,7 @@ Historical routing decision at PR122 (superseded next gate):
 
 ### Preserved v2 foundation
 
-Historical foundation packet: `VERTICAL_SLICE_V2_CHANGE_PACKET.md`. It does not override the growth-first decision or the dated capacity candidate.
+Historical foundation packet: `VERTICAL_SLICE_V2_CHANGE_PACKET.md`. It does not override the growth-first decision or the later capacity repair.
 
 The reusable v2 foundation contains:
 - full Rank 1 v2 path;
@@ -801,7 +801,7 @@ The reusable v2 foundation contains:
 - selected-Zone construction/reward emphasis;
 - authoritative Before/After measurement.
 
-PR121/122 evidence above remains historical to those builds and the former progression gate. PR132 supersedes their mandatory contract/Rating growth path; the capacity candidate extends the bounded slice as specified in §1.2. Rank3 redesign and the remaining Rank2 equipment-mode pairs are still outside this candidate. The current gate is the dated repair/diagnosis and subsequent ordinary-growth human validation stated at the start of this section.
+PR121/122 evidence above remains historical to those builds and the former progression gate. PR132 superseded their mandatory contract/Rating growth path; PR136 extended the bounded slice as specified in §1.2. Rank3 redesign and the remaining Rank2 equipment-mode pairs are still outside this implementation. The current gate is ordinary-growth and save-continuity validation on an iPhone, plus unresolved growth and visual-quality assessment stated at the start of this section.
 
 ### Return to DEVICE_VALIDATION
 
