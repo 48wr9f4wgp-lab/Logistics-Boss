@@ -33,10 +33,12 @@ var _capital_action: Button
 var _automation_action: Button
 var _rank2_capital_buttons: Array[Button] = []
 var _action_message: Label
+var _action_body: VBoxContainer
+var _action_footer: VBoxContainer
 var _close_button: Button
 var _preview_kind: StringName = &""
 var _notice_text := ""
-var _notice_until := 0.0
+var _notice_remaining := 0.0
 
 var _raw_touch_index := -1
 var _raw_touch_button: Button
@@ -54,6 +56,7 @@ func _ready() -> void:
 
 
 func bind_sim(next_sim: WarehouseSim) -> void:
+    _clear_notice()
     sim = next_sim
     _render()
 
@@ -62,6 +65,7 @@ func open_zone(zone_key: String) -> void:
     if zone_key not in ["inbound", "storage", "picking", "packing", "shipping"]:
         return
     if _selected_zone != zone_key:
+        _clear_notice()
         _clear_construction_preview()
     _selected_zone = zone_key
     if _scroll != null:
@@ -76,6 +80,7 @@ func close() -> void:
     if _panel == null or not _panel.visible:
         return
     _panel.visible = false
+    _clear_notice()
     _reset_raw_action_input()
     _clear_construction_preview()
     _selected_zone = ""
@@ -97,6 +102,7 @@ func preview_kind() -> StringName:
 func _set_construction_preview(kind: StringName) -> void:
     if _preview_kind == kind:
         return
+    _clear_notice()
     _preview_kind = kind
     if kind == &"":
         construction_preview_cleared.emit()
@@ -111,7 +117,12 @@ func _clear_construction_preview() -> void:
     construction_preview_cleared.emit()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+    # Reading time is presentation time, independent of simulation speed/pause.
+    if _notice_remaining > 0.0:
+        _notice_remaining = maxf(0.0, _notice_remaining - maxf(0.0, delta))
+        if _notice_remaining <= 0.0:
+            _clear_notice()
     if is_open():
         _render()
 
@@ -280,6 +291,8 @@ func _build_panel() -> void:
     _scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
     column.add_child(_scroll)
     var body := VBoxContainer.new()
+    _action_body = body
+    _action_footer = column
     body.add_theme_constant_override("separation", 6)
     body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     _scroll.add_child(body)
@@ -381,6 +394,8 @@ func _build_panel() -> void:
 
     _action_message = _label(10, Color(1.0, 0.78, 0.46))
     _action_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _action_message.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _action_message.visible = false
     body.add_child(_action_message)
 
 
@@ -394,27 +409,47 @@ func _render() -> void:
     _equipment.text = "現在設備｜%s" % _current_equipment(_selected_zone)
     _operations.text = _operations_text(_selected_zone)
     _capital.text = "設備判断はこのZoneで行う"
+    _action_message.text = ""
     _render_rank1_actions()
     _render_rank2_equipment_actions()
     _render_direct_staffing_actions()
     _render_growth_automation_action()
     _render_capacity_action()
+    # Notice priority comes after preview/cooldown copy so an action failure
+    # survives every refresh while keeping the underlying preview intact.
+    _render_notice()
 
 
 func _set_notice(text: String, seconds: float = 5.0) -> void:
     _notice_text = text
-    _notice_until = (sim.sim_time if sim != null else 0.0) + maxf(0.0, seconds)
+    _notice_remaining = maxf(0.0, seconds)
+
+
+func _clear_notice() -> void:
+    _notice_text = ""
+    _notice_remaining = 0.0
+    if _action_message != null:
+        _action_message.text = ""
+        _action_message.visible = false
 
 
 func _render_notice() -> void:
     if _action_message == null:
         return
-    var now := sim.sim_time if sim != null else 0.0
-    if not _notice_text.is_empty() and now <= _notice_until:
+    var notice_active := not _notice_text.is_empty() and _notice_remaining > 0.0
+    if notice_active:
         _action_message.text = _notice_text
-    else:
-        _notice_text = ""
-        _action_message.text = ""
+    # Pin only short action notices. Long preview details stay in the scroll
+    # content so they cannot shrink the viewport over the confirm button.
+    var target := _action_footer if notice_active else _action_body
+    if target != null and _action_message.get_parent() != target:
+        _action_message.reparent(target)
+    # Short action notices deserve readable emphasis. Keep detailed preview
+    # copy compact so growing it cannot push the confirm button out of view.
+    var font_size := 12 if notice_active else 10
+    if _action_message.get_theme_font_size("font_size") != font_size:
+        _action_message.add_theme_font_size_override("font_size", font_size)
+    _action_message.visible = not _action_message.text.is_empty()
 
 
 func _render_rank1_actions() -> void:
@@ -423,7 +458,6 @@ func _render_rank1_actions() -> void:
 
     _operations_action.visible = false
     _capital_action.visible = false
-    _render_notice()
 
     if sim == null or sim.facility_rank > 2 or not sim.has_method("rank1_project_info"):
         return
@@ -559,8 +593,8 @@ func _on_rank2_capital_action(button: Button) -> void:
         _render()
         return
 
+    _set_notice(_purchase_failure_text(result))
     _render()
-    _action_message.text = _purchase_failure_text(result)
 
 
 func _render_direct_staffing_actions() -> void:
@@ -622,11 +656,12 @@ func _on_staffing_move(button: Button) -> void:
 
     match String(result.get("reason", "")):
         "minimum":
-            _action_message.text = "%sは最低1名必要" % _staffing_zone_label(from_zone)
+            _set_notice("%sは最低1名必要" % _staffing_zone_label(from_zone))
         "cooldown":
-            _action_message.text = "観察中｜あと%d秒" % int(ceil(float(result.get("remaining", 0.0))))
+            _set_notice("観察中｜あと%d秒" % int(ceil(float(result.get("remaining", 0.0)))))
         _:
-            _action_message.text = "この配置変更は実行できない"
+            _set_notice("この配置変更は実行できない")
+    _render()
 
 
 func _staffing_zone_label(zone_key: String) -> String:
@@ -644,9 +679,11 @@ func _on_operations_action() -> void:
     if sim == null or not sim.has_method("purchase_rank1_project"):
         return
     var result: Dictionary = sim.call("purchase_rank1_project", StringName("worker_hire"))
-    _render()
     if not bool(result.get("ok", false)):
-        _action_message.text = _purchase_failure_text(result)
+        _set_notice(_purchase_failure_text(result))
+    else:
+        _clear_notice()
+    _render()
 
 
 func _on_capital_action() -> void:
@@ -668,9 +705,9 @@ func _on_capital_action() -> void:
         _clear_construction_preview()
         construction_committed.emit(_selected_zone, project_kind, "build")
         _set_notice("建設完了｜25秒のBefore / After計測開始", 6.0)
-    _render()
     if not bool(result.get("ok", false)):
-        _action_message.text = _purchase_failure_text(result)
+        _set_notice(_purchase_failure_text(result))
+    _render()
 
 
 func _purchase_failure_text(result: Dictionary) -> String:

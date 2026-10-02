@@ -14,6 +14,8 @@ var zone: WarehouseZonePanel
 var router: MobileUiGestureRouter
 var coach: V2Rank1Coach
 var resume_brief: Control
+var save_notice: LogisticsSaveStatusNotice
+var _save_notice_suppressed: Array[Control] = []
 var _section := "field"
 var _goal_section := "contracts"
 var _tabs: Dictionary = {}
@@ -30,11 +32,12 @@ var staffing: StaffingWorkspace
 var _capacity_panel: VBoxContainer
 
 
-func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2Rank1Coach = null, next_resume: Control = null) -> void:
+func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2Rank1Coach = null, next_resume: Control = null, next_save_notice: LogisticsSaveStatusNotice = null) -> void:
     hud = next_hud
     zone = next_zone
     coach = next_coach
     resume_brief = next_resume
+    save_notice = next_save_notice
     process_priority = 100
     # A CanvasLayer has no theme property. Apply the runtime-loaded theme to
     # each Control root instead, including roots attached after this bind.
@@ -191,6 +194,7 @@ func refresh() -> void:
         var info: Dictionary = sim.call("capacity_info", StringName(button.get_meta("capacity_kind")))
         button.text = "%s %d/%d
 %s" % [info["label"], int(info["count"]), int(info["limit"]), "増設分 導入済み" if bool(info["maxed"]) else "現場で増設内容を見る ▶"]
+    _sync_save_notice()
     _render_contracts()
     _render_goal()
     _render_field()
@@ -242,6 +246,8 @@ func _render_goal() -> void:
     # A disappearing resume/coach band must not move an action under a held finger.
     if router == null or not router.is_pressing(goal):
         goal.offset_top = 196.0 if upper_band_busy else 128.0
+        if save_notice != null and save_notice.visible:
+            goal.offset_top = maxf(goal.offset_top, save_notice.get_global_rect().end.y + 8.0)
     goal.offset_bottom = goal.offset_top + 56.0
     _goal_section = "field"
     if sim.facility_rank == 1:
@@ -268,6 +274,28 @@ func _render_goal() -> void:
         goal.text += "\n契約 %d/%d｜残り%d秒" % [int(active.get("progress", 0)), int(active.get("target", 0)), ceili(float(active.get("remaining", 0.0)))]
         goal.offset_bottom = goal.offset_top + 72.0
     goal.add_theme_stylebox_override("normal", _growth)
+
+
+func _sync_save_notice() -> void:
+    if save_notice == null:
+        return
+    var show_notice := save_notice.has_notice() and not hud._sheet.visible and not hud._reset_modal.visible and not zone.is_open()
+    save_notice.visible = show_notice
+    if show_notice:
+        for band in [coach, resume_brief, hud._ftue_coach, hud._wave_panel]:
+            if band != null and band.visible:
+                if band not in _save_notice_suppressed:
+                    _save_notice_suppressed.append(band)
+                band.visible = false
+                if band == resume_brief:
+                    band.set_process(false)
+    else:
+        for band in _save_notice_suppressed:
+            if is_instance_valid(band):
+                band.visible = true
+                if band == resume_brief:
+                    band.set_process(true)
+        _save_notice_suppressed.clear()
 
 
 func _render_field() -> void:
@@ -316,11 +344,13 @@ func _render_coach() -> void:
         return
     var texts := {
         "observe": "出荷で稼ぎ、設備を2種類増やして倉庫を広げよう。",
-        "inspect": "倉庫の「タップ」を押して、現場の状態を確認。",
-        "act": "設備の配置を確認してから建設。最初のタップでは購入しません。",
+        "inspect": "倉庫の現場名（保管 › など）を押して状態を確認。目標ボタンからも開けます。",
+        "act": "「設備を見る」で配置を確認→建設。採用は「1人採用」から。",
         "measure": "新しい設備の仕事を見よう。続けて投資してもOK。",
         "complete": "流れがどう変わった？ 次の現場も確認してみよう。" }
     coach._body_label.text = String(texts.get(coach.current_step_key(), coach.body_text()))
+    if coach.current_step_key() == "inspect" and not coach.guidance_zone().is_empty():
+        coach._body_label.text = "倉庫の「%s｜ここをタップ」を押して現場を確認。目標からも開けます。" % String(ZONES.get(coach.guidance_zone(), coach.guidance_zone()))
 
 
 func _open_goal() -> void:
