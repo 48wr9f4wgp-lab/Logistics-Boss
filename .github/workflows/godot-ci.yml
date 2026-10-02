@@ -49,6 +49,7 @@ jobs:
           bash godot/tools/run_polish_checks.sh \
             world_zone_input_smoke \
             packing_presentation_smoke \
+            blender_workbench_smoke \
             presentation_cache_smoke \
             selected_routes_visibility_smoke
 

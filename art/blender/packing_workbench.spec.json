@@ -1,0 +1,21 @@
+{
+  "asset": "flotra.packing_workbench.v1",
+  "blender_version": "4.3.2",
+  "triangles": 304,
+  "mesh_objects": 1,
+  "materials": 1,
+  "textures": 0,
+  "lights": 0,
+  "animations": 0,
+  "collision_shapes": 0,
+  "source": "art/blender/packing_workbench.blend",
+  "runtime": "godot/assets/models/packing_workbench.glb",
+  "license": "CC0-1.0",
+  "units": "meters",
+  "godot_axes": "Y up, +Z front",
+  "origin": "floor-center",
+  "worktop_height_m": 1.032,
+  "max_triangles": 500,
+  "max_runtime_surfaces": 1,
+  "lod": "No additional LOD initially: single 304-triangle instance; validate on device."
+}
