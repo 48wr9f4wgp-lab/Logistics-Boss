@@ -48,6 +48,7 @@ jobs:
         run: |
           bash godot/tools/run_polish_checks.sh \
             world_zone_input_smoke \
+            window_focus_input_smoke \
             packing_presentation_smoke \
             blender_workbench_smoke \
             presentation_cache_smoke \
@@ -55,6 +56,7 @@ jobs:
             warehouse_cohesion_smoke \
             hud_cohesion_smoke \
             player_journey_smoke \
+            staffing_return_journey_smoke \
             zone_action_feedback_smoke \
             save_preservation_smoke \
             save_preservation_review_smoke \
