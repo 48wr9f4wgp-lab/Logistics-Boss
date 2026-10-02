@@ -139,6 +139,10 @@ func _sync_feedback_visibility() -> void:
 
 func _on_sim_event(event: Dictionary) -> void:
     var event_type := String(event.get("type", ""))
+    # Retire expired results before inherited handlers can start a fresh timer.
+    # An empty pending queue otherwise leaves their presentation flag behind.
+    if _measurement_result_active and _measurement_timer <= 0.0:
+        _measurement_result_active = false
     # Legacy handlers also write "measuring" copy. Keep unread result content
     # and its remaining reading time across a new investment through either API.
     var preserve_result := event_type in MEASUREMENT_START_EVENTS and _measurement_result_active and _measurement_timer > 0.0 and _measurement_label != null

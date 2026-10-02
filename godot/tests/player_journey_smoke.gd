@@ -26,6 +26,9 @@ func _run() -> void:
         await _verify_composed_journey()
     await _verify_overlapping_measurements()
     await _verify_legacy_result_preservation()
+    for family in ["upgrade", "facility", "renovation", "annex", "routing", "carrier", "rank1", "growth", "capacity"]:
+        await _verify_result_lifecycle(family, false)
+        await _verify_result_lifecycle(family, true)
     Input.emulate_mouse_from_touch = old_mouse
     Input.emulate_touch_from_mouse = old_touch
     print("Player journey checks=%d; failures=%d" % [_checks, _failures])
@@ -154,6 +157,29 @@ func _verify_composed_journey() -> void:
     _expect(sim.packing_cells == 1 and not zone.is_open(), "Capacity commit adds exactly one cell and returns to observation")
     await _verify_measurement_clock(sim, hud, "梱包セル", "Capacity investment")
 
+    # A later legacy facility event must not revive the expired capacity result.
+    zone.open_zone("storage")
+    await _settle()
+    var facility_button: Button
+    for button in zone._rank2_capital_buttons:
+        if String(button.get_meta("kind", "")) == "fast_pick_rack":
+            facility_button = button
+    _expect(facility_button != null, "Actual main exposes the Rank 2 storage facility action")
+    if facility_button != null:
+        zone._scroll.ensure_control_visible(facility_button)
+        await _settle()
+        before_money = sim.money
+        _engine_tap(facility_button)
+        await _settle()
+        _expect(sim.money == before_money and zone.preview_kind() == &"fast_pick_rack", "Facility tap previews without spending after the previous result expires")
+        zone._scroll.ensure_control_visible(facility_button)
+        await _settle()
+        _expect(clarity.router.button_at(facility_button.get_global_rect().get_center()) == facility_button, "Facility preview retains its engine-touch confirmation target")
+        _engine_tap(facility_button)
+        await _settle()
+        _expect(bool(sim.facilities.get("fast_pick_rack", false)) and sim.money == before_money - sim.facility_cost(&"fast_pick_rack") and not zone.is_open(), "Facility confirmation buys exactly once and exposes fresh feedback")
+        await _verify_measurement_clock(sim, hud, "高速棚", "Facility after expired result")
+
     # A stale preview is an actual failed Domain action. Invoke its handler
     # directly because normal disabled controls correctly block unsafe taps.
     zone.open_zone("packing")
@@ -178,6 +204,7 @@ func _verify_measurement_clock(sim: FlotraV2Sim, hud: MobileGameHud, equipment: 
     _expect(hud._measurement_panel.visible and hud._measurement_label.text.contains("計測中"), "%s starts a visible measurement banner" % category)
     _expect(hud._measurement_label.text.contains(equipment), "%s banner identifies the investment" % category)
     _expect(hud._measurement_label.text.contains("25秒"), "%s begins with the authoritative 25-second window" % category)
+    _verify_measuring_style(hud, category)
     sim.set_time_scale(0.0)
     var paused_at := sim.sim_time
     sim.step(35.0)
@@ -275,6 +302,87 @@ func _verify_overlapping_measurements() -> void:
     _expect(hud._measurement_label.text.contains("自動出荷レーン") and not hud._measurement_label.text.contains("計測中"), "Both simultaneous authoritative completions deliver the named result")
     hud._process(11.0)
     _expect(not hud._measurement_panel.visible, "Same-tick completions remove both watches without a phantom countdown")
+    hud.queue_free()
+    await _settle()
+
+
+func _verify_measuring_style(hud: MobileGameHud, category: String) -> void:
+    var style := hud._measurement_panel.get_theme_stylebox("panel") as StyleBoxFlat
+    _expect(hud._measurement_label.get_theme_font_size("font_size") == 13, "%s uses the measuring font rather than the previous verdict font" % category)
+    _expect(hud._measurement_label.get_theme_color("font_color").is_equal_approx(Color(0.90, 0.98, 1.0)) and style.border_color.is_equal_approx(Color(0.18, 0.72, 0.96, 0.92)), "%s uses measuring colors rather than the previous verdict colors" % category)
+
+
+func _verify_result_lifecycle(family: String, unread: bool) -> void:
+    var category := "%s after %s result" % [family, "unread" if unread else "expired"]
+    var sim: FlotraV2Sim = SimScript.new()
+    sim.money = 1000000 # Explicit fixtures, never natural progression evidence.
+    sim.forklift_unlocked = true
+    if family in ["facility", "renovation", "growth", "capacity"]:
+        sim.facility_rank = 2
+    elif family in ["annex", "routing", "carrier"]:
+        sim.facility_rank = 3
+    if family == "carrier":
+        sim.receiving_annex_unlocked = true
+    if family == "renovation":
+        sim.facilities["fast_pick_rack"] = true
+    var hud: MobileGameHud = HudScript.new()
+    hud.bind_sim(sim)
+    get_root().add_child(hud)
+    hud.set_process(false) # Drive reading time explicitly, independently of frames.
+    await _settle()
+    _expect(bool(sim.purchase_upgrade(&"speed").get("ok", false)), "%s starts with a genuine investment" % category)
+    _advance_domain(sim, 25.1)
+    hud._process(0.0)
+    var result := hud._measurement_label.text
+    var result_color := hud._measurement_label.get_theme_color("font_color")
+    var result_border := (hud._measurement_panel.get_theme_stylebox("panel") as StyleBoxFlat).border_color
+    _expect(hud._pending_measurements.is_empty() and result.contains("搬送訓練") and not result.contains("計測中"), "%s begins only after the previous authoritative completion empties the queue" % category)
+    hud._process(3.0 if unread else 11.0)
+    var reading_time := hud._measurement_timer
+    if unread:
+        hud._sheet.visible = true
+        hud._process(40.0)
+    else:
+        _expect(not hud._measurement_panel.visible and reading_time <= 0.0, "%s has fully expired before the next event" % category)
+    sim.set_time_scale(0.0)
+    var purchase: Dictionary
+    match family:
+        "upgrade": purchase = sim.purchase_upgrade(&"rack")
+        "facility": purchase = sim.purchase_facility(&"fast_pick_rack")
+        "renovation": purchase = sim.purchase_facility(&"high_density_rack")
+        "annex": purchase = sim.purchase_receiving_annex()
+        "routing": purchase = sim.set_routing_mode("express")
+        "carrier": purchase = sim.purchase_inbound_carrier_program()
+        "rank1": purchase = sim.purchase_rank1_project(&"rack_wing")
+        "growth": purchase = sim.purchase_growth_automation(&"extra_forklift")
+        "capacity": purchase = sim.purchase_capacity(&"packing_cell", 0)
+    _expect(bool(purchase.get("ok", false)) and hud._pending_measurements.size() == 1, "%s creates exactly one new authoritative watch" % category)
+    if unread:
+        hud._process(40.0)
+        _expect(not hud._measurement_panel.visible and hud._measurement_label.text == result and is_equal_approx(hud._measurement_timer, reading_time), "%s preserves hidden result text and remaining reading time through the purchase" % category)
+        _expect(hud._measurement_label.get_theme_font_size("font_size") == 12 and hud._measurement_label.get_theme_color("font_color") == result_color and (hud._measurement_panel.get_theme_stylebox("panel") as StyleBoxFlat).border_color == result_border, "%s preserves the unread verdict styling" % category)
+        hud._sheet.visible = false
+        hud._process(0.0)
+        _expect(hud._measurement_panel.visible and hud._measurement_label.text == result, "%s restores the unread result when Management closes" % category)
+        hud._process(reading_time + 0.1)
+    hud._process(0.0)
+    _expect(hud._measurement_panel.visible and hud._measurement_label.text.contains("残り25秒") and hud._measurement_label.text.contains("一時停止中"), "%s immediately shows the fresh paused countdown" % category)
+    _verify_measuring_style(hud, category)
+    var paused_at := sim.sim_time
+    sim.step(35.0)
+    hud._process(35.0)
+    _expect(is_equal_approx(sim.sim_time, paused_at) and hud._measurement_label.text.contains("残り25秒") and hud._measurement_label.text.contains("一時停止中"), "%s retains the paused countdown beyond the legacy timeout" % category)
+    sim.set_time_scale(4.0)
+    _advance_domain(sim, 1.275) # 5.1 game seconds avoids a floating-point ceil boundary.
+    hud._process(1.275)
+    _expect(is_equal_approx(sim.sim_time, paused_at + 5.1) and hud._measurement_label.text.contains("残り20秒") and not hud._measurement_label.text.contains("一時停止中"), "%s follows resumed 4x simulation time" % category)
+    _verify_measuring_style(hud, category + " resumed")
+    sim.set_time_scale(1.0)
+    _advance_domain(sim, 20.1)
+    hud._process(0.0)
+    _expect(hud._pending_measurements.is_empty() and hud._measurement_panel.visible and not hud._measurement_label.text.contains("計測中") and hud._measurement_label.text.contains("→"), "%s ends only on the new authoritative completion" % category)
+    hud._process(11.0)
+    _expect(not hud._measurement_panel.visible, "%s leaves no orphan measurement after its own result expires" % category)
     hud.queue_free()
     await _settle()
 
