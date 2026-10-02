@@ -42,6 +42,16 @@ jobs:
             exit 1
           fi
 
+      - name: Interaction and truthful-flow presentation regressions
+        env:
+          GODOT_BIN: godot
+        run: |
+          bash godot/tools/run_polish_checks.sh \
+            world_zone_input_smoke \
+            packing_presentation_smoke \
+            presentation_cache_smoke \
+            selected_routes_visibility_smoke
+
       - name: Domain simulation smoke
         run: godot --headless --path godot --script res://tests/sim_smoke.gd
 

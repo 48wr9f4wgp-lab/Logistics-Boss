@@ -132,6 +132,7 @@ func _ready() -> void:
     interaction_clarity.name = "MobileInteractionClarity"
     hud.add_child(interaction_clarity)
     interaction_clarity.bind(hud as MobileGameHud, zone_panel, v2_rank1_coach, resume_brief)
+    interaction_clarity.router.raw_touch_observed.connect(zone_interaction.observe_touch_input)
 
     var capacity_view := preload("res://view/capacity_growth_view.gd").new()
     view.add_child(capacity_view)

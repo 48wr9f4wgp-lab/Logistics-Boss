@@ -51,11 +51,22 @@ func run() -> void:
         for point in [Vector3(-5.25,0.5,0.15), Vector3(-2.2,0.5,0.15), Vector3(0.25,0.5,0.15), Vector3(2.65,0.5,0.15), Vector3(5.3,0.5,0.15), Vector3(0,0.5,4.5), Vector3(4.6,0.5,4.5), Vector3(7.35,0.5,-1), Vector3(7.35,0.5,1.6), Vector3(-6.5,0,-3.3), Vector3(-6.5,0,3.3), Vector3(-3,3.5,-2.5), Vector3(5.6,1.5,5.5), Vector3(8.55,1.5,-2)]:
             var projected := view._camera.unproject_position(point)
             check(safe.has_point(projected), "Operational target stays inside portrait working area: %s" % point)
+        # The hide control belongs to an actual selected route. Seed a real
+        # picking reservation so this remains a control-layout assertion.
+        sim.rack_stock = maxi(sim.rack_stock, 1)
+        var active_picker: Dictionary = {}
+        for worker in sim.workers:
+            if worker["role"] == "pick":
+                active_picker = worker
+                sim._start_task(worker, WarehouseSim.Task.PICK)
+                break
+        check(not active_picker.is_empty() and int(active_picker.get("task", WarehouseSim.Task.IDLE)) == WarehouseSim.Task.PICK, "Readability fixture must contain an actual picking job")
         clarity.zone.open_zone("picking")
         clarity.zone.close()
         hud._show_measurement_status("搬送コンベア後｜前後の観測値\n要再判断｜出荷14.4→12.0/分\n入庫6.9→13.9｜次: 入荷確認", 10.0)
         await settle()
         var result := hud._measurement_panel.get_global_rect()
+        check(routes.lines[0].visible, "Route control layout is checked against real visible route geometry")
         for button in [routes.overview, routes.toggle]:
             check(button.is_visible_in_tree(), "Camera and route controls remain available with results")
             check(not result.intersects(button.get_global_rect()), "Feedback must not overlap camera/route controls")

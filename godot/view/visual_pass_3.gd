@@ -14,12 +14,20 @@ const CARTON := Color(0.78, 0.53, 0.26)
 const SIGNAL_IDLE_ENERGY := 1.05
 const SIGNAL_WARNING_ENERGY := 3.2
 const SIGNAL_CRITICAL_ENERGY := 4.6
+# The base/parallel packing system supports at most two concurrent Domain jobs.
+# This pool visualizes those jobs only; CapacityGrowthView owns added cells,
+# QueuePressureView owns waiting cargo, and WarehouseView owns stock/output.
+const PACKING_JOB_VISUAL_CAP := 2
+const PACKING_WARNING_QUEUE := 3
 
 var warehouse_view: WarehouseView
 var hud: GameHud
 var _flow_signals: Dictionary = {}
 var _last_bottleneck_key := ""
 var _last_bottleneck_severity := -1
+var _packing_parcels: Array[Node3D] = []
+var _packing_green: MeshInstance3D
+var _packing_amber: MeshInstance3D
 
 
 func bind(view: WarehouseView, game_hud: GameHud) -> void:
@@ -30,6 +38,7 @@ func bind(view: WarehouseView, game_hud: GameHud) -> void:
     warehouse_view._orbit_yaw = -0.80
     call_deferred("_tune_camera")
     call_deferred("_sync_domain_bottleneck_signals")
+    call_deferred("_sync_packing_activity")
 
 
 func _ready() -> void:
@@ -42,6 +51,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
     _sync_domain_bottleneck_signals()
+    _sync_packing_activity()
 
 
 func _tune_camera() -> void:
@@ -64,13 +74,20 @@ func _build_pack_focal_cell() -> void:
     _emissive_box("PackGantryGlow", Vector3(2.35, 0.055, 0.055), Vector3(2.55, 2.12, -0.66), CYAN, 3.2)
 
     _box("PackStatusTower", Vector3(0.16, 1.05, 0.16), Vector3(3.72, 1.55, -0.40), STEEL)
-    _emissive_box("PackStatusGreen", Vector3(0.19, 0.18, 0.19), Vector3(3.72, 2.02, -0.40), MINT, 2.8)
-    _emissive_box("PackStatusAmber", Vector3(0.19, 0.13, 0.19), Vector3(3.72, 1.84, -0.40), WARM, 2.0)
+    _packing_green = _emissive_box("PackStatusGreen", Vector3(0.19, 0.18, 0.19), Vector3(3.72, 2.02, -0.40), MINT, 0.0)
+    _packing_amber = _emissive_box("PackStatusAmber", Vector3(0.19, 0.13, 0.19), Vector3(3.72, 1.84, -0.40), WARM, 0.0)
+    _set_packing_lamp(_packing_green, MINT, false)
+    _set_packing_lamp(_packing_amber, WARM, false)
 
-    # Parcels on the pack handoff create a readable production line rather than empty furniture.
-    for i in 5:
-        var x := 1.62 + float(i) * 0.43
-        _carton(Vector3(x, 1.04, 0.05), Vector3(0.36, 0.28, 0.34))
+    for i in PACKING_JOB_VISUAL_CAP:
+        var parcel := Node3D.new()
+        parcel.name = "PackingInProcess%d" % i
+        parcel.visible = false
+        add_child(parcel)
+        _box_into(parcel, "ActualCarton", Vector3(0.42, 0.32, 0.38), Vector3.ZERO, CARTON)
+        _box_into(parcel, "CartonTape", Vector3(0.075, 0.332, 0.395), Vector3(0.0, 0.008, 0.0), Color(0.88, 0.77, 0.56))
+        _box_into(parcel, "CartonLabel", Vector3(0.18, 0.13, 0.018), Vector3(0.0, 0.0, -0.20), Color(0.90, 0.92, 0.89))
+        _packing_parcels.append(parcel)
 
     # Short guard rails make the cell feel like installed industrial equipment.
     for z in [-1.20, 1.08]:
@@ -80,13 +97,12 @@ func _build_pack_focal_cell() -> void:
 
 
 func _build_rack_depth_details() -> void:
-    # Add loaded pallet silhouettes and address beacons to break the primitive rack look.
+    # Pallets and address beacons remain when stock is empty. Actual rack cargo
+    # belongs to WarehouseView, avoiding a second decorative stock count.
     for aisle in 2:
         var x := -2.25 + float(aisle) * 1.45
         for z in [-2.95, -1.90, -0.85, 0.20, 1.25]:
             _pallet(Vector3(x, 0.17, z))
-            _carton(Vector3(x - 0.24, 0.54, z), Vector3(0.42, 0.42, 0.52))
-            _carton(Vector3(x + 0.24, 0.54, z), Vector3(0.42, 0.42, 0.52))
 
     for z in [-3.25, -1.15, 0.95, 3.05]:
         _emissive_box("RackBeacon", Vector3(0.10, 0.20, 0.08), Vector3(-0.08, 2.65, z), CYAN, 2.1)
@@ -230,10 +246,39 @@ func _pallet(position: Vector3) -> void:
         _box("PalletSlat", Vector3(0.22, 0.075, 0.84), position + Vector3(dx, 0.075, 0.0), Color(0.55, 0.33, 0.12))
 
 
-func _carton(position: Vector3, size: Vector3) -> void:
-    _box("Carton", size, position, CARTON)
-    _box("CartonTape", Vector3(size.x * 0.16, size.y + 0.012, size.z + 0.015), position + Vector3(0.0, 0.008, 0.0), Color(0.88, 0.77, 0.56))
-    _box("CartonLabel", Vector3(size.x * 0.42, size.y * 0.40, 0.018), position + Vector3(0.0, 0.0, -size.z * 0.51), Color(0.90, 0.92, 0.89))
+func _sync_packing_activity() -> void:
+    var sim: WarehouseSim = warehouse_view.sim if warehouse_view != null else null
+    var job_count := mini(sim._packing_jobs.size(), PACKING_JOB_VISUAL_CAP) if sim != null else 0
+    for index in _packing_parcels.size():
+        var parcel := _packing_parcels[index]
+        parcel.visible = index < job_count
+        if not parcel.visible:
+            continue
+        # Remaining Domain time drives position directly. No wall-clock or local
+        # progress accumulator: pausing or speed changes cannot fake throughput.
+        var duration := maxf(sim._packing_duration(), 0.001)
+        var progress := clampf(1.0 - sim._packing_jobs[index] / duration, 0.0, 1.0)
+        var start := Vector3(1.72, 1.20, -0.05)
+        var finish := Vector3(3.30, 1.20, -0.05)
+        if index == 1:
+            var parallel := bool(sim.facilities.get("parallel_pack", false))
+            start = Vector3(1.65 if parallel else 2.52, 1.03, 1.25)
+            finish = Vector3(3.05 if parallel else 3.65, 1.03, 1.25)
+        parcel.position = start.lerp(finish, progress)
+
+    # Amber is actual waiting pressure, green is processing without pressure.
+    # Both lamps stay dark when idle, and never advertise contradictory states.
+    var pressure := sim != null and sim.packing_queue >= PACKING_WARNING_QUEUE
+    _set_packing_lamp(_packing_green, MINT, job_count > 0 and not pressure)
+    _set_packing_lamp(_packing_amber, WARM, pressure)
+
+
+func _set_packing_lamp(lamp: MeshInstance3D, color: Color, lit: bool) -> void:
+    if lamp == null:
+        return
+    var material := lamp.material_override as StandardMaterial3D
+    material.albedo_color = color if lit else color * Color(0.16, 0.16, 0.16, 1.0)
+    material.emission_energy_multiplier = 2.8 if lit else 0.0
 
 
 func _box(name: String, size: Vector3, position: Vector3, color: Color) -> MeshInstance3D:

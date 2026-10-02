@@ -141,11 +141,11 @@ func _verify_zone_affordance_and_ftue_guidance() -> bool:
 
     var inbound_label := interaction._zone_labels.get("inbound") as Label3D
     var storage_label := interaction._zone_labels.get("storage") as Label3D
-    if inbound_label == null or not inbound_label.text.contains("混雑・タップ"):
+    if inbound_label == null or (not inbound_label.text.contains("混雑") or not inbound_label.text.contains("›")):
         _fail("congested INBOUND label must advertise that the Zone is tappable")
         return false
-    if storage_label == null or not storage_label.text.contains("タップ"):
-        _fail("normal Zone labels must still advertise tap affordance")
+    if storage_label == null or not storage_label.text.contains("›"):
+        _fail("normal Zone labels must retain the compact chevron tap affordance")
         return false
 
     var coach: V2Rank1Coach = CoachScript.new()

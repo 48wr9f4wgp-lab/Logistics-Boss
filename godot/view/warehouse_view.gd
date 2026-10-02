@@ -356,17 +356,22 @@ func _sync_rack_geometry() -> void:
 
 
 func _sync_box_counts() -> void:
-    if _last_inbound != sim.inbound_queue:
-        _last_inbound = sim.inbound_queue
-        _rebuild_boxes(_inbound_boxes, mini(sim.inbound_queue, 12), Vector3(-6.0, 0.28, 1.72), Vector2(4, 3), PARCEL)
+    # Presentation caps are the cache key. Above-cap Domain changes must not
+    # rebuild identical meshes during a busy shift.
+    var inbound_count := clampi(sim.inbound_queue, 0, 12)
+    var rack_count := clampi(sim.rack_stock, 0, 20)
+    var packed_count := clampi(sim.packed_queue, 0, 10)
+    if _last_inbound != inbound_count:
+        _last_inbound = inbound_count
+        _rebuild_boxes(_inbound_boxes, inbound_count, Vector3(-6.0, 0.28, 1.72), Vector2(4, 3), PARCEL)
 
-    if _last_rack_stock != sim.rack_stock:
-        _last_rack_stock = sim.rack_stock
-        _rebuild_boxes(_rack_boxes, mini(sim.rack_stock, 20), Vector3(-2.55, 0.68, -3.3), Vector2(4, 5), Color(0.82, 0.60, 0.34))
+    if _last_rack_stock != rack_count:
+        _last_rack_stock = rack_count
+        _rebuild_boxes(_rack_boxes, rack_count, Vector3(-2.55, 0.68, -3.3), Vector2(4, 5), Color(0.82, 0.60, 0.34))
 
-    if _last_packed != sim.packed_queue:
-        _last_packed = sim.packed_queue
-        _rebuild_boxes(_packed_boxes, mini(sim.packed_queue, 10), Vector3(4.45, 0.36, 1.15), Vector2(5, 2), Color(0.84, 0.61, 0.31))
+    if _last_packed != packed_count:
+        _last_packed = packed_count
+        _rebuild_boxes(_packed_boxes, packed_count, Vector3(4.45, 0.36, 1.15), Vector2(5, 2), Color(0.84, 0.61, 0.31))
 
 
 func _update_camera(delta: float) -> void:

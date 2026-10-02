@@ -4,6 +4,7 @@ class_name MobileUiGestureRouter
 # The composed mobile scene has one raw gesture owner. Standalone legacy HUD
 # tests keep their original routers; bind() disables them only in this scene.
 signal action_activated(button: Button)
+signal raw_touch_observed(event: InputEvent)
 
 const DRAG_THRESHOLD := 6.0
 const MOUSE_SUPPRESSION_MS := 450
@@ -35,6 +36,8 @@ func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel) -> void:
 func _input(event: InputEvent) -> void:
     if hud == null:
         return
+    if event is InputEventScreenTouch or event is InputEventScreenDrag:
+        raw_touch_observed.emit(event)
     # Input dispatches its emulated mouse BEFORE the originating finger event.
     # A time-based suppression window set by ScreenTouch is therefore too late.
     # Never let this synthetic event acquire the genuine-mouse pointer (-2).
