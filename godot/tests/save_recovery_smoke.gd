@@ -37,7 +37,9 @@ func _run() -> void:
     if corrupt_primary == null:
         _fail("test must be able to replace primary save")
         return
-    corrupt_primary.store_string(JSON.stringify({"schema_version": 999, "money": 1}))
+    # An invalid old schema is recoverable. A future schema is separately
+    # protected by save_preservation_smoke, even with a usable older backup.
+    corrupt_primary.store_string(JSON.stringify({"schema_version": 0, "money": 1}))
     corrupt_primary.close()
 
     var restored = SimScript.new()

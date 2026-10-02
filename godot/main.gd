@@ -20,6 +20,7 @@ const GameHudScript = preload("res://ui/game_hud_mobile.gd")
 const WarehouseZonePanelScript = preload("res://ui/warehouse_zone_panel.gd")
 const V2Rank1CoachScript = preload("res://ui/v2_rank1_coach.gd")
 const SessionResumeBriefScript = preload("res://ui/session_resume_brief.gd")
+const SaveStatusNoticeScript = preload("res://ui/save_status_notice.gd")
 const MobileInteractionClarityScript = preload("res://ui/mobile_interaction_clarity.gd")
 const SaveStoreScript = preload("res://persistence/save_store.gd")
 const GameFeelScript = preload("res://feedback/game_feel.gd")
@@ -114,6 +115,13 @@ func _ready() -> void:
     var v2_rank1_coach: V2Rank1Coach = V2Rank1CoachScript.new()
     hud.add_child(v2_rank1_coach)
     v2_rank1_coach.bind_context(sim, zone_interaction)
+    # The panel's actual-open signal also covers management and project shortcuts.
+    # A player should learn the same loop whichever route they take to a zone.
+    zone_panel.opened.connect(v2_rank1_coach._on_zone_selected)
+    # Read existing tutorial markers during normal binding above, then prohibit
+    # new marker writes in an explicitly unsaved/protected session as well.
+    save_store.status_changed.connect(_sync_tutorial_persistence.bind(hud, v2_rank1_coach))
+    _sync_tutorial_persistence(hud, v2_rank1_coach)
 
     # Returning players get a five-second continuity brief built only from the
     # restored Domain state. Fresh saves and active FTUE keep the onboarding band.
@@ -126,12 +134,16 @@ func _ready() -> void:
     var should_show_resume := resumed_session and legacy_ftue_clear and v2_ftue_clear
     resume_brief.bind(sim, should_show_resume)
 
+    var save_notice: LogisticsSaveStatusNotice = SaveStatusNoticeScript.new()
+    hud.add_child(save_notice)
+    save_notice.bind(save_store)
+
     # Compose the interaction presentation after every mobile surface exists.
     # It owns UI gestures only; simulation, saves and purchase handlers stay intact.
     var interaction_clarity: MobileInteractionClarity = MobileInteractionClarityScript.new()
     interaction_clarity.name = "MobileInteractionClarity"
     hud.add_child(interaction_clarity)
-    interaction_clarity.bind(hud as MobileGameHud, zone_panel, v2_rank1_coach, resume_brief)
+    interaction_clarity.bind(hud as MobileGameHud, zone_panel, v2_rank1_coach, resume_brief, save_notice)
     interaction_clarity.router.raw_touch_observed.connect(zone_interaction.observe_touch_input)
 
     var capacity_view := preload("res://view/capacity_growth_view.gd").new()
@@ -182,6 +194,14 @@ func _ready() -> void:
     game_feel = GameFeelScript.new()
     add_child(game_feel)
     game_feel.bind_sim(sim)
+
+
+func _sync_tutorial_persistence(hud: MobileGameHud, coach: V2Rank1Coach) -> void:
+    if save_store == null or not save_store.write_protected:
+        return
+    coach._persist_completion = false
+    if hud._ftue_coach != null:
+        hud._ftue_coach._persist_completion = false
 
 
 func _process(delta: float) -> void:

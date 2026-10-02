@@ -2,11 +2,28 @@ extends "res://ui/game_hud_ftue.gd"
 class_name FeedbackGameHud
 
 const FlowMeasurementScript = preload("res://domain/flow_measurement.gd")
+const MEASUREMENT_START_EVENTS := [
+    "rank1_project_purchased", "growth_automation_purchased", "capacity_purchased",
+    "upgrade_purchased", "facility_purchased", "facility_renovated",
+    "receiving_annex_purchased", "routing_changed", "inbound_carrier_program_purchased",
+]
 
+# Presentation state only. Investment events start these watches; the Domain's
+# matching completion event ends them. Wall-clock animation never predicts a result.
+var _pending_measurements: Array[Dictionary] = []
+var _measurement_result_active := false
 var _measurement_followup_active := false
 var _toast_is_priority := false
 var _earnings_timer := 0.0
 var _earnings_caption: Label
+
+
+func bind_sim(next_sim: WarehouseSim) -> void:
+    if sim != next_sim:
+        _pending_measurements.clear()
+        _measurement_result_active = false
+        _measurement_timer = 0.0
+    super.bind_sim(next_sim)
 
 
 func _ready() -> void:
@@ -31,6 +48,7 @@ func _process(delta: float) -> void:
     # Only inherited HUD display clocks wait. Domain.step(), cash rendering,
     # worker tasks and the separately owned onboarding nodes keep running.
     super._process(0.0 if obscured else delta)
+    _refresh_pending_measurements()
     _sync_measurement_followup_cta()
     _sync_feedback_visibility()
 
@@ -110,28 +128,111 @@ func _sync_feedback_visibility() -> void:
             _toast.add_theme_font_size_override("font_size", 11)
     if _measurement_panel != null:
         _measurement_panel.visible = not obscured and _measurement_timer > 0.0
+        if _measurement_panel.visible:
+            # Three-line/wrapped observations can grow beyond the inherited
+            # fixed-height box. Grow upward so the speed/management dock stays clear.
+            _measurement_panel.anchor_top = 1.0
+            _measurement_panel.anchor_bottom = 1.0
+            _measurement_panel.offset_bottom = -104.0
+            _measurement_panel.offset_top = -104.0 - maxf(54.0, _measurement_panel.get_combined_minimum_size().y)
 
 
 func _on_sim_event(event: Dictionary) -> void:
-    super._on_sim_event(event)
     var event_type := String(event.get("type", ""))
+    # Retire expired results before inherited handlers can start a fresh timer.
+    # An empty pending queue otherwise leaves their presentation flag behind.
+    if _measurement_result_active and _measurement_timer <= 0.0:
+        _measurement_result_active = false
+    # Legacy handlers also write "measuring" copy. Keep unread result content
+    # and its remaining reading time across a new investment through either API.
+    var preserve_result := event_type in MEASUREMENT_START_EVENTS and _measurement_result_active and _measurement_timer > 0.0 and _measurement_label != null
+    var result_text := _measurement_label.text if preserve_result else ""
+    var result_time := _measurement_timer
+    super._on_sim_event(event)
+    if preserve_result:
+        _show_measurement_status(result_text, result_time)
     if event_type == "capacity_purchased":
         _show_toast("%s %d台目を増設" % [event.get("label", "設備"), int(event.get("count", 1))])
     if event_type == "measurement_completed":
+        _finish_pending_measurement(String(event.get("kind", "")))
+        _measurement_result_active = true
         _show_measurement_feedback(event)
         return
 
-    if event_type in [
-        "upgrade_purchased",
-        "facility_purchased",
-        "facility_renovated",
-        "receiving_annex_purchased",
-        "routing_changed",
-        "inbound_carrier_program_purchased",
-    ]:
-        _measurement_followup_active = false
-        _style_measurement_state("measuring")
+    if event_type in MEASUREMENT_START_EVENTS:
+        _begin_pending_measurement(event)
+        if not _measurement_result_active:
+            _measurement_followup_active = false
         _sync_measurement_followup_cta()
+
+
+func _begin_pending_measurement(event: Dictionary) -> void:
+    if sim == null:
+        return
+    var kind := String(event.get("measurement_kind", event.get("kind", "")))
+    var event_type := String(event.get("type", ""))
+    if not event.has("measurement_kind"):
+        if event_type == "facility_purchased":
+            kind = "facility_%s" % kind
+        elif event_type == "facility_renovated":
+            kind = "renovation_%s" % kind
+        elif event_type == "routing_changed":
+            kind = "routing_%s" % String(event.get("mode", ""))
+    _pending_measurements.append({
+        "kind": kind,
+        "label": _measurement_name(kind, String(event.get("label", "設備変更"))),
+        "started_at": float(event.get("at", sim.sim_time)),
+        "window": float(event.get("measurement_window", FlowMeasurement.WINDOW_SECONDS)),
+    })
+    if not (_measurement_result_active and _measurement_timer > 0.0):
+        _measurement_result_active = false
+        _style_measurement_state("measuring")
+    _refresh_pending_measurements()
+
+
+func _finish_pending_measurement(kind: String) -> void:
+    # Capacity purchases may repeat the same kind: complete only the oldest one.
+    for index in _pending_measurements.size():
+        if String(_pending_measurements[index]["kind"]) == kind:
+            _pending_measurements.remove_at(index)
+            return
+
+
+func _refresh_pending_measurements() -> void:
+    if sim == null or _pending_measurements.is_empty():
+        return
+    # Let completed results keep their reading time, including behind panels.
+    if _measurement_result_active and _measurement_timer > 0.0:
+        return
+    if _measurement_result_active:
+        _style_measurement_state("measuring")
+    _measurement_result_active = false
+    var latest: Dictionary = _pending_measurements.back()
+    var remaining := maxi(0, ceili(float(latest["started_at"]) + float(latest["window"]) - sim.sim_time))
+    var detail := "前後の観測値を比較｜続けて投資できます"
+    if _pending_measurements.size() > 1:
+        detail = "ほか%d件も計測中｜複数変更を含む参考値" % (_pending_measurements.size() - 1)
+    if sim.time_scale <= 0.0:
+        detail = "一時停止中｜再開すると計測が進みます"
+    var text := "%s｜効果を計測中\n残り%d秒（ゲーム内時間）\n%s" % [latest["label"], remaining, detail]
+    if _measurement_label != null and _measurement_label.text != text:
+        _show_measurement_status(text, 1.0)
+    else:
+        _measurement_timer = 1.0
+
+
+func _measurement_name(kind: String, fallback: String = "設備変更") -> String:
+    var names := {
+        "rank1_rack_wing": "棚の増設", "rank1_second_packing_bench": "梱包台の増設",
+        "rank1_worker_hire": "作業員採用", "rank1_forklift_project": "フォークリフト",
+        "extra_forklift": "フォークリフト2号車", "transfer_conveyor": "搬送コンベア", "packing_cell": "梱包セル増設", "dispatch_lane": "自動出荷レーン増設",
+        "facility_fast_pick_rack": "高速棚", "facility_high_density_rack": "高密度棚",
+        "facility_parallel_pack": "並列梱包", "facility_fast_pack_cell": "高速梱包",
+        "renovation_fast_pick_rack": "高速棚へ改装", "renovation_high_density_rack": "高密度棚へ改装",
+        "renovation_parallel_pack": "並列梱包へ改装", "renovation_fast_pack_cell": "高速梱包へ改装",
+        "worker": "作業員増員", "rack": "棚の増設", "speed": "搬送訓練", "packing": "梱包強化", "forklift": "フォークリフト",
+    }
+    return String(names.get(kind, fallback))
 
 
 func measurement_feedback(event: Dictionary) -> Dictionary:
@@ -201,15 +302,7 @@ func measurement_feedback(event: Dictionary) -> Dictionary:
         action_short,
     ]
     var action_line := "次: %s" % action_short
-    var names := {
-        "rank1_rack_wing": "棚の増設", "rank1_second_packing_bench": "梱包台の増設",
-        "rank1_worker_hire": "作業員採用", "rank1_forklift_project": "フォークリフト",
-        "extra_forklift": "フォークリフト2号車", "transfer_conveyor": "搬送コンベア", "packing_cell": "梱包セル増設", "dispatch_lane": "自動出荷レーン増設",
-        "facility_fast_pick_rack": "高速棚", "facility_high_density_rack": "高密度棚",
-        "facility_parallel_pack": "並列梱包", "facility_fast_pack_cell": "高速梱包",
-        "renovation_fast_pick_rack": "高速棚へ改装", "renovation_high_density_rack": "高密度棚へ改装",
-        "renovation_parallel_pack": "並列梱包へ改装", "renovation_fast_pack_cell": "高速梱包へ改装" }
-    var equipment := String(names.get(String(event.get("kind", "")), "設備変更"))
+    var equipment := _measurement_name(String(event.get("kind", "")))
     var attribution := "複数変更を含む参考値" if int(event.get("overlapping_changes", 0)) > 0 else "前後の観測値"
     var text := "%s後｜%s\n%s\n%s" % [equipment, attribution, result_line, context_line]
     var needs_followup := state != "improved" or bottleneck_key != "stable"

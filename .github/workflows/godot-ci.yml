@@ -53,7 +53,12 @@ jobs:
             presentation_cache_smoke \
             selected_routes_visibility_smoke \
             warehouse_cohesion_smoke \
-            hud_cohesion_smoke
+            hud_cohesion_smoke \
+            player_journey_smoke \
+            zone_action_feedback_smoke \
+            save_preservation_smoke \
+            save_preservation_review_smoke \
+            save_status_journey_smoke
 
       - name: Domain simulation smoke
         run: godot --headless --path godot --script res://tests/sim_smoke.gd
