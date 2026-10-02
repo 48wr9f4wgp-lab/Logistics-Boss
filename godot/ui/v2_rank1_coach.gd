@@ -5,6 +5,7 @@ signal step_changed(step_key: String)
 signal completed(skipped: bool)
 
 const JAPANESE_UI_FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
+const HudPalette := preload("res://ui/hud_palette.gd")
 const DONE_PATH := "user://flotra_v2_rank1_ftue_v1.done"
 
 enum Step {
@@ -61,14 +62,14 @@ func _ready() -> void:
     _step_label = Label.new()
     _step_label.add_theme_font_override("font", JAPANESE_UI_FONT)
     _step_label.add_theme_font_size_override("font_size", 9)
-    _step_label.add_theme_color_override("font_color", Color(1.0, 0.68, 0.28))
+    _step_label.add_theme_color_override("font_color", HudPalette.AMBER)
     copy.add_child(_step_label)
 
     _body_label = Label.new()
     _body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     _body_label.add_theme_font_override("font", JAPANESE_UI_FONT)
     _body_label.add_theme_font_size_override("font_size", 11)
-    _body_label.add_theme_color_override("font_color", Color(0.88, 0.96, 1.0))
+    _body_label.add_theme_color_override("font_color", HudPalette.TEXT_SECONDARY)
     copy.add_child(_body_label)
 
     _skip_button = Button.new()
@@ -311,8 +312,8 @@ func _exit_tree() -> void:
 
 func _panel_style() -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
-    style.bg_color = Color(0.018, 0.045, 0.062, 0.95)
-    style.border_color = Color(1.0, 0.58, 0.20, 0.76)
+    style.bg_color = HudPalette.SURFACE_DEEP
+    style.border_color = HudPalette.KEYLINE
     style.set_border_width_all(1)
     style.set_corner_radius_all(11)
     return style

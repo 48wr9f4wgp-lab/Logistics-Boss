@@ -4,6 +4,7 @@ class_name MobileInteractionClarity
 # Presentation adapter for existing v2 surfaces, explicitly composed in main.
 # Domain rules/handlers are unchanged; this is not another HUD subclass.
 const RouterScript := preload("res://ui/mobile_ui_gesture_router.gd")
+const HudPalette := preload("res://ui/hud_palette.gd")
 const FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
 const ZONES := {"inbound": "入荷", "storage": "保管", "picking": "ピッキング", "packing": "梱包", "shipping": "出荷"}
 const PROJECTS := {"rack_wing": "棚の増設", "second_packing_bench": "梱包台の増設", "worker_hire": "作業員を1人採用", "forklift_project": "フォークリフト"}
@@ -20,6 +21,7 @@ var _descriptions: Array[Label] = []
 var _settings_labels: Array[Label] = []
 var _normal: StyleBoxFlat
 var _primary: StyleBoxFlat
+var _growth: StyleBoxFlat
 var _pressed: StyleBoxFlat
 var _disabled: StyleBoxFlat
 var _ui_theme: Theme
@@ -44,10 +46,14 @@ func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2
     for child in hud.get_children():
         _theme_control_root(child)
     hud.child_entered_tree.connect(_theme_control_root)
-    _normal = _style(Color(0.045, 0.12, 0.16), Color(0.28, 0.67, 0.82))
-    _primary = _style(Color(0.055, 0.29, 0.25), Color(0.44, 0.95, 0.77))
-    _pressed = _style(Color(0.32, 0.22, 0.075), Color(1.0, 0.76, 0.32))
-    _disabled = _style(Color(0.035, 0.06, 0.075), Color(0.24, 0.32, 0.36))
+    _normal = _style(HudPalette.SURFACE_RAISED, HudPalette.KEYLINE)
+    _primary = _style(HudPalette.SELECTED_SURFACE, HudPalette.SELECTED_KEYLINE)
+    _pressed = _style(HudPalette.PRESSED_SURFACE, HudPalette.AMBER)
+    _disabled = _style(HudPalette.DISABLED_SURFACE, HudPalette.KEYLINE_SOFT)
+    _growth = _style(HudPalette.SURFACE_RAISED, HudPalette.AMBER)
+    _growth.set_border_width_all(0)
+    _growth.border_width_left = 3
+    _growth.content_margin_left = 12.0
     _build_sections()
     _separate_contract_actions()
     _style_buttons(hud)
@@ -58,8 +64,11 @@ func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2
     goal.pressed.connect(_open_goal)
     goal.offset_top = 196.0
     goal.offset_bottom = 264.0
-    goal.add_theme_font_size_override("font_size", 13)
-    goal.add_theme_stylebox_override("normal", _primary)
+    goal.add_theme_font_size_override("font_size", 12)
+    goal.add_theme_stylebox_override("normal", _growth)
+    goal.add_theme_stylebox_override("hover", _growth)
+    hud._speed_button.add_theme_font_size_override("font_size", 13)
+    hud._manage_button.add_theme_font_size_override("font_size", 13)
     if coach != null:
         coach.offset_top = 128.0
         coach.offset_bottom = 190.0
@@ -258,7 +267,7 @@ func _render_goal() -> void:
         var active: Dictionary = sim.active_contract
         goal.text += "\n契約 %d/%d｜残り%d秒" % [int(active.get("progress", 0)), int(active.get("target", 0)), ceili(float(active.get("remaining", 0.0)))]
         goal.offset_bottom = goal.offset_top + 72.0
-    goal.add_theme_stylebox_override("normal", _primary)
+    goal.add_theme_stylebox_override("normal", _growth)
 
 
 func _render_field() -> void:
@@ -361,8 +370,10 @@ func _style_buttons(node: Node) -> void:
         button.add_theme_stylebox_override("hover", _normal)
         button.add_theme_stylebox_override("pressed", _pressed)
         button.add_theme_stylebox_override("disabled", _disabled)
-        button.add_theme_color_override("font_color", Color(0.94, 0.99, 1.0))
-        button.add_theme_color_override("font_disabled_color", Color(0.67, 0.74, 0.77))
+        button.add_theme_color_override("font_color", HudPalette.TEXT)
+        button.add_theme_color_override("font_hover_color", HudPalette.TEXT)
+        button.add_theme_color_override("font_pressed_color", HudPalette.TEXT)
+        button.add_theme_color_override("font_disabled_color", HudPalette.DISABLED_TEXT)
         button.mouse_filter = Control.MOUSE_FILTER_STOP
         button.focus_mode = Control.FOCUS_NONE
     if node is Label:
@@ -379,7 +390,7 @@ func _style(background: Color, border: Color) -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
     style.bg_color = background
     style.border_color = border
-    style.set_border_width_all(2)
+    style.set_border_width_all(1)
     style.set_corner_radius_all(10)
     style.content_margin_left = 8.0
     style.content_margin_right = 8.0

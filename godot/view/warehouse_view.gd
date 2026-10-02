@@ -53,6 +53,8 @@ var _camera_distance := 18.0
 var _touches: Dictionary = {}
 var _last_pinch_distance := 0.0
 var _camera_pose_initialized := false
+var _carton_meshes: Dictionary = {}
+var _carton_material: StandardMaterial3D
 
 
 func bind_sim(next_sim: WarehouseSim) -> void:
@@ -167,6 +169,7 @@ func _build_environment() -> void:
 func _work_light(position: Vector3, light_range: float, energy: float) -> void:
     var light := OmniLight3D.new()
     light.position = position
+    light.set_meta("warehouse_task_light", true)
     light.omni_range = light_range
     light.light_energy = energy
     light.light_color = WARM
@@ -354,9 +357,9 @@ func _sync_rack_geometry() -> void:
         for bay in bays:
             var z := -3.25 + float(bay) * 1.05
             for px in [rack_x - 0.56, rack_x + 0.56]:
-                _box_into(_rack_root, "RackPost", Vector3(0.11, 3.35, 0.11), Vector3(px, 1.68, z), Color(0.055, 0.12, 0.18))
+                _box_into(_rack_root, "RackPost", Vector3(0.11, 3.35, 0.11), Vector3(px, 1.68, z), Color(0.070, 0.125, 0.175))
             for y in [0.52, 1.30, 2.08, 2.86]:
-                _box_into(_rack_root, "RackShelf", Vector3(1.24, 0.095, 0.76), Vector3(rack_x, y, z), Color(0.18, 0.26, 0.30))
+                _box_into(_rack_root, "RackShelf", Vector3(1.24, 0.095, 0.76), Vector3(rack_x, y, z), Color(0.235, 0.310, 0.345))
                 _box_into(_rack_root, "RackBeam", Vector3(1.32, 0.10, 0.08), Vector3(rack_x, y + 0.04, z - 0.36), ORANGE)
 
 
@@ -505,7 +508,7 @@ func _make_station_sign(text: String, position: Vector3, color: Color) -> void:
 
     var label := Label3D.new()
     label.text = text
-    label.position = position
+    label.position = position + Vector3(0.0, 0.0, 0.17)
     label.font_size = 34
     label.outline_size = 7
     label.modulate = color
@@ -530,7 +533,12 @@ func _rebuild_boxes(root: Node3D, count: int, start: Vector3, grid: Vector2, col
             clampf(color.b * tone, 0.0, 1.0),
             color.a
         )
-        _box_into(root, "Parcel", Vector3(0.39, 0.31, 0.39), Vector3(x, y, z), parcel_color)
+        var parcel := MeshInstance3D.new()
+        parcel.name = "Parcel"
+        parcel.position = Vector3(x, y, z)
+        parcel.mesh = _carton_mesh(parcel_color)
+        parcel.material_override = _carton_material
+        root.add_child(parcel)
 
 
 func _box(name: String, size: Vector3, position: Vector3, color: Color) -> MeshInstance3D:
@@ -540,6 +548,7 @@ func _box(name: String, size: Vector3, position: Vector3, color: Color) -> MeshI
 func _box_into(parent: Node, name: String, size: Vector3, position: Vector3, color: Color) -> MeshInstance3D:
     var mesh_instance := MeshInstance3D.new()
     mesh_instance.name = name
+    mesh_instance.set_meta("finish_role", name)
     var mesh := BoxMesh.new()
     mesh.size = size
     mesh_instance.mesh = mesh
@@ -566,3 +575,38 @@ func _box_into(parent: Node, name: String, size: Vector3, position: Vector3, col
     mesh_instance.material_override = material
     parent.add_child(mesh_instance)
     return mesh_instance
+
+
+func _carton_mesh(color: Color) -> ArrayMesh:
+    # Nine deterministic carton tones share geometry/materials across all stock
+    # rebuilds. Tape/labels are coplanar-offset faces, not extra draw calls/nodes.
+    if _carton_meshes.has(color):
+        return _carton_meshes[color]
+    if _carton_material == null:
+        _carton_material = StandardMaterial3D.new()
+        _carton_material.vertex_color_use_as_albedo = true
+        _carton_material.roughness = 0.88
+    var surface := SurfaceTool.new()
+    surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+    var cube := BoxMesh.new()
+    cube.size = Vector3(0.39, 0.31, 0.39)
+    var arrays := cube.get_mesh_arrays()
+    var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+    var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+    var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+    for index in indices:
+        surface.set_color(color)
+        surface.set_normal(normals[index])
+        surface.add_vertex(vertices[index])
+    _carton_face(surface, [Vector3(-0.035,0.157,-0.195),Vector3(-0.035,0.157,0.195),Vector3(0.035,0.157,0.195),Vector3(0.035,0.157,-0.195)], Vector3.UP, Color(0.72,0.62,0.42))
+    _carton_face(surface, [Vector3(-0.14,0.02,0.197),Vector3(0.01,0.02,0.197),Vector3(0.01,0.11,0.197),Vector3(-0.14,0.11,0.197)], Vector3.BACK, Color(0.85,0.85,0.77))
+    var mesh := surface.commit()
+    _carton_meshes[color] = mesh
+    return mesh
+
+
+func _carton_face(surface: SurfaceTool, points: Array, normal: Vector3, color: Color) -> void:
+    for index in [0,2,1,0,3,2]:
+        surface.set_color(color)
+        surface.set_normal(normal)
+        surface.add_vertex(points[index])

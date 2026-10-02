@@ -213,6 +213,7 @@ func _status_light(parent: Node3D, position: Vector3, color: Color) -> void:
 func _box(parent: Node, node_name: String, size: Vector3, position: Vector3, color: Color) -> MeshInstance3D:
     var instance := MeshInstance3D.new()
     instance.name = node_name
+    instance.set_meta("finish_role", node_name)
     var mesh := BoxMesh.new()
     mesh.size = size
     instance.mesh = mesh

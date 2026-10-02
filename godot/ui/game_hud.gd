@@ -1,6 +1,8 @@
 extends CanvasLayer
 class_name GameHud
 
+const HudPalette := preload("res://ui/hud_palette.gd")
+
 signal reset_progress_requested
 
 var sim: WarehouseSim
@@ -198,7 +200,7 @@ func _build_management_sheet() -> void:
     _sheet.offset_top = 0.0
     _sheet.offset_bottom = -96.0
     _sheet.visible = false
-    _sheet.add_theme_stylebox_override("panel", _panel_style(Color(0.016, 0.035, 0.050, 0.995), Color(0.16, 0.55, 0.76, 0.92), 20))
+    _sheet.add_theme_stylebox_override("panel", _panel_style(HudPalette.SURFACE_DEEP, HudPalette.KEYLINE, 18))
     add_child(_sheet)
 
     var margin := MarginContainer.new()
@@ -262,7 +264,7 @@ func _build_toast() -> void:
     _toast_panel.offset_right = 104.0
     _toast_panel.offset_top = -25.0
     _toast_panel.offset_bottom = 25.0
-    _toast_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.03, 0.12, 0.10, 0.96), Color(0.24, 0.85, 0.56, 0.90), 16))
+    _toast_panel.add_theme_stylebox_override("panel", _panel_style(HudPalette.SELECTED_SURFACE, HudPalette.SELECTED_KEYLINE, 12))
     _toast_panel.visible = false
     add_child(_toast_panel)
 
@@ -270,7 +272,7 @@ func _build_toast() -> void:
     _toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     _toast.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     _toast.add_theme_font_size_override("font_size", 17)
-    _toast.add_theme_color_override("font_color", Color(0.66, 1.0, 0.79))
+    _toast.add_theme_color_override("font_color", HudPalette.MINT)
     _toast_panel.add_child(_toast)
 
 
@@ -397,11 +399,11 @@ func _bottleneck_text(info: Dictionary) -> String:
 
 
 func _style_bottleneck(severity: int) -> void:
-    var color := Color(0.34, 0.92, 0.66)
+    var color := HudPalette.MINT
     if severity >= 2:
-        color = Color(1.0, 0.40, 0.32)
+        color = HudPalette.ALERT
     elif severity == 1:
-        color = Color(1.0, 0.72, 0.28)
+        color = HudPalette.AMBER
     _bottleneck.add_theme_color_override("font_color", color)
 
 
@@ -414,17 +416,17 @@ func _style_policy_buttons() -> void:
 func _apply_button_style(button: Button, selected: bool) -> void:
     if button == null:
         return
-    var bg := Color(0.025, 0.055, 0.075, 0.96)
-    var border := Color(0.14, 0.30, 0.38, 0.95)
+    var bg := HudPalette.SURFACE_RAISED
+    var border := HudPalette.KEYLINE
     if selected:
-        bg = Color(0.025, 0.16, 0.24, 0.99)
-        border = Color(0.20, 0.72, 1.0, 1.0)
+        bg = HudPalette.SELECTED_SURFACE
+        border = HudPalette.SELECTED_KEYLINE
     button.add_theme_stylebox_override("normal", _panel_style(bg, border, 12))
-    button.add_theme_stylebox_override("hover", _panel_style(Color(0.035, 0.10, 0.14, 0.99), Color(0.24, 0.64, 0.84, 1.0), 12))
-    button.add_theme_stylebox_override("pressed", _panel_style(Color(0.03, 0.18, 0.25, 1.0), Color(0.30, 0.80, 1.0, 1.0), 12))
-    button.add_theme_stylebox_override("disabled", _panel_style(Color(0.025, 0.042, 0.052, 0.80), Color(0.12, 0.19, 0.22, 0.72), 12))
-    button.add_theme_color_override("font_color", Color(0.89, 0.96, 0.99))
-    button.add_theme_color_override("font_disabled_color", Color(0.42, 0.52, 0.56))
+    button.add_theme_stylebox_override("hover", _panel_style(HudPalette.SELECTED_SURFACE, HudPalette.SELECTED_KEYLINE, 12))
+    button.add_theme_stylebox_override("pressed", _panel_style(HudPalette.PRESSED_SURFACE, HudPalette.AMBER, 12))
+    button.add_theme_stylebox_override("disabled", _panel_style(HudPalette.DISABLED_SURFACE, HudPalette.KEYLINE_SOFT, 12))
+    button.add_theme_color_override("font_color", HudPalette.TEXT)
+    button.add_theme_color_override("font_disabled_color", HudPalette.DISABLED_TEXT)
 
 
 func _is_maxed(kind: StringName) -> bool:

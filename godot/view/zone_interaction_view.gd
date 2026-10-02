@@ -117,12 +117,16 @@ func _build_zone_targets() -> void:
         var label := Label3D.new()
         label.name = "ZoneLabel_%s" % String(zone_key)
         label.text = String(definition["label"])
-        var zone_position: Vector3 = definition["position"]
-        label.position = Vector3(zone_position.x, 0.34, 2.75)
-        if String(zone_key) == "shipping":
-            # Keep the far-right shipping target readable in the default portrait
-            # hero camera without moving its authoritative tap Area3D.
-            label.position = Vector3(4.45, 0.34, 1.75)
+        # Keep captions at their own equipment edge instead of stacking all
+        # five along one foreground diagonal in the portrait overview.
+        var anchors := {
+            "inbound": Vector3(-5.65, 0.40, 3.78),
+            "storage": Vector3(-3.65, 1.40, -0.30),
+            "picking": Vector3(0.25, 0.34, 2.75),
+            "packing": Vector3(2.65, 2.75, -1.20),
+            "shipping": Vector3(5.65, 0.42, 2.70),
+        }
+        label.position = anchors[String(zone_key)]
         label.font = JAPANESE_UI_FONT
         label.font_size = 32
         label.outline_size = 4

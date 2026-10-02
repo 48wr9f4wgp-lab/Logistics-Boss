@@ -51,7 +51,9 @@ jobs:
             packing_presentation_smoke \
             blender_workbench_smoke \
             presentation_cache_smoke \
-            selected_routes_visibility_smoke
+            selected_routes_visibility_smoke \
+            warehouse_cohesion_smoke \
+            hud_cohesion_smoke
 
       - name: Domain simulation smoke
         run: godot --headless --path godot --script res://tests/sim_smoke.gd

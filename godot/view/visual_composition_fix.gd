@@ -7,15 +7,15 @@ const OVERVIEW_FOV := 38.5
 const OVERVIEW_START_DISTANCE := 19.5
 const OVERVIEW_MAX_DISTANCE := 25.0
 
-const PREMIUM_FLOOR := Color(0.115, 0.155, 0.180)
-const PREMIUM_NAVY := Color(0.045, 0.082, 0.110)
-const PREMIUM_STEEL := Color(0.080, 0.125, 0.150)
-const BRUSHED_STEEL := Color(0.185, 0.245, 0.270)
+const PREMIUM_FLOOR := Color(0.255, 0.300, 0.320)
+const PREMIUM_NAVY := Color(0.072, 0.115, 0.150)
+const PREMIUM_STEEL := Color(0.070, 0.125, 0.175)
+const BRUSHED_STEEL := Color(0.235, 0.310, 0.345)
 const DARK_EQUIPMENT := Color(0.047, 0.075, 0.090)
-const INBOUND_TINT := Color(0.050, 0.145, 0.195)
-const PACK_TINT := Color(0.180, 0.105, 0.035)
-const OUTBOUND_TINT := Color(0.040, 0.145, 0.110)
-const APRON_TINT := Color(0.075, 0.095, 0.110)
+const INBOUND_TINT := Color(0.095, 0.230, 0.285)
+const PACK_TINT := Color(0.275, 0.205, 0.105)
+const OUTBOUND_TINT := Color(0.080, 0.215, 0.175)
+const APRON_TINT := Color(0.100, 0.140, 0.165)
 const SITE_CONCRETE := Color(0.030, 0.041, 0.049)
 const SERVICE_CONCRETE := Color(0.052, 0.066, 0.075)
 const ROAD_TINT := Color(0.022, 0.029, 0.034)
@@ -24,9 +24,10 @@ const YARD_WARM := Color(1.0, 0.66, 0.30)
 const PRACTICAL_WARM := Color(1.0, 0.78, 0.52)
 const PRACTICAL_COOL := Color(0.46, 0.78, 1.0)
 const SAFETY_AMBER := Color(0.88, 0.43, 0.075)
-const FLOOR_JOINT := Color(0.105, 0.125, 0.135)
+const FLOOR_JOINT := Color(0.160, 0.200, 0.220)
 
 var warehouse_view: WarehouseView
+var _palette_refresh_pending := false
 
 
 func bind(view: WarehouseView) -> void:
@@ -69,10 +70,12 @@ func _apply_composition() -> void:
     _build_site_context()
     _build_floor_finish_details()
     _build_premium_practicals()
+    _build_architectural_finish()
     _apply_north_star_environment()
     _apply_north_star_palette()
     _limit_dynamic_shadow_cost()
     _deemphasize_truck()
+    _queue_palette_refresh()
 
 
 func _on_domain_event(event: Dictionary) -> void:
@@ -81,14 +84,35 @@ func _on_domain_event(event: Dictionary) -> void:
     # modules do not fall back to the older flat-plastic look.
     var event_type := String(event.get("type", ""))
     if event_type in [
+        "save_loaded",
+        "rank1_project_purchased",
+        "warehouse_expansion_purchased",
+        "facility_renovated",
+        "growth_automation_purchased",
+        "capacity_purchased",
         "upgrade_purchased",
         "facility_purchased",
         "rank_up",
         "receiving_annex_purchased",
         "routing_mode_changed",
-        "inbound_carrier_purchased",
+        "inbound_carrier_program_purchased",
     ]:
-        call_deferred("_apply_north_star_palette")
+        _queue_palette_refresh()
+
+
+func _queue_palette_refresh() -> void:
+    if _palette_refresh_pending:
+        return
+    _palette_refresh_pending = true
+    # Purchases may arrive outside _process. Wait for structural views to rebuild
+    # next frame, then retint once at idle, rather than recolouring old nodes.
+    await get_tree().process_frame
+    call_deferred("_finish_palette_refresh")
+
+
+func _finish_palette_refresh() -> void:
+    _palette_refresh_pending = false
+    _apply_north_star_palette()
 
 
 func _reduce_foreground_structure() -> void:
@@ -194,13 +218,12 @@ func _apply_north_star_environment() -> void:
         if child is WorldEnvironment:
             var world := child as WorldEnvironment
             if world.environment != null:
-                # Keep the industrial night setting, but separate lit faces from
-                # ambient fill more clearly. The slightly lifted navy background
-                # preserves edge readability while lower ambient energy gives the
-                # existing key/work lights enough contrast to model real depth.
-                world.environment.background_color = Color(0.012, 0.026, 0.038)
-                world.environment.ambient_light_color = Color(0.16, 0.24, 0.31)
-                world.environment.ambient_light_energy = 0.46
+                # Neutral cool fill preserves navy/steel material separation;
+                # the warm directional key supplies depth without stacked orange
+                # point-light washes. No screen-space or post-process effects.
+                world.environment.background_color = Color(0.018, 0.032, 0.047)
+                world.environment.ambient_light_color = Color(0.45, 0.53, 0.61)
+                world.environment.ambient_light_energy = 0.62
             return
 
 
@@ -215,30 +238,36 @@ func _apply_north_star_palette() -> void:
 func _retint_recursive(node: Node) -> void:
     if node is MeshInstance3D:
         var mesh_instance := node as MeshInstance3D
-        match str(mesh_instance.name):
+        match String(mesh_instance.get_meta("finish_role", mesh_instance.name)):
             "Floor":
                 _retint_mesh(mesh_instance, PREMIUM_FLOOR, 0.78, 0.015)
             "BackWall", "WallColumn", "StorageEndcap":
                 _retint_mesh(mesh_instance, PREMIUM_NAVY, 0.62, 0.08)
             "CentralAisle":
-                _retint_mesh(mesh_instance, Color(0.085, 0.115, 0.130), 0.74, 0.01)
-            "InboundPad", "InboundZone":
+                _retint_mesh(mesh_instance, Color(0.185, 0.235, 0.260), 0.74, 0.01)
+            "InboundPad", "InboundZone", "RackWingPad":
                 _retint_mesh(mesh_instance, INBOUND_TINT, 0.66, 0.02)
-            "PackingPad", "PackZone", "PackHeroBase":
+            "PackingPad", "PackZone", "PackHeroBase", "SecondPackPad":
                 _retint_mesh(mesh_instance, PACK_TINT, 0.64, 0.01)
             "OutboundPad", "OutboundZone":
                 _retint_mesh(mesh_instance, OUTBOUND_TINT, 0.66, 0.02)
             "TruckApron", "FloorPlate":
                 _retint_mesh(mesh_instance, APRON_TINT, 0.82, 0.01)
-            "PackTable", "PackSideTable", "PackTable2", "RackShelf", "QuickShelf", "DenseShelf", "OpsDeck", "ForkL", "ForkR", "AGVBase":
+            "PackTable", "PackSideTable", "PackTable2", "SecondPackBench", "RackWingShelf", "RackShelf", "QuickShelf", "DenseShelf", "OpsDeck", "ForkL", "ForkR", "AGVBase":
                 _retint_mesh(mesh_instance, BRUSHED_STEEL, 0.36, 0.34)
-            "RackPost", "QuickPost", "DensePost", "DockPost", "DockPostL", "DockPostR", "OpsSupport", "PackGantryPost", "PackGantryTop", "ForkRoof":
+            "RackPost", "RackWingPost", "SecondPackScreenStand", "QuickPost", "DensePost", "DockPost", "DockPostL", "DockPostR", "OpsSupport", "PackGantryPost", "PackGantryTop", "ForkRoof":
                 _retint_mesh(mesh_instance, PREMIUM_STEEL, 0.48, 0.18)
             "Conveyor", "AGVTop", "CellOpening":
                 _retint_mesh(mesh_instance, DARK_EQUIPMENT, 0.56, 0.12)
+            "Lane", "AisleMarker":
+                _retint_mesh(mesh_instance, Color(0.67, 0.64, 0.42), 0.90, 0.0)
+            "PalletBase", "Pallet":
+                _retint_mesh(mesh_instance, Color(0.34, 0.235, 0.135), 0.94, 0.0)
+            "PalletSlat":
+                _retint_mesh(mesh_instance, Color(0.47, 0.335, 0.195), 0.92, 0.0)
             "Roller":
                 _retint_mesh(mesh_instance, Color(0.31, 0.38, 0.41), 0.32, 0.42)
-            "RackBeam", "QuickBeam", "DenseBeam", "PackRail2", "CellAccent":
+            "RackBeam", "RackWingBeam", "SecondPackRail", "QuickBeam", "DenseBeam", "PackRail2", "CellAccent", "RackGuard", "GuardPost", "GuardRail", "PackGuard", "PackGuardPostL", "PackGuardPostR":
                 _retint_mesh(mesh_instance, SAFETY_AMBER, 0.43, 0.08)
 
     for child in node.get_children():
@@ -269,12 +298,23 @@ func _limit_light_recursive(node: Node) -> void:
     if node is OmniLight3D:
         var omni := node as OmniLight3D
         omni.shadow_enabled = false
-        omni.light_energy = minf(omni.light_energy, 2.8)
+        # One coherent key plus four local practicals; broad overlapping fill
+        # used to wash every surface orange and multiply Compatibility draws.
+        if omni.get_meta("warehouse_task_light", false):
+            omni.light_energy = 1.15
+            omni.omni_range = 4.5
+            omni.light_color = Color(1.0, 0.81, 0.59)
+        else:
+            omni.light_energy = 0.0
     elif node is DirectionalLight3D:
         var directional := node as DirectionalLight3D
         directional.shadow_enabled = true
-        directional.light_energy = 0.90
-        directional.light_color = Color(0.80, 0.88, 0.96)
+        directional.light_energy = 1.10
+        directional.light_color = Color(1.0, 0.94, 0.84)
+        directional.rotation_degrees = Vector3(-55.0, -28.0, 0.0)
+        directional.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+        directional.directional_shadow_max_distance = 48.0
+        directional.directional_shadow_fade_start = 0.90
 
     for child in node.get_children():
         _limit_light_recursive(child)
@@ -304,6 +344,7 @@ func _deemphasize_truck() -> void:
 func _site_box(parent: Node, name: String, size: Vector3, position: Vector3, color: Color, roughness: float, metallic: float) -> MeshInstance3D:
     var instance := MeshInstance3D.new()
     instance.name = name
+    instance.set_meta("finish_role", name)
     var mesh := BoxMesh.new()
     mesh.size = size
     instance.mesh = mesh
@@ -324,3 +365,11 @@ func _site_emissive_box(parent: Node, name: String, size: Vector3, position: Vec
     material.emission = color
     material.emission_energy_multiplier = energy
     return instance
+
+
+func _build_architectural_finish() -> void:
+    if get_node_or_null("ArchitecturalFinish") != null:
+        return
+    var finish := preload("res://view/warehouse_architectural_finish.gd").new()
+    finish.name = "ArchitecturalFinish"
+    add_child(finish)

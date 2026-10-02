@@ -9,6 +9,7 @@ signal construction_preview_cleared
 signal construction_committed(zone_key: String, kind: StringName, action: String)
 
 const JAPANESE_UI_FONT := preload("res://assets/fonts/MPLUS1p-Regular.ttf")
+const HudPalette := preload("res://ui/hud_palette.gd")
 const ACTION_TAP_MAX_MOVEMENT := 18.0
 const SYNTHETIC_MOUSE_SUPPRESS_MS := 450
 
@@ -260,10 +261,10 @@ func _build_panel() -> void:
     title_column.add_theme_constant_override("separation", 0)
     head.add_child(title_column)
 
-    _title = _label(18, Color(0.92, 0.98, 1.0))
+    _title = _label(18, HudPalette.TEXT)
     title_column.add_child(_title)
 
-    _state = _label(11, Color(0.46, 0.86, 1.0))
+    _state = _label(11, HudPalette.CYAN)
     title_column.add_child(_state)
 
     _close_button = Button.new()
@@ -292,7 +293,7 @@ func _build_panel() -> void:
     _evidence.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     body.add_child(_evidence)
 
-    _equipment = _label(11, Color(1.0, 0.78, 0.40))
+    _equipment = _label(11, HudPalette.AMBER)
     _equipment.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     body.add_child(_equipment)
 
@@ -873,8 +874,8 @@ func _section_panel(border: Color) -> PanelContainer:
 
 func _panel_style() -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
-    style.bg_color = Color(0.010, 0.031, 0.044, 0.985)
-    style.border_color = Color(0.18, 0.72, 0.96, 0.92)
+    style.bg_color = HudPalette.SURFACE_DEEP
+    style.border_color = HudPalette.KEYLINE
     style.set_border_width_all(1)
     style.set_corner_radius_all(18)
     style.shadow_color = Color(0.0, 0.0, 0.0, 0.42)
@@ -885,8 +886,8 @@ func _panel_style() -> StyleBoxFlat:
 
 func _section_style(border: Color) -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
-    style.bg_color = Color(0.020, 0.050, 0.066, 0.94)
-    style.border_color = border
+    style.bg_color = HudPalette.SURFACE
+    style.border_color = HudPalette.KEYLINE_SOFT.lerp(border, 0.14)
     style.set_border_width_all(1)
     style.set_corner_radius_all(10)
     style.content_margin_left = 8.0
