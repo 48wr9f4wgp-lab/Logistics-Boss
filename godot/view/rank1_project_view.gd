@@ -96,6 +96,7 @@ func _group(group_name: String) -> Node3D:
 func _box(parent: Node, node_name: String, size: Vector3, position: Vector3, color: Color) -> MeshInstance3D:
     var instance := MeshInstance3D.new()
     instance.name = node_name
+    instance.set_meta("finish_role", node_name)
     var mesh := BoxMesh.new()
     mesh.size = size
     instance.mesh = mesh

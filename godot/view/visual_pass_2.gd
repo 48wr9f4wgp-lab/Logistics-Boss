@@ -181,6 +181,7 @@ func _box(name: String, size: Vector3, position: Vector3, color: Color) -> MeshI
 func _box_into(parent: Node, name: String, size: Vector3, position: Vector3, color: Color) -> MeshInstance3D:
     var mesh_instance := MeshInstance3D.new()
     mesh_instance.name = name
+    mesh_instance.set_meta("finish_role", name)
     var mesh := BoxMesh.new()
     mesh.size = size
     mesh_instance.mesh = mesh
@@ -200,6 +201,7 @@ func _box_emissive(name: String, size: Vector3, position: Vector3, color: Color,
 func _box_emissive_into(parent: Node, name: String, size: Vector3, position: Vector3, color: Color, energy: float) -> MeshInstance3D:
     var mesh_instance := MeshInstance3D.new()
     mesh_instance.name = name
+    mesh_instance.set_meta("finish_role", name)
     var mesh := BoxMesh.new()
     mesh.size = size
     mesh_instance.mesh = mesh

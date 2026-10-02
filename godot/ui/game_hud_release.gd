@@ -11,10 +11,9 @@ const RELEASE_STATUS_TOP := 128.0
 const RELEASE_WAVE_BOTTOM := 158.0
 const RELEASE_FTUE_BOTTOM := 190.0
 
-const HUD_SURFACE := Color(0.012, 0.034, 0.048, 0.955)
-const HUD_SURFACE_STRONG := Color(0.009, 0.027, 0.039, 0.985)
+const HUD_SURFACE := HudPalette.SURFACE
+const HUD_SURFACE_STRONG := HudPalette.SURFACE_DEEP
 const HUD_SHADOW := Color(0.0, 0.0, 0.0, 0.44)
-const HUD_ACCENT_CYAN := Color(0.18, 0.72, 0.96, 0.86)
 
 
 func _ready() -> void:
@@ -47,7 +46,8 @@ func _compact_command_hud() -> void:
         for child in brand.get_children():
             if child is Label:
                 var label := child as Label
-                label.add_theme_font_size_override("font_size", 16 if label.text == "FLOTRA" else 8)
+                label.add_theme_font_size_override("font_size", 18 if label.text == "FLOTRA" else 9)
+                label.add_theme_color_override("font_color", HudPalette.TEXT if label.text == "FLOTRA" else HudPalette.TEXT_SECONDARY)
 
     var metrics := _find_metric_row()
     if metrics != null:
@@ -72,39 +72,37 @@ func _compact_command_hud() -> void:
 
 
 func _apply_premium_hud_finish() -> void:
-    # The rendered capture showed a clean but very flat outline-only HUD. Add a
-    # small amount of depth while preserving the restrained command-center look.
-    # No blur, animated shader or full-screen overlay is used on the mobile path.
+    # Material depth and text hierarchy do the work, rather than a differently
+    # colored outline around every metric. No extra geometry or overlays.
     var metrics := _find_metric_row()
     if metrics != null:
-        var accents := [
-            Color(1.0, 0.69, 0.25, 0.82),
-            Color(0.42, 0.64, 1.0, 0.82),
-            Color(0.35, 0.91, 0.73, 0.82),
-            Color(1.0, 0.66, 0.32, 0.82),
-        ]
-        var accent_index := 0
         for child in metrics.get_children():
             if child is not PanelContainer:
                 continue
-            var accent: Color = accents[mini(accent_index, accents.size() - 1)]
             (child as PanelContainer).add_theme_stylebox_override(
                 "panel",
-                _premium_panel_style(HUD_SURFACE, accent, 12, 4)
+                _premium_panel_style(HUD_SURFACE, HudPalette.KEYLINE_SOFT, 10, 3)
             )
-            accent_index += 1
+            var box := child.get_child(0) as VBoxContainer
+            box.add_theme_constant_override("separation", 0)
+            var caption := box.get_child(0) as Label
+            caption.add_theme_font_size_override("font_size", 10)
+            caption.add_theme_color_override("font_color", HudPalette.TEXT_SECONDARY)
+            var value := box.get_child(1) as Label
+            value.add_theme_font_size_override("font_size", 19)
+            value.add_theme_color_override("font_color", HudPalette.AMBER if value == _money else HudPalette.TEXT)
 
     if _bottleneck_panel != null:
         _bottleneck_panel.add_theme_stylebox_override(
             "panel",
-            _premium_panel_style(HUD_SURFACE, Color(0.18, 0.56, 0.72, 0.86), 14, 4)
+            _premium_panel_style(HUD_SURFACE_STRONG, HudPalette.KEYLINE_SOFT, 10, 3)
         )
 
     var dock := _find_bottom_dock()
     if dock != null:
         dock.add_theme_stylebox_override(
             "panel",
-            _premium_panel_style(HUD_SURFACE_STRONG, HUD_ACCENT_CYAN, 18, 6)
+            _premium_panel_style(HUD_SURFACE_STRONG, HudPalette.KEYLINE, 16, 6)
         )
 
 

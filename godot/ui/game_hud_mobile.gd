@@ -486,7 +486,7 @@ func _build_v2_management_overview() -> void:
     _v2_overview_panel.name = "V2ManagementOverview"
     _v2_overview_panel.add_theme_stylebox_override(
         "panel",
-        _panel_style(Color(0.018, 0.052, 0.070, 0.985), Color(0.18, 0.72, 0.96, 0.90), 14)
+        _panel_style(HudPalette.SURFACE, HudPalette.KEYLINE_SOFT, 12)
     )
     list.add_child(_v2_overview_panel)
     list.move_child(_v2_overview_panel, 0)
@@ -530,7 +530,7 @@ func _build_v2_management_overview() -> void:
     _v2_rank1_expansion_panel.name = "V2Rank1Expansion"
     _v2_rank1_expansion_panel.add_theme_stylebox_override(
         "panel",
-        _panel_style(Color(0.020, 0.058, 0.075, 0.985), Color(1.0, 0.62, 0.22, 0.92), 14)
+        _panel_style(HudPalette.SURFACE, HudPalette.KEYLINE_SOFT, 12)
     )
     list.add_child(_v2_rank1_expansion_panel)
     list.move_child(_v2_rank1_expansion_panel, mini(1, list.get_child_count() - 1))
@@ -591,7 +591,7 @@ func _build_v2_management_overview() -> void:
     _v2_staffing_panel.name = "V2StaffingOverview"
     _v2_staffing_panel.add_theme_stylebox_override(
         "panel",
-        _panel_style(Color(0.018, 0.052, 0.070, 0.985), Color(0.28, 0.86, 0.72, 0.90), 14)
+        _panel_style(HudPalette.SURFACE, HudPalette.KEYLINE_SOFT, 12)
     )
     list.add_child(_v2_staffing_panel)
 
