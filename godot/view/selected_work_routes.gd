@@ -63,7 +63,7 @@ func _process(_delta: float) -> void:
     _layout_controls()
     for line in lines:
         line.visible = false
-    toggle.visible = not selected.is_empty() and not zone.is_open() and not _hud._sheet.visible
+    toggle.visible = false
     if selected.is_empty() or view == null or view.sim == null:
         return
     var task := WarehouseSim.Task.STORE if selected in ["inbound", "storage"] else (WarehouseSim.Task.PICK if selected == "picking" else (WarehouseSim.Task.SHIP if selected == "shipping" else WarehouseSim.Task.IDLE))
@@ -83,6 +83,9 @@ func _process(_delta: float) -> void:
         var side := direction.cross(Vector3.UP)
         _place_line(cursor,tip,tip-direction*0.40+side*0.20); cursor += 1
         _place_line(cursor,tip,tip-direction*0.40-side*0.20); cursor += 1
+    # A hide action is meaningful only when an actual worker route is drawn.
+    # Packing is machine-owned and idle workers have no active route.
+    toggle.visible = cursor > 0 and not zone.is_open() and not _hud._sheet.visible
 
 func _place_line(index: int, a: Vector3, b: Vector3) -> void:
     a.y = 0.18

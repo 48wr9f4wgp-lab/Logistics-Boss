@@ -49,13 +49,15 @@ func _sync_queues() -> void:
         return
     _ensure_roots()
 
-    if _last_packing_queue != sim.packing_queue:
-        _last_packing_queue = sim.packing_queue
-        _rebuild_packing_backlog(mini(maxi(sim.packing_queue, 0), PACKING_VISUAL_CAP))
+    var packing_count := clampi(sim.packing_queue, 0, PACKING_VISUAL_CAP)
+    var order_count := clampi(sim.open_orders, 0, ORDER_VISUAL_CAP)
+    if _last_packing_queue != packing_count:
+        _last_packing_queue = packing_count
+        _rebuild_packing_backlog(packing_count)
 
-    if _last_open_orders != sim.open_orders:
-        _last_open_orders = sim.open_orders
-        _rebuild_order_backlog(mini(maxi(sim.open_orders, 0), ORDER_VISUAL_CAP))
+    if _last_open_orders != order_count:
+        _last_open_orders = order_count
+        _rebuild_order_backlog(order_count)
 
 
 func visible_backlog_counts() -> Dictionary:

@@ -74,9 +74,11 @@ func _build_storage_detail() -> void:
         for x in [-3.25, 0.15]:
             _box("GuardPost", Vector3(0.18, 0.65, 0.18), Vector3(x, 0.34, z), ORANGE)
 
-    _pallet_stack(Vector3(-4.55, 0.05, -1.65), 3, 2)
-    _pallet_stack(Vector3(-5.55, 0.05, 0.20), 2, 2)
-    _pallet_stack(Vector3(-3.95, 0.05, 3.10), 2, 1)
+    # Empty staging pallets are infrastructure. WarehouseView alone displays
+    # incoming/racked/outgoing goods, so an empty Domain stays visibly empty.
+    _staging_pallet(Vector3(-4.55, 0.05, -1.65), 3, 2)
+    _staging_pallet(Vector3(-5.55, 0.05, 0.20), 2, 2)
+    _staging_pallet(Vector3(-3.95, 0.05, 3.10), 2, 1)
 
     # Tall endcap board makes STORAGE a visual focal point.
     _box("StorageEndcap", Vector3(3.55, 0.58, 0.18), Vector3(-1.55, 3.45, -3.92), NAVY)
@@ -93,9 +95,8 @@ func _build_pack_cell_detail() -> void:
         _box("GuardPost", Vector3(0.11, 0.95, 0.11), Vector3(x, 0.49, 1.00), ORANGE)
     _box("GuardRail", Vector3(2.9, 0.10, 0.10), Vector3(2.55, 0.85, 1.00), ORANGE)
 
-    # Two parcel stacks make the pack/outbound handoff feel active.
-    _parcel_stack(Vector3(1.15, 0.20, -1.25), 3, 2, Color(0.79, 0.55, 0.29))
-    _parcel_stack(Vector3(4.10, 0.20, 0.10), 2, 2, Color(0.83, 0.61, 0.32))
+    # QueuePressureView owns waiting parcels; VisualPass3 shows only actual
+    # in-process packing jobs. Do not decorate this handoff with fake inventory.
 
 
 func _build_dock_detail() -> void:
@@ -151,21 +152,8 @@ func _point_light(position: Vector3, color: Color, light_range: float, energy: f
     add_child(light)
 
 
-func _pallet_stack(origin: Vector3, columns: int, rows: int) -> void:
+func _staging_pallet(origin: Vector3, columns: int, rows: int) -> void:
     _box("PalletBase", Vector3(maxf(1.0, float(columns) * 0.52), 0.12, maxf(0.75, float(rows) * 0.48)), origin + Vector3(0.0, 0.08, 0.0), Color(0.44, 0.27, 0.10))
-    for r in rows:
-        for c in columns:
-            var x := origin.x - float(columns - 1) * 0.25 + float(c) * 0.50
-            var z := origin.z - float(rows - 1) * 0.23 + float(r) * 0.46
-            _box("PalletCarton", Vector3(0.43, 0.48, 0.40), Vector3(x, origin.y + 0.38, z), Color(0.72, 0.48, 0.24))
-
-
-func _parcel_stack(origin: Vector3, columns: int, rows: int, color: Color) -> void:
-    for r in rows:
-        for c in columns:
-            var x := origin.x - float(columns - 1) * 0.23 + float(c) * 0.46
-            var y := origin.y + float(r) * 0.36
-            _box("ParcelStack", Vector3(0.40, 0.31, 0.40), Vector3(x, y, origin.z), color)
 
 
 func _wheel(parent: Node, position: Vector3, radius: float, width: float, rotation_degrees: Vector3) -> void:
