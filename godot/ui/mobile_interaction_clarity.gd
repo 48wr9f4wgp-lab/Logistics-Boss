@@ -58,6 +58,7 @@ func bind(next_hud: MobileGameHud, next_zone: WarehouseZonePanel, next_coach: V2
     _growth.border_width_left = 3
     _growth.content_margin_left = 12.0
     _build_sections()
+    hud._sheet.visibility_changed.connect(_on_management_visibility_changed)
     _separate_contract_actions()
     _style_buttons(hud)
     hud._apply_mobile_font_tree(hud)
@@ -362,10 +363,14 @@ func open_section(section: String) -> void:
         zone.close()
     if not hud._sheet.visible:
         hud._toggle_sheet()
-        # Opening a fresh staffing session must still read current assignments.
-        if section == "staffing" and _section == section:
-            staffing.reset_draft()
     _select_section(section)
+
+
+func _on_management_visibility_changed() -> void:
+    # Every reopened sheet starts a fresh staffing session, including the
+    # ordinary dock/header toggle. Same-session tab retaps never change visibility.
+    if hud._sheet.visible and _section == "staffing":
+        staffing.reset_draft()
 
 
 func _select_section(section: String) -> void:
