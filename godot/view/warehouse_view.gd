@@ -1,6 +1,8 @@
 extends Node3D
 class_name WarehouseView
 
+const PackingWorkbenchScene = preload("res://assets/models/packing_workbench.glb")
+
 const STATION_POSITIONS := {
     "conveyor": Vector3(-0.35, 0.35, 1.85),
     "center": Vector3(0.0, 0.35, 2.6),
@@ -233,9 +235,12 @@ func _build_inbound_dock() -> void:
 
 func _build_packing_zone() -> void:
     _box("PackingPad", Vector3(3.1, 0.10, 2.75), Vector3(2.55, 0.02, -0.05), Color(0.42, 0.26, 0.075))
-    _box("PackTable", Vector3(2.35, 0.36, 1.15), Vector3(2.55, 0.85, -0.05), STEEL_LIGHT)
-    _box("PackMonitor", Vector3(0.62, 0.54, 0.12), Vector3(2.55, 1.47, -0.52), Color(0.06, 0.12, 0.15))
-    _box("PackScreen", Vector3(0.48, 0.38, 0.03), Vector3(2.55, 1.47, -0.59), CYAN)
+    # Blender-authored static shell only. Existing Domain-driven parcel/lamp
+    # presentation and interaction anchors remain owned by their current views.
+    var workbench := PackingWorkbenchScene.instantiate() as Node3D
+    workbench.name = "PackingWorkbench"
+    workbench.position = Vector3(2.55, 0.0, -0.05)
+    add_child(workbench)
     _conveyor(Vector3(3.95, 0.68, 0.72), Vector3(2.2, 0.28, 0.78))
 
 
