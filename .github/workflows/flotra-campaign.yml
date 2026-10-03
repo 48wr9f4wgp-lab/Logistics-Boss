@@ -1,0 +1,32 @@
+name: FLOTRA Campaign Regression
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'flotra-campaign/**'
+      - 'docs/godot-jobs-preview/**'
+      - '.github/workflows/flotra-campaign.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'flotra-campaign/**'
+      - 'docs/godot-jobs-preview/**'
+      - '.github/workflows/flotra-campaign.yml'
+permissions:
+  contents: read
+jobs:
+  campaign-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+      - name: Campaign, save safety, and phone input tests
+        run: bash flotra-campaign/test.sh

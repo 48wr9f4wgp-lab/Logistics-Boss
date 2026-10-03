@@ -1,0 +1,35 @@
+; Engine configuration file.
+; FLOTRA Godot vertical slice.
+
+config_version=5
+
+[application]
+
+config/name="FLOTRA"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="FLOTRA-campaign-release-v1"
+run/main_scene="res://prototype/release.tscn"
+config/icon="res://icon.svg"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=390
+window/size/viewport_height=844
+window/size/window_width_override=390
+window/size/window_height_override=844
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+rendering/anti_aliasing/quality/msaa_3d=1
+textures/vram_compression/import_etc2_astc=true
+textures/default_filters/use_nearest_mipmap_filter=false
+
+[physics]
+
+common/enable_pause_aware_picking=true
