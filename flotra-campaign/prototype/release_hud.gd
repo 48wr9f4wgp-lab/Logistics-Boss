@@ -76,8 +76,9 @@ func refresh() -> void:
     var current: Dictionary = _release.get("current_contract", {})
     var total := int(progress.get("total", 0))
     _shipped.text = "出荷 %d / %d個   資金 %s" % [int(progress.get("shipped", 0)), total, _compact_funds(int(_release.get("wallet", 0)))]
-    _travel.text = "残り まとめ %d件" % _queued_jobs("bulk")
-    _waiting.text = "小口 %d件  /  %dx" % [_queued_jobs("small"), int(_speed)]
+    var elapsed := float(_release.get("elapsed", 0.0))
+    _travel.text = "経過 %s  /  %dx" % [_clock(elapsed), int(_speed)]
+    _waiting.text = _live_target(current, elapsed)
     var completed := int(_release.get("completed_count", 0))
     var count := int(_release.get("total_contracts", 6))
     _observed_note.text = "契約 %d/%d達成  ·  %s" % [completed, count, str(current.get("label", "受注・設備から最初の契約へ"))]
@@ -85,8 +86,13 @@ func refresh() -> void:
     if _notice.is_empty():
         var status := str(_release.get("status", "ready"))
         if status in ["contract_complete", "campaign_complete"]:
-            _reason_title.text = "全契約を達成！" if status == "campaign_complete" else "契約を達成！"
-            _reason_detail.text = "受注・設備で、記録更新に挑戦できます" if status == "campaign_complete" else "受注・設備で、設備を整えて次の契約へ"
+            var result: Dictionary = _release.get("last_result", {})
+            if not result.is_empty() and not bool(result.get("first_completion", false)):
+                _reason_title.text = "記録更新！" if bool(result.get("new_best", false)) else "再挑戦を完走！"
+                _reason_detail.text = "結果で、今回のメダルと自己ベストを確認"
+            else:
+                _reason_title.text = "全契約を達成！" if status == "campaign_complete" else "契約を達成！"
+                _reason_detail.text = "受注・設備で、記録更新に挑戦できます" if status == "campaign_complete" else "受注・設備で、設備を整えて次の契約へ"
         elif status == "ready":
             _reason_title.text = "6つの契約で倉庫を育てよう"
             _reason_detail.text = "下の「受注・設備」から契約を選びます"
@@ -97,6 +103,23 @@ func refresh() -> void:
 
 func _show_operational_reason() -> void:
     super._show_operational_reason()
+    var held := 0
+    var ready := 0
+    var next_release := INF
+    for bay in _snapshot.get("bulk_bays", []):
+        if not bool(bay.get("occupied", false)): continue
+        var remaining := float(bay.get("remaining_hold", 0))
+        if remaining > 0:
+            held += 1
+            next_release = minf(next_release, remaining)
+        else: ready += 1
+    var all_idle := true
+    for worker in _snapshot.get("workers", []):
+        if str(worker.get("phase", "idle")) != "idle": all_idle = false
+    if held > 0 and ready == 0 and (all_idle or _reason_title.text.contains("床が満杯")):
+        _reason_title.text = "保管時間の終了待ち"
+        _reason_detail.text = "契約の保管条件。出荷可能まであと%d秒" % ceili(next_release)
+        return
     if _reason_title.text == "2種類の仕事が進行中":
         var current: Dictionary = _release.get("current_contract", {})
         _reason_title.text = "目標：" + str(current.get("label", "最初の契約を受注"))
@@ -179,7 +202,7 @@ func show_entry() -> void:
     _text(_content, "① 契約を受ける\n決まった荷物を最後まで出荷しよう", 16).name = "EntryGoal1"
     _text(_content, "② 配置を工夫する\n棚・保管床と梱包台を動かして流れを改善", 16).name = "EntryGoal2"
     _text(_content, "③ 報酬で設備を育てる\n6契約を達成。その後は最速記録に挑戦", 16).name = "EntryGoal3"
-    _text(_content, "右上で一時停止。結果で1x / 2xを切替", 14, Color("476266")).name = "EntrySafety"
+    _text(_content, "早い出荷で金メダルへ。時間を超えても続行できます。\n右上で一時停止。結果で1x / 2xを切替", 14, Color("476266")).name = "EntrySafety"
     _text(_content, _save_status, 15, Color("476266")).name = "EntrySaveStatus"
     _action(_content, "倉庫の続きへ" if _has_started or not _release.get("current_contract", {}).is_empty() else "契約を選んで始める", close_sheet, true).name = "StartTrial"
     _layout_body()
@@ -240,9 +263,10 @@ func _build_contracts() -> void:
         _text(box, str(option.get("label", id)) + ("  達成済み" if bool(option.get("completed", false)) else ""), 18)
         _text(box, str(option.get("description", "")), 15)
         _text(box, "%d個 / まとめ%d便・小口%d便\n初回報酬 %d / 金 %d秒・銀 %d秒以内" % [int(option.get("total_units", 0)), int(option.get("bulk_manifests", 0)), int(option.get("pick_manifests", 0)), int(option.get("reward", 0)), int(option.get("gold_seconds", 0)), int(option.get("silver_seconds", 0))], 14, Color("476266"))
+        _text(box, "まとめ便は荷下ろし後%d秒保管" % int(option.get("dwell", 0)), 14, Color("476266"))
         var best := float(option.get("best_time", 0.0))
         if best > 0:
-            _text(box, "自己ベスト %.1f秒  %s" % [best, _medal(str(option.get("best_medal", "")))], 14)
+            _text(box, "自己ベスト %s  %s" % [_record_clock(best), _medal(str(option.get("best_medal", "")))], 14)
         var button := _action(box, "記録に再挑戦" if bool(option.get("completed", false)) else "この契約を受ける", _request_contract.bind(id), bool(option.get("available", false)) and not bool(option.get("completed", false)))
         button.name = "AcceptContract_" + id
         button.disabled = not bool(option.get("available", false))
@@ -288,6 +312,8 @@ func _build_demand() -> void:
     else:
         _text(_content, "まず「契約」から最初の仕事を選びます", 16)
     _text(_content, "まとめ保管：床に置く → 保管 → 出荷\n小口梱包：棚 → ピック → 梱包 → 出荷", 15)
+    if not current.is_empty():
+        _text(_content, "この契約のまとめ便は、荷下ろし後%d秒の保管が必要です。設備を増やしても、この時間は変わりません。" % int(current.get("dwell", 0)), 15).name = "BulkHoldingRule"
     _text(_content, "保管床を広く残すか、棚と梱包台の動線を短くするか。下の「配置変更」で工夫できます。", 15, Color("476266"))
 
 func _refresh_contract_content() -> void:
@@ -354,6 +380,26 @@ func _compact_funds(value: int) -> String:
 func _medal(value: String) -> String:
     return str({"gold":"金", "silver":"銀", "bronze":"銅"}.get(value, ""))
 
+func _clock(seconds: float) -> String:
+    var whole := maxi(0, roundi(seconds * 100.0) / 100)
+    return "%d:%02d" % [whole / 60, whole % 60]
+
+func _record_clock(seconds: float) -> String:
+    var centiseconds := maxi(0, roundi(seconds * 100.0))
+    return "%d:%02d.%02d" % [centiseconds / 6000, (centiseconds / 100) % 60, centiseconds % 100]
+
+func _live_target(current: Dictionary, elapsed: float) -> String:
+    if current.is_empty(): return "契約を選ぼう"
+    var outcome: Dictionary = _release.get("last_result", {})
+    if str(_release.get("status", "")) in ["contract_complete", "campaign_complete"]:
+        return "%sメダルで達成" % _medal(str(outcome.get("medal", "bronze")))
+    var gold := float(current.get("gold_seconds", 0))
+    var silver := float(current.get("silver_seconds", 0))
+    var elapsed_cs := roundi(elapsed * 100.0)
+    if elapsed_cs <= roundi(gold * 100.0): return "金目標 %s" % _clock(gold)
+    if elapsed_cs <= roundi(silver * 100.0): return "銀目標 %s" % _clock(silver)
+    return "完走で銅メダル"
+
 func show_conditions() -> void:
     _read_release()
     _open_sheet("records", "契約の結果", 630)
@@ -383,14 +429,23 @@ func _update_record() -> void:
         return
     var progress: Dictionary = _release.get("progress", {})
     var current: Dictionary = _release.get("current_contract", {})
-    _content.get_node("ReleaseRecordSummary").text = _campaign_summary()
-    _content.get_node("ReleaseRecordProgress").text = "出荷 %d / %d個  ·  経過 %.1f秒" % [int(progress.get("shipped", 0)), int(progress.get("total", 0)), float(_release.get("elapsed", 0.0))]
-    _content.get_node("ReleaseRecordMetrics").text = "全員の歩行 %.0f秒 / 道待ち %.0f秒\n設備移動で停止 %.1f秒" % [float(_snapshot.get("travel_seconds", 0)), float(_snapshot.get("aisle_wait_seconds", 0)), float(_snapshot.get("relocation_seconds", 0))]
-    var best := float(_release.get("best_time", 0.0))
-    _content.get_node("ReleaseRecordBest").text = "自己ベスト %.1f秒\n再挑戦でも資金と設備は引き継ぎます" % best if best > 0 else ("契約を完了すると記録が残ります" if not current.is_empty() else "最初の契約を受けて、実績を作ろう")
     var outcome: Dictionary = _release.get("last_result", {})
-    _content.get_node("ReleaseRecordOutcome").text = ("今回 %s  %.1f秒\n報酬 %d%s" % [_medal(str(outcome.get("medal", ""))), float(outcome.get("elapsed", 0)), int(outcome.get("earnings", 0)), "（初回のみ）" if bool(outcome.get("first_completion", false)) else "（再挑戦は記録更新用）"]) if not outcome.is_empty() else ""
     var status := str(_release.get("status", "ready"))
+    var complete := status in ["contract_complete", "campaign_complete"]
+    var elapsed := float(_release.get("elapsed", 0.0))
+    var best := float(_release.get("best_time", 0.0))
+    var heading := "契約は進行中" if status == "running" else "最初の契約を選ぼう"
+    if complete:
+        heading = "契約達成 · %sメダル" % _medal(str(outcome.get("medal", "bronze")))
+    if complete and not outcome.is_empty() and not bool(outcome.get("first_completion", false)):
+        heading = "再挑戦達成 · %sメダル" % _medal(str(outcome.get("medal", "bronze")))
+    if status == "campaign_complete" and bool(outcome.get("first_completion", false)):
+        heading = "全6契約を達成！\n%sメダル" % _medal(str(outcome.get("medal", "bronze")))
+    _content.get_node("ReleaseRecordSummary").text = heading
+    _content.get_node("ReleaseRecordProgress").text = "%s\n出荷 %d / %d個  ·  %s" % [str(current.get("label", "受注・設備から始められます")), int(progress.get("shipped", 0)), int(progress.get("total", 0)), _record_clock(elapsed)]
+    _content.get_node("ReleaseRecordMetrics").text = "金 %s以内 / 銀 %s以内\n道待ち %.0f秒（全員合計）・配置移動 %.1f秒" % [_clock(float(current.get("gold_seconds", 0))), _clock(float(current.get("silver_seconds", 0))), float(_snapshot.get("aisle_wait_seconds", 0)), float(_snapshot.get("relocation_seconds", 0))] if not current.is_empty() else "まとめ便は保管床、小口便は集品・梱包が要です"
+    _content.get_node("ReleaseRecordBest").text = "自己ベスト %s%s" % [_record_clock(best), "  新記録！" if bool(outcome.get("new_best", false)) else ""] if best > 0 else "完了すると自己ベストが残ります"
+    _content.get_node("ReleaseRecordOutcome").text = ("報酬 %d（初回のみ）\n資金 %d · 設備は次の契約へ引き継ぎ" % [int(outcome.get("earnings", 0)), int(_release.get("wallet", 0))]) if bool(outcome.get("first_completion", false)) else ("再挑戦は記録更新用。資金と設備は引き継ぎます" if complete else "")
     _content.get_node("NextContract").text = "再挑戦・設備を見る" if bool(_release.get("campaign_complete", false)) else ("次の契約・設備を見る" if status in ["ready", "contract_complete"] else "契約・設備を見る")
     _content.get_node("TogglePause").text = "一時停止" if _trial_running else "再開"
     _content.get_node("RecordSaveStatus").text = _save_status
