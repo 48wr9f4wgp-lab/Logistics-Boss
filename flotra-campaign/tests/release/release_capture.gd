@@ -4,6 +4,8 @@ var app
 var output: String
 func _init() -> void: call_deferred("run")
 func capture(label: String) -> void:
+    # The fixture advances simulation instantly; expire its short real-time notice too.
+    app.hud._process(5.0)
     app.hud.refresh()
     app.world.refresh()
     for _i in 8: await process_frame

@@ -73,11 +73,18 @@ func contract_options() -> Array[Dictionary]:
         option.completed = contract_results.has(option.id)
         option.is_replay = option.completed
         option.available = campaign_status != "running" and unlocked
-        option.locked_reason = "作業中の契約を完了してください" if campaign_status == "running" else ("前の契約を完了すると解放" if not unlocked else "")
+        option.locked_reason = "作業中の契約を完了してください" if campaign_status == "running" else (_remaining_contracts(str(option.id)) if not unlocked else "")
         option.best_time = float(contract_results.get(option.id, {}).get("best_time", 0.0))
         option.best_medal = str(contract_results.get(option.id, {}).get("best_medal", ""))
         result.append(option)
     return result
+
+func _remaining_contracts(id: String) -> String:
+    var requirements: Array = {"small_orders":["first_shift"], "pallet_wave":["first_shift"], "packing_rush":["small_orders","pallet_wave"], "storage_peak":["small_orders","pallet_wave"], "final_dispatch":["packing_rush","storage_peak"]}.get(id, [])
+    var missing: Array[String] = []
+    for required in requirements:
+        if not contract_results.has(required): missing.append(str(_contract(required).label))
+    return "解放まで：" + "・".join(missing) + "を達成"
 
 func _contract_unlocked(id: String) -> bool:
     match id:
@@ -244,7 +251,21 @@ func _tick(dt: float) -> void:
         _complete_contract(definition)
 
 func _medal(definition: Dictionary, elapsed: float) -> String:
-    return "gold" if elapsed <= float(definition.gold_seconds) else ("silver" if elapsed <= float(definition.silver_seconds) else "bronze")
+    # The authoritative clock advances in 0.05-second ticks. Compare the same
+    # centisecond precision shown to players, not accumulated binary float noise.
+    var elapsed_cs := roundi(elapsed * 100.0)
+    return "gold" if elapsed_cs <= roundi(float(definition.gold_seconds)*100.0) else ("silver" if elapsed_cs <= roundi(float(definition.silver_seconds)*100.0) else "bronze")
+
+func _saved_medal_valid(value: String, definition: Dictionary, elapsed: float) -> bool:
+    var legacy := "gold" if elapsed <= float(definition.gold_seconds) else ("silver" if elapsed <= float(definition.silver_seconds) else "bronze")
+    return value == _medal(definition,elapsed) or value == legacy
+
+func _normalize_saved_medals() -> void:
+    # Only invoked after the entire legacy/new save has passed strict validation.
+    for id in contract_results:
+        contract_results[id].best_medal = _medal(_contract(id),float(contract_results[id].best_time))
+    if not last_result.is_empty():
+        last_result.medal = _medal(_contract(str(last_result.contract_id)),float(last_result.elapsed))
 
 func _complete_contract(definition: Dictionary) -> void:
     finished = true
@@ -311,7 +332,8 @@ func import_release_state(data: Dictionary) -> Dictionary:
     var result: Dictionary = candidate._validate_loaded_release()
     if not result.ok:
         return result
-    _load_release_unchecked(data)
+    candidate._normalize_saved_medals()
+    _load_release_unchecked(candidate.export_release_state())
     return {"ok":true,"schema":RELEASE_SCHEMA}
 
 func _load_release_unchecked(data: Dictionary) -> void:
@@ -449,7 +471,7 @@ func _validate_loaded_release() -> Dictionary:
             var result = contract_results[definition.id]
             if not result is Dictionary or not _keys_and_types(result,{"best_time":0.0,"best_medal":"","attempts":0,"earned":0}):
                 return _bad("result_shape")
-            if result.best_time <= 0.0 or result.attempts < 1 or result.earned != definition.reward or result.best_medal != _medal(definition,result.best_time):
+            if result.best_time <= 0.0 or result.attempts < 1 or result.earned != definition.reward or not _saved_medal_valid(result.best_medal,definition,result.best_time):
                 return _bad("result_value")
             expected_wallet += int(result.earned)
     var seen_upgrades := {}
@@ -489,7 +511,7 @@ func _validate_loaded_release() -> Dictionary:
         if not last_result.is_empty():
             return _bad("unexpected_last_result")
     else:
-        if last_result.is_empty() or last_result.contract_id != current_contract_id or last_result.label != definition.label or last_result.elapsed != sim_time or last_result.best_time != contract_results[current_contract_id].best_time or last_result.medal != _medal(definition,sim_time) or last_result.earnings != (int(definition.reward) if last_result.first_completion else 0) or last_result.shipped != shipped or last_result.total_units != shipped or last_result.worker_count not in [3,4,5] or _option(last_result.layout_id).is_empty():
+        if last_result.is_empty() or last_result.contract_id != current_contract_id or last_result.label != definition.label or last_result.elapsed != sim_time or last_result.best_time != contract_results[current_contract_id].best_time or not _saved_medal_valid(last_result.medal,definition,sim_time) or last_result.earnings != (int(definition.reward) if last_result.first_completion else 0) or last_result.shipped != shipped or last_result.total_units != shipped or last_result.worker_count not in [3,4,5] or _option(last_result.layout_id).is_empty():
             return _bad("last_result_value")
         var result_upgrades := {}
         for id in last_result.upgrades:
