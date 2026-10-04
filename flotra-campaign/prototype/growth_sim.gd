@@ -1,11 +1,11 @@
 extends "res://prototype/jobs_sim.gd"
-class_name FlotraReleaseSim
+class_name FlotraGrowthSim
 
 # Bounded campaign layered over the original physical cargo ledger. Contract
 # rewards have a separate wallet; base money remains shipment-value accounting.
-const RELEASE_SCHEMA := 1
+const RELEASE_SCHEMA := 2
 const CAMPAIGN_STARTING_WALLET := 100
-const CONTRACTS := [
+const LEGACY_CONTRACTS := [
     {"id":"first_shift","label":"01 はじめての出荷","description":"まとめ便3・単品便3。36個を最後まで届けよう。","manifest_quota":6,"bulk_manifests":3,"pick_manifests":3,"mix":"balanced","interval":4.0,"dwell":18.0,"reward":180,"gold_seconds":145.0,"silver_seconds":210.0},
     {"id":"small_orders","label":"02 小さな注文ラッシュ","description":"まとめ便2・単品便8。棚と梱包の位置を見直そう。","manifest_quota":10,"bulk_manifests":2,"pick_manifests":8,"mix":"pick_heavy","interval":3.0,"dwell":24.0,"reward":260,"gold_seconds":220.0,"silver_seconds":320.0},
     {"id":"pallet_wave","label":"03 パレットの波","description":"まとめ便10・単品便2。保管床の空きが鍵。","manifest_quota":12,"bulk_manifests":10,"pick_manifests":2,"mix":"bulk_heavy","interval":2.5,"dwell":45.0,"reward":300,"gold_seconds":210.0,"silver_seconds":310.0},
@@ -13,7 +13,7 @@ const CONTRACTS := [
     {"id":"storage_peak","label":"05 保管床の勝負","description":"まとめ便16・単品便4。長い保管時間を乗り越えよう。","manifest_quota":20,"bulk_manifests":16,"pick_manifests":4,"mix":"bulk_heavy","interval":2.0,"dwell":65.0,"reward":450,"gold_seconds":340.0,"silver_seconds":480.0},
     {"id":"final_dispatch","label":"06 最後の大型契約","description":"まとめ便12・単品便12。144個を届けて全契約達成。","manifest_quota":24,"bulk_manifests":12,"pick_manifests":12,"mix":"balanced","interval":1.8,"dwell":50.0,"reward":600,"gold_seconds":360.0,"silver_seconds":510.0},
 ]
-const UPGRADES := [
+const LEGACY_UPGRADES := [
     {"id":"worker_4","label":"4人目を採用","description":"運搬・集品を行う作業員が3人から4人に。","cost":220,"unlock_after":1},
     {"id":"rack_24","label":"棚を24個に","description":"実際の棚容量が12個から24個に。補充待ちを減らす。","cost":200,"unlock_after":1},
     {"id":"packing_2","label":"梱包台を改善","description":"1個の梱包に必要な時間が3秒から2秒に。","cost":260,"unlock_after":2},
@@ -38,6 +38,36 @@ const SIM_FIELDS := [
     "_edges","_next_cargo","_next_manifest","_inbound_timer","_accumulator","_move_remaining",
     "_move_duration","_round_robin","_mix_credit",
 ]
+const LegacySim = preload("res://prototype/release_sim.gd")
+const GROWTH_CONTRACTS := [
+    {"id":"growth_1","label":"01 小さな倉庫の一歩","description":"12個を出荷して、最初の増築へ。","manifest_quota":2,"bulk_manifests":1,"pick_manifests":1,"mix":"balanced","interval":1.5,"dwell":6.0,"reward":140,"gold_seconds":45.0,"silver_seconds":80.0},
+    {"id":"growth_2","label":"02 町の配送拠点","description":"24個の注文。増築か人手を選ぼう。","manifest_quota":4,"bulk_manifests":2,"pick_manifests":2,"mix":"balanced","interval":1.2,"dwell":6.0,"reward":200,"gold_seconds":75.0,"silver_seconds":140.0},
+    {"id":"growth_3","label":"03 ロボットの出番","description":"36個を出荷。自動化で流れを変えよう。","manifest_quota":6,"bulk_manifests":4,"pick_manifests":2,"mix":"bulk_heavy","interval":1.0,"dwell":8.0,"reward":260,"gold_seconds":100.0,"silver_seconds":180.0},
+    {"id":"growth_4","label":"04 大きな配送センター","description":"48個の出荷。新しい棟へ仕事を広げよう。","manifest_quota":8,"bulk_manifests":5,"pick_manifests":3,"mix":"bulk_heavy","interval":0.8,"dwell":10.0,"reward":340,"gold_seconds":125.0,"silver_seconds":220.0},
+    {"id":"growth_5","label":"05 街をつなぐ物流基地","description":"60個の出荷。保管と自動梱包を使い分けよう。","manifest_quota":10,"bulk_manifests":7,"pick_manifests":3,"mix":"bulk_heavy","interval":0.7,"dwell":12.0,"reward":450,"gold_seconds":150.0,"silver_seconds":260.0},
+    {"id":"growth_6","label":"06 巨大倉庫へ","description":"72個の出荷。完成後も定期便で増築できる。","manifest_quota":12,"bulk_manifests":8,"pick_manifests":4,"mix":"bulk_heavy","interval":0.6,"dwell":14.0,"reward":600,"gold_seconds":180.0,"silver_seconds":320.0},
+    {"id":"route_bulk","label":"定期便：まとめ配送","description":"保管床と運搬力を活かす。毎回報酬あり。","manifest_quota":12,"bulk_manifests":10,"pick_manifests":2,"mix":"bulk_heavy","interval":0.5,"dwell":16.0,"reward":300,"gold_seconds":180.0,"silver_seconds":320.0},
+    {"id":"route_pick","label":"定期便：小口配送","description":"棚・梱包・ロボットを活かす。毎回報酬あり。","manifest_quota":6,"bulk_manifests":1,"pick_manifests":5,"mix":"pick_heavy","interval":0.7,"dwell":6.0,"reward":300,"gold_seconds":180.0,"silver_seconds":320.0},
+    {"id":"route_hub","label":"大型便：物流センター","description":"288個の保管配送。完成した倉庫で取り組む大型便。","manifest_quota":48,"bulk_manifests":40,"pick_manifests":8,"mix":"bulk_heavy","interval":0.35,"dwell":120.0,"reward":900,"gold_seconds":360.0,"silver_seconds":600.0},
+]
+const GROWTH_UPGRADES := [
+    {"id":"wing_1","label":"第1棟を増築","description":"北へ広げ、実際に使う保管床を8枠追加。","cost":150,"unlock_after":1},
+    {"id":"crew_4","label":"仲間を1人迎える","description":"作業員が3人から4人へ。並行して運べる。","cost":90,"unlock_after":1},
+    {"id":"robot_2","label":"配送ロボット2台","description":"配送ロボット2台。人の1.3倍の速さで実際に荷物を運ぶ。","cost":260,"unlock_after":2},
+    {"id":"auto_pack","label":"自動梱包機","description":"1個の梱包を1.5秒から0.7秒に。","cost":240,"unlock_after":2},
+    {"id":"wing_2","label":"第2棟を増築","description":"さらに北へ。保管8枠と接続通路を追加。","cost":350,"unlock_after":2},
+    {"id":"rack_48","label":"大型棚48個","description":"棚の実容量を48個へ。補充待ちを減らす。","cost":180,"unlock_after":2},
+    {"id":"crew_6","label":"6人のチームへ","description":"人の作業員を6人に。採用済みの仲間も引き継ぐ。","cost":280,"unlock_after":3},
+    {"id":"wing_3","label":"第3棟を増築","description":"配送センターを拡張。保管8枠追加。","cost":650,"unlock_after":3},
+    {"id":"robot_4","label":"ロボットを4台へ","description":"ロボット2台追加。連携制御で4台とも移動が25%速くなる。","cost":500,"unlock_after":4},
+    {"id":"wing_4","label":"第4棟を増築","description":"4棟をつなぐ巨大倉庫へ。保管8枠追加。","cost":1000,"unlock_after":4},
+]
+var legacy_profile := false
+var _cached_snapshot: Dictionary = {}
+var _snapshot_dirty := true
+var _graph_cache_revision := -1
+var _points_cache: Dictionary = {}
+var _links_cache: Array = []
 var campaign_wallet := CAMPAIGN_STARTING_WALLET
 var completed_count := 0
 var purchased_upgrades: Array[String] = []
@@ -52,22 +82,119 @@ func _init() -> void:
     _apply_equipment()
     finished = true
 
+func _contracts() -> Array:
+    return LEGACY_CONTRACTS + GROWTH_CONTRACTS
+
+func _upgrades() -> Array:
+    return LEGACY_UPGRADES + GROWTH_UPGRADES
+
+func _milestones() -> int:
+    var count := 0
+    for index in 6:
+        if contract_results.has("growth_%d" % (index+1)): count += 1
+    return count
+
+func _wing_count() -> int:
+    var count := 0
+    for index in 4:
+        if "wing_%d" % (index+1) in purchased_upgrades: count += 1
+    return 0 if legacy_profile else count
+
+func _human_count() -> int:
+    if not legacy_profile and "crew_6" in purchased_upgrades: return 6
+    if "worker_5" in purchased_upgrades: return 5
+    if "worker_4" in purchased_upgrades or (not legacy_profile and "crew_4" in purchased_upgrades): return 4
+    return 3
+
+func _robot_count() -> int:
+    if legacy_profile: return 0
+    return 4 if "robot_4" in purchased_upgrades else (2 if "robot_2" in purchased_upgrades else 0)
+
+func _points() -> Dictionary:
+    var count := _wing_count()
+    if count == _graph_cache_revision and not _points_cache.is_empty(): return _points_cache
+    _graph_cache_revision = count
+    _links_cache = []
+    var points := POINTS.duplicate()
+    for tier in _wing_count():
+        var z := -10.2-4.4*tier
+        points["wing_%d_spine" % tier] = Vector3(2,0,z)
+        points["wing_%d_west" % tier] = Vector3(-8,0,z)
+        points["wing_%d_east" % tier] = Vector3(9,0,z)
+        for index in 4:
+            points["wing_%d_%d" % [tier,index]] = Vector3([-6.0,-3.0,5.0,7.0][index],0,z)
+    _points_cache = points
+    return points
+
+func _links() -> Array:
+    _points()
+    if not _links_cache.is_empty(): return _links_cache
+    var links := LINKS.duplicate(true)
+    for tier in _wing_count():
+        var spine := "wing_%d_spine" % tier
+        links.append(["bulk_junction" if tier==0 else "wing_%d_spine" % (tier-1),spine])
+        links.append([spine,"wing_%d_1" % tier])
+        links.append(["wing_%d_1" % tier,"wing_%d_0" % tier])
+        links.append([spine,"wing_%d_2" % tier])
+        links.append(["wing_%d_2" % tier,"wing_%d_3" % tier])
+        # Two real side service aisles connect receiving and dispatch to every
+        # wing, relieving the original single central neck for northbound work.
+        if tier == 0:
+            links.append(["inbound","wing_0_west"])
+            links.append(["outbound","wing_0_east"])
+        else:
+            links.append(["wing_%d_west" % (tier-1),"wing_%d_west" % tier])
+            links.append(["wing_%d_east" % (tier-1),"wing_%d_east" % tier])
+        links.append(["wing_%d_west" % tier,"wing_%d_0" % tier])
+        links.append(["wing_%d_east" % tier,"wing_%d_3" % tier])
+    _links_cache = links
+    return links
+
+func _expected_bays() -> Array:
+    var result := BAY_DEFS.duplicate(true)
+    if "floor_2" in purchased_upgrades: result.append_array(EXTRA_BAYS)
+    for tier in _wing_count():
+        for index in 4:
+            for side in 2:
+                result.append({"id":"W%d-%d-%d" % [tier+1,index+1,side+1],"position":Vector3([-6.0,-3.0,5.0,7.0][index],0,-10.2-4.4*tier+(-1.1 if side==0 else 1.1)),"node":"wing_%d_%d" % [tier,index]})
+    return result
+
+func _expected_rack() -> int:
+    return 48 if not legacy_profile and "rack_48" in purchased_upgrades else (24 if "rack_24" in purchased_upgrades else 12)
+
+func _expected_pack() -> float:
+    if legacy_profile: return 2.0 if "packing_2" in purchased_upgrades else 3.0
+    return 0.7 if "auto_pack" in purchased_upgrades else (1.2 if "packing_2" in purchased_upgrades else 1.5)
+
+func _handling_seconds(task: String) -> float:
+    return super._handling_seconds(task) * (1.0 if legacy_profile else 0.65)
+
+func _worker_speed(worker: Dictionary) -> float:
+    if not legacy_profile and int(worker.id) >= _human_count():
+        return 6.0 if "robot_4" in purchased_upgrades else 4.8
+    return walk_speed
+
+func _worker_handling_seconds(worker: Dictionary) -> float:
+    var seconds := _handling_seconds(str(worker.task))
+    return seconds * (0.6 if not legacy_profile and int(worker.id) >= _human_count() else 1.0)
+
 func _contract(id: String) -> Dictionary:
-    for item in CONTRACTS:
+    for item in _contracts():
         if item.id == id:
             return item
     return {}
 
 func _upgrade(id: String) -> Dictionary:
-    for item in UPGRADES:
+    for item in _upgrades():
         if item.id == id:
             return item
     return {}
 
 func contract_options() -> Array[Dictionary]:
     var result: Array[Dictionary] = []
-    for index in CONTRACTS.size():
-        var option: Dictionary = CONTRACTS[index].duplicate(true)
+    for definition in GROWTH_CONTRACTS:
+        var option: Dictionary = definition.duplicate(true)
+        option.repeatable = true
         var unlocked := _contract_unlocked(str(option.id))
         option.total_units = int(option.manifest_quota) * MANIFEST_SIZE
         option.completed = contract_results.has(option.id)
@@ -80,35 +207,47 @@ func contract_options() -> Array[Dictionary]:
     return result
 
 func _remaining_contracts(id: String) -> String:
-    var requirements: Array = {"small_orders":["first_shift"], "pallet_wave":["first_shift"], "packing_rush":["small_orders","pallet_wave"], "storage_peak":["small_orders","pallet_wave"], "final_dispatch":["packing_rush","storage_peak"]}.get(id, [])
-    var missing: Array[String] = []
-    for required in requirements:
-        if not contract_results.has(required): missing.append(str(_contract(required).label))
-    return "解放まで：" + "・".join(missing) + "を達成"
+    if id.begins_with("growth_"):
+        return "先にステップ%dを達成" % (int(id.trim_prefix("growth_"))-1)
+    if id == "route_hub": return "ステップ6・増築3棟・ロボット2台で解放"
+    return "ステップ1で解放"
 
 func _contract_unlocked(id: String) -> bool:
+    if id.begins_with("growth_"):
+        var number := int(id.trim_prefix("growth_"))
+        return number == 1 or contract_results.has("growth_%d" % (number-1))
+    if id in ["route_bulk","route_pick"]: return _milestones() >= 1
+    if id == "route_hub": return _milestones() >= 6 and _wing_count() >= 3 and _robot_count() >= 2
+    # Original definitions and unlock graph are frozen for old saves.
     match id:
-        "first_shift":
-            return true
-        "small_orders", "pallet_wave":
-            return contract_results.has("first_shift")
-        "packing_rush", "storage_peak":
-            return contract_results.has("small_orders") and contract_results.has("pallet_wave")
-        "final_dispatch":
-            return contract_results.has("packing_rush") and contract_results.has("storage_peak")
+        "first_shift": return true
+        "small_orders", "pallet_wave": return contract_results.has("first_shift")
+        "packing_rush", "storage_peak": return contract_results.has("small_orders") and contract_results.has("pallet_wave")
+        "final_dispatch": return contract_results.has("packing_rush") and contract_results.has("storage_peak")
     return false
+
+func _upgrade_prerequisite(id: String) -> String:
+    if id.begins_with("wing_") and int(id.trim_prefix("wing_")) > 1:
+        return "wing_%d" % (int(id.trim_prefix("wing_"))-1)
+    if id == "robot_4": return "robot_2"
+    return ""
 
 func upgrade_options() -> Array[Dictionary]:
     var result: Array[Dictionary] = []
-    for definition in UPGRADES:
+    for definition in GROWTH_UPGRADES:
         var option: Dictionary = definition.duplicate(true)
         option.owned = option.id in purchased_upgrades
         option.available = false
         option.locked_reason = ""
         if option.owned:
             option.locked_reason = "導入済み"
-        elif completed_count < int(option.unlock_after):
-            option.locked_reason = "契約%d件達成で解放" % int(option.unlock_after)
+        elif _milestones() < int(option.unlock_after):
+            option.locked_reason = "ステップ%dで解放" % int(option.unlock_after)
+        elif not _upgrade_prerequisite(option.id).is_empty() and _upgrade_prerequisite(option.id) not in purchased_upgrades:
+            option.locked_reason = "先に" + str(_upgrade(_upgrade_prerequisite(option.id)).label)
+        elif option.id == "crew_4" and _human_count() >= 4:
+            option.owned = true
+            option.locked_reason = "採用済み"
         elif option.id == "worker_5" and "worker_4" not in purchased_upgrades:
             option.locked_reason = "先に4人目を採用"
         elif campaign_status == "running":
@@ -132,6 +271,8 @@ func accept_contract(id: String) -> Dictionary:
         return {"ok":false,"reason":"unshipped_cargo"}
     var retained_layout := layout_id
     var retained_speed := time_scale
+    legacy_profile = not (id.begins_with("growth_") or id.begins_with("route_"))
+    _snapshot_dirty = true
     current_contract_id = id
     manifest_cursor = 0
     arrival_interval = float(definition.interval)
@@ -144,6 +285,7 @@ func accept_contract(id: String) -> Dictionary:
     return {"ok":true,"contract_id":id,"is_replay":contract_results.has(id)}
 
 func buy_upgrade(id: String) -> Dictionary:
+    _snapshot_dirty = true
     if _upgrade(id).is_empty():
         return {"ok":false,"reason":"unknown_upgrade"}
     for option in upgrade_options():
@@ -158,9 +300,11 @@ func buy_upgrade(id: String) -> Dictionary:
     return {"ok":false,"reason":"unknown_upgrade"}
 
 func _apply_equipment() -> void:
-    rack_capacity = 24 if "rack_24" in purchased_upgrades else 12
-    pack_seconds = 2.0 if "packing_2" in purchased_upgrades else 3.0
-    var count := 5 if "worker_5" in purchased_upgrades else (4 if "worker_4" in purchased_upgrades else 3)
+    rack_capacity = _expected_rack()
+    pack_seconds = _expected_pack()
+    walk_speed = WALK_SPEED if legacy_profile else 3.6
+    var count := _human_count()+_robot_count()
+    _snapshot_dirty = true
     # Equipment is applied only between contracts, so adding/removing off-shift
     # workers cannot drop a reservation or carried cargo.
     while workers.size() > count:
@@ -169,7 +313,7 @@ func _apply_equipment() -> void:
         var worker: Dictionary = workers[0].duplicate(true)
         worker.id = workers.size()
         worker.node = "inbound"
-        worker.position = POINTS.inbound
+        worker.position = _points().inbound
         worker.task = "idle"
         worker.phase = "idle"
         worker.cargo_ids = []
@@ -190,13 +334,13 @@ func _apply_equipment() -> void:
         worker.travel_seconds = 0.0
         worker.wait_seconds = 0.0
         workers.append(worker)
-    if "floor_2" in purchased_upgrades and _bay("C1").is_empty():
-        for definition in EXTRA_BAYS:
-            var bay: Dictionary = definition.duplicate(true)
-            bay.footprint = Rect2(bay.position.x-.5,bay.position.z-.5,1.0,1.0)
-            bay.manifest_id = -1
-            bay.reserved_by = -1
-            bulk_bays.append(bay)
+    for definition in _expected_bays():
+        if not _bay(definition.id).is_empty(): continue
+        var bay: Dictionary = definition.duplicate(true)
+        bay.footprint = Rect2(bay.position.x-.5,bay.position.z-.5,1.0,1.0)
+        bay.manifest_id = -1
+        bay.reserved_by = -1
+        bulk_bays.append(bay)
     _round_robin %= workers.size()
     _build_edges()
 
@@ -204,6 +348,7 @@ func set_mix(_next_mix: String) -> Dictionary:
     return {"ok":false,"reason":"contract_mix_fixed"}
 
 func apply_layout(next_layout: String) -> Dictionary:
+    _snapshot_dirty = true
     if campaign_status == "running":
         return super.apply_layout(next_layout)
     if _option(next_layout).is_empty():
@@ -216,6 +361,7 @@ func apply_layout(next_layout: String) -> Dictionary:
 
 func step(real_dt: float) -> void:
     if campaign_status == "running":
+        _snapshot_dirty = true
         super.step(real_dt)
 
 func _spawn(dt: float) -> void:
@@ -272,14 +418,14 @@ func _complete_contract(definition: Dictionary) -> void:
     var first_completion := not contract_results.has(current_contract_id)
     var previous: Dictionary = contract_results.get(current_contract_id, {})
     var best := minf(float(previous.get("best_time", INF)), sim_time)
-    var earned := int(definition.reward) if first_completion else 0
+    var earned := int(definition.reward) if first_completion or not legacy_profile else 0
     campaign_wallet += earned
     if first_completion:
         completed_count += 1
     var attempts := int(previous.get("attempts", 0))+1
-    contract_results[current_contract_id] = {"best_time":best,"best_medal":_medal(definition,best),"attempts":attempts,"earned":int(definition.reward)}
+    contract_results[current_contract_id] = {"best_time":best,"best_medal":_medal(definition,best),"attempts":attempts,"earned":int(previous.get("earned",0))+earned}
     last_result = {"contract_id":current_contract_id,"label":definition.label,"elapsed":sim_time,"best_time":best,"medal":_medal(definition,sim_time),"earnings":earned,"first_completion":first_completion,"new_best":sim_time < float(previous.get("best_time", INF)),"shipped":shipped,"total_units":int(definition.manifest_quota)*MANIFEST_SIZE,"worker_count":workers.size(),"layout_id":layout_id,"upgrades":purchased_upgrades.duplicate()}
-    campaign_status = "campaign_complete" if completed_count == CONTRACTS.size() else "contract_complete"
+    campaign_status = "contract_complete"
 
 func release_state() -> Dictionary:
     var definition := _contract(current_contract_id).duplicate(true)
@@ -291,13 +437,31 @@ func release_state() -> Dictionary:
     var objective := "最初の契約を受けよう"
     if campaign_status == "running":
         objective = "残り%d個を出荷する（受付は全%d便で終了）" % [total-shipped,int(definition.manifest_quota)]
-    elif completed_count == CONTRACTS.size():
+    elif completed_count == _contracts().size():
         objective = "全6契約を達成！ 配置を変えてベストタイムに挑戦しよう"
     elif completed_count > 0:
         objective = "設備と配置を選び、次の契約を受けよう"
-    return {"schema":RELEASE_SCHEMA,"status":campaign_status,"wallet":campaign_wallet,"completed_count":completed_count,"total_contracts":CONTRACTS.size(),"campaign_complete":completed_count==CONTRACTS.size(),"current_contract":definition,"current_contract_id":current_contract_id,"progress":{"shipped":shipped,"total":total,"offered":offered_units,"manifests_offered":manifest_cursor,"manifest_quota":int(definition.get("manifest_quota",0)),"remaining":maxi(0,total-shipped),"fraction":float(shipped)/float(total) if total>0 else 0.0},"elapsed":sim_time,"best_time":float(contract_results.get(current_contract_id,{}).get("best_time",0.0)),"last_earnings":int(last_result.get("earnings",0)),"last_result":last_result.duplicate(true),"objective":objective,"available":available,"upgrades":purchased_upgrades.duplicate(),"worker_count":workers.size(),"results":contract_results.duplicate(true)}
+    var growth := {"wing_count":_wing_count(),"area":223.886+83.6*_wing_count()+(14.554 if _wing_count()>0 else 0.0),"human_count":_human_count(),"robot_count":_robot_count(),"completed_milestones":_milestones(),"next_goal":_next_goal(),"legacy_profile":legacy_profile,"lifetime_units":_lifetime_units()}
+    return {"growth":growth,"schema":RELEASE_SCHEMA,"status":campaign_status,"wallet":campaign_wallet,"completed_count":completed_count,"total_contracts":_contracts().size(),"campaign_complete":completed_count==_contracts().size(),"current_contract":definition,"current_contract_id":current_contract_id,"progress":{"shipped":shipped,"total":total,"offered":offered_units,"manifests_offered":manifest_cursor,"manifest_quota":int(definition.get("manifest_quota",0)),"remaining":maxi(0,total-shipped),"fraction":float(shipped)/float(total) if total>0 else 0.0},"elapsed":sim_time,"best_time":float(contract_results.get(current_contract_id,{}).get("best_time",0.0)),"last_earnings":int(last_result.get("earnings",0)),"last_result":last_result.duplicate(true),"objective":objective,"available":available,"upgrades":purchased_upgrades.duplicate(),"worker_count":workers.size(),"results":contract_results.duplicate(true)}
+
+func _next_goal() -> String:
+    if legacy_profile and campaign_status == "running": return "以前の荷物を届けて、増築の新しい一歩へ"
+    if _milestones() == 0: return "12個を届けて第1棟を増築しよう"
+    for option in upgrade_options():
+        if option.available: return "%sを導入できる！" % option.label
+    if _milestones() < 6: return "次の配送で資金をためよう"
+    if _wing_count() < 4: return "定期便の報酬で4棟の巨大倉庫へ"
+    if _robot_count() < 4 or "auto_pack" not in purchased_upgrades: return "配送ロボットと自動梱包で仕上げよう"
+    return "巨大物流センター完成！ 大型便やベスト記録に挑戦"
+
+func _lifetime_units() -> int:
+    var total := 0
+    for id in contract_results:
+        total += int(contract_results[id].attempts)*int(_contract(id).manifest_quota)*MANIFEST_SIZE
+    return total + (shipped if campaign_status=="running" else 0)
 
 func snapshot() -> Dictionary:
+    if not _snapshot_dirty and not _cached_snapshot.is_empty(): return _cached_snapshot
     var state := super.snapshot()
     state.prototype = false
     state.continuous = false
@@ -313,6 +477,15 @@ func snapshot() -> Dictionary:
                     choice.benefit = "まとめ保管%d枠" % count
                 else:
                     choice.tradeoff = "まとめ保管%d枠・棚が床4枠を使う" % count
+    var wings: Array[Rect2] = []
+    for tier in _wing_count(): wings.append(Rect2(-9,-12.4-4.4*tier,19,4.4))
+    state.world.growth_wings = wings
+    state.world.growth_connectors = [Rect2(-9,-8,2,6),Rect2(8,-8,2,11)] if _wing_count()>0 else []
+    state.topology_revision = _wing_count()
+    state.human_count = _human_count()
+    state.robot_count = _robot_count()
+    _cached_snapshot = state
+    _snapshot_dirty = false
     return state
 
 func export_release_state() -> Dictionary:
@@ -320,23 +493,32 @@ func export_release_state() -> Dictionary:
     for field in SIM_FIELDS:
         var value = get(field)
         simulation[field] = value.duplicate(true) if value is Array or value is Dictionary else value
-    return {"schema":RELEASE_SCHEMA,"campaign":{"wallet":campaign_wallet,"completed_count":completed_count,"upgrades":purchased_upgrades.duplicate(),"current_contract_id":current_contract_id,"status":campaign_status,"manifest_cursor":manifest_cursor,"results":contract_results.duplicate(true),"last_result":last_result.duplicate(true)},"sim":simulation}
+    return {"schema":RELEASE_SCHEMA,"growth":{"legacy_profile":legacy_profile},"campaign":{"wallet":campaign_wallet,"completed_count":completed_count,"upgrades":purchased_upgrades.duplicate(),"current_contract_id":current_contract_id,"status":campaign_status,"manifest_cursor":manifest_cursor,"results":contract_results.duplicate(true),"last_result":last_result.duplicate(true)},"sim":simulation}
 
 func import_release_state(data: Dictionary) -> Dictionary:
-    # Validate into a disposable instance; a rejected save never mutates this run.
+    if data.get("schema") == 1:
+        var legacy = LegacySim.new()
+        var validated: Dictionary = legacy.import_release_state(data)
+        if not validated.ok: return validated
+        var preserved: Dictionary = legacy.export_release_state()
+        preserved.schema = RELEASE_SCHEMA
+        preserved.growth = {"legacy_profile":true}
+        _load_release_unchecked(preserved)
+        _snapshot_dirty = true
+        return {"ok":true,"schema":RELEASE_SCHEMA,"migrated":true}
     var validation := _validate_save_shape(data)
-    if not validation.ok:
-        return validation
+    if not validation.ok: return validation
     var candidate = get_script().new()
     candidate._load_release_unchecked(data)
     var result: Dictionary = candidate._validate_loaded_release()
-    if not result.ok:
-        return result
+    if not result.ok: return result
     candidate._normalize_saved_medals()
     _load_release_unchecked(candidate.export_release_state())
+    _snapshot_dirty = true
     return {"ok":true,"schema":RELEASE_SCHEMA}
 
 func _load_release_unchecked(data: Dictionary) -> void:
+    legacy_profile = data.growth.legacy_profile
     var campaign: Dictionary = data.campaign
     campaign_wallet = campaign.wallet
     completed_count = campaign.completed_count
@@ -394,8 +576,9 @@ func _keys_and_types(value: Dictionary, template: Dictionary) -> bool:
     return true
 
 func _validate_save_shape(data: Dictionary) -> Dictionary:
-    if not _safe_variant(data) or not _keys_and_types(data,{"schema":1,"campaign":{},"sim":{}}) or data.schema != RELEASE_SCHEMA:
+    if not _safe_variant(data) or not _keys_and_types(data,{"schema":2,"growth":{},"campaign":{},"sim":{}}) or data.schema != RELEASE_SCHEMA:
         return _bad("schema")
+    if not _keys_and_types(data.growth,{"legacy_profile":false}): return _bad("growth_shape")
     var campaign: Dictionary = data.campaign
     if not _keys_and_types(campaign,{"wallet":0,"completed_count":0,"upgrades":[],"current_contract_id":"","status":"","manifest_cursor":0,"results":{},"last_result":{}}):
         return _bad("campaign_shape")
@@ -423,7 +606,7 @@ func _validate_save_shape(data: Dictionary) -> Dictionary:
             if not value is int:
                 return _bad("queue_type")
     var worker_template: Dictionary = workers[0]
-    if simulation.workers.size() < 3 or simulation.workers.size() > 5:
+    if simulation.workers.size() < 3 or simulation.workers.size() > 10:
         return _bad("worker_count")
     for worker in simulation.workers:
         if not worker is Dictionary or not _keys_and_types(worker,worker_template):
@@ -458,35 +641,38 @@ func _validate_save_shape(data: Dictionary) -> Dictionary:
     return {"ok":true}
 
 func _validate_loaded_release() -> Dictionary:
-    if campaign_status not in ["ready","running","contract_complete","campaign_complete"] or completed_count < 0 or completed_count > CONTRACTS.size():
+    if not current_contract_id.is_empty() and legacy_profile != LEGACY_CONTRACTS.any(func(item): return item.id == current_contract_id):
+        return _bad("contract_profile")
+    if campaign_status not in ["ready","running","contract_complete","campaign_complete"] or completed_count < 0 or completed_count > _contracts().size():
         return _bad("campaign_status")
     if contract_results.size() != completed_count:
         return _bad("completion_count")
     var expected_wallet := CAMPAIGN_STARTING_WALLET
-    for index in CONTRACTS.size():
-        var definition: Dictionary = CONTRACTS[index]
+    for index in _contracts().size():
+        var definition: Dictionary = _contracts()[index]
         if contract_results.has(definition.id) and not _contract_unlocked(str(definition.id)):
             return _bad("completion_order")
         if contract_results.has(definition.id):
             var result = contract_results[definition.id]
             if not result is Dictionary or not _keys_and_types(result,{"best_time":0.0,"best_medal":"","attempts":0,"earned":0}):
                 return _bad("result_shape")
-            if result.best_time <= 0.0 or result.attempts < 1 or result.earned != definition.reward or not _saved_medal_valid(result.best_medal,definition,result.best_time):
+            if result.best_time <= 0.0 or result.attempts < 1 or result.earned != int(definition.reward)*(int(result.attempts) if str(definition.id).begins_with("growth_") or str(definition.id).begins_with("route_") else 1) or not _saved_medal_valid(result.best_medal,definition,result.best_time):
                 return _bad("result_value")
             expected_wallet += int(result.earned)
     var seen_upgrades := {}
     for id in purchased_upgrades:
         var upgrade := _upgrade(id)
-        if upgrade.is_empty() or seen_upgrades.has(id) or completed_count < int(upgrade.unlock_after):
+        if upgrade.is_empty() or seen_upgrades.has(id) or (_milestones() if id in GROWTH_UPGRADES.map(func(item): return item.id) else completed_count) < int(upgrade.unlock_after):
             return _bad("upgrade_unlock")
+        if not _upgrade_prerequisite(id).is_empty() and _upgrade_prerequisite(id) not in purchased_upgrades: return _bad("growth_upgrade_prerequisite")
         seen_upgrades[id] = true
         expected_wallet -= int(upgrade.cost)
     if "worker_5" in purchased_upgrades and "worker_4" not in purchased_upgrades:
         return _bad("worker_prerequisite")
     if campaign_wallet != expected_wallet or campaign_wallet < 0:
         return _bad("wallet")
-    var expected_workers := 5 if "worker_5" in purchased_upgrades else (4 if "worker_4" in purchased_upgrades else 3)
-    if workers.size() != expected_workers or rack_capacity != (24 if "rack_24" in purchased_upgrades else 12) or pack_seconds != (2.0 if "packing_2" in purchased_upgrades else 3.0) or walk_speed != WALK_SPEED:
+    var expected_workers := _human_count()+_robot_count()
+    if workers.size() != expected_workers or rack_capacity != _expected_rack() or pack_seconds != _expected_pack() or walk_speed != (WALK_SPEED if legacy_profile else 3.6):
         return _bad("equipment")
     if _option(layout_id).is_empty() or _workload(workload_id).is_empty() or (not pending_layout_id.is_empty() and _option(pending_layout_id).is_empty()) or time_scale < 0.0 or time_scale > 12.0 or duration != 0.0 or sim_time < 0.0 or sim_time > 10000000.0:
         return _bad("simulation_parameters")
@@ -505,13 +691,13 @@ func _validate_loaded_release() -> Dictionary:
             return _bad("arrival_clock")
         if campaign_status != "running" and (shipped != int(definition.manifest_quota)*MANIFEST_SIZE or not contract_results.has(current_contract_id) or not pending_layout_id.is_empty()):
             return _bad("incomplete_cargo")
-    if (campaign_status == "campaign_complete") != (completed_count == CONTRACTS.size() and campaign_status != "running"):
+    if campaign_status == "campaign_complete" and (not legacy_profile or completed_count != 6):
         return _bad("campaign_completion")
     if campaign_status in ["ready","running"]:
         if not last_result.is_empty():
             return _bad("unexpected_last_result")
     else:
-        if last_result.is_empty() or last_result.contract_id != current_contract_id or last_result.label != definition.label or last_result.elapsed != sim_time or last_result.best_time != contract_results[current_contract_id].best_time or not _saved_medal_valid(last_result.medal,definition,sim_time) or last_result.earnings != (int(definition.reward) if last_result.first_completion else 0) or last_result.shipped != shipped or last_result.total_units != shipped or last_result.worker_count not in [3,4,5] or _option(last_result.layout_id).is_empty():
+        if last_result.is_empty() or last_result.contract_id != current_contract_id or last_result.label != definition.label or last_result.elapsed != sim_time or last_result.best_time != contract_results[current_contract_id].best_time or not _saved_medal_valid(last_result.medal,definition,sim_time) or last_result.earnings != (int(definition.reward) if last_result.first_completion or not legacy_profile else 0) or last_result.shipped != shipped or last_result.total_units != shipped or last_result.worker_count < 3 or last_result.worker_count > 10 or _option(last_result.layout_id).is_empty():
             return _bad("last_result_value")
         var result_upgrades := {}
         for id in last_result.upgrades:
@@ -532,9 +718,7 @@ func _validate_loaded_release() -> Dictionary:
     for field in ["shipped","bulk_shipped","pick_shipped","revenue","money","arrived","initial_cargo","inbound_blocked","offered_units","open_orders","travel_seconds","loaded_travel_seconds","aisle_wait_seconds","relocation_seconds","relocation_count","stored","picked","packed"]:
         if get(field) < 0:
             return _bad("negative_"+field)
-    var expected_bays: Array = BAY_DEFS.duplicate(true)
-    if "floor_2" in purchased_upgrades:
-        expected_bays.append_array(EXTRA_BAYS)
+    var expected_bays: Array = _expected_bays()
     if bulk_bays.size() != expected_bays.size():
         return _bad("bay_count")
     for index in bulk_bays.size():
@@ -563,7 +747,7 @@ func _validate_loaded_release() -> Dictionary:
             if manifest.unit_ids[ordinal] != unit_id or not cargo.has(unit_id):
                 return _bad("manifest_units")
             var item: Dictionary = cargo[unit_id]
-            if item.id != unit_id or item.manifest_id != id or item.kind != manifest.kind or item.ordinal != ordinal or not POINTS.has(item.node) or item.worker_id < -1 or item.worker_id >= workers.size() or (not str(item.bay_id).is_empty() and _bay(item.bay_id).is_empty()):
+            if item.id != unit_id or item.manifest_id != id or item.kind != manifest.kind or item.ordinal != ordinal or not _points().has(item.node) or item.worker_id < -1 or item.worker_id >= workers.size() or (not str(item.bay_id).is_empty() and _bay(item.bay_id).is_empty()):
                 return _bad("cargo_reference")
     for field in ["inbound","external_backlog","bulk_storage"]:
         for id in get(field):
@@ -580,12 +764,12 @@ func _validate_loaded_release() -> Dictionary:
         return _bad("packing_capacity")
     for index in workers.size():
         var worker: Dictionary = workers[index]
-        if worker.id != index or (worker.phase == "idle") != (worker.task == "idle") or worker.phase not in ["idle","to_source","work","to_target"] or worker.task not in ["idle","evacuate","bulk_store","bulk_ship","restock","pick","ship"] or not POINTS.has(worker.node) or worker.edge_progress < 0.0 or worker.edge_progress > 1.0 or worker.path_index < 0 or (worker.phase != "idle" and worker.path_index > worker.path.size()) or worker.lane not in [0,1]:
+        if worker.id != index or (worker.phase == "idle") != (worker.task == "idle") or worker.phase not in ["idle","to_source","work","to_target"] or worker.task not in ["idle","evacuate","bulk_store","bulk_ship","restock","pick","ship"] or not _points().has(worker.node) or worker.edge_progress < 0.0 or worker.edge_progress > 1.0 or worker.path_index < 0 or (worker.phase != "idle" and worker.path_index > worker.path.size()) or worker.lane not in [0,1]:
             return _bad("worker_state")
         if (worker.manifest_id != -1 and not manifests.has(worker.manifest_id)) or (worker.cargo_id != -1 and not cargo.has(worker.cargo_id)) or (not str(worker.bay_id).is_empty() and _bay(worker.bay_id).is_empty()):
             return _bad("worker_reference")
         for node in worker.path:
-            if not node is String or not POINTS.has(node):
+            if not node is String or not _points().has(node):
                 return _bad("worker_path")
         for path_index in maxi(0,worker.path.size()-1):
             var edge := _edge_between(worker.path[path_index],worker.path[path_index+1])
@@ -597,7 +781,7 @@ func _validate_loaded_release() -> Dictionary:
             if str(worker.target).is_empty() or (worker.task != "evacuate" and (worker.manifest_id < 1 or worker.cargo_ids.is_empty())):
                 return _bad("worker_target_or_load")
         for field in ["source","target","edge_from","edge_to"]:
-            if not str(worker[field]).is_empty() and not POINTS.has(worker[field]):
+            if not str(worker[field]).is_empty() and not _points().has(worker[field]):
                 return _bad("worker_node")
         if not str(worker.edge_id).is_empty() and not _edges.has(worker.edge_id):
             return _bad("worker_edge")

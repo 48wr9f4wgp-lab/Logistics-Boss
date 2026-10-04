@@ -100,6 +100,12 @@ var _move_duration := 0.0
 var _round_robin := 0
 var _mix_credit := 0.0
 
+func _points() -> Dictionary:
+    return POINTS
+
+func _links() -> Array:
+    return LINKS
+
 func _init() -> void:
     restart()
 
@@ -188,7 +194,7 @@ func restart(next_workload: String = "balanced", next_layout: String = "compact"
         bulk_bays.append(bay)
     _build_edges()
     for i in 5:
-        workers.append({"id":i,"role":"flex","node":"inbound","position":POINTS.inbound,"task":"idle","phase":"idle","cargo_id":-1,"cargo_ids":[],"manifest_id":-1,"bay_id":"","carrying":false,"waiting":false,"path":[],"path_index":0,"edge_id":"","edge_progress":0.0,"edge_from":"","edge_to":"","lane":0,"work_remaining":0.0,"source":"","target":"","travel_seconds":0.0,"wait_seconds":0.0})
+        workers.append({"id":i,"role":"flex","node":"inbound","position":_points().inbound,"task":"idle","phase":"idle","cargo_id":-1,"cargo_ids":[],"manifest_id":-1,"bay_id":"","carrying":false,"waiting":false,"path":[],"path_index":0,"edge_id":"","edge_progress":0.0,"edge_from":"","edge_to":"","lane":0,"work_remaining":0.0,"source":"","target":"","travel_seconds":0.0,"wait_seconds":0.0})
     mix_history.append({"at":0.0,"mix_id":workload_id,"first_manifest":_next_manifest})
     return {"ok":true}
 
@@ -251,10 +257,10 @@ func _build_edges() -> void:
     for bay in bulk_bays:
         bay.available = _bay_available_in(bay,layout_id)
     var obstacles := [{"id":"shelf","rect":_shelf_footprint(layout_id).grow(WORKER_RADIUS)},{"id":"packing","rect":_pack_footprint(layout_id).grow(WORKER_RADIUS)}]
-    for link in LINKS:
+    for link in _links():
         var key := str(link[0])+":"+str(link[1])
-        var a: Vector3 = POINTS[link[0]]
-        var b: Vector3 = POINTS[link[1]]
+        var a: Vector3 = _points()[link[0]]
+        var b: Vector3 = _points()[link[1]]
         var direction := (b-a).normalized()
         var normal := Vector3(-direction.z,0,direction.x)
         var lanes: Array[Dictionary] = []
@@ -289,6 +295,12 @@ func _build_edges() -> void:
 
 func _walk_speed() -> float:
     return walk_speed
+
+func _worker_speed(_worker: Dictionary) -> float:
+    return _walk_speed()
+
+func _worker_handling_seconds(worker: Dictionary) -> float:
+    return _handling_seconds(str(worker.task))
 
 func _path_edge_cost(edge: Dictionary) -> float:
     return (edge.to as Vector3).distance_to(edge.from)
@@ -531,7 +543,7 @@ func _find_path(source: String, target: String, manifest_transport: bool = false
         return [source]
     var distances := {source:0.0}
     var previous := {}
-    var remaining: Array = POINTS.keys()
+    var remaining: Array = _points().keys()
     while not remaining.is_empty():
         var closest := ""
         var best := INF
@@ -593,7 +605,7 @@ func _update_worker(worker: Dictionary, dt: float) -> void:
         if worker.phase == "to_source":
             worker.phase = "work"
             worker.carrying = true
-            worker.work_remaining = _handling_seconds(worker.task)
+            worker.work_remaining = _worker_handling_seconds(worker)
             for cargo_id in worker.cargo_ids:
                 cargo[cargo_id].stage = "carried_" + str(worker.task)
         else:
@@ -632,15 +644,15 @@ func _update_worker(worker: Dictionary, dt: float) -> void:
         worker.edge_to = b
         worker.edge_progress = 0.0
     worker.waiting = false
-    var length := (POINTS[a] as Vector3).distance_to(POINTS[b])
+    var length := (_points()[a] as Vector3).distance_to(_points()[b])
     var before := float(worker.edge_progress)
-    worker.edge_progress = minf(1.0, before + dt * _walk_speed() / length)
-    var actual_dt := (float(worker.edge_progress) - before) * length / _walk_speed()
+    worker.edge_progress = minf(1.0, before + dt * _worker_speed(worker) / length)
+    var actual_dt := (float(worker.edge_progress) - before) * length / _worker_speed(worker)
     travel_seconds += actual_dt
     worker.travel_seconds += actual_dt
     if worker.carrying:
         loaded_travel_seconds += actual_dt
-    worker.position = (POINTS[a] as Vector3).lerp(POINTS[b], float(worker.edge_progress))
+    worker.position = (_points()[a] as Vector3).lerp(_points()[b], float(worker.edge_progress))
     if not edge.lanes.is_empty():
         var direction: Vector3 = (edge.to - edge.from).normalized()
         var lateral := Vector3(-direction.z, 0.0, direction.x)
@@ -648,7 +660,7 @@ func _update_worker(worker: Dictionary, dt: float) -> void:
         worker.position += lateral * side * sin(PI * float(worker.edge_progress))
     if worker.edge_progress >= 1.0 - 0.000001:
         worker.node = b
-        worker.position = POINTS[b]
+        worker.position = _points()[b]
         worker.path_index += 1
         worker.edge_id = ""
         edge.owners.erase(worker.id)
@@ -770,8 +782,8 @@ func _cargo_position(item: Dictionary) -> Vector3:
     if item.kind == "bulk" and not str(item.bay_id).is_empty() and item.stage in ["bulk_storage","reserved_bulk_ship"]:
         return _bay(item.bay_id).position
     if _move_remaining > 0 and item.stage == "storage":
-        return (POINTS[_shelf_node()] as Vector3).lerp(POINTS[_shelf_node(pending_layout_id)],1.0-_move_remaining/_move_duration)
-    return POINTS[item.node]
+        return (_points()[_shelf_node()] as Vector3).lerp(_points()[_shelf_node(pending_layout_id)],1.0-_move_remaining/_move_duration)
+    return _points()[item.node]
 
 func slot_options() -> Array:
     return snapshot().slots
@@ -796,7 +808,7 @@ func snapshot() -> Dictionary:
         var item := worker.duplicate(true)
         var positions: Array[Vector3] = []
         for node in worker.path:
-            positions.append(POINTS[node])
+            positions.append(_points()[node])
         item.path = positions
         item.progress = float(worker.edge_progress)
         item.job_kind = str(manifests[worker.manifest_id].kind) if worker.manifest_id>=0 else ""
@@ -850,7 +862,7 @@ func snapshot() -> Dictionary:
         if manifest.shipped_units<MANIFEST_SIZE:
             jobs_by_type[key].queued_jobs += 1
             jobs_by_type[key].queued_units += MANIFEST_SIZE-int(manifest.shipped_units)
-    return {"prototype":true,"jobs_by_type":jobs_by_type,"job_mix_id":workload_id,"job_mix_label":_workload(workload_id).label,"bottleneck_detail":"受付済みの便は場外待機も含めて保持。まとめ便は荷下ろしから最低%d秒保管して直送。単品便は1個ずつ集品・梱包。"%int(bulk_dwell),"timing":timing_info(),"layout_id":layout_id,"layout_label":option.label,"pending_layout_id":pending_layout_id,"workload_id":workload_id,"mix_id":workload_id,"workload_label":_workload(workload_id).label,"scenario_description":_workload(workload_id).description,"sim_time":sim_time,"duration":duration,"continuous":duration<=0,"finished":finished,"shipped":shipped,"bulk_shipped":bulk_shipped,"pick_shipped":pick_shipped,"revenue":revenue,"money":money,"arrived":arrived,"offered_units":offered_units,"initial_cargo":initial_cargo,"inbound_blocked":inbound_blocked,"stored":stored,"picked":picked,"packed":packed,"rack_capacity":rack_capacity,"rack_occupied":_rack_occupied(),"bulk_capacity":bulk_capacity(),"bulk_occupied":bulk_storage.size(),"bulk_bays":bays,"manifest_size":MANIFEST_SIZE,"manifests":manifests.duplicate(true),"mix_history":mix_history.duplicate(true),"travel_seconds":travel_seconds,"loaded_travel_seconds":loaded_travel_seconds,"aisle_wait_seconds":aisle_wait_seconds,"relocation_seconds":relocation_seconds,"relocation_count":relocation_count,"relocation_history":relocation_history.duplicate(true),"relocating":_move_remaining>0,"relocation_remaining":_move_remaining,"annex_open":true,"equipment_budget":0,"budget_description":"棚1・梱包台1・5人・床6枠を配置で使い分け","equipment_signature":"rack%d:1;bench%.1fs:1;workers:5;pallet_floor:6;annex:1"%[rack_capacity,pack_seconds],"queues":{"inbound":inbound.size()*MANIFEST_SIZE,"external":external_backlog.size()*MANIFEST_SIZE,"storage":storage.size(),"bulk_storage":bulk_storage.size()*MANIFEST_SIZE,"picking":_worker_count("pick"),"packing":packing.size(),"processing":pack_jobs.size(),"packed":ready.size(),"orders":open_orders},"workers":visible_workers,"cargo":visible_cargo,"slots":slots,"edges":visible_edges,"equipment":[{"id":"shelf","kind":"shelf","slot":option.shelf_slot,"position":shelf_position,"access_position":POINTS[_shelf_node()],"size":Vector3(2.2,2.2,2.8),"capacity":rack_capacity},{"id":"packing","kind":"packing","slot":option.packing_slot,"position":pack_position,"access_position":POINTS[_pack_node()],"size":Vector3(1.6,.95,1),"capacity":1}],"world":{"width":20.0,"height":12.0,"annex":Rect2(-2,-7.8,9,5.8),"aisle":Rect2(-5,-.65,3,1.3),"inbound":POINTS.inbound,"outbound":POINTS.outbound,"nodes":POINTS.duplicate()},"reservations":{"store_slots":_store_reserved(),"cargo":workers.filter(func(w):return w.phase != "idle").size()},"bottleneck":_bottleneck(),"comparison":comparison.duplicate(true),"invariant":check_invariants()}
+    return {"prototype":true,"jobs_by_type":jobs_by_type,"job_mix_id":workload_id,"job_mix_label":_workload(workload_id).label,"bottleneck_detail":"受付済みの便は場外待機も含めて保持。まとめ便は荷下ろしから最低%d秒保管して直送。単品便は1個ずつ集品・梱包。"%int(bulk_dwell),"timing":timing_info(),"layout_id":layout_id,"layout_label":option.label,"pending_layout_id":pending_layout_id,"workload_id":workload_id,"mix_id":workload_id,"workload_label":_workload(workload_id).label,"scenario_description":_workload(workload_id).description,"sim_time":sim_time,"duration":duration,"continuous":duration<=0,"finished":finished,"shipped":shipped,"bulk_shipped":bulk_shipped,"pick_shipped":pick_shipped,"revenue":revenue,"money":money,"arrived":arrived,"offered_units":offered_units,"initial_cargo":initial_cargo,"inbound_blocked":inbound_blocked,"stored":stored,"picked":picked,"packed":packed,"rack_capacity":rack_capacity,"rack_occupied":_rack_occupied(),"bulk_capacity":bulk_capacity(),"bulk_occupied":bulk_storage.size(),"bulk_bays":bays,"manifest_size":MANIFEST_SIZE,"manifests":manifests.duplicate(true),"mix_history":mix_history.duplicate(true),"travel_seconds":travel_seconds,"loaded_travel_seconds":loaded_travel_seconds,"aisle_wait_seconds":aisle_wait_seconds,"relocation_seconds":relocation_seconds,"relocation_count":relocation_count,"relocation_history":relocation_history.duplicate(true),"relocating":_move_remaining>0,"relocation_remaining":_move_remaining,"annex_open":true,"equipment_budget":0,"budget_description":"棚1・梱包台1・5人・床6枠を配置で使い分け","equipment_signature":"rack%d:1;bench%.1fs:1;workers:5;pallet_floor:6;annex:1"%[rack_capacity,pack_seconds],"queues":{"inbound":inbound.size()*MANIFEST_SIZE,"external":external_backlog.size()*MANIFEST_SIZE,"storage":storage.size(),"bulk_storage":bulk_storage.size()*MANIFEST_SIZE,"picking":_worker_count("pick"),"packing":packing.size(),"processing":pack_jobs.size(),"packed":ready.size(),"orders":open_orders},"workers":visible_workers,"cargo":visible_cargo,"slots":slots,"edges":visible_edges,"equipment":[{"id":"shelf","kind":"shelf","slot":option.shelf_slot,"position":shelf_position,"access_position":_points()[_shelf_node()],"size":Vector3(2.2,2.2,2.8),"capacity":rack_capacity},{"id":"packing","kind":"packing","slot":option.packing_slot,"position":pack_position,"access_position":_points()[_pack_node()],"size":Vector3(1.6,.95,1),"capacity":1}],"world":{"width":20.0,"height":12.0,"annex":Rect2(-2,-7.8,9,5.8),"aisle":Rect2(-5,-.65,3,1.3),"inbound":_points().inbound,"outbound":_points().outbound,"nodes":_points().duplicate()},"reservations":{"store_slots":_store_reserved(),"cargo":workers.filter(func(w):return w.phase != "idle").size()},"bottleneck":_bottleneck(),"comparison":comparison.duplicate(true),"invariant":check_invariants()}
 
 func check_invariants() -> Dictionary:
     var owners: Array = []
