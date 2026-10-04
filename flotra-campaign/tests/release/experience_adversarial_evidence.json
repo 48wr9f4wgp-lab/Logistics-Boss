@@ -1,0 +1,84 @@
+{
+  "suite": "independent_experience_adversarial",
+  "verified_at_utc": "2026-10-04T11:23:27Z",
+  "godot": "4.7.2.stable.official.ed1daf0bf",
+  "exit_code": 0,
+  "checks": 27630,
+  "failures": [],
+  "baseline_commit": "0a5a71ee3e88100373fcb77aae685bd4f52a7c24",
+  "baseline_sha256": {
+    "growth_sim.gd": "22768ef02cd0b379b80f7392108a382d14a85919ceb6a6c4449ac7bf98301194",
+    "release_sim.gd": "7dcfef204d0e1a26f0a088bd6c0aeed764ca0ee46212761b3e7988985e2ad682",
+    "jobs_sim.gd": "cfe35051566561dcd21d4b021b19118a66afdd6d9e3f9847fbf32e8066d4dfeb"
+  },
+  "implementation_sha256": {
+    "growth_sim.gd": "2fca0727cf1c0e5eb24487fceb152c05d432e13df5143e36dc328af184dd4ea6",
+    "growth_v2_sim.gd": "fb888e047c279ee5a12b408f949b46e0662094ca89c589a4c2131dd256bd0bee",
+    "jobs_sim.gd": "cfe35051566561dcd21d4b021b19118a66afdd6d9e3f9847fbf32e8066d4dfeb",
+    "release_save.gd": "faf3a5bdd6b059cbf29b84909c237ab8d9e20353bdf2563ce066a32abb64e249"
+  },
+  "test_sha256": {
+    "experience_adversarial.gd": "2a479dbba5d0fef4b4986973f488b2df3166930ef15142759ca0a4e1dcd96068",
+    "run_experience_adversarial.sh": "0fd2e948b7ab4729c7f828580364c0ccaa1470a482f2a03eea702ebe0559c074"
+  },
+  "coverage": [
+    "Schema1 and schema2 migration exact binary-equivalent physics and campaign fields against independent original scripts from the pinned git commit, including original physical engine",
+    "30 source/work/target transport phases, paused state, active and pending relocation, all original purchases/results/wallets, four-wing ten-worker active hub",
+    "3 operating modes x 4 layouts with independently reconstructed cargo ownership, full physical-stage shipment checks and exact payout counts",
+    "Parcel pick and dispatch batches of 1..3 same-manifest units; six batch phases plus active trolley-edge save continuation against direct-property control copies",
+    "Fully earned four-wing, six-human, four-robot, automatic-packing, 48-slot warehouse: active robotic cart phases/edge save continuation and full 288-unit dispatch",
+    "Future schema, mode/preference shape corruption, unowned effects, duplicate cargo, wrong worksites, truncated routes, invalid event/relocation clocks, position/progress mismatch and operating-profile downgrade rejected atomically",
+    "Queued relocation cancellation while an empty-handed worker evacuates after final cargo; no premature reward settlement or stranded route ownership",
+    "Native store malformed/future primary and backup protection; exact previous-version backup bytes after migration checkpoint; mixed-version reload"
+  ],
+  "legacy_validator_boundary": {
+    "schema2_wrong_worksite_accepted": true
+  },
+  "scope_notes": [
+    "Pinned schema2 accepted the forged wrong-worksite state; this was inherited validation permissiveness rather than valid gameplay regression. New schema3 rejects it.",
+    "Tests ran in disposable /tmp copies with isolated HOME, XDG paths and explicit FLOTRA_REVIEW_USER_ROOT. No actual user progress files were opened.",
+    "This is headless domain/native-storage evidence, not WebGL, physical-device, UI, browser-storage or deployment certification.",
+    "Runner requires the pinned baseline git object locally; shallow CI checkouts must fetch that history or use fetch-depth: 0."
+  ],
+  "command": "GODOT=/path/to/Godot_v4.7.2 bash flotra-campaign/tests/release/run_experience_adversarial.sh",
+  "old_transport_phases": [
+    "v1_restock_to_source",
+    "v1_restock_work",
+    "v1_restock_to_target",
+    "v1_bulk_store_to_source",
+    "v1_bulk_store_work",
+    "v1_pick_to_source",
+    "v1_pick_work",
+    "v1_bulk_store_to_target",
+    "v1_pick_to_target",
+    "v1_ship_to_source",
+    "v1_ship_work",
+    "v1_ship_to_target",
+    "v1_bulk_ship_to_source",
+    "v1_bulk_ship_work",
+    "v1_bulk_ship_to_target",
+    "v2_restock_to_source",
+    "v2_restock_work",
+    "v2_restock_to_target",
+    "v2_bulk_store_to_source",
+    "v2_bulk_store_work",
+    "v2_bulk_store_to_target",
+    "v2_pick_to_source",
+    "v2_pick_work",
+    "v2_pick_to_target",
+    "v2_ship_to_source",
+    "v2_ship_work",
+    "v2_ship_to_target",
+    "v2_bulk_ship_to_source",
+    "v2_bulk_ship_work",
+    "v2_bulk_ship_to_target"
+  ],
+  "parcel_phases": [
+    "pick_to_source",
+    "pick_work",
+    "pick_to_target",
+    "ship_to_source",
+    "ship_work",
+    "ship_to_target"
+  ]
+}

@@ -125,15 +125,16 @@ async function swipe(page, context, rect, upward, requestedDistance) {
   const bottom = canvas.y + rect.y + rect.height - 16;
   const top = canvas.y + rect.y + 16;
   const start = upward ? bottom : top;
-  const distance = Math.min(bottom - top, requestedDistance || bottom - top);
+  const distance = Math.min(bottom - top, 180, (requestedDistance || bottom - top) * 0.5);
   const end = start + (upward ? -distance : distance);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: start }] });
   for (let step = 1; step <= 9; step++) {
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: start + (end - start) * step / 9 }] });
-    await page.waitForTimeout(25);
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
   }
   // Hold at the end so this is a deliberate drag, not an uncontrolled fling in
   // a short editor scroll area whose entire range can be smaller than a swipe.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(resolve)))));
   await page.waitForTimeout(250);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   let previous;
@@ -170,7 +171,7 @@ async function tapName(page, context, name, scrollable = false) {
     const inScroll = !scrollable || (y >= scroll.y + 8 && y <= scroll.y + scroll.height - 8);
     if (inCanvas && inScroll) {
       assert.ok(!control.disabled, `Touchable button is enabled: ${name}`);
-      assert.ok(control.height >= 48 && control.fontSize >= 18, `Readable CSS target: ${name}`);
+      assert.ok(control.height >= 56 && control.fontSize >= 18, `Readable CSS target: ${name}`);
       verify(m, `before touching ${name}`);
       console.log(`POINT ${name}: ${m.canvas.rect.x + x},${m.canvas.rect.y + y}; CSS ${m.engine.logicalWidth}x${m.engine.logicalHeight}; DPR ${m.viewport.dpr}`);
       await touchAt(page, context, m.canvas.rect.x + x, m.canvas.rect.y + y);
@@ -272,7 +273,7 @@ async function samplePerformance(page,milliseconds) {
   async function scenario(name,fixture,action){
    if(process.env.FLOTRA_JOURNEY_CASES && !process.env.FLOTRA_JOURNEY_CASES.split(',').includes(name))return;
    const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true});
-   if(fixture)await context.addInitScript(encoded=>localStorage.setItem('flotra.campaign.release.v1',encoded),fixture.encoded);
+   if(fixture)await context.addInitScript(encoded=>{if(localStorage.getItem('flotra.campaign.release.v1')===null)localStorage.setItem('flotra.campaign.release.v1',encoded);},fixture.encoded);
    const page=await context.newPage();const errors=[];
    page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
    const test={name};result.tests.push(test);
@@ -314,6 +315,38 @@ async function samplePerformance(page,milliseconds) {
    await page.waitForTimeout(1200);await tapName(page,context,'PauseResume');await expectUI(page,{trialRunning:false});
    state=await ui(page);assert.ok(state.simTime>legacy.time);test.preserved=true;test.resumedAt=state.simTime;
    await page.screenshot({path:path.join(output,'legacy-save-preserved.png'),scale:'css'});
+  });
+  const growthV2=JSON.parse(fs.readFileSync(path.join(fixturesDirectory,'growth_v2.json'),'utf8'));
+  await scenario('growth-v2-inflight',growthV2,async(page,context,test)=>{
+   let state=await ui(page);assert.equal(state.wallet,growthV2.wallet);assert.equal(state.progress.shipped,growthV2.shipped);assert.equal(state.simTime,growthV2.time);assert.deepEqual(state.upgrades,growthV2.upgrades);assert.equal(state.trialRunning,false);
+   await closeSheets(page,context);await page.waitForTimeout(600);
+   assert.equal((await ui(page)).simTime,growthV2.time,'Closing help preserves migrated pause');
+   await setRunning(page,context,true);await page.waitForTimeout(1200);await setRunning(page,context,false);
+   state=await ui(page);assert.ok(state.simTime>growthV2.time);test.preserved=true;
+  });
+  const complete=JSON.parse(fs.readFileSync(path.join(fixturesDirectory,'complete.json'),'utf8'));
+  await scenario('equipment-and-comfort',complete,async(page,context,test)=>{
+   await closeSheets(page,context);await tapName(page,context,'Back');await expectUI(page,{sheet:'controls'});
+   await tapName(page,context,'Speed4x',true);await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.speed===4);
+   await tapName(page,context,'PauseMenusSetting',true);await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.preferences.pause_on_menus===true);
+   await tapName(page,context,'ReducedMotionSetting',true);await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.preferences.reduced_motion===true);
+   await closeSheets(page,context);await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.FlotraViewport?.uiMetrics,null,{timeout:120000});await settle(page);
+   let state=await ui(page);assert.equal(state.speed,4);assert.equal(state.preferences.pause_on_menus,true);assert.equal(state.preferences.reduced_motion,true);assert.equal(state.trialRunning,false);test.preferencesPersisted=true;
+   await closeSheets(page,context);await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs'});await tapName(page,context,'Tab_upgrades');
+   await tapName(page,context,'ToggleOperations',true);await tapName(page,context,'ChooseOperation_parcel',true);
+   await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.operation.mode_id==='parcel');
+   assert.equal((await ui(page)).wallet,complete.wallet,'Free operating choices never spend the wallet');
+   await page.screenshot({path:path.join(output,'parcel-operation-choice.png'),scale:'css'});
+   await tapName(page,context,'Tab_contracts');await tapName(page,context,'AcceptContract_route_pick',true);await expectUI(page,{sheet:'',trialRunning:true});
+   await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.batchWorkers>0,null,{timeout:45000});test.actualParcelCart=true;
+   await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs',menuPaused:true});
+   state=await ui(page);const pausedAt=state.simTime;await page.waitForTimeout(1100);assert.equal((await ui(page)).simTime,pausedAt,'Automatic menu pause preserves cargo clock');
+   await closeSheets(page,context);await page.waitForFunction(t=>window.FlotraViewport.uiMetrics.simTime>t,pausedAt);
+   await setRunning(page,context,false);await tapName(page,context,'Back');await expectUI(page,{sheet:'controls'});await closeSheets(page,context);
+   assert.equal((await ui(page)).trialRunning,false,'Manual pause survives opening and closing controls');
+   await setRunning(page,context,true);await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.status==='contract_complete',null,{timeout:90000});
+   state=await ui(page);assert.equal(state.progress.shipped,36);assert.equal(state.wallet,complete.wallet+300);test.cartDeliveryPaysExactlyOnce=true;
+   await tapName(page,context,'SessionRecord');await expectUI(page,{sheet:'records'});await page.screenshot({path:path.join(output,'completed-parcel-route.png'),scale:'css'});
   });
   const late=JSON.parse(fs.readFileSync(path.join(fixturesDirectory,'late.json'),'utf8'));
   await scenario('mature-performance',late,async(page,context,test)=>{

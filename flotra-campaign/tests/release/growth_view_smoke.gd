@@ -284,6 +284,8 @@ func run() -> void:
             view.select_slot(slot)
             view.fit_camera(Vector2(dimensions))
             check_callouts(view, dimensions, 1)
+            var expected_caption := "棚の容量 %d個" % active.rack_capacity if slot == "shelf" else "梱包 %.1f秒/個" % active.pack_seconds
+            check(view._callouts.Selected.label.text == expected_caption, "Mature equipment caption preserves actual capacity and fractional packing time")
             check_batches(view)
             view.preview_slot(slot, "annex")
             view.fit_camera(Vector2(dimensions))

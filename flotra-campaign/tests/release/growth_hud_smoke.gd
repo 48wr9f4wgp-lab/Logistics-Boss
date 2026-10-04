@@ -61,7 +61,9 @@ func verify_touch_scrolling():
     check(hud._sheet_kind == "jobs" and hud._scroll.scroll_vertical > 100, "Drag from enabled job button scrolls")
     check(contract_requests.is_empty(), "Button drag does not accept a job")
     for tab in ["upgrades", "records"]:
-        if tab == "upgrades": hud._open_upgrades()
+        if tab == "upgrades":
+            hud._open_upgrades()
+            hud._toggle_upgrades_group("future")
         else: hud.show_conditions()
         await settled()
         for attempt in 2:
@@ -120,12 +122,13 @@ func _run():
         await settled()
         check(hud._upgrade_buttons.has("wing_4"), "Four wings shown")
         inspect(hud._root)
-        hud.show_conditions()
+        hud.show_controls()
         await settled()
         check(hud._speed_buttons.has(4), "4x speed selectable")
         hud._choose_speed(4.0)
         check(hud._speed == 4.0, "4x speed preserved")
         hud.set_speed(2.0)
+        hud.show_conditions()
         hud._toggle_history()
         check(hud._content.get_node("GrowthHistory").visible, "Optional history opens")
         inspect(hud._root)

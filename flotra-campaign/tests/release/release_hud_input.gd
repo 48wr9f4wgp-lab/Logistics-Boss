@@ -134,7 +134,7 @@ func run() -> void:
             check(hud._sheet_kind == "editor" and not hud._trial_running, "Paused warehouse layout remains independent")
             hud._choose("annex")
             await settle()
-            check(hud._cost.text == "契約の合間の配置変更・作業停止なし", "Between-contract layout previews show zero stoppage")
+            check(hud._cost.text == "仕事の合間は無料で変更できます。待ち時間もありません", "Between-contract layout previews show zero stoppage")
             hud.show_action_result({"ok":true,"pending":false})
             check(hud._notice_title == "配置を変更しました", "Immediate layout feedback does not claim deferred relocation")
             hud.close_sheet()

@@ -19,6 +19,8 @@ var _last_status := ""
 var _loaded := false
 var _phone_qa := false
 var _qa_elapsed := 0.0
+var _menu_paused := false
+var _preferences := {"preferred_speed": 2, "pause_on_menus": false, "reduced_motion": false}
 
 func _ready() -> void:
     # Native window units are already logical pixels. The web drawing buffer is
@@ -33,6 +35,7 @@ func _ready() -> void:
     sim = SimScript.new()
     if persistence_enabled:
         save_store.load_into(sim)
+    _apply_preferences()
     _loaded = true
     var background := ColorRect.new()
     background.color = Color("101e29")
@@ -55,10 +58,14 @@ func _ready() -> void:
     hud = HudScript.new()
     hud.call("bind_sim", sim)
     add_child(hud)
+    world.input_gate = func(): return is_instance_valid(hud) and hud._sheet_kind in ["", "editor"] and not hud._background_input_blocked()
     hud.call("set_speed",speed)
     _connect_if("contract_requested", _accept_contract)
     _connect_if("upgrade_requested", _buy_upgrade)
     _connect_if("speed_requested", _set_speed)
+    _connect_if("preference_requested", _set_preference)
+    _connect_if("operation_requested", _set_operation)
+    _connect_if("cancel_layout_requested", _cancel_layout)
     _connect_if("trial_started", _start_trial)
     _connect_if("back_requested", _return_to_intro)
     _connect_if("exit_requested", _exit_trial)
@@ -78,6 +85,7 @@ func _ready() -> void:
     if OS.has_feature("web"):
         get_tree().root.size_changed.connect(func(): _report_web_viewport.call_deferred())
     _resize_world()
+    _apply_preferences()
     hud.call("set_save_status", save_store.status if persistence_enabled else "テスト・保存なし")
     if hud.has_method("show_intro"):
         hud.call("show_intro")
@@ -158,13 +166,20 @@ func _report_phone_qa() -> void:
         slots[id] = {"x":point.x,"y":point.y}
     data["slots"] = slots
     data["worldVisible"] = viewport_container.visible
-    data["growth"] = sim.release_state().growth
-    data["progress"] = sim.release_state().progress
+    var release: Dictionary = sim.release_state()
+    data["growth"] = release.growth
+    data["progress"] = release.progress
     data["status"] = sim.campaign_status
     data["wallet"] = sim.campaign_wallet
     data["upgrades"] = sim.purchased_upgrades.duplicate()
     data["currentContract"] = sim.current_contract_id
     data["simTime"] = sim.sim_time
+    data["speed"] = speed
+    data["menuPaused"] = _menu_paused
+    data["preferences"] = release.get("preferences", {})
+    data["operation"] = release.get("operations", {})
+    data["batchWorkers"] = sim.workers.filter(func(worker): return worker.task in ["pick", "ship"] and worker.cargo_ids.size() > 1).size()
+    data["layout"] = {"current":sim.layout_id,"pending":sim.pending_layout_id,"moving":sim._move_remaining > 0.0}
     data["performance"] = {"nodes":Performance.get_monitor(Performance.OBJECT_NODE_COUNT),"objects":Performance.get_monitor(Performance.OBJECT_COUNT),"drawCalls":Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),"processMs":Performance.get_monitor(Performance.TIME_PROCESS)*1000.0}
     JavaScriptBridge.eval("if (window.FlotraViewport) window.FlotraViewport.uiMetrics = %s" % JSON.stringify(data), true)
 
@@ -182,6 +197,8 @@ func _resize_world() -> void:
         bottom = insets.y
     viewport_container.position = Vector2(0, top)
     viewport_container.size = Vector2(size.x, maxf(96.0, size.y-top-bottom))
+    if world != null and world.has_method("cancel_pointer_input"):
+        world.call("cancel_pointer_input")
     if world != null and world.has_method("fit_camera"):
         world.call("fit_camera", viewport_container.size)
 
@@ -195,12 +212,12 @@ func _process(delta: float) -> void:
                 _report_phone_qa()
     if sim == null:
         return
-    if running:
+    _menu_paused = running and bool(_preferences.pause_on_menus) and is_instance_valid(hud) and not str(hud._sheet_kind).is_empty()
+    if running and not _menu_paused:
         sim.step(minf(delta, 0.25) * speed)
         _save_elapsed += delta
-        var state: Dictionary = sim.release_state()
-        if str(state.get("status","")) != _last_status:
-            _last_status = str(state.get("status",""))
+        if sim.campaign_status != _last_status:
+            _last_status = sim.campaign_status
             _save_now()
         elif _save_elapsed >= 5.0:
             _save_now()
@@ -215,7 +232,7 @@ func _update_world_visibility() -> void:
     # Full-height reading sheets cover the warehouse. Keep its simulation and
     # autosaves running, but do not render a hidden 3D scene behind those sheets.
     if not is_instance_valid(hud) or not is_instance_valid(viewport): return
-    var visible_world: bool = hud._sheet_kind not in ["entry","jobs","records"]
+    var visible_world: bool = hud._sheet_kind not in ["entry","jobs","records","controls"]
     viewport_container.visible = visible_world
     viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if visible_world else SubViewport.UPDATE_DISABLED
 
@@ -281,7 +298,43 @@ func _buy_upgrade(id: String) -> void:
 
 func _set_speed(value: float) -> void:
     speed = value if value in [1.0,2.0,4.0] else 2.0
+    if sim.has_method("set_preference"):
+        sim.set_preference("preferred_speed", int(speed))
     hud.call("set_speed",speed)
+    _save_now()
+
+func _apply_preferences() -> void:
+    if sim == null: return
+    var preferences: Dictionary = sim.release_state().get("preferences", {})
+    for key in _preferences:
+        if preferences.has(key): _preferences[key] = preferences[key]
+    speed = float(preferences.get("preferred_speed", 2))
+    if is_instance_valid(hud):
+        hud.call("set_speed", speed)
+        if hud.has_method("set_preferences"): hud.call("set_preferences", preferences)
+    if is_instance_valid(world) and world.has_method("set_reduced_motion"):
+        world.call("set_reduced_motion", bool(preferences.get("reduced_motion", false)))
+
+func _set_preference(key: String, value: Variant) -> void:
+    if not sim.has_method("set_preference"): return
+    var result: Dictionary = sim.set_preference(key, value)
+    if result.get("ok", false):
+        _apply_preferences()
+        _save_now()
+
+func _set_operation(id: String) -> void:
+    if not sim.has_method("set_operation"): return
+    var result: Dictionary = sim.set_operation(id)
+    if hud.has_method("show_operation_result"): hud.call("show_operation_result", result)
+    if result.get("ok", false): _save_now()
+    world.call("refresh")
+
+func _cancel_layout() -> void:
+    if not sim.has_method("cancel_layout"): return
+    var result: Dictionary = sim.cancel_layout()
+    if hud.has_method("show_cancel_layout_result"): hud.call("show_cancel_layout_result", result)
+    if result.get("ok", false): _save_now()
+    world.call("refresh")
 
 func _save_now() -> void:
     _save_elapsed = 0.0
@@ -290,7 +343,13 @@ func _save_now() -> void:
     if is_instance_valid(hud): hud.call("set_save_status",save_store.status)
 
 func _notification(what: int) -> void:
-    if what in [NOTIFICATION_WM_WINDOW_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_CLOSE_REQUEST]:
+    if what in [NOTIFICATION_WM_WINDOW_FOCUS_OUT, NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED]:
+        # A background tab/app never silently keeps advancing a player's job.
+        # Returning is deliberately paused until an explicit Resume action.
+        running = false
+        if is_instance_valid(hud): hud.call("set_trial_running", false)
+        _save_now()
+    elif what == NOTIFICATION_WM_CLOSE_REQUEST:
         _save_now()
 
 func _preview_layout(id: String) -> void:

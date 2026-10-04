@@ -499,7 +499,7 @@ func _update_choice() -> void:
             button.add_theme_stylebox_override("normal", _style(TEAL if is_selected else Color("e3eae2"), INK if is_selected else LINE))
             button.add_theme_font_size_override("font_size", 16)
     _benefit.text = "よい点  " + str(selected.get("benefit", "実際の運搬を観測して確かめます"))
-    _tradeoff.text = "引き換え  " + str(selected.get("tradeoff", "置く場所によって、通る道と距離が変わります"))
+    _tradeoff.text = "注意点  " + str(selected.get("tradeoff", "置く場所によって、通る道と距離が変わります"))
     _cost.text = str(selected.get("cost_label", "同じ設備を移動 ・ 追加購入なし"))
     var pending := not str(_snapshot.get("pending_layout_id", "")).is_empty()
     var unchanged := _choice_id == current
@@ -520,10 +520,10 @@ func _apply_choice() -> void:
 func show_action_result(result: Dictionary) -> void:
     var ok := bool(result.get("ok", false))
     var reason := str(result.get("reason", ""))
-    var reasons := {"draining":"運搬中の荷物を完了してから、設備を移します", "busy":"前の配置変更が終わるまでお待ちください", "too_late":"残り時間では移動が終わりません。「条件」で通常の波を選べます", "same":"すでにこの配置です", "finished":"観測は終了しました。「条件」から最初から試せます", "unknown":"この配置には変更できません", "unknown_slot":"選んだ区画が見つかりません", "unknown_choice":"選んだ場所には変更できません"}
+    var reasons := {"draining":"運搬が終わり、移動先が空くと設備を動かします。移動費用はかかりません", "busy":"前の配置変更が終わるまでお待ちください", "too_late":"いまは配置を変更できません。作業の終了後にもう一度お試しください", "same":"すでにこの配置です", "finished":"作業が終了しています。次の仕事を選んでください", "unknown":"この配置には変更できません", "unknown_slot":"選んだ設備が見つかりません。配置画面を開き直してください", "unknown_choice":"この場所には変更できません。別の場所を選んでください"}
     _notice = str(reasons.get(reason, ""))
     if _notice.is_empty():
-        _notice = "荷物を運び終えてから、設備を移します" if ok else "この配置には変更できません"
+        _notice = "運搬が終わり、移動先が空くと設備を動かします" if ok else "配置を変更できませんでした。配置画面を開き直してください"
     _notice_seconds = 5.0
     refresh()
 

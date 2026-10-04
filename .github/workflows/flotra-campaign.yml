@@ -17,7 +17,7 @@ permissions:
 jobs:
   campaign-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -30,9 +30,14 @@ jobs:
           include-templates: false
       - name: Campaign, save safety, and phone input tests
         run: bash flotra-campaign/test.sh
+      - name: Independent pinned historical-save and route adversarial checks
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=1 origin 0a5a71ee3e88100373fcb77aae685bd4f52a7c24
+          bash flotra-campaign/tests/release/run_experience_adversarial.sh
   phone-browser-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -64,7 +69,7 @@ jobs:
           retention-days: 7
   growth-browser-journey:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4

@@ -98,7 +98,10 @@ func run() -> void:
         app.hud.select_slot("shelf")
         await settle()
         verify_labels(1)
-        check(app.world._callouts.Selected.label.text=="棚 24個","Selected shelf shows actual upgraded capacity")
+        check(app.world._callouts.Selected.label.text=="棚の容量 24個","Selected shelf shows actual upgraded capacity")
+        app.hud.select_slot("packing")
+        await settle()
+        check(app.world._callouts.Selected.label.text=="梱包 %.1f秒/個" % app.sim.pack_seconds,"Selected packing shows exact seconds per item")
         app.queue_free()
         await process_frame
     print("READABILITY_WORLD %d checks, %d failures"%[checks,failures])

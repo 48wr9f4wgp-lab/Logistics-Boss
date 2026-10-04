@@ -146,7 +146,7 @@ func _refresh_callouts() -> void:
     _callout_signature = signature
     var descriptors: Array[Dictionary] = []
     if not _selected.is_empty() and _slots.has(_selected):
-        var title := "棚 %d個" % sim.rack_capacity if _selected == "shelf" else "梱包 %.0f秒" % sim.pack_seconds
+        var title := "棚の容量 %d個" % sim.rack_capacity if _selected == "shelf" else "梱包 %.1f秒/個" % sim.pack_seconds
         var equipment: Node3D = _slots[_selected]
         descriptors.append({"id":"Selected","text":title,"point":equipment.position+Vector3(0,2.2 if _selected=="shelf" else 1.0,0),"color":AMBER,"side":-1})
         if is_instance_valid(_ghost):
