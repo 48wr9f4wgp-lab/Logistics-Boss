@@ -17,10 +17,19 @@ var persistence_enabled := true
 var _save_elapsed := 0.0
 var _last_status := ""
 var _loaded := false
+var _phone_qa := false
+var _qa_elapsed := 0.0
 
 func _ready() -> void:
-    get_tree().root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
-    get_tree().root.content_scale_size = Vector2i.ZERO
+    # Native window units are already logical pixels. The web drawing buffer is
+    # high-DPI device pixels, so use the canvas's CSS rectangle as our layout space.
+    if OS.has_feature("web"):
+        # String return matches the established bridge contract across Web builds.
+        _phone_qa = str(JavaScriptBridge.eval("new URLSearchParams(window.location.search).get(\"phone_qa\") === \"1\" ? \"1\" : \"0\"", true)) == "1"
+        _sync_web_viewport()
+    else:
+        get_tree().root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
+        get_tree().root.content_scale_size = Vector2i.ZERO
     sim = SimScript.new()
     if persistence_enabled:
         save_store.load_into(sim)
@@ -65,10 +74,88 @@ func _ready() -> void:
     if world.has_signal("slot_selected"):
         world.connect("slot_selected", _world_slot_selected)
     get_viewport().size_changed.connect(_resize_world)
+    if OS.has_feature("web"):
+        get_tree().root.size_changed.connect(func(): _report_web_viewport.call_deferred())
     _resize_world()
     hud.call("set_save_status", save_store.status if persistence_enabled else "テスト・保存なし")
     if hud.has_method("show_intro"):
         hud.call("show_intro")
+    if OS.has_feature("web"):
+        _report_web_viewport.call_deferred()
+
+# Keep logical controls and input coordinates independent of the browser's DPR.
+# The loader owns the full-resolution backing buffer; Godot stretches canvas
+# items and transforms browser input into this exact CSS-pixel coordinate space.
+func _apply_logical_viewport(css_size: Vector2i) -> void:
+    if css_size.x <= 0 or css_size.y <= 0:
+        return
+    var window := get_tree().root
+    if window.content_scale_size == css_size and window.content_scale_mode == Window.CONTENT_SCALE_MODE_CANVAS_ITEMS:
+        return
+    window.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+    window.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_IGNORE
+    window.content_scale_size = css_size
+    if OS.has_feature("web"):
+        _report_web_viewport.call_deferred()
+    if is_instance_valid(hud):
+        hud.call("_layout")
+        _resize_world.call_deferred()
+
+func _report_web_viewport() -> void:
+    if not OS.has_feature("web") or not is_instance_valid(hud):
+        return
+    var logical := get_viewport().get_visible_rect().size
+    var transform := get_viewport().get_screen_transform()
+    var dimensions: Vector2 = hud._root.size
+    var metrics := {"logicalWidth": logical.x, "logicalHeight": logical.y,
+        "rootWidth": get_tree().root.size.x, "rootHeight": get_tree().root.size.y,
+        "hudWidth": dimensions.x, "hudHeight": dimensions.y,
+        "scaleX": transform.x.length(), "scaleY": transform.y.length()}
+    JavaScriptBridge.eval("if (window.FlotraViewport) window.FlotraViewport.engineMetrics = %s" % JSON.stringify(metrics), true)
+
+func _sync_web_viewport() -> void:
+    var encoded: Variant = JavaScriptBridge.eval("window.FlotraViewport ? window.FlotraViewport.metricsJSON : ''", true)
+    if not encoded is String or encoded.is_empty():
+        return
+    var metrics: Variant = JSON.parse_string(encoded)
+    if metrics is Dictionary:
+        _apply_logical_viewport(Vector2i(roundi(float(metrics.get("width", 0))), roundi(float(metrics.get("height", 0)))))
+
+# Opt-in, read-only diagnostics for the actual exported browser/input suite.
+# It exposes visible UI geometry, never commands or save/import/reset methods.
+func _qa_rect(control: Control) -> Dictionary:
+    var rect := control.get_global_rect()
+    return {"x":rect.position.x,"y":rect.position.y,"width":rect.size.x,"height":rect.size.y}
+
+func _report_phone_qa() -> void:
+    if not _phone_qa or not is_instance_valid(hud): return
+    var buttons: Array = []
+    var labels: Array = []
+    var pending: Array[Node] = [hud._root]
+    while not pending.is_empty():
+        var node: Node = pending.pop_back()
+        for child in node.get_children(): pending.append(child)
+        if node is Button:
+            var data := _qa_rect(node)
+            data.merge({"name":str(node.name),"text":node.text,"disabled":node.disabled,
+                "visible":node.is_visible_in_tree(),"fontSize":node.get_theme_font_size("font_size")})
+            buttons.append(data)
+        elif node is Label and node.is_visible_in_tree():
+            var data := _qa_rect(node)
+            data.merge({"name":str(node.name),"text":node.text,"fontSize":node.get_theme_font_size("font_size")})
+            labels.append(data)
+    var data := {"sheet":hud._sheet_kind,"trialRunning":hud._trial_running,
+        "selectedSlot":world._selected,"buttons":buttons,"labels":labels,"scroll":{}}
+    if is_instance_valid(hud._scroll):
+        data.scroll = _qa_rect(hud._scroll)
+        data.scroll.merge({"scrollVertical":hud._scroll.scroll_vertical,
+            "max":hud._scroll.get_v_scroll_bar().max_value,"page":hud._scroll.get_v_scroll_bar().page})
+    var slots := {}
+    for id in world._slots:
+        var point: Vector2 = viewport_container.position + world.camera.unproject_position(world._slots[id].position + Vector3(0,1,0))
+        slots[id] = {"x":point.x,"y":point.y}
+    data["slots"] = slots
+    JavaScriptBridge.eval("if (window.FlotraViewport) window.FlotraViewport.uiMetrics = %s" % JSON.stringify(data), true)
 
 func _connect_if(key: StringName, target: Callable) -> void:
     if hud.has_signal(key):
@@ -88,6 +175,13 @@ func _resize_world() -> void:
         world.call("fit_camera", viewport_container.size)
 
 func _process(delta: float) -> void:
+    if OS.has_feature("web"):
+        _sync_web_viewport()
+        if _phone_qa:
+            _qa_elapsed += delta
+            if _qa_elapsed >= 0.2:
+                _qa_elapsed = 0.0
+                _report_phone_qa()
     if sim == null:
         return
     if running:

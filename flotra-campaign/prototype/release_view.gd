@@ -1,7 +1,7 @@
 extends "res://prototype/jobs_view.gd"
 ## Release-only presentation. Geometry, jobs and selection remain authoritative.
-const CALLOUT_FONT_SIZE := 14
-const CALLOUT_HEIGHT := 28.0
+const CALLOUT_FONT_SIZE := 18
+const CALLOUT_HEIGHT := 36.0
 const CALLOUT_MARGIN := 8.0
 var _readability_layer: CanvasLayer
 var _callouts: Dictionary = {}

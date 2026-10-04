@@ -150,11 +150,16 @@ func refresh() -> void:
             _reason_detail.text = "床の荷物を出し終えてから移動します"
     else:
         _show_operational_reason()
-    _compare.disabled = bool(_snapshot.get("finished", false))
+    _compare.disabled = not _work_choices_enabled()
     if _sheet_kind == "jobs":
         _update_mix_choice()
     elif _sheet_kind == "records":
         _update_record()
+
+# Decide availability once. A release can keep its menu open between contracts
+# without briefly disabling/re-enabling BaseButton and cancelling a held finger.
+func _work_choices_enabled() -> bool:
+    return not bool(_snapshot.get("finished", false))
 
 func _show_operational_reason() -> void:
     var reason := str(_snapshot.get("bottleneck", ""))
