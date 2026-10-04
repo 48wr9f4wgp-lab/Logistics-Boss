@@ -248,6 +248,10 @@ async function closeSheets(page,context) {
   }
   await expectUI(page,{sheet:''});
 }
+async function setRunning(page,context,running) {
+  if ((await ui(page)).trialRunning !== running) await tapName(page,context,'PauseResume');
+  await expectUI(page,{trialRunning:running});
+}
 async function samplePerformance(page,milliseconds) {
   return page.evaluate(ms=>new Promise(resolve=>{
     const frames=[],metrics=[];let last=performance.now(),start=last;
@@ -297,7 +301,7 @@ async function samplePerformance(page,milliseconds) {
   const legacy=JSON.parse(fs.readFileSync(path.join(fixturesDirectory,'legacy.json'),'utf8'));
   await scenario('legacy-inflight',legacy,async(page,context,test)=>{
    let state=await ui(page);assert.equal(state.wallet,legacy.wallet);assert.equal(state.progress.shipped,legacy.shipped);assert.equal(state.simTime,legacy.time);assert.equal(state.growth.legacy_profile,true);assert.deepEqual(state.upgrades,legacy.upgrades);assert.equal(state.trialRunning,false);
-   await closeSheets(page,context);await tapName(page,context,'PauseResume');await expectUI(page,{trialRunning:true});
+   await closeSheets(page,context);await setRunning(page,context,true);
    await page.waitForTimeout(1200);await tapName(page,context,'PauseResume');await expectUI(page,{trialRunning:false});
    state=await ui(page);assert.ok(state.simTime>legacy.time);test.preserved=true;test.resumedAt=state.simTime;
    await page.screenshot({path:path.join(output,'legacy-save-preserved.png'),scale:'css'});
@@ -305,9 +309,9 @@ async function samplePerformance(page,milliseconds) {
   const late=JSON.parse(fs.readFileSync(path.join(fixturesDirectory,'late.json'),'utf8'));
   await scenario('mature-performance',late,async(page,context,test)=>{
    let state=await ui(page);assert.equal(state.growth.wing_count,4);assert.equal(state.growth.robot_count,4);assert.equal(state.progress.shipped,late.shipped);assert.equal(state.wallet,late.wallet);assert.equal(state.trialRunning,false);
-   await closeSheets(page,context);await page.waitForTimeout(1000);
+   await closeSheets(page,context);await setRunning(page,context,false);await page.waitForTimeout(1000);
    const idle=await samplePerformance(page,6000);
-   await tapName(page,context,'PauseResume');await expectUI(page,{trialRunning:true});await page.waitForTimeout(1000);
+   await setRunning(page,context,true);await page.waitForTimeout(1000);
    const active=await samplePerformance(page,12000);
    await tapName(page,context,'PauseResume');await expectUI(page,{trialRunning:false});await page.waitForTimeout(500);
    await page.screenshot({path:path.join(output,'mature-warehouse.png'),scale:'css'});
