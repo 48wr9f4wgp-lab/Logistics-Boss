@@ -49,6 +49,11 @@ func _build() -> void:
     _shipped.add_theme_font_size_override("font_size", 20)
     _layout()
 
+func _work_choices_enabled() -> bool:
+    # Contracts and upgrades remain available before/after a finite contract.
+    # Override the inherited decision itself, not the resulting button state.
+    return true
+
 func set_save_status(value: String) -> void:
     _save_status = value
     refresh()
@@ -86,7 +91,6 @@ func refresh() -> void:
         if save_label != null:
             save_label.text = _save_status
     _compare.text = "受注・設備"
-    _compare.disabled = false
     _conditions.text = "結果"
     var progress: Dictionary = _release.get("progress", {})
     var current: Dictionary = _release.get("current_contract", {})

@@ -15,6 +15,12 @@ The defect was reproduced in actual Chromium WebGL2 rendering with fresh isolate
 - Clearer live view with fewer simultaneous rows, larger warehouse space, full-height reading sheets, and a pinned placement action outside the editor's scroll area
 - Portrait layouts remain usable at 375×567, 375×667, 390×844 and 430×932; short landscape uses a header-safe reading layout
 
+## Held-touch regression found by browser verification
+
+Actual finger-duration tests uncovered an inherited input bug between contracts. The prototype HUD disabled its work-choice button because the simulation was finished; the campaign then re-enabled it in the same refresh. That temporary disable cancels Godot BaseButton's in-progress press. A down/up pair inside one frame could pass while a normal finger held across a refresh failed. A deterministic engine test reproduced the cancellation with unchanged press epochs.
+
+The campaign now overrides the inherited availability decision before it is applied, so the button never transiently disables. The dismissal epochs, focus-loss protection, scroll cancellation and click-through guard remain intact. Regression coverage holds mouse and touch input across repeated refreshes in ready, completed and replay states.
+
 ## Scope and preservation
 
 The six contracts, actual upgrades, replay scoring and PR145/146 save format are unchanged. `campaign-storage.js` is byte-identical to the prior release. The loader retains `persistentPaths: []`; the original `/godot-preview/`, its assets and its user data are untouched. Campaign localStorage remains isolated with the same backup and exclusive writer lock.

@@ -33,6 +33,10 @@ jobs:
   phone-browser-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        dpr: [1, 2, 3]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -43,6 +47,8 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
           "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
       - name: Exported phone CSS, DPR, resize and touch regression
+        env:
+          FLOTRA_TEST_DPRS: ${{ matrix.dpr }}
         shell: bash
         run: |
           python3 -m http.server 8812 --bind 127.0.0.1 --directory docs > /tmp/flotra-browser-server.log 2>&1 &
@@ -53,6 +59,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: flotra-browser-phone
+          name: flotra-browser-phone-dpr-${{ matrix.dpr }}
           path: build/browser-phone
           retention-days: 7

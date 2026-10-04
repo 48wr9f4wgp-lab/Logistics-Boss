@@ -16,10 +16,35 @@ const testURL = new URL(requestedURL);
 testURL.searchParams.set('phone_qa', '1');
 const url = testURL.href;
 fs.mkdirSync(output, { recursive: true });
-const cases = [[375, 567], [375, 667], [390, 844], [430, 932]];
+const allCases = [[375, 567], [375, 667], [390, 844], [430, 932]];
+const selectedCases = process.env.FLOTRA_TEST_CASES?.split(',');
+const cases = selectedCases ? allCases.filter(([width, height]) => selectedCases.includes(`${width}x${height}`)) : allCases;
+assert.ok(cases.length > 0, 'At least one known phone case is selected');
 const dprs = process.env.FLOTRA_TEST_DPRS ? process.env.FLOTRA_TEST_DPRS.split(',').map(Number) : [1, 2, 3];
-const report = { kind: 'Chromium CSS viewport/DPR/WebGL emulation; not physical device verification', url, results: [] };
+const tapHold = Number(process.env.FLOTRA_TAP_HOLD_MS ?? 90);
+assert.ok(Number.isFinite(tapHold) && tapHold >= 0 && tapHold <= 500, 'Supported touch hold duration');
+const freshOnly = process.env.FLOTRA_FRESH_ONLY === '1';
+const report = { kind: 'Chromium CSS viewport/DPR/WebGL emulation; not physical device verification', url, configuration: { tapHoldMilliseconds: tapHold, freshContextOnly: freshOnly }, results: [] };
 const closeEnough = (actual, expected, label, tolerance = 1) => assert.ok(Math.abs(actual - expected) <= tolerance, `${label}: ${actual} != ${expected}`);
+const cdpSessions = new WeakMap();
+
+async function session(page, context) {
+  if (!cdpSessions.has(page)) cdpSessions.set(page, await context.newCDPSession(page));
+  return cdpSessions.get(page);
+}
+
+async function touchAt(page, context, x, y) {
+  if (tapHold === 0) {
+    await page.touchscreen.tap(x, y);
+    return;
+  }
+  const cdp = await session(page, context);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 0, x, y }] });
+  // Hold across a rendering/refresh boundary to detect real press cancellation
+  // bugs. A zero-duration tap can complete before a faulty refresh runs.
+  await page.waitForTimeout(tapHold);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+}
 
 async function measure(page) {
   return page.evaluate(() => {
@@ -34,6 +59,22 @@ async function measure(page) {
   });
 }
 
+async function installDOMTrace(page) {
+  if (process.env.FLOTRA_DOM_TRACE !== '1') return;
+  await page.addInitScript(() => {
+    window.__phoneDomTrace = [];
+    for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel', 'mousedown', 'mousemove', 'mouseup', 'focus', 'blur']) {
+      window.addEventListener(type, event => {
+        const canvas = document.querySelector('#canvas');
+        const rect = canvas?.getBoundingClientRect();
+        const points = event.changedTouches ? Array.from(event.changedTouches).map(touch => ({ id: touch.identifier, x: touch.clientX, y: touch.clientY })) : [{ x: event.clientX, y: event.clientY }];
+        window.__phoneDomTrace.push({ type, ms: performance.now(), target: event.target?.id || event.target?.nodeName, points, dpr: devicePixelRatio, viewport: [innerWidth, innerHeight], canvas: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height, backingWidth: canvas.width, backingHeight: canvas.height } : null });
+        if (window.__phoneDomTrace.length > 2000) window.__phoneDomTrace.shift();
+      }, { capture: true, passive: true });
+    }
+  });
+}
+
 function verify(m, label) {
   assert.ok(m.bridge && m.engine, `${label}: actual bridge and engine metrics must be present`);
   const r = m.canvas.rect;
@@ -44,6 +85,8 @@ function verify(m, label) {
   closeEnough(m.bridge.height, r.height, `${label}: bridge CSS height`);
   closeEnough(m.engine.logicalWidth, Math.round(r.width), `${label}: Godot logical width is CSS width`);
   closeEnough(m.engine.logicalHeight, Math.round(r.height), `${label}: Godot logical height is CSS height`);
+  closeEnough(m.engine.hudWidth, Math.round(r.width), `${label}: actual HUD width is CSS width`);
+  closeEnough(m.engine.hudHeight, Math.round(r.height), `${label}: actual HUD height is CSS height`);
   closeEnough(m.engine.rootWidth, m.canvas.width, `${label}: Godot backing width`);
   closeEnough(m.engine.rootHeight, m.canvas.height, `${label}: Godot backing height`);
   closeEnough(m.engine.scaleX, m.canvas.width / m.engine.logicalWidth, `${label}: engine X scaling`, 0.02);
@@ -77,7 +120,7 @@ async function expectUI(page, expected) {
 
 async function swipe(page, context, rect, upward, requestedDistance) {
   const canvas = (await measure(page)).canvas.rect;
-  const cdp = await context.newCDPSession(page);
+  const cdp = await session(page, context);
   const x = canvas.x + rect.x + rect.width / 2;
   const bottom = canvas.y + rect.y + rect.height - 16;
   const top = canvas.y + rect.y + 16;
@@ -93,7 +136,6 @@ async function swipe(page, context, rect, upward, requestedDistance) {
   // a short editor scroll area whose entire range can be smaller than a swipe.
   await page.waitForTimeout(250);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await cdp.detach();
   let previous;
   let stable = 0;
   for (let sample = 0; sample < 15 && stable < 3; sample++) {
@@ -126,7 +168,9 @@ async function tapName(page, context, name, scrollable = false) {
     if (inCanvas && inScroll) {
       assert.ok(!control.disabled, `Touchable button is enabled: ${name}`);
       assert.ok(control.height >= 48 && control.fontSize >= 18, `Readable CSS target: ${name}`);
-      await page.touchscreen.tap(m.canvas.rect.x + x, m.canvas.rect.y + y);
+      verify(m, `before touching ${name}`);
+      console.log(`POINT ${name}: ${m.canvas.rect.x + x},${m.canvas.rect.y + y}; CSS ${m.engine.logicalWidth}x${m.engine.logicalHeight}; DPR ${m.viewport.dpr}`);
+      await touchAt(page, context, m.canvas.rect.x + x, m.canvas.rect.y + y);
       await page.waitForTimeout(240);
       return;
     }
@@ -161,7 +205,7 @@ async function touchJourney(page, context, label, result) {
   const state = await ui(page);
   const m = await measure(page);
   assert.ok(state.slots?.shelf, 'Actual projected shelf location is available');
-  await page.touchscreen.tap(m.canvas.rect.x + state.slots.shelf.x, m.canvas.rect.y + state.slots.shelf.y);
+  await touchAt(page, context, m.canvas.rect.x + state.slots.shelf.x, m.canvas.rect.y + state.slots.shelf.y);
   await expectUI(page, { sheet: 'editor', selectedSlot: 'shelf', trialRunning: false });
   await tapName(page, context, 'NextSlot');
   await expectUI(page, { sheet: 'editor', selectedSlot: 'packing', trialRunning: false });
@@ -178,7 +222,12 @@ async function touchJourney(page, context, label, result) {
   await page.screenshot({ path: path.join(output, `editor-${label}.png`), scale: 'css' });
   await tapName(page, context, 'ApplyChoice');
   await expectUI(page, { sheet: '', trialRunning: false });
-  result.touch = { introClose: true, introScrollAndStart: true, contractAcceptance: true, pause: true, worldShelfPick: true, equipmentTabs: true, candidateSelection: true, pinnedApply: true, finalState: await ui(page) };
+  await tapName(page, context, 'SessionRecord');
+  await expectUI(page, { sheet: 'records', trialRunning: false });
+  await page.screenshot({ path: path.join(output, `results-${label}.png`), scale: 'css' });
+  await tapName(page, context, 'CloseSheet');
+  await expectUI(page, { sheet: '', trialRunning: false });
+  result.touch = { introClose: true, introScrollAndStart: true, contractAcceptance: true, pause: true, worldShelfPick: true, equipmentTabs: true, candidateSelection: true, pinnedApply: true, results: true, finalState: await ui(page) };
 }
 
 (async () => {
@@ -224,6 +273,7 @@ async function touchJourney(page, context, label, result) {
         const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: dpr, isMobile: true, hasTouch: true });
         const page = await context.newPage();
         page.setDefaultTimeout(15000);
+        await installDOMTrace(page);
         const errors = [];
         const consoleMessages = [];
         page.on('pageerror', error => { errors.push(error.message); console.error(`[${label}] pageerror: ${error.message}`); });
@@ -252,6 +302,7 @@ async function touchJourney(page, context, label, result) {
           result.minimumVisibleFontCSS = Math.min(...cssFonts);
           await page.screenshot({ path: path.join(output, `entry-${label}.png`), scale: 'css' });
 
+          if (!freshOnly) {
           // Browser chrome reduces CSS height independently of DPR.
           await page.setViewportSize({ width, height: Math.max(420, height - 120) });
           await settle(page);
@@ -271,7 +322,7 @@ async function touchJourney(page, context, label, result) {
 
           // Change DPR without changing CSS width/height to exercise the bridge's
           // matchMedia path, rather than relying only on separately opened tabs.
-          const cdp = await context.newCDPSession(page);
+          const cdp = await session(page, context);
           const alternateDpr = dpr === 3 ? 2 : 3;
           await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: alternateDpr, mobile: true });
           await page.waitForFunction(value => devicePixelRatio === value, alternateDpr);
@@ -281,9 +332,8 @@ async function touchJourney(page, context, label, result) {
           await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile: true });
           await page.waitForFunction(value => devicePixelRatio === value, dpr);
           await settle(page);
-          await cdp.detach();
-          // Detaching a CDP emulation session can restore Chromium's default
-          // viewport. Reapply Playwright's owned viewport before the next case.
+          // Keep the CDP session alive until context.close: detaching a session
+          // can restore Chromium's default viewport or DPR mid-gesture.
           await page.setViewportSize({ width, height: height - 1 });
           await page.setViewportSize({ width, height });
           await page.waitForFunction(size => innerWidth === size.width && innerHeight === size.height, { width, height });
@@ -309,6 +359,14 @@ async function touchJourney(page, context, label, result) {
           await style.evaluate(element => element.remove());
           await settle(page);
           verify(await measure(page), `${label} resize restoration`);
+          } else {
+            await expectUI(page, { sheet: 'entry' });
+            await tapName(page, context, 'CloseSheet');
+            await expectUI(page, { sheet: 'jobs' });
+            await tapName(page, context, 'CloseSheet');
+            await expectUI(page, { sheet: '' });
+            result.safeAreaTouch = 'Not run in fresh-context timing comparison';
+          }
           await touchJourney(page, context, label, result);
           assert.deepEqual(errors, [], `${label}: no JavaScript runtime errors`);
           result.status = 'passed';
@@ -320,6 +378,7 @@ async function touchJourney(page, context, label, result) {
           await page.screenshot({ path: path.join(output, `failure-${label}.png`), scale: 'css' }).catch(() => {});
           throw error;
         } finally {
+          if (process.env.FLOTRA_DOM_TRACE === '1') result.domTrace = await page.evaluate(() => window.__phoneDomTrace || []).catch(() => []);
           fs.writeFileSync(path.join(output, 'browser-phone-geometry.json'), JSON.stringify(report, null, 2));
           await context.close();
         }
