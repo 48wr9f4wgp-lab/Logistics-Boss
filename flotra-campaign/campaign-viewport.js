@@ -5,6 +5,17 @@
   const canvas = document.getElementById('canvas');
   const api = { metricsJSON: '', read: () => JSON.parse(api.metricsJSON || '{}') };
   window.FlotraViewport = api;
+  // Godot's Web mouse-motion bridge omits the DOM buttons bitmask. Expose the
+  // observed mouse state read-only so a missed release cannot keep panning on
+  // hover. Pointer capture and browser defaults remain untouched.
+  let mouseButtons = -1;
+  Object.defineProperty(api, 'mouseButtons', { get: () => mouseButtons });
+  for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) {
+    window.addEventListener(type, event => {
+      if (event.pointerType === 'mouse') mouseButtons = type === 'pointercancel' ? 0 : event.buttons;
+    }, { capture: true, passive: true });
+  }
+  window.addEventListener('blur', () => { mouseButtons = 0; }, { capture: true, passive: true });
   let scheduled = false;
   function sync() {
     scheduled = false;

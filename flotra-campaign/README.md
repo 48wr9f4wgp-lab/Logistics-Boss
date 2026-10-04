@@ -43,3 +43,9 @@ Growth adds independent balance, old-save migration, native-storage backup, touc
 ## Player-experience polish
 
 The 操作 menu remembers speed, optional menu auto-pause and reduced walking animation. Backgrounding or reloading leaves the warehouse paused until explicit resume. First-job and next/replay actions are immediately reachable; affordable equipment comes before folded future/owned equipment. Between jobs, three free operating choices provide balanced, real three-parcel-cart and pallet-priority workflows. Equipment previews show capacities and tradeoffs; queued layout changes can be cancelled before physical movement begins. See `FLOTRA_EXPERIENCE_RELEASE_2026-10-04.md` and the Japanese player guide under `docs/guides/`.
+
+## Camera controls
+
+Drag the warehouse with one finger or the mouse to pan. Pinch or use the mouse wheel / plus-minus buttons to zoom from whole-warehouse scale up to 3×. The visible 左90° / 右90° buttons change the camera bearing; 全体 restores the original whole-warehouse view. Camera state is session-only and never mutates campaign saves, money, equipment, cargo or the foreground clock. The layout editor retains its own precise equipment framing and restores the overview camera when closed.
+
+The 56px camera row occupies a reserved strip above the bottom HUD, not the scene's callouts. Short landscape puts it in the header. Menus, HUD crossings, canceled touch, focus loss and resize cancel any held camera input. See `FLOTRA_CAMERA_RELEASE_2026-10-04.md` for verification and boundaries.

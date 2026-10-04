@@ -25,6 +25,25 @@ var _rendered_preview := ""
 var _rendered_ghost_present := false
 var _rendered_ghost_position := Vector3.ZERO
 var reduced_motion := false
+# Session-only view preferences, deliberately independent of saved game state
+# and the layout editor's automatic equipment framing.
+const CAMERA_MAX_ZOOM := 3.0
+const CAMERA_DRAG_THRESHOLD := 8.0
+var _camera_zoom := 1.0
+var _camera_turn := 0
+var _camera_pan := Vector2.ZERO
+var _camera_fit_size := 1.0
+var _camera_fit_position := Vector3.ZERO
+var _camera_projected_size := Vector2.ONE
+var _camera_view_size := Vector2(390, 500)
+var _camera_touches: Dictionary = {}
+var _camera_dragging := false
+var _camera_mouse_down := false
+var _camera_last := Vector2.ZERO
+var _camera_start := Vector2.ZERO
+var _camera_touch_slot := ""
+var camera_input_gate: Callable
+
 
 func set_reduced_motion(value: bool) -> void:
     if reduced_motion == value: return
@@ -270,6 +289,7 @@ func _open_connector_walls() -> void:
 func fit_camera(view_size: Vector2) -> void:
     if camera == null:
         return
+    _camera_view_size = view_size
     camera.keep_aspect = Camera3D.KEEP_HEIGHT
     var center := _world_center
     var focus := not _selected.is_empty() and _slots.has(_selected)
@@ -277,7 +297,10 @@ func fit_camera(view_size: Vector2) -> void:
         center = (_slots[_selected] as Node3D).position
         if is_instance_valid(_ghost):
             center = (center + _ghost.position) * .5
-    camera.position = center + Vector3(28, 38, 22)
+    var bearing := Vector3(28, 38, 22)
+    if not focus:
+        bearing = bearing.rotated(Vector3.UP, float(_camera_turn) * PI * .5)
+    camera.position = center + bearing
     camera.look_at(center, Vector3.UP)
     var points: Array[Vector3] = []
     if focus:
@@ -315,7 +338,162 @@ func fit_camera(view_size: Vector2) -> void:
     var padding := Vector2(22, 24) if not focus else Vector2(28, 36)
     var usable := Vector2(maxf(.2, 1.0 - padding.x * 2 / maxf(1, view_size.x)), maxf(.2, 1.0 - padding.y * 2 / maxf(1, view_size.y)))
     camera.size = maxf(projected.size.y / usable.y, projected.size.x / (aspect * usable.x))
+    if not focus:
+        _camera_fit_size = camera.size
+        _camera_fit_position = camera.position
+        _camera_projected_size = projected.size
+        _apply_camera_view()
+    else:
+        _refresh_callouts()
+
+func _apply_camera_view() -> void:
+    if camera == null or not _selected.is_empty(): return
+    camera.size = _camera_fit_size / _camera_zoom
+    var aspect := _camera_view_size.x / maxf(1, _camera_view_size.y)
+    # At least a substantial edge of the warehouse stays in view. Bounds use
+    # all actual wing/connector corners in the CURRENT camera bearing.
+    var visible_extent := Vector2(camera.size * aspect, camera.size)
+    var limit := (_camera_projected_size * .5 - visible_extent * .25).max(_camera_projected_size * .12)
+    _camera_pan = _camera_pan.clamp(-limit, limit)
+    # Rectangular projected bounds contain empty diagonal corners around the
+    # isometric footprint. Round the pan envelope so those corners cannot
+    # leave the player looking at an almost-empty viewport.
+    var normalized_pan := _camera_pan / limit.max(Vector2(.001, .001))
+    if normalized_pan.length() > 1.0:
+        _camera_pan /= normalized_pan.length()
+    camera.position = _camera_fit_position + camera.basis.x * _camera_pan.x + camera.basis.y * _camera_pan.y
     _refresh_callouts()
+
+func camera_action(action: String) -> void:
+    if not _camera_allowed(): return
+    cancel_pointer_input()
+    match action:
+        "reset":
+            _camera_zoom = 1.0
+            _camera_turn = 0
+            _camera_pan = Vector2.ZERO
+            fit_camera(_camera_view_size)
+        "left", "right":
+            _camera_turn = posmod(_camera_turn + (-1 if action == "left" else 1), 4)
+            _camera_pan = Vector2.ZERO
+            fit_camera(_camera_view_size)
+        "in", "out":
+            _zoom_camera(1.25 if action == "in" else .8, _camera_view_size * .5)
+
+func _camera_allowed() -> bool:
+    return _selected.is_empty() and (not input_gate.is_valid() or input_gate.call()) and (not camera_input_gate.is_valid() or camera_input_gate.call())
+
+func _pan_camera(delta: Vector2) -> void:
+    var scale := camera.size / maxf(1, _camera_view_size.y)
+    _camera_pan += Vector2(-delta.x, delta.y) * scale
+    _apply_camera_view()
+
+func _zoom_camera(factor: float, anchor: Vector2) -> void:
+    var before := camera.size
+    _camera_zoom = clampf(_camera_zoom * factor, 1.0, CAMERA_MAX_ZOOM)
+    var after := _camera_fit_size / _camera_zoom
+    var offset := anchor - _camera_view_size * .5
+    _camera_pan += Vector2(offset.x, -offset.y) * (before - after) / maxf(1, _camera_view_size.y)
+    _apply_camera_view()
+
+func _touch_pair() -> Array[Vector2]:
+    var keys := _camera_touches.keys()
+    return [_camera_touches[keys[0]], _camera_touches[keys[1]]]
+
+func _unhandled_input(event: InputEvent) -> void:
+    # When either OS emulation option is enabled, handle only the original
+    # device stream in the world. GUI buttons keep Godot's normal emulation.
+    if event.device == InputEvent.DEVICE_ID_EMULATION and (event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventScreenTouch or event is InputEventScreenDrag): return
+    if event is InputEventScreenTouch and event.canceled:
+        cancel_pointer_input()
+        return
+    # The editor retains its original precise tap/preview workflow.
+    if not _selected.is_empty():
+        super._unhandled_input(event)
+        return
+    if not _camera_allowed():
+        cancel_pointer_input()
+        return
+    if event is InputEventMouseButton:
+        # Touch already has stable identities; its emulated mouse duplicate
+        # must not pan twice or select equipment after a pinch.
+        if event.device == InputEvent.DEVICE_ID_EMULATION: return
+        if event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+            _zoom_camera(1.15 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0 / 1.15, event.position)
+        elif event.button_index == MOUSE_BUTTON_LEFT:
+            if event.pressed:
+                _camera_mouse_down = true
+                _camera_dragging = false
+                _camera_last = event.position
+                _camera_start = event.position
+                _camera_touch_slot = _slot_at(event.position)
+            else:
+                var select := _camera_mouse_down and not _camera_dragging and _camera_start.distance_to(event.position) < CAMERA_DRAG_THRESHOLD
+                var slot := _camera_touch_slot
+                cancel_pointer_input()
+                if select: _select_camera_tap(slot, event.position)
+    elif event is InputEventMouseMotion:
+        if event.device == InputEvent.DEVICE_ID_EMULATION: return
+        if (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
+            if _camera_mouse_down: cancel_pointer_input()
+            return
+        if not _camera_mouse_down: return
+        if _camera_start.distance_to(event.position) >= CAMERA_DRAG_THRESHOLD:
+            _camera_dragging = true
+        if _camera_dragging: _pan_camera(event.position - _camera_last)
+        _camera_last = event.position
+    elif event is InputEventScreenTouch:
+        if event.canceled:
+            cancel_pointer_input()
+            return
+        if event.pressed:
+            _camera_touches[event.index] = event.position
+            if _camera_touches.size() == 1:
+                _camera_dragging = false
+                _camera_start = event.position
+                _camera_touch_slot = _slot_at(event.position)
+            else:
+                _camera_dragging = true
+                _camera_touch_slot = ""
+        elif _camera_touches.has(event.index):
+            var select := _camera_touches.size() == 1 and not _camera_dragging and _camera_start.distance_to(event.position) < CAMERA_DRAG_THRESHOLD
+            var slot := _camera_touch_slot
+            _camera_touches.erase(event.index)
+            if _camera_touches.is_empty():
+                cancel_pointer_input()
+            if select: _select_camera_tap(slot, event.position)
+    elif event is InputEventScreenDrag and _camera_touches.has(event.index):
+        if _camera_touches.size() == 2:
+            var before := _touch_pair()
+            _camera_touches[event.index] = event.position
+            var after := _touch_pair()
+            _pan_camera((after[0] + after[1] - before[0] - before[1]) * .5)
+            var distance := before[0].distance_to(before[1])
+            if distance >= 10:
+                _zoom_camera(clampf(after[0].distance_to(after[1]) / distance, .75, 1.3334), (after[0] + after[1]) * .5)
+        elif _camera_touches.size() == 1:
+            if _camera_start.distance_to(event.position) >= CAMERA_DRAG_THRESHOLD:
+                _camera_dragging = true
+            if _camera_dragging: _pan_camera(event.position - Vector2(_camera_touches[event.index]))
+            _camera_touches[event.index] = event.position
+        else:
+            _camera_touches[event.index] = event.position
+
+func _select_camera_tap(slot: String, point: Vector2) -> void:
+    if not slot.is_empty() and slot == _slot_at(point):
+        select_slot(slot)
+        slot_selected.emit(slot)
+
+func cancel_pointer_input() -> void:
+    super.cancel_pointer_input()
+    _camera_touches.clear()
+    _camera_mouse_down = false
+    _camera_dragging = false
+    _camera_touch_slot = ""
+
+func camera_metrics() -> Dictionary:
+    return {"zoom":_camera_zoom, "turn":_camera_turn, "panX":_camera_pan.x, "panY":_camera_pan.y,
+        "size":camera.size, "fitSize":_camera_fit_size, "touches":_camera_touches.size(), "mouseDown":_camera_mouse_down}
 
 func _build_worker(id: String) -> Node3D:
     if int(id) < _human_count:

@@ -10,6 +10,7 @@ signal preference_requested(key: String, value: Variant)
 signal sheet_changed(kind: String)
 signal operation_requested(id: String)
 signal cancel_layout_requested()
+signal camera_requested(action: String)
 
 var _history_visible := false
 var _future_upgrades_visible := false
@@ -21,6 +22,8 @@ var _announced_sheet := ""
 var _operations_visible := false
 var _input_layout_size := Vector2.ZERO
 var _equipment_notice := ""
+var _camera_controls: Control
+var _camera_buttons: Array[Button] = []
 
 func _init() -> void:
     _speed = 2.0
@@ -29,6 +32,25 @@ func _build() -> void:
     super._build()
     _root.name = "GrowthHUD"
     _root.theme.default_font_size = BODY_FONT_SIZE
+    _camera_controls = Control.new()
+    _camera_controls.name = "CameraControls"
+    _camera_controls.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _root.add_child(_camera_controls)
+    for item in [["CameraLeft", "左90°", "left"], ["CameraRight", "右90°", "right"], ["CameraOut", "−", "out"], ["CameraIn", "＋", "in"], ["CameraReset", "全体", "reset"]]:
+        var button := _button(_camera_controls, item[1], func(): camera_requested.emit(item[2]), false, false)
+        button.name = item[0]
+        for style_name in ["normal", "hover", "pressed", "focus", "disabled"]:
+            var style := button.get_theme_stylebox(style_name).duplicate() as StyleBoxFlat
+            style.content_margin_left = 3
+            style.content_margin_right = 3
+            button.add_theme_stylebox_override(style_name, style)
+        _camera_buttons.append(button)
+    _camera_buttons[0].tooltip_text = "左に90度回転"
+    _camera_buttons[1].tooltip_text = "右に90度回転"
+    _camera_buttons[2].tooltip_text = "縮小"
+    _camera_buttons[3].tooltip_text = "拡大"
+    _camera_buttons[4].tooltip_text = "最初の向きで倉庫全体を表示"
+    _layout()
 
 func _button(parent: Node, value: String, action: Callable, primary: bool = false, light: bool = true) -> Button:
     var button := super._button(parent, value, action, primary, light)
@@ -99,6 +121,36 @@ func _layout() -> void:
     if _built:
         _back.text = "操作" if _sheet_kind.is_empty() else "戻る"
 
+func _update_world_region() -> void:
+    super._update_world_region()
+    _layout_camera_controls()
+
+func _layout_camera_controls() -> void:
+    if is_instance_valid(_camera_controls):
+        _camera_controls.visible = _sheet_kind.is_empty()
+        var compact := _compact_camera_header()
+        var row_width := _root.size.x - (196 if compact else 24)
+        _rect(_camera_controls, 102 if compact else 12, 10 if compact else _root.size.y - 216, row_width, CONTROL_HEIGHT)
+        var x := 0.0
+        var gap := clampf((row_width - CONTROL_HEIGHT * 5) / 4.0, 0, 8)
+        var rotation_width := clampf((row_width - gap * 4 - CONTROL_HEIGHT * 3) / 2.0, CONTROL_HEIGHT, 64)
+        var widths := [rotation_width, rotation_width, CONTROL_HEIGHT, CONTROL_HEIGHT, maxf(CONTROL_HEIGHT, row_width - rotation_width * 2 - CONTROL_HEIGHT * 2 - gap * 4)]
+        for index in _camera_buttons.size():
+            _rect(_camera_buttons[index], x, 0, widths[index], CONTROL_HEIGHT)
+            x += widths[index] + gap
+        _title.visible = not compact
+        _safe_note.visible = not compact
+        if compact: _reason_panel.hide()
+
+func _compact_camera_header() -> bool:
+    return _sheet_kind.is_empty() and _root.size.y < 500 and _root.size.x >= 540
+
+func world_insets() -> Vector2:
+    var insets := super.world_insets()
+    if _compact_camera_header(): return Vector2(76, 156)
+    if _sheet_kind.is_empty(): insets.y += 64
+    return insets
+
 func _layout_body() -> void:
     if _sheet_kind == "controls" and is_instance_valid(_scroll):
         _rect(_scroll, 0, 0, _body.size.x, maxf(48, _body.size.y))
@@ -129,6 +181,8 @@ func show_controls() -> void:
     _text(_content, "歩くときの揺れを抑えます。作業の速さは変わりません", BODY_FONT_SIZE, Color("476266"))
     _action(_content, "変更予約を取り消す", _cancel_queued_layout).name = "CancelQueuedLayout"
     _text(_content, "設備を動かし始める前なら、配置の変更予約を取り消せます", BODY_FONT_SIZE, Color("476266")).name = "CancelLayoutHint"
+    _text(_content, "倉庫の視点", 22)
+    _text(_content, "1本指でドラッグして移動、2本指でつまんで拡大・縮小。画面下の左右90°で回転し、全体で元の眺めに戻せます。設備は短くタップすると配置を選べます", BODY_FONT_SIZE, Color("476266"))
     _action(_content, "遊び方を見る", show_entry).name = "OpenHelp"
     _text(_content, _save_status, BODY_FONT_SIZE, Color("476266")).name = "ControlsSaveStatus"
     _update_controls()
@@ -260,6 +314,7 @@ func refresh() -> void:
     _compare.text = "次の仕事" if _complete() else "仕事"
     _conditions.text = "成果"
     _back.text = "操作" if _sheet_kind.is_empty() else "戻る"
+    if _compact_camera_header(): _reason_panel.hide()
     _update_controls()
     if str(_release.get("status", "ready")) != "running":
         _pause.text = "仕事"
@@ -314,6 +369,7 @@ func show_entry() -> void:
         _text(_content, "以前の資金・設備・記録は引き継がれています。進行中の仕事も、そのまま続けられます", BODY_FONT_SIZE, Color("476266")).name = "LegacyContinuity"
     if str(_release.get("status", "ready")) == "running" and not _trial_running:
         _text(_content, "進行中の仕事を読み込みました。いまは一時停止中です", BODY_FONT_SIZE, Color("476266")).name = "ResumePauseNotice"
+    _text(_content, "倉庫はドラッグで移動、ピンチで拡大できます。左右90°で回転し、「全体」で元の眺めに戻せます", BODY_FONT_SIZE, Color("476266"))
     _text(_content, "「配置変更」で棚と梱包台を無料で動かせます", BODY_FONT_SIZE, Color("476266"))
     _text(_content, _save_status, BODY_FONT_SIZE, Color("476266")).name = "EntrySaveStatus"
     _layout_body()

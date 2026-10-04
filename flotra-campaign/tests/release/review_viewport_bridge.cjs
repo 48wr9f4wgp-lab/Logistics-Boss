@@ -46,6 +46,24 @@ for (const dpr of [1, 1.25, 2, 3]) {
   assert.equal(width, Math.round(390 * dpr));
   assert.equal(height, Math.round(844 * dpr));
   checks += 4;
+  // The bridge observes only real DOM mouse state, without changing input or
+  // canvas geometry. It recovers a missing release even when Godot's internal
+  // mouse-motion mask still reports the previous press.
+  assert.equal(window.FlotraViewport.mouseButtons, -1, 'Unknown mouse state starts unset');
+  events.get('pointerdown')({pointerType: 'mouse', buttons: 1});
+  assert.equal(window.FlotraViewport.mouseButtons, 1, 'Mouse down is observed');
+  events.get('pointermove')({pointerType: 'touch', buttons: 0});
+  assert.equal(window.FlotraViewport.mouseButtons, 1, 'Touch cannot overwrite mouse state');
+  events.get('pointermove')({pointerType: 'mouse', buttons: 0});
+  assert.equal(window.FlotraViewport.mouseButtons, 0, 'Hover recovers a missed mouse release');
+  events.get('pointerdown')({pointerType: 'mouse', buttons: 1});
+  events.get('pointercancel')({pointerType: 'mouse', buttons: 1});
+  assert.equal(window.FlotraViewport.mouseButtons, 0, 'Canceled mouse cannot remain held');
+  events.get('pointerdown')({pointerType: 'mouse', buttons: 1});
+  events.get('blur')();
+  assert.equal(window.FlotraViewport.mouseButtons, 0, 'Window blur clears observed mouse buttons');
+  assert.equal(Object.getOwnPropertyDescriptor(window.FlotraViewport, 'mouseButtons').set, undefined, 'Mouse observation is read-only');
+  checks += 7;
   const originalWrites = writes;
   events.get('resize')(); events.get('orientationchange')(); observer();
   assert.equal(frames.length, 1, 'Resize events coalesce into one animation frame');

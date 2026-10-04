@@ -105,3 +105,48 @@ jobs:
           name: flotra-growth-browser-journey
           path: build/growth-browser-journey
           retention-days: 7
+
+  camera-browser-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        dpr: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+      - name: Build isolated earned-state fixtures
+        shell: bash
+        run: |
+          godot --headless --editor --path flotra-campaign --import
+          mkdir -p build/camera-fixtures
+          FLOTRA_GROWTH_FIXTURES="$PWD/build/camera-fixtures" godot --headless --path flotra-campaign --script res://tests/release/growth_browser_fixtures.gd
+      - name: Install browser test dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+          sudo apt-get install -y xvfb
+      - name: Test real camera gestures and recovery
+        env:
+          FLOTRA_TEST_DPRS: ${{ matrix.dpr }}
+        shell: bash
+        run: |
+          python3 -m http.server 8826 --bind 127.0.0.1 --directory docs/godot-jobs-preview > /tmp/flotra-camera-server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" xvfb-run -a node flotra-campaign/tests/release/browser_camera_controls.cjs http://127.0.0.1:8826/ build/camera-browser build/camera-fixtures
+      - name: Preserve camera browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flotra-camera-browser-dpr-${{ matrix.dpr }}
+          path: build/camera-browser
+          retention-days: 7
