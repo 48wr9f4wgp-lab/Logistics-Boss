@@ -168,7 +168,7 @@ async function tapName(page, context, name, scrollable = false) {
     const y = control.y + control.height / 2;
     const scroll = state.scroll;
     const inCanvas = x >= 0 && x <= m.canvas.rect.width && y >= 0 && y <= m.canvas.rect.height;
-    const inScroll = !scrollable || (y >= scroll.y + 8 && y <= scroll.y + scroll.height - 8);
+    const inScroll = !scrollable || (control.y >= scroll.y + 8 && control.y + control.height <= scroll.y + scroll.height - 8);
     if (inCanvas && inScroll) {
       assert.ok(!control.disabled, `Touchable button is enabled: ${name}`);
       assert.ok(control.height >= 56 && control.fontSize >= 18, `Readable CSS target: ${name}`);
@@ -269,7 +269,7 @@ async function samplePerformance(page,milliseconds) {
  let browser;
  const result={kind:'Isolated actual Chromium WebGL growth journey, old-save migration and late-state performance; not physical Safari', tests:[]};
  try {
-  browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,headless:true});
+  browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,headless:process.env.FLOTRA_HEADED !== '1'});
   async function scenario(name,fixture,action){
    if(process.env.FLOTRA_JOURNEY_CASES && !process.env.FLOTRA_JOURNEY_CASES.split(',').includes(name))return;
    const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true});
