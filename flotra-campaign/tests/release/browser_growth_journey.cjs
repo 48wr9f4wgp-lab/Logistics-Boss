@@ -269,21 +269,24 @@ async function samplePerformance(page,milliseconds) {
  let browser;
  const result={kind:'Isolated actual Chromium WebGL growth journey, old-save migration and late-state performance; not physical Safari', tests:[]};
  try {
-  browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,headless:process.env.FLOTRA_HEADED !== '1'});
+  browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,headless:true});
   async function scenario(name,fixture,action){
    if(process.env.FLOTRA_JOURNEY_CASES && !process.env.FLOTRA_JOURNEY_CASES.split(',').includes(name))return;
-   const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true});
+   // Keep the established headless renderer/performance baseline. A separate
+   // headed browser is required only for genuine focus loss between tabs.
+   const focusBrowser=name==='equipment-and-comfort'?await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,headless:false}):null;
+   const context=await (focusBrowser||browser).newContext({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true});
    if(fixture)await context.addInitScript(encoded=>{if(localStorage.getItem('flotra.campaign.release.v1')===null)localStorage.setItem('flotra.campaign.release.v1',encoded);},fixture.encoded);
    const page=await context.newPage();const errors=[];
    page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-   const test={name};result.tests.push(test);
+   const test={name,presentation:focusBrowser?'headed actual focus':'headless renderer baseline'};result.tests.push(test);
    try{await boot(page);test.environment=await page.evaluate(()=>{
     const gl=document.querySelector('#canvas').getContext('webgl2');
     const ext=gl?.getExtension('WEBGL_debug_renderer_info');
     return {visibility:document.visibilityState,dpr:devicePixelRatio,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,vendor:ext?gl.getParameter(ext.UNMASKED_VENDOR_WEBGL):null};
    });await action(page,context,test);assert.deepEqual(errors,[]);test.status='passed';}
    catch(error){test.status='failed';test.error=error.message;test.last=await ui(page).catch(()=>null);await page.screenshot({path:path.join(output,'failure-'+name+'.png'),scale:'css'}).catch(()=>{});throw error;}
-   finally{test.errors=errors;fs.writeFileSync(path.join(output,'growth-journey.json'),JSON.stringify(result,null,2));await context.close();}
+   finally{test.errors=errors;fs.writeFileSync(path.join(output,'growth-journey.json'),JSON.stringify(result,null,2));await context.close();await focusBrowser?.close();}
   }
   await scenario('fresh-growth',null,async(page,context,test)=>{
    const started=Date.now();await tapName(page,context,'CloseSheet');await expectUI(page,{sheet:'jobs'});
@@ -339,11 +342,16 @@ async function samplePerformance(page,milliseconds) {
    await page.screenshot({path:path.join(output,'parcel-operation-choice.png'),scale:'css'});
    await tapName(page,context,'Tab_contracts');await tapName(page,context,'AcceptContract_route_pick',true);await expectUI(page,{sheet:'',trialRunning:true});
    await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.batchWorkers>0,null,{timeout:45000});test.actualParcelCart=true;
-   const other=await context.newPage();await other.goto('about:blank');await other.bringToFront();
+   // Playwright forces every page to look focused by default. Turn off only
+   // that testing override so the headed browser can supply actual tab events.
+   await (await session(page,context)).send('Emulation.setFocusEmulationEnabled',{enabled:false});
+   const other=await context.newPage();await other.goto('about:blank');
+   await (await session(other,context)).send('Emulation.setFocusEmulationEnabled',{enabled:false});
+   await other.bringToFront();
    await page.waitForTimeout(1300);
    const background=await page.evaluate(()=>({focused:document.hasFocus(),visibility:document.visibilityState}));
    assert.equal(background.focused,false,'Browser actually moved focus away from the game');
-   await page.bringToFront();await other.close();await expectUI(page,{trialRunning:false});
+   await page.bringToFront();await other.close();assert.equal(await page.evaluate(()=>document.hasFocus()),true,'Game tab actually regained focus');await expectUI(page,{trialRunning:false});
    const returnedTime=(await ui(page)).simTime;await page.waitForTimeout(750);
    assert.equal((await ui(page)).simTime,returnedTime,'Returning from another browser tab stays paused without catch-up');
    test.browserFocusPause={...background,returnedTime};await setRunning(page,context,true);

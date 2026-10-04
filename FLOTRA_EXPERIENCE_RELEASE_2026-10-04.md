@@ -37,9 +37,9 @@ Automatic packing was not a useful speed purchase for this workload under the pr
 
 ## Foreground playback clock
 
-Godot 4.7.2 caps the engine process delta under very slow rendering. A measured 350ms foreground frame reported only about 133ms, so the old displayed 2× speed could run below real time. The campaign now feeds its existing fixed 0.05s domain ticks from a monotonic foreground clock. At most one second of wall time is accepted per rendered frame; excess stall time is discarded, not queued as a debt. Pause, focus loss, menu auto-pause, new work and speed changes re-anchor that clock. Background time is never turned into offline progress.
+Godot 4.7.2 caps the engine process delta under very slow rendering. A measured 350ms foreground frame reported only about 133ms, so the old displayed 2× speed could run below real time. The campaign now feeds its existing fixed 0.05s domain ticks from a monotonic foreground clock. At most 0.25 seconds of wall time is accepted per rendered frame; excess stall time is discarded, not queued as a debt. Pause, focus loss, menu auto-pause, new work and speed changes re-anchor that clock. Background time is never turned into offline progress.
 
-Independent clock tests cover 1×/2×/4×, long stalls, pause/resume, menu boundaries and imported active saves. Native mature 80-tick batches (one capped second at 4×) measured at most 36ms in the test environment and preserved every unit. This fixes playback pacing, not GPU FPS.
+Independent clock tests cover 1×/2×/4×, long stalls, pause/resume, menu boundaries and imported active saves. The original per-frame work budget is retained: at 4×, at most 20 fixed simulation ticks are processed per frame. Slow frames up to 250ms now preserve the selected rate; longer stalls deliberately slow playback to protect responsiveness. This fixes capped-delta pacing, not GPU FPS.
 
 ## Save continuity and validation
 

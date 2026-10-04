@@ -21,9 +21,10 @@ var _phone_qa := false
 var _qa_elapsed := 0.0
 var _menu_paused := false
 var _preferences := {"preferred_speed": 2, "pause_on_menus": false, "reduced_motion": false}
-const MAX_FOREGROUND_FRAME_SECONDS := 1.0
+const MAX_FOREGROUND_FRAME_SECONDS := 0.25
 # Godot's process delta is catch-up capped on very slow renderers. Use a
-# monotonic foreground clock so the selected playback speed remains honest.
+# monotonic foreground clock within the existing per-frame work budget.
+# Longer stalls are discarded instead of creating an expensive catch-up spiral.
 # Callable injection keeps slow-frame/pause tests deterministic.
 var frame_clock: Callable = func() -> int: return Time.get_ticks_usec()
 var _last_frame_usec := -1

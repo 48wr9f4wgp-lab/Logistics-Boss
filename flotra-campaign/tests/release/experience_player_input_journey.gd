@@ -123,6 +123,15 @@ func tap(control: Control, kind: String = "touch", held: int = 5) -> void:
 func node(name: String) -> Control:
     return app.hud._root.find_child(name, true, false) as Control
 
+func process_elapsed(seconds: float) -> void:
+    # The scene now uses foreground monotonic time. A manual process callback
+    # cannot invent wall time on fast CI machines. SceneTreeTimer consumes frame
+    # delta, including time accrued before creation, so await a real deadline.
+    var deadline := Time.get_ticks_usec() + ceili(seconds * 1000000.0)
+    while Time.get_ticks_usec() < deadline:
+        await process_frame
+    app._process(seconds)
+
 func finish_job() -> void:
     for tick in 7200:
         if app.sim.finished: break
@@ -205,25 +214,25 @@ func run() -> void:
         finish()
         return
     mark("First-open, scroll cancellation and held work acceptance")
-    app._process(.15)
+    await process_elapsed(.15)
     await tap(app.hud._back)
     check(app.hud._sheet_kind == "controls", "Top-left operation control opens settings")
     await tap(node("Speed4x"))
     check(app.speed == 4 and app.sim.preferences.preferred_speed == 4, "Held speed touch reaches scene and persisted preference")
     await tap(node("PauseMenusSetting"))
     var before: Dictionary = app.sim.export_release_state()
-    app._process(.2)
+    await process_elapsed(.2)
     check(app._menu_paused and app.running and app.sim.export_release_state() == before, "Real auto-pause toggle freezes all logistics in menu")
     await tap(node("ReducedMotionSetting"))
     check(app.world.reduced_motion and app.sim.preferences.reduced_motion, "Real reduced-motion control updates view and persisted state")
     await tap(app.hud._close)
-    app._process(.1)
+    await process_elapsed(.1)
     check(not app._menu_paused and app.sim.sim_time > before.sim.sim_time, "Closing menu resumes prior run intent")
     await tap(app.hud._pause, "mouse")
     before = app.sim.export_release_state()
     await tap(app.hud._back)
     await tap(app.hud._close)
-    app._process(.2)
+    await process_elapsed(.2)
     check(not app.running and app.sim.export_release_state() == before, "Explicit pause survives menu open and close")
     await tap(app.hud._back)
     await tap(node("ControlsPause"))
@@ -242,7 +251,7 @@ func run() -> void:
     check(app.speed == 4 and not app.running, "Focus loss cancels held control and pauses warehouse")
     root.propagate_notification(Node.NOTIFICATION_WM_WINDOW_FOCUS_IN)
     before = app.sim.export_release_state()
-    app._process(.2)
+    await process_elapsed(.2)
     check(app.sim.export_release_state() == before and not app.running, "Returning focus cannot silently resume")
     await tap(speed1,"mouse")
     check(app.speed == 1, "Fresh click remains usable after lost-focus release")
@@ -267,7 +276,7 @@ func run() -> void:
     finish_job()
     var completed_wallet: int = app.sim.campaign_wallet
     for repeat in 10:
-        app._process(.1)
+        await process_elapsed(.1)
         refresh()
     check(app.sim.campaign_wallet == completed_wallet, "Repeated completion refresh cannot double-award")
     await tap(app.hud._conditions)
@@ -332,7 +341,7 @@ func run() -> void:
     await settle()
     await tap(app.hud._conditions)
     await tap(node("StartNextJob"))
-    app._process(.2)
+    await process_elapsed(.2)
     await tap(app.hud._pause)
     before = app.sim.export_release_state()
     app.queue_free()
@@ -344,7 +353,7 @@ func run() -> void:
     check(not app.running and app.hud._sheet_kind.is_empty(), "Closing restored help never resumes saved job")
     await tap(app.hud._back)
     await tap(node("ControlsPause"))
-    app._process(.1)
+    await process_elapsed(.1)
     check(app.running and app.sim.sim_time > before.sim.sim_time, "Real explicit resume continues restored cargo")
     # A blocked store is represented faithfully in all full-height read screens.
     app.save_store.blocked = true

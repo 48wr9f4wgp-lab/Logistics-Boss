@@ -48,3 +48,17 @@ The runner includes all three independent suites and allocates a fresh disposabl
 ## Verification boundary
 
 This is native **headless engine input and layout-geometry evidence**. It does not establish rendered typography, browser DPR scaling, GPU performance, physical touch hardware or iPhone/Safari behavior. No screenshots or browser results are claimed here; those require the separate actual WebGL/browser and physical-device checks. The simulated save-warning case tests propagation and reachability, while corrupt-save and browser storage-lock behavior remain the responsibility of their dedicated suites.
+
+## CI follow-up: test-harness clock alignment
+
+The inherited `readability_input.gd` initially failed its first mouse selection on fast headless starts even though its helper awaited a 0.25-second `SceneTreeTimer`, a physics frame and six process frames. Instrumented native input showed the precise state at that press: **msLeft=55, frame=7, guardFrame=0, guarded=true**. The camera projection and viewport were correct; both press and release reached the world input gate and were rejected while 55ms of the real dismissal interval remained. Later mouse and touch selection worked once the wall-clock interval had expired.
+
+This was a test clock mismatch, not a world-selection defect. A scene timer consumes frame delta, which on the initial headless frame can include startup time accrued before that timer was created. It therefore did not establish the monotonic interval required by the actual input guard.
+
+- The input-test helper now waits for an actual 250ms monotonic deadline and the guard to clear, with a bounded 2.25-second failure deadline, then retains its original physics/layout settling
+- Every same-frame mouse/touch dispatch, selection, caption, focus-loss and geometry assertion remains unchanged
+- The native journey's manual-process helper likewise waits for a monotonic microsecond deadline before calling the scene; a synthetic process delta cannot substitute for real elapsed time in the foreground clock
+- `readability_input.gd` passed **1,038 checks, zero failures in each of three fresh official Godot 4.7.2 processes**
+- No game implementation changed for this follow-up
+
+Diagnostic evidence is retained in `build/experience/readability-input-diagnostic.log`; repeated fresh-process results are in `build/experience/readability-input-monotonic.log`. The temporary diagnostic script was removed after identifying the cause.

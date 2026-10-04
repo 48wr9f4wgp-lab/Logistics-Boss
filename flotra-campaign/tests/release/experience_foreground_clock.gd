@@ -24,7 +24,7 @@ class SlowFrames extends Node:
         if samples.size() >= 4:
             set_process(false)
             return
-        OS.delay_msec(350)
+        OS.delay_msec(200)
 
 func _initialize() -> void: run.call_deferred()
 
@@ -66,44 +66,49 @@ func run() -> void:
     root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
     root.content_scale_size = Vector2i.ZERO
     root.size = Vector2i(390,844)
+    check(Main.MAX_FOREGROUND_FRAME_SECONDS == 0.25, "Foreground catch-up stays within the original quarter-second frame budget")
     for speed in [1.0,2.0,4.0]:
         make_app()
         start(speed)
         for index in 12:
-            frame(0.35)
-            check_time(float(index+1)*0.35*speed, "%.0fx follows 350ms foreground wall time despite capped engine delta" % speed)
+            frame(0.2)
+            check_time(float(index+1)*0.2*speed, "%.0fx follows 200ms foreground wall time despite capped engine delta" % speed)
             check(app.sim.check_invariants().ok, "Slow foreground frame preserves physical cargo and reservations")
         var before: float = app.sim.sim_time
         frame(0.0,0.9)
         check_time(before, "An engine delta with no monotonic elapsed time never invents progress")
-        frame(10.0)
-        check_time(before+speed, "A stale ten-second foreground interval is capped at one wall second")
         frame(0.35)
-        check_time(before+speed+0.35*speed, "Discarded stale time never becomes a catch-up backlog")
+        check_time(before+0.25*speed, "A 350ms foreground stall credits at most 250ms")
+        frame(0.2)
+        check_time(before+0.45*speed, "Excess from a 350ms stall never becomes a catch-up backlog")
+        frame(10.0)
+        check_time(before+0.7*speed, "A stale ten-second foreground interval credits only the 250ms budget")
+        frame(0.2)
+        check_time(before+0.9*speed, "Discarded ten-second stale time never becomes a catch-up backlog")
         await dispose()
 
     make_app()
     frame(120.0)
     check(not app.running and app.sim.sim_time == 0.0, "Reading the initial screen does not accumulate offline work")
     start()
-    frame(0.35)
-    check_time(0.7, "Accepting a first job discards all pre-start time")
-    for index in 8: frame(0.35)
+    frame(0.2)
+    check_time(0.4, "Accepting a first job discards all pre-start time")
+    for index in 8: frame(0.2)
     check(app.sim.workers.any(func(worker): return worker.phase != "idle"), "Pause fixture contains real in-flight work")
     app._pause_trial(true)
     var paused: Dictionary = app.sim.export_release_state()
     frame(60.0)
     check(app.sim.export_release_state() == paused, "Manual pause preserves every cargo clock, reservation and coordinate")
     app._pause_trial(false)
-    frame(0.35)
-    check_time(float(paused.sim.sim_time)+0.7, "Manual Resume counts only new foreground time")
+    frame(0.2)
+    check_time(float(paused.sim.sim_time)+0.4, "Manual Resume counts only new foreground time")
     check(app.sim.check_invariants().ok, "Resume leaves in-flight logistics valid")
     await dispose()
 
     for notification in [Node.NOTIFICATION_WM_WINDOW_FOCUS_OUT,Node.NOTIFICATION_APPLICATION_FOCUS_OUT,Node.NOTIFICATION_APPLICATION_PAUSED]:
         make_app()
         start()
-        for index in 8: frame(0.35)
+        for index in 8: frame(0.2)
         app._notification(notification)
         paused = app.sim.export_release_state()
         frame(600.0)
@@ -114,14 +119,14 @@ func run() -> void:
         frame(30.0)
         check(app.sim.export_release_state() == paused, "Returning from a minimized/backgrounded app never resumes implicitly")
         app._pause_trial(false)
-        frame(0.35)
-        check_time(float(paused.sim.sim_time)+0.7, "Explicit Resume discards the background interval")
+        frame(0.2)
+        check_time(float(paused.sim.sim_time)+0.4, "Explicit Resume discards the background interval")
         check(app.sim.check_invariants().ok, "Interrupted cargo remains physically valid")
         await dispose()
 
     make_app()
     start()
-    for index in 8: frame(0.35)
+    for index in 8: frame(0.2)
     app._set_preference("pause_on_menus",true)
     app.hud.show_controls()
     paused = app.sim.export_release_state()
@@ -129,8 +134,8 @@ func run() -> void:
     check(app.running and app._menu_paused, "Automatic menu pause preserves explicit running intent")
     check(app.sim.export_release_state() == paused, "Automatic menu pause preserves all simulation state")
     app.hud.close_sheet()
-    frame(0.35)
-    check_time(float(paused.sim.sim_time)+0.7, "Closing a menu resumes without granting reading-time progress")
+    frame(0.2)
+    check_time(float(paused.sim.sim_time)+0.4, "Closing a menu resumes without granting reading-time progress")
     app._pause_trial(true)
     app.hud.show_controls()
     frame(30.0)
@@ -142,7 +147,7 @@ func run() -> void:
 
     make_app()
     start()
-    for index in 8: frame(0.35)
+    for index in 8: frame(0.2)
     var saved: Dictionary = app.sim.export_release_state()
     await dispose()
     make_app()
@@ -151,8 +156,8 @@ func run() -> void:
     frame(600.0)
     check(not app.running and app.sim.export_release_state() == saved, "Restored active cargo stays paused with no elapsed-clock windfall")
     app._start_trial()
-    frame(0.35)
-    check_time(float(saved.sim.sim_time)+0.7, "Starting restored cargo uses only new foreground time")
+    frame(0.2)
+    check_time(float(saved.sim.sim_time)+0.4, "Starting restored cargo uses only new foreground time")
     check(app.sim.check_invariants().ok, "Clock-independent save/resume preserves route conservation")
     await dispose()
 
@@ -164,13 +169,15 @@ func run() -> void:
     root.add_child(driver)
     while driver.samples.size() < 4: await process_frame
     var wall := 0.0
+    var credited := 0.0
     var capped := false
     for sample in driver.samples:
         wall += float(sample.wall)
+        credited += minf(float(sample.wall), 0.25)
         capped = capped or float(sample.delta) < float(sample.wall)*0.75
-    real_probe = {"samples":driver.samples.duplicate(true),"wall_seconds":wall,"simulation_seconds":app.sim.sim_time-driver.baseline_sim}
-    check(capped, "Actual 350ms engine frames exhibit the independently confirmed process-delta cap")
-    check_time(driver.baseline_sim+wall*2.0, "Default monotonic clock preserves actual 2x speed across real stalled engine frames")
+    real_probe = {"samples":driver.samples.duplicate(true),"wall_seconds":wall,"credited_wall_seconds":credited,"simulation_seconds":app.sim.sim_time-driver.baseline_sim}
+    check(capped, "Actual 200ms engine frames exhibit the independently confirmed process-delta cap")
+    check_time(driver.baseline_sim+credited*2.0, "Default monotonic clock preserves 2x speed within the quarter-second foreground budget")
     check(app.sim.check_invariants().ok, "Actual stalled-frame simulation conserves cargo")
     driver.free()
     await dispose()

@@ -97,7 +97,7 @@ jobs:
           python3 -m http.server 8820 --bind 127.0.0.1 --directory docs/godot-jobs-preview > /tmp/flotra-growth-server.log 2>&1 &
           server=$!
           trap 'kill "$server" 2>/dev/null || true' EXIT
-          FLOTRA_HEADED=1 NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" xvfb-run -a node flotra-campaign/tests/release/browser_growth_journey.cjs http://127.0.0.1:8820/ build/growth-browser-journey build/growth-fixtures
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" xvfb-run -a node flotra-campaign/tests/release/browser_growth_journey.cjs http://127.0.0.1:8820/ build/growth-browser-journey build/growth-fixtures
       - name: Preserve growth browser evidence
         if: always()
         uses: actions/upload-artifact@v4
