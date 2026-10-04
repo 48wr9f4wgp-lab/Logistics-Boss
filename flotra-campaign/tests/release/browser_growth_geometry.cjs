@@ -147,6 +147,9 @@ async function swipe(page, context, rect, upward, requestedDistance) {
 }
 
 async function button(page, name) {
+  // UI diagnostics arrive after rendered input, especially on software GPUs.
+  // Wait for the requested real control, rather than reading a stale sheet.
+  await page.waitForFunction(name => window.FlotraViewport?.uiMetrics?.buttons.some(item => item.name === name && item.visible), name, { timeout: 10000 });
   const state = await ui(page);
   const result = state?.buttons.find(item => item.name === name && item.visible);
   assert.ok(result, `Visible real engine button exists: ${name}`);

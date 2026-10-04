@@ -34,7 +34,11 @@ Two narrowly scoped validator defects were covered: floating arrival clocks at e
 
 The CSS-pixel viewport bridge, full-DPR backing buffer, 18px minimum text, 56px controls, full-height sheets and pinned layout action remain. The next job is placed before the locked roadmap. Successful expansion reveals the new floor immediately. Passive cards and scroll-content buttons pass drag events to the scroll container, while the inherited held-touch, stale-press, focus-loss and dismissal guards remain active.
 
-Presentation snapshots are shared read-only across the HUD and renderer within each mutation cycle. Static graph coordinates are cached by expansion revision; floor and route meshes rebuild only when topology changes. Robot meshes and material counts are bounded. Reloaded and live-expanded warehouse geometry must match.
+Presentation snapshots are shared read-only across the HUD and renderer within each mutation cycle. Static graph coordinates are cached by expansion revision; floor and route meshes rebuild only when topology changes. Robot meshes and material counts are bounded. Repeated box geometry is submitted through two colored MultiMeshes while retaining the original named nodes as transform/visibility sources. Rounded human geometry is reduced from 7,680 to 208 triangles per person without changing its bounds. The original lighting and shadows are retained. Reloaded and live-expanded warehouse geometry must match.
+
+Full-height reading sheets stop hidden 3D drawing while the simulation and autosave rules continue unchanged. The warehouse returns immediately when the sheet closes. This does not change the canvas backing resolution, CSS layout, font sizes or touch geometry.
+
+Measured software-renderer limits are explicit: a HUD-only diagnostic already takes about 117ms/frame on this cloud SwiftShader renderer, and the original phone release measures about 267ms/frame. It is not evidence of physical phone FPS. Final tests bound draw calls, CPU cost, stable paused node counts, and added 3D frame cost against a same-run covered-menu baseline. Native measured mature draw calls fall from 1,146 to 66; batching alone was not treated as a proven FPS improvement. The exported browser tests retain absolute frame-time measurements in their artifacts.
 
 ## Reproduce
 

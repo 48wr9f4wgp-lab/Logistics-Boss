@@ -81,6 +81,7 @@ func _ready() -> void:
     hud.call("set_save_status", save_store.status if persistence_enabled else "テスト・保存なし")
     if hud.has_method("show_intro"):
         hud.call("show_intro")
+    _update_world_visibility()
     if OS.has_feature("web"):
         _report_web_viewport.call_deferred()
 
@@ -156,6 +157,7 @@ func _report_phone_qa() -> void:
         var point: Vector2 = viewport_container.position + world.camera.unproject_position(world._slots[id].position + Vector3(0,1,0))
         slots[id] = {"x":point.x,"y":point.y}
     data["slots"] = slots
+    data["worldVisible"] = viewport_container.visible
     data["growth"] = sim.release_state().growth
     data["progress"] = sim.release_state().progress
     data["status"] = sim.campaign_status
@@ -205,7 +207,17 @@ func _process(delta: float) -> void:
     if hud != null:
         hud.call("refresh")
     if world != null:
-        world.call("refresh")
+        _update_world_visibility()
+        if viewport_container.visible:
+            world.call("refresh")
+
+func _update_world_visibility() -> void:
+    # Full-height reading sheets cover the warehouse. Keep its simulation and
+    # autosaves running, but do not render a hidden 3D scene behind those sheets.
+    if not is_instance_valid(hud) or not is_instance_valid(viewport): return
+    var visible_world: bool = hud._sheet_kind not in ["entry","jobs","records"]
+    viewport_container.visible = visible_world
+    viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if visible_world else SubViewport.UPDATE_DISABLED
 
 func _start_trial() -> void:
     # An imported domain-level pause remains intact until explicit Resume.

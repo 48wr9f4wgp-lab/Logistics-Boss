@@ -4,7 +4,14 @@ extends "res://prototype/release_view.gd"
 
 const ROBOT_BODY := Color("d8e8e6")
 const ROBOT_DARK := Color("203842")
+const HUMAN_RADIAL_SEGMENTS := 8
+const HUMAN_CAPSULE_RINGS := 2
+const HUMAN_HEAD_RINGS := 3 # Include the equator, retaining the full head diameter.
 const CoreGeometry = preload("res://prototype/jobs_sim.gd")
+const HIDDEN_BOX_TRANSFORM := Transform3D(Basis(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO), Vector3.ZERO)
+var _box_sources: Array[MeshInstance3D] = []
+var _box_batches: Array[MultiMeshInstance3D] = []
+var _box_batch_states: Array = []
 var _growth_root: Node3D
 var _growth_floors: Array[MeshInstance3D] = []
 var _connector_floors: Array[MeshInstance3D] = []
@@ -20,9 +27,85 @@ var _rendered_ghost_position := Vector3.ZERO
 
 func _ready() -> void:
     super._ready()
+    _make_box_batches()
     _growth_root = Node3D.new()
     _growth_root.name = "AuthoritativeGrowthFloors"
     add_child(_growth_root)
+
+func _make_box_batches() -> void:
+    var cube := BoxMesh.new()
+    cube.size = Vector3.ONE
+    for emissive in [false, true]:
+        var material := StandardMaterial3D.new()
+        material.albedo_color = Color.WHITE
+        material.roughness = .82
+        material.vertex_color_use_as_albedo = true
+        material.emission_enabled = emissive
+        if emissive:
+            material.emission = Color.WHITE
+            material.emission_energy_multiplier = .15
+            material.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
+        var instances := MultiMesh.new()
+        instances.transform_format = MultiMesh.TRANSFORM_3D
+        instances.use_colors = true
+        instances.mesh = cube
+        var batch := MultiMeshInstance3D.new()
+        batch.name = "EmissiveBoxBatch" if emissive else "WarehouseBoxBatch"
+        batch.multimesh = instances
+        batch.material_override = material
+        add_child(batch)
+        _box_batches.append(batch)
+
+func _box(parent: Node, title: String, size: Vector3, position: Vector3, color: Color) -> MeshInstance3D:
+    var source := super._box(parent, title, size, position, color)
+    # Keep the original named node for authoritative transform/visibility,
+    # selection geometry and existing tests. Only the batched copy is drawn.
+    # A zero layer mask leaves `visible` available to the inherited renderer.
+    source.layers = 0
+    _box_sources.append(source)
+    return source
+
+func _live_box(source: MeshInstance3D) -> bool:
+    if not is_instance_valid(source) or not source.is_inside_tree():
+        return false
+    var ancestor: Node = source
+    while ancestor != null and ancestor != self:
+        if ancestor.is_queued_for_deletion():
+            return false
+        ancestor = ancestor.get_parent()
+    return true
+
+func _refresh_box_batches() -> void:
+    if _box_batches.is_empty():
+        return
+    var sources: Array[MeshInstance3D] = []
+    for source in _box_sources:
+        if _live_box(source):
+            sources.append(source)
+    _box_sources = sources
+    var count := sources.size()
+    if _box_batches[0].multimesh.instance_count != count:
+        for batch in _box_batches:
+            batch.multimesh.instance_count = count
+        _box_batch_states.clear()
+        _box_batch_states.resize(count)
+    var local_from_world := global_transform.affine_inverse()
+    for index in count:
+        var source: MeshInstance3D = sources[index]
+        var material := source.material_override as StandardMaterial3D
+        var color := material.albedo_color if material != null else Color.WHITE
+        var group := (1 if material != null and material.emission_enabled else 0) if source.is_visible_in_tree() else -1
+        var shape := source.mesh as BoxMesh
+        var transform := local_from_world * source.global_transform * Transform3D(Basis.from_scale(shape.size), Vector3.ZERO) if group >= 0 else HIDDEN_BOX_TRANSFORM
+        var state: Array = [source.get_instance_id(), transform, color, group]
+        if _box_batch_states[index] is Array and _box_batch_states[index] == state:
+            continue
+        for batch_index in 2:
+            var instances := _box_batches[batch_index].multimesh
+            instances.set_instance_transform(index, transform if batch_index == group else HIDDEN_BOX_TRANSFORM)
+            if batch_index == group:
+                instances.set_instance_color(index, color)
+        _box_batch_states[index] = state
 
 func _build_shell(state: Dictionary) -> void:
     # The inherited shell estimates the original hall from routing bounds.
@@ -73,6 +156,7 @@ func refresh() -> void:
         _location_data["annex"] = storage_bounds
         _callout_signature = ""
         fit_camera(Vector2(get_viewport().size))
+    _refresh_box_batches()
 
 func _sync_growth_geometry(state: Dictionary) -> bool:
     if _growth_root == null:
@@ -223,6 +307,18 @@ func fit_camera(view_size: Vector2) -> void:
 func _build_worker(id: String) -> Node3D:
     if int(id) < _human_count:
         var human := super._build_worker(id)
+        # At phone scale these primitives are only a few pixels wide. Reduce
+        # their tessellation, retaining the original radius, height, placement,
+        # materials, cargo children and animation/worker identity unchanged.
+        for child in human.get_children():
+            if not child is MeshInstance3D:
+                continue
+            if child.mesh is CapsuleMesh:
+                child.mesh.radial_segments = HUMAN_RADIAL_SEGMENTS
+                child.mesh.rings = HUMAN_CAPSULE_RINGS
+            elif child.mesh is SphereMesh:
+                child.mesh.radial_segments = HUMAN_RADIAL_SEGMENTS
+                child.mesh.rings = HUMAN_HEAD_RINGS
         human.set_meta("growth_actor_kind", "human")
         return human
     var robot := Node3D.new()
