@@ -35,6 +35,12 @@ Measured domain examples, in game-time seconds, on the same paid parcel demand a
 
 Automatic packing was not a useful speed purchase for this workload under the previous single-parcel pattern (140.35→140.65s); the real cart creates packing bursts and makes it useful without slowing the default game. Shelving similarly improves from a small 140.35→138.25s difference to 99.55→91.95s with the cart. These are examples, not promised gains for every warehouse. A fully equipped short-pick layout favors balanced operation (49.65s versus cart 50.25s), while a mid-level expanded bulk setup improves from 83.75s to 67.90s under pallet priority.
 
+## Foreground playback clock
+
+Godot 4.7.2 caps the engine process delta under very slow rendering. A measured 350ms foreground frame reported only about 133ms, so the old displayed 2× speed could run below real time. The campaign now feeds its existing fixed 0.05s domain ticks from a monotonic foreground clock. At most one second of wall time is accepted per rendered frame; excess stall time is discarded, not queued as a debt. Pause, focus loss, menu auto-pause, new work and speed changes re-anchor that clock. Background time is never turned into offline progress.
+
+Independent clock tests cover 1×/2×/4×, long stalls, pause/resume, menu boundaries and imported active saves. Native mature 80-tick batches (one capped second at 4×) measured at most 36ms in the test environment and preserved every unit. This fixes playback pacing, not GPU FPS.
+
 ## Save continuity and validation
 
 Payload schema 3 adds the operating profile and comfort preferences. Schema 1 and schema 2 saves are validated by their preserved original implementations before migration. Wallet, purchases, records and the entire active cargo/clock/route/reservation state are retained byte-for-byte. An imported job continues under the original operating profile until a fresh job is accepted. New comfort preferences do not change its domain clock.

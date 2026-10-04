@@ -4,7 +4,7 @@
 
 The final independent suite passed on Godot **4.7.2.stable.official.ed1daf0bf** with exit code 0 on 2026-10-04:
 
-- `experience_player_input_journey.gd`: **2,680 checks, zero failures**
+- `experience_player_input_journey.gd`: **2,682 checks, zero failures**
 - `experience_slow_frame_guard.gd`: **14 checks, zero failures**
 - `experience_interruption_probe.gd`: all four interruption/recovery assertions passed
 

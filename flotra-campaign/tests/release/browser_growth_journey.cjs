@@ -339,6 +339,14 @@ async function samplePerformance(page,milliseconds) {
    await page.screenshot({path:path.join(output,'parcel-operation-choice.png'),scale:'css'});
    await tapName(page,context,'Tab_contracts');await tapName(page,context,'AcceptContract_route_pick',true);await expectUI(page,{sheet:'',trialRunning:true});
    await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.batchWorkers>0,null,{timeout:45000});test.actualParcelCart=true;
+   const other=await context.newPage();await other.goto('about:blank');await other.bringToFront();
+   await page.waitForTimeout(1300);
+   const background=await page.evaluate(()=>({focused:document.hasFocus(),visibility:document.visibilityState}));
+   assert.equal(background.focused,false,'Browser actually moved focus away from the game');
+   await page.bringToFront();await other.close();await expectUI(page,{trialRunning:false});
+   const returnedTime=(await ui(page)).simTime;await page.waitForTimeout(750);
+   assert.equal((await ui(page)).simTime,returnedTime,'Returning from another browser tab stays paused without catch-up');
+   test.browserFocusPause={...background,returnedTime};await setRunning(page,context,true);
    await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs',menuPaused:true});
    state=await ui(page);const pausedAt=state.simTime;await page.waitForTimeout(1100);assert.equal((await ui(page)).simTime,pausedAt,'Automatic menu pause preserves cargo clock');
    await closeSheets(page,context);await page.waitForFunction(t=>window.FlotraViewport.uiMetrics.simTime>t,pausedAt);

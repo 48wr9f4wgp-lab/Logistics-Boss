@@ -21,6 +21,13 @@ var _phone_qa := false
 var _qa_elapsed := 0.0
 var _menu_paused := false
 var _preferences := {"preferred_speed": 2, "pause_on_menus": false, "reduced_motion": false}
+const MAX_FOREGROUND_FRAME_SECONDS := 1.0
+# Godot's process delta is catch-up capped on very slow renderers. Use a
+# monotonic foreground clock so the selected playback speed remains honest.
+# Callable injection keeps slow-frame/pause tests deterministic.
+var frame_clock: Callable = func() -> int: return Time.get_ticks_usec()
+var _last_frame_usec := -1
+var _clock_active := false
 
 func _ready() -> void:
     # Native window units are already logical pixels. The web drawing buffer is
@@ -66,6 +73,7 @@ func _ready() -> void:
     _connect_if("preference_requested", _set_preference)
     _connect_if("operation_requested", _set_operation)
     _connect_if("cancel_layout_requested", _cancel_layout)
+    _connect_if("sheet_changed", _sheet_clock_changed)
     _connect_if("trial_started", _start_trial)
     _connect_if("back_requested", _return_to_intro)
     _connect_if("exit_requested", _exit_trial)
@@ -213,9 +221,16 @@ func _process(delta: float) -> void:
     if sim == null:
         return
     _menu_paused = running and bool(_preferences.pause_on_menus) and is_instance_valid(hud) and not str(hud._sheet_kind).is_empty()
-    if running and not _menu_paused:
-        sim.step(minf(delta, 0.25) * speed)
-        _save_elapsed += delta
+    var active := running and not _menu_paused
+    var now_usec: int = frame_clock.call()
+    var foreground_seconds := 0.0
+    if active and _clock_active and _last_frame_usec >= 0 and now_usec >= _last_frame_usec:
+        foreground_seconds = minf(float(now_usec - _last_frame_usec) / 1000000.0, MAX_FOREGROUND_FRAME_SECONDS)
+    _last_frame_usec = now_usec
+    _clock_active = active
+    if active:
+        sim.step(foreground_seconds * speed)
+        _save_elapsed += foreground_seconds
         if sim.campaign_status != _last_status:
             _last_status = sim.campaign_status
             _save_now()
@@ -240,11 +255,13 @@ func _start_trial() -> void:
     # An imported domain-level pause remains intact until explicit Resume.
     if sim.time_scale == 0.0: sim.time_scale = 1.0
     running = true
+    _reset_frame_clock()
     hud.call("set_trial_running", true)
 
 func _pause_trial(paused: bool) -> void:
     if not paused and sim.time_scale == 0.0: sim.time_scale = 1.0
     running = not paused
+    _reset_frame_clock()
     hud.call("set_trial_running", running)
     _save_now()
 
@@ -286,6 +303,7 @@ func _accept_contract(id: String) -> void:
     if result.get("ok",false):
         if sim.time_scale == 0.0: sim.time_scale = 1.0
         running = true
+        _reset_frame_clock()
         hud.call("set_trial_running", true)
         _save_now()
     world.call("refresh")
@@ -301,6 +319,7 @@ func _set_speed(value: float) -> void:
     if sim.has_method("set_preference"):
         sim.set_preference("preferred_speed", int(speed))
     hud.call("set_speed",speed)
+    _reset_frame_clock()
     _save_now()
 
 func _apply_preferences() -> void:
@@ -320,7 +339,17 @@ func _set_preference(key: String, value: Variant) -> void:
     var result: Dictionary = sim.set_preference(key, value)
     if result.get("ok", false):
         _apply_preferences()
+        if key in ["pause_on_menus", "preferred_speed"]: _reset_frame_clock()
         _save_now()
+
+func _reset_frame_clock() -> void:
+    _last_frame_usec = frame_clock.call()
+    _clock_active = running and not (bool(_preferences.pause_on_menus) and is_instance_valid(hud) and not str(hud._sheet_kind).is_empty())
+
+func _sheet_clock_changed(_kind: String) -> void:
+    # Anchor at the actual close/open action, not at the next rendered frame.
+    # A long paused menu contributes no elapsed time after it is dismissed.
+    if bool(_preferences.pause_on_menus): _reset_frame_clock()
 
 func _set_operation(id: String) -> void:
     if not sim.has_method("set_operation"): return
@@ -347,6 +376,7 @@ func _notification(what: int) -> void:
         # A background tab/app never silently keeps advancing a player's job.
         # Returning is deliberately paused until an explicit Resume action.
         running = false
+        _reset_frame_clock()
         if is_instance_valid(hud): hud.call("set_trial_running", false)
         _save_now()
     elif what == NOTIFICATION_WM_CLOSE_REQUEST:
