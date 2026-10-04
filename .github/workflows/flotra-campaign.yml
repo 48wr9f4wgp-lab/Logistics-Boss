@@ -30,3 +30,29 @@ jobs:
           include-templates: false
       - name: Campaign, save safety, and phone input tests
         run: bash flotra-campaign/test.sh
+  phone-browser-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser test dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Exported phone CSS, DPR, resize and touch regression
+        shell: bash
+        run: |
+          python3 -m http.server 8812 --bind 127.0.0.1 --directory docs > /tmp/flotra-browser-server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" node flotra-campaign/tests/release/browser_phone_geometry.cjs http://127.0.0.1:8812/godot-jobs-preview/ build/browser-phone
+      - name: Preserve actual browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flotra-browser-phone
+          path: build/browser-phone
+          retention-days: 7

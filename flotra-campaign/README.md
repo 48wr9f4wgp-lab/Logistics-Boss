@@ -27,3 +27,9 @@ Linux native rendering and engine-input tests at 375×667, 390×844 and 430×932
 ## Final readability and scoring
 
 The final pass adds readable screen-space location labels, tighter phone framing, live medal targets, explicit prerequisite/holding explanations and precise replay records. Inclusive medal thresholds use centisecond precision. Valid older boundary badges are corrected on import without changing operational progress. See `FLOTRA_FINISH_PASS_2026-10-03.md` at repository root.
+
+## CSS-pixel phone correction
+
+The October 4 correction fixes a Web-only DPR mismatch: the HUD now lays out in the canvas's actual safe-area CSS rectangle while its drawing buffer remains full-resolution. Body and world labels are 18 CSS pixels or larger and touch controls are 56 CSS pixels. Reading screens scroll at full height; placement has a pinned action and a compact short-landscape layout. See `FLOTRA_PHONE_READABILITY_2026-10-04.md`.
+
+Use `bash flotra-campaign/export_web.sh` to rebuild the export with its checked-in shell and viewport/storage bridges. The browser regression runs the actual committed WebGL2 export at 375/390/430 CSS widths and DPR 1/2/3, including toolbar-height changes, orientation, DPR changes, synthetic safe areas and real touch events. This Chromium emulation is distinct from physical iPhone/Safari verification.
