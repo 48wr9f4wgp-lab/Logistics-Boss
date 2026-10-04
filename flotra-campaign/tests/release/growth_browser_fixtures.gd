@@ -3,6 +3,7 @@ extends SceneTree
 # install them in fresh profiles, never in any user's existing saved warehouse.
 const Growth=preload("res://prototype/growth_sim.gd")
 const Legacy=preload("res://prototype/release_sim.gd")
+const GrowthV2=preload("res://prototype/growth_v2_sim.gd")
 const Store=preload("res://prototype/release_save.gd")
 func _initialize():
     var directory=OS.get_environment("FLOTRA_GROWTH_FIXTURES")
@@ -13,6 +14,14 @@ func _initialize():
     legacy.step(20.0)
     legacy.apply_layout("pack_annex")
     write_fixture(directory,"legacy",legacy)
+    var previous=GrowthV2.new()
+    previous.accept_contract("growth_1")
+    while not previous.finished:previous.step(10.0)
+    previous.buy_upgrade("wing_1")
+    previous.buy_upgrade("crew_4")
+    previous.accept_contract("growth_2")
+    previous.step(17.375)
+    write_fixture(directory,"growth_v2",previous)
     var growth=Growth.new()
     for number in range(1,7):
         growth.accept_contract("growth_%d"%number)
@@ -27,6 +36,10 @@ func _initialize():
     write_fixture(directory,"late",growth)
     while not growth.finished:growth.step(10.0)
     write_fixture(directory,"complete",growth)
+    growth.set_operation("parcel")
+    growth.accept_contract("route_pick")
+    growth.step(10.0)
+    write_fixture(directory,"parcel",growth)
     quit()
 func write_fixture(directory:String,name:String,sim):
     var encoded=Store.new().encode(sim.export_release_state())

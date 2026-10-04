@@ -55,6 +55,7 @@ func _ready() -> void:
     hud = HudScript.new()
     hud.call("bind_sim", sim)
     add_child(hud)
+    world.input_gate = func(): return is_instance_valid(hud) and hud._sheet_kind in ["", "editor"] and not hud._background_input_blocked()
     _connect_if("contract_requested", _accept_contract)
     _connect_if("upgrade_requested", _buy_upgrade)
     _connect_if("speed_requested", _set_speed)
@@ -171,6 +172,8 @@ func _resize_world() -> void:
         bottom = insets.y
     viewport_container.position = Vector2(0, top)
     viewport_container.size = Vector2(size.x, maxf(96.0, size.y-top-bottom))
+    if world != null and world.has_method("cancel_pointer_input"):
+        world.call("cancel_pointer_input")
     if world != null and world.has_method("fit_camera"):
         world.call("fit_camera", viewport_container.size)
 

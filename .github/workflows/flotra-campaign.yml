@@ -17,7 +17,7 @@ permissions:
 jobs:
   campaign-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -30,9 +30,14 @@ jobs:
           include-templates: false
       - name: Campaign, save safety, and phone input tests
         run: bash flotra-campaign/test.sh
+      - name: Independent pinned historical-save and route adversarial checks
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=1 origin 0a5a71ee3e88100373fcb77aae685bd4f52a7c24
+          bash flotra-campaign/tests/release/run_experience_adversarial.sh
   phone-browser-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -64,7 +69,7 @@ jobs:
           retention-days: 7
   growth-browser-journey:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -85,13 +90,14 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
           "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+          sudo apt-get install -y xvfb
       - name: Test earned growth, old save and mature warehouse
         shell: bash
         run: |
           python3 -m http.server 8820 --bind 127.0.0.1 --directory docs/godot-jobs-preview > /tmp/flotra-growth-server.log 2>&1 &
           server=$!
           trap 'kill "$server" 2>/dev/null || true' EXIT
-          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" node flotra-campaign/tests/release/browser_growth_journey.cjs http://127.0.0.1:8820/ build/growth-browser-journey build/growth-fixtures
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" xvfb-run -a node flotra-campaign/tests/release/browser_growth_journey.cjs http://127.0.0.1:8820/ build/growth-browser-journey build/growth-fixtures
       - name: Preserve growth browser evidence
         if: always()
         uses: actions/upload-artifact@v4

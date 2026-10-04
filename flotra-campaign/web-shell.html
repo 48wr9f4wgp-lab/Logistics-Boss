@@ -14,6 +14,7 @@ html, body, #canvas {
 body {
 	color: white;
 	background-color: black;
+	font: 18px/1.5 sans-serif;
 	overflow: hidden;
 	touch-action: none;
 }
@@ -88,6 +89,7 @@ body {
 	border: 1px solid #9b3943;
 	color: #e0e0e0;
 	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
+	font-size: 18px;
 	line-height: 1.3;
 	margin: 0 2rem;
 	overflow: hidden;
@@ -95,20 +97,29 @@ body {
 	text-align: center;
 	z-index: 1;
 }
+
+#status-label {
+	position: absolute;
+	bottom: 15%;
+	margin: 0 1.5rem;
+	font: 18px/1.6 sans-serif;
+	text-align: center;
+}
 		</style>
 		$GODOT_HEAD_INCLUDE
 	</head>
 	<body>
 		<canvas id="canvas">
-			Your browser does not support the canvas tag.
+			このブラウザーではFLOTRAを表示できません。別のブラウザーで開いてください。
 		</canvas>
 
 		<noscript>
-			Your browser does not support JavaScript.
+			FLOTRAを遊ぶにはJavaScriptを有効にしてください。
 		</noscript>
 
 		<div id="status">
 			<img id="status-splash" class="$GODOT_SPLASH_CLASSES" src="$GODOT_SPLASH" alt="">
+			<p id="status-label" role="status">倉庫を読み込んでいます…</p>
 			<progress id="status-progress"></progress>
 			<div id="status-notice"></div>
 		</div>
@@ -129,6 +140,7 @@ const engine = new Engine(GODOT_CONFIG);
 	const statusOverlay = document.getElementById('status');
 	const statusProgress = document.getElementById('status-progress');
 	const statusNotice = document.getElementById('status-notice');
+	const statusLabel = document.getElementById('status-label');
 
 	let initializing = true;
 	let statusMode = '';
@@ -145,6 +157,7 @@ const engine = new Engine(GODOT_CONFIG);
 		statusOverlay.style.visibility = 'visible';
 		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
 		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusLabel.style.display = mode === 'progress' ? 'block' : 'none';
 		statusMode = mode;
 	}
 
@@ -161,13 +174,7 @@ const engine = new Engine(GODOT_CONFIG);
 
 	function displayFailureNotice(err) {
 		console.error(err);
-		if (err instanceof Error) {
-			setStatusNotice(err.message);
-		} else if (typeof err === 'string') {
-			setStatusNotice(err);
-		} else {
-			setStatusNotice('An unknown error occurred.');
-		}
+		setStatusNotice('FLOTRAを起動できませんでした。\n通信状態を確認して、ページを読み込み直してください。\n解決しない場合は、最新版の別のブラウザーでお試しください。');
 		setStatusMode('notice');
 		initializing = false;
 	}
@@ -204,8 +211,10 @@ const engine = new Engine(GODOT_CONFIG);
 			});
 		} else {
 			// Display the message as usual
-			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
-			displayFailureNotice(missingMsg + missing.join('\n'));
+			console.error('Missing browser features:', missing);
+			setStatusNotice('このブラウザーではFLOTRAを動かせません。\nブラウザーを最新版にするか、別のブラウザーで開いてください。');
+			setStatusMode('notice');
+			initializing = false;
 		}
 	} else {
 		setStatusMode('progress');

@@ -25,7 +25,18 @@ func tap_world(id: String, kind: String) -> void:
     root.push_input(input_at(point,false,kind))
     await settle()
 func guard() -> void:
-    await create_timer(.25).timeout
+    # The dismissal guard uses monotonic wall time. On the first headless
+    # frame, a SceneTreeTimer can consume startup delta accrued before its
+    # creation and fire while that guard is still active. Keep the intended
+    # 250ms wait in the same clock domain instead of depending on frame delta.
+    var earliest := Time.get_ticks_msec() + 250
+    var deadline := earliest + 2000
+    while Time.get_ticks_msec() < earliest or app.hud._background_input_blocked():
+        if Time.get_ticks_msec() >= deadline:
+            check(false, "World dismissal guard clears within bounded real time")
+            quit(1)
+            return
+        await process_frame
     await physics_frame
     await settle()
 func run() -> void:

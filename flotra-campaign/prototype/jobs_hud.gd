@@ -10,6 +10,7 @@ var _comparison_loading := false
 var _has_started := false
 var _entry_resume_running := false
 var _background_guard_until := 0
+var _background_guard_frame := -1
 var _pause: Button
 var _notice_title := "変更を受け付けました"
 
@@ -34,8 +35,9 @@ func _build() -> void:
     _layout()
 
 func _button(parent: Node, value: String, action: Callable, primary: bool = false, light: bool = true) -> Button:
+    var press_guard := {"blocked": false}
     var guarded_action := func():
-        if _sheet_kind.is_empty() and Time.get_ticks_msec() < _background_guard_until:
+        if press_guard.blocked or (_sheet_kind.is_empty() and _background_input_blocked()):
             return
         action.call()
     var button := super._button(parent, value, guarded_action, primary, light)
@@ -44,13 +46,21 @@ func _button(parent: Node, value: String, action: Callable, primary: bool = fals
     # while stale releases still fail the inherited epoch check.
     button.gui_input.connect(func(event: InputEvent):
         if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+            press_guard.blocked = _sheet_kind.is_empty() and _background_input_blocked()
             button.set_meta("press_epoch", _input_epoch)
         elif event is InputEventScreenTouch and event.pressed:
+            press_guard.blocked = _sheet_kind.is_empty() and _background_input_blocked()
             button.set_meta("press_epoch", _input_epoch)
         elif event is InputEventKey and event.is_action_pressed("ui_accept") and not event.echo:
+            press_guard.blocked = _sheet_kind.is_empty() and _background_input_blocked()
             button.set_meta("press_epoch", _input_epoch)
     )
     return button
+
+func _background_input_blocked() -> bool:
+    # A slow synchronous purchase/accept callback can exceed the wall-clock
+    # interval before its queued input batch ends. Require a new frame too.
+    return Time.get_ticks_msec() < _background_guard_until or Engine.get_process_frames() <= _background_guard_frame
 
 func _layout() -> void:
     super._layout()
@@ -140,14 +150,14 @@ func refresh() -> void:
         _reason_detail.text = _notice
     elif not _trial_running and _sheet_kind != "entry":
         _reason_title.text = "倉庫を一時停止中"
-        _reason_detail.text = "右上の「再開」で続けます。配置も変更できます"
+        _reason_detail.text = "「再開」で作業を続けます。停止中も配置を選べます"
     elif pending:
         if bool(_snapshot.get("relocating", false)):
             _reason_title.text = "設備と在庫を移動中"
-            _reason_detail.text = "あと%.1f秒は作業停止。受注は残ります" % float(_snapshot.get("relocation_remaining", 0))
+            _reason_detail.text = "移動中は作業が止まります。あと%.1f秒（ゲーム内）" % float(_snapshot.get("relocation_remaining", 0))
         else:
-            _reason_title.text = "保管床と運搬の完了待ち"
-            _reason_detail.text = "床の荷物を出し終えてから移動します"
+            _reason_title.text = "設備を動かす準備中"
+            _reason_detail.text = "運搬が終わり、移動先が空くと設備を動かします"
     else:
         _show_operational_reason()
     _compare.disabled = not _work_choices_enabled()
@@ -164,17 +174,17 @@ func _work_choices_enabled() -> bool:
 func _show_operational_reason() -> void:
     var reason := str(_snapshot.get("bottleneck", ""))
     if reason.contains("場の外") or reason.contains("場外"):
-        _reason_title.text = "入荷の外で便が待機"
-        _reason_detail.text = "受注は保留中。保管床と棚の空きに注目"
+        _reason_title.text = "倉庫の外で入荷待ち"
+        _reason_detail.text = "荷物は順番に入ります。保管床や棚が空くまでお待ちください"
     elif reason.contains("保管") and reason.contains("満杯"):
-        _reason_title.text = "まとめ保管の床が満杯"
-        _reason_detail.text = "使える床は%d枠。棚の位置で広さが変わります" % int(_snapshot.get("bulk_capacity", 0))
+        _reason_title.text = "まとめ便の保管床が満杯"
+        _reason_detail.text = "使える保管床は%d枠です。棚の位置を変えると枠数も変わります" % int(_snapshot.get("bulk_capacity", 0))
     elif reason.contains("棚") and reason.contains("満杯"):
-        _reason_title.text = "小口の棚が満杯"
-        _reason_detail.text = "棚から梱包へ運ぶ動線を見直そう"
+        _reason_title.text = "小口便の棚が満杯"
+        _reason_detail.text = "棚から梱包台へ運ぶ距離を見直してみよう"
     elif reason.contains("譲り"):
         _reason_title.text = "通路ですれ違い待ち"
-        _reason_detail.text = "棚・梱包台の位置で、通る道が変わります"
+        _reason_detail.text = "棚と梱包台の位置を変えると、通る道も変わります"
     else:
         _reason_title.text = "2種類の仕事が進行中"
         _reason_detail.text = "まとめ便は床で保管、小口は棚から梱包へ"
@@ -199,6 +209,7 @@ func _start_trial() -> void:
 
 func show_play() -> void:
     _background_guard_until = Time.get_ticks_msec() + 180
+    _background_guard_frame = Engine.get_process_frames()
     _input_epoch += 1
     super.show_play()
 
@@ -299,15 +310,19 @@ func show_job_mix_result(result: Dictionary) -> void:
 func _update_choice() -> void:
     super._update_choice()
     if _sheet_kind == "editor" and is_instance_valid(_apply) and _apply.text == "今の配置です":
-        _cost.text = "現在の配置・設備の移動なし"
+        _cost.text = "現在の配置です。移動費用はかかりません"
 
 func show_action_result(result: Dictionary) -> void:
-    _notice_title = "設備の移動を受け付けました" if bool(result.get("ok", false)) else "配置を確認してください"
+    if bool(result.get("ok", false)):
+        _notice_title = "設備の移動を予約しました" if _trial_running else "再開すると設備を移動します"
+    else:
+        _notice_title = str({"busy":"前の配置変更が終わるまで待とう", "same":"すでにこの配置です", "finished":"次の仕事を選ぼう"}.get(str(result.get("reason", "")), "配置を変更できませんでした"))
     super.show_action_result(result)
 
 func close_sheet() -> void:
     var previous := _sheet_kind
     _background_guard_until = Time.get_ticks_msec() + 180
+    _background_guard_frame = Engine.get_process_frames()
     if previous == "entry":
         _input_epoch += 1
         if _has_started:

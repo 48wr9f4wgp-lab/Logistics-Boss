@@ -139,7 +139,7 @@ func _show_operational_reason() -> void:
         if str(worker.get("phase", "idle")) != "idle": all_idle = false
     if held > 0 and ready == 0 and (all_idle or _reason_title.text.contains("床が満杯")):
         _reason_title.text = "保管時間の終了待ち"
-        _reason_detail.text = "契約の保管条件。出荷可能まであと%d秒" % ceili(next_release)
+        _reason_detail.text = "まとめ便の保管時間です。出荷まであと%d秒（ゲーム内）" % ceili(next_release)
         return
     if _reason_title.text == "2種類の仕事が進行中":
         var current: Dictionary = _release.get("current_contract", {})
@@ -393,7 +393,13 @@ func show_upgrade_result(result: Dictionary) -> void:
     refresh()
 
 func _locked_text(reason: String) -> String:
-    return str({"contract_in_progress":"進行中の契約を終えると選べます", "locked_contract":"前の契約を達成すると解放されます", "unshipped_cargo":"今の荷物と設備の移動が終わるまでお待ちください", "unknown_contract":"この契約は見つかりません", "unknown_upgrade":"この設備は見つかりません", "busy":"進行中の契約を終えると選べます", "contract_running":"進行中の契約を終えると選べます", "active_contract":"進行中の契約を終えると選べます", "locked":"前の契約を達成すると解放されます", "insufficient_funds":"資金が足りません。次の契約で報酬を獲得", "funds":"資金が足りません。次の契約で報酬を獲得", "owned":"すでに導入済みです", "already_owned":"すでに導入済みです", "contract_mix_fixed":"契約の荷物の内訳は固定です"}.get(reason, reason if not reason.is_empty() else "前の契約を達成すると選べます"))
+    var has_readable_copy := false
+    for character in reason:
+        if character.unicode_at(0) > 127:
+            has_readable_copy = true
+            break
+    var fallback := reason if has_readable_copy else "いまは選べません。画面を開き直して確認してください"
+    return str({"contract_in_progress":"進行中の仕事が終わると選べます", "locked_contract":"前の成長ステップを完了すると選べます", "unshipped_cargo":"荷物の出荷と設備の移動が終わると選べます", "unknown_contract":"仕事が見つかりません。仕事一覧を開き直してください", "unknown_upgrade":"設備が見つかりません。設備一覧を開き直してください", "busy":"進行中の仕事が終わると選べます", "contract_running":"進行中の仕事が終わると選べます", "active_contract":"進行中の仕事が終わると選べます", "locked":"先に必要な仕事を完了してください", "insufficient_funds":"資金が足りません。仕事を完了して報酬を受け取ろう", "funds":"資金が足りません。仕事を完了して報酬を受け取ろう", "owned":"すでに導入済みです", "already_owned":"すでに導入済みです", "unavailable":"いまは選べません。必要な資金と条件を確認してください", "contract_mix_fixed":"仕事ごとの荷物の内訳は変更できません"}.get(reason, fallback))
 
 func _compact_funds(value: int) -> String:
     if value >= 100000000:
@@ -495,12 +501,12 @@ func _update_choice() -> void:
         button.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
         button.text = button.text.replace("現在の配置", "使用中")
     if _sheet_kind == "editor" and is_instance_valid(_apply) and str(_release.get("status", "ready")) != "running" and not _apply.disabled:
-        _cost.text = "契約の合間の配置変更・作業停止なし"
+        _cost.text = "仕事の合間は無料で変更できます。待ち時間もありません"
 
 func show_action_result(result: Dictionary) -> void:
     if bool(result.get("ok", false)) and not bool(result.get("pending", true)) and str(_release.get("status", "ready")) != "running":
         _notice_title = "配置を変更しました"
-        _notice = "次の契約で、新しい動線を確認しよう"
+        _notice = "無料で配置を変更しました。次の仕事で荷物の流れを見てみよう"
         _notice_seconds = 4.0
         refresh()
         return
@@ -520,8 +526,8 @@ func _update_mix_choice() -> void:
 func _short_save_status() -> String:
     if _save_status.contains("テスト"):
         return "テスト・保存なし"
-    if _save_status.contains("できません") or _save_status.contains("失敗") or _save_status.contains("保護") or _save_status.contains("保存されません"):
-        return "保存に注意 · 結果へ"
+    if _save_status.contains("できません") or _save_status.contains("失敗") or _save_status.contains("保護") or _save_status.contains("保存されません") or _save_status.contains("保存停止") or _save_status.contains("上書き停止") or _save_status.contains("容量"):
+        return "保存注意・成果へ"
     return _save_status
 
 func _layout() -> void:

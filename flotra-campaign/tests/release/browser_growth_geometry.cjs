@@ -125,15 +125,16 @@ async function swipe(page, context, rect, upward, requestedDistance) {
   const bottom = canvas.y + rect.y + rect.height - 16;
   const top = canvas.y + rect.y + 16;
   const start = upward ? bottom : top;
-  const distance = Math.min(bottom - top, requestedDistance || bottom - top);
+  const distance = Math.min(bottom - top, 180, (requestedDistance || bottom - top) * 0.5);
   const end = start + (upward ? -distance : distance);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: start }] });
   for (let step = 1; step <= 9; step++) {
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: start + (end - start) * step / 9 }] });
-    await page.waitForTimeout(25);
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
   }
   // Hold at the end so this is a deliberate drag, not an uncontrolled fling in
   // a short editor scroll area whose entire range can be smaller than a swipe.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(resolve)))));
   await page.waitForTimeout(250);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   let previous;
@@ -167,10 +168,10 @@ async function tapName(page, context, name, scrollable = false) {
     const y = control.y + control.height / 2;
     const scroll = state.scroll;
     const inCanvas = x >= 0 && x <= m.canvas.rect.width && y >= 0 && y <= m.canvas.rect.height;
-    const inScroll = !scrollable || (y >= scroll.y + 8 && y <= scroll.y + scroll.height - 8);
+    const inScroll = !scrollable || (control.y >= scroll.y + 8 && control.y + control.height <= scroll.y + scroll.height - 8);
     if (inCanvas && inScroll) {
       assert.ok(!control.disabled, `Touchable button is enabled: ${name}`);
-      assert.ok(control.height >= 48 && control.fontSize >= 18, `Readable CSS target: ${name}`);
+      assert.ok(control.height >= 56 && control.fontSize >= 18, `Readable CSS target: ${name}`);
       verify(m, `before touching ${name}`);
       console.log(`POINT ${name}: ${m.canvas.rect.x + x},${m.canvas.rect.y + y}; CSS ${m.engine.logicalWidth}x${m.engine.logicalHeight}; DPR ${m.viewport.dpr}`);
       await touchAt(page, context, m.canvas.rect.x + x, m.canvas.rect.y + y);
@@ -191,7 +192,28 @@ async function tapName(page, context, name, scrollable = false) {
 async function touchJourney(page, context, label, result) {
   await expectUI(page, { sheet: '' });
   await tapName(page, context, 'Back');
-  await expectUI(page, { sheet: 'entry' });
+  await expectUI(page, { sheet: 'controls', trialRunning: false });
+  const speed = await button(page, 'Speed4x');
+  assert.ok(speed.y >= 0 && speed.y + speed.height <= (await measure(page)).canvas.rect.height, 'Speed is available without scrolling at phone height');
+  await tapName(page, context, 'Speed4x', true);
+  await page.waitForFunction(() => window.FlotraViewport.uiMetrics.speed === 4);
+  await page.screenshot({ path: path.join(output, `controls-${label}.png`), scale: 'css' });
+  const beforeResize = await measure(page);
+  const one = await button(page, 'Speed1x');
+  const touch = await session(page, context);
+  await touch.send('Input.dispatchTouchEvent', {type:'touchStart',touchPoints:[{id:0,x:one.x+one.width/2,y:one.y+one.height/2}]});
+  await page.waitForTimeout(110);
+  await page.setViewportSize({width:beforeResize.viewport.width,height:beforeResize.viewport.height-40});
+  await settle(page);
+  await touch.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+  await page.waitForTimeout(500);
+  assert.equal((await ui(page)).speed,4,'Held press cancelled by real viewport resize');
+  await page.setViewportSize({width:beforeResize.viewport.width,height:beforeResize.viewport.height});
+  await settle(page);
+  await tapName(page,context,'Speed1x',true);await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.speed===1);
+  await tapName(page,context,'Speed4x',true);await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.speed===4);
+  await tapName(page, context, 'OpenHelp', true);
+  await expectUI(page, { sheet: 'entry', trialRunning: false });
   await tapName(page, context, 'StartTrial', true);
   await expectUI(page, { sheet: '' });
   await tapName(page, context, 'WorkChoice');

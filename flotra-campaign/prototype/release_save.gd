@@ -42,7 +42,7 @@ func load_into(sim) -> Dictionary:
     var pair := _read_pair()
     if not pair.get("ok",false):
         blocked = true
-        status = "保存を利用できません"
+        status = "保存機能を利用できません。この画面の進行は保存されません"
         return {"ok":false,"reason":"storage_unavailable","fresh":false}
     var primary := str(pair.get("primary",""))
     var backup := str(pair.get("backup",""))
@@ -54,10 +54,10 @@ func load_into(sim) -> Dictionary:
         var imported: Dictionary = sim.import_release_state(decoded.data)
         if imported.get("ok",false):
             _last_good = primary
-            status = "保存から再開"
+            status = "保存データを読み込みました"
             if not backup.is_empty() and not _valid_for_sim(backup,sim):
                 blocked = true
-                status = "予備保存を保護中・上書き停止"
+                status = "バックアップの確認が必要です。データ保護のため、この先の進行は保存されません"
                 return {"ok":true,"fresh":false,"restored":true,"blocked":true}
             return {"ok":true,"fresh":false,"restored":true}
     # Never replace unrecognized/corrupt data automatically, including a future version.
@@ -66,9 +66,9 @@ func load_into(sim) -> Dictionary:
     if decoded.ok:
         var imported: Dictionary = sim.import_release_state(decoded.data)
         if imported.get("ok",false):
-            status = "予備から再開・保存停止中"
+            status = "バックアップを読み込みました。元のデータを保護しているため、この先の進行は保存されません"
             return {"ok":true,"fresh":false,"restored":true,"backup":true,"blocked":true}
-    status = "保存を読めません・上書き停止"
+    status = "保存データを読み込めません。以前のデータは保護しています。この画面の進行は保存されません"
     return {"ok":false,"fresh":false,"reason":"unrecognized_save","blocked":true}
 
 func _valid_for_sim(text: String, sim) -> bool:
@@ -83,7 +83,7 @@ func save_from(sim) -> Dictionary:
     var data: Dictionary = sim.export_release_state()
     var text := encode(data)
     if text.length() > MAX_TEXT:
-        status = "保存容量を超えました"
+        status = "保存データが大きすぎるため保存できません。画面を閉じると未保存の進行が失われます"
         return {"ok":false,"reason":"too_large"}
     var result: Dictionary
     if OS.has_feature("web"):
@@ -96,11 +96,11 @@ func save_from(sim) -> Dictionary:
         _last_good = text
         status = "自動保存済み"
     else:
-        status = "保存失敗・閉じると進行を失います"
-        if result.get("reason","") == "writer_unavailable": status = "保存停止・他のタブを閉じて再読込"
+        status = "保存できませんでした。画面を閉じると未保存の進行が失われます"
+        if result.get("reason","") == "writer_unavailable": status = "保存できません。他のタブで開いていないか確認してください。ブラウザーの保存機能が未対応の場合もあります。読み込み直すと未保存の進行は失われます"
         elif result.get("reason","") == "concurrent_change":
             blocked = true
-            status = "他の画面で進行更新・上書き停止"
+            status = "別の画面で進行が更新されました。そのデータを保護するため、この画面の進行は保存されません"
     return result
 
 func _write_native(text: String) -> Dictionary:

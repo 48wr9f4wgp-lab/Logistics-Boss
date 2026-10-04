@@ -24,6 +24,19 @@ var _rendered_selection := ""
 var _rendered_preview := ""
 var _rendered_ghost_present := false
 var _rendered_ghost_position := Vector3.ZERO
+var reduced_motion := false
+
+func set_reduced_motion(value: bool) -> void:
+    if reduced_motion == value: return
+    reduced_motion = value
+    _rendered_snapshot = {}
+    refresh()
+
+func _process(delta: float) -> void:
+    # Keep physical cargo transport visible. Only the decorative walking cycle
+    # is suppressed; no clock, processing rate, route or entity is changed.
+    if not reduced_motion:
+        _pulse += delta
 
 func _ready() -> void:
     super._ready()
@@ -353,9 +366,14 @@ func _refresh_workers(workers: Array) -> void:
     super._refresh_workers(workers)
     for worker in workers:
         var id := str(worker.get("id", 0))
-        if int(id) < _human_count or not _actors.has(id):
+        if not _actors.has(id):
             continue
         var robot: Node3D = _actors[id]
+        if int(id) < _human_count:
+            if reduced_motion:
+                (robot.get_node("LeftLeg") as Node3D).rotation.x = 0.0
+                (robot.get_node("RightLeg") as Node3D).rotation.x = 0.0
+            continue
         # The inherited human gait must not make a robot's wheels kick.
         (robot.get_node("LeftLeg") as Node3D).rotation.x = 0.0
         (robot.get_node("RightLeg") as Node3D).rotation.x = 0.0

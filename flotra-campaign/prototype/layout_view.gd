@@ -27,6 +27,7 @@ var _built_shell := false
 var _down_slot := ""
 var _down_position := Vector2.ZERO
 var _touch_index := -1
+var input_gate: Callable
 var _pulse := 0.0
 var _ghost: Node3D
 
@@ -180,7 +181,7 @@ func _build_shell(state: Dictionary) -> void:
     _box(self,"OutboundReceivingPad",Vector3(2.4,.04,2.0),outbound_position+Vector3(0,.015,0),Color("39736b"))
     _label(self,"InboundLabel","入荷",inbound_position+Vector3(0,.12,1.2),WHITE,38)
     _label(self,"OutboundLabel","出荷",outbound_position+Vector3(0,.12,1.2),WHITE,38)
-    _label(self,"AnnexLabel","増築区画",Vector3(wing_center.x,1.10,wing_back+.14),TEAL,40)
+    _label(self,"AnnexLabel","別館",Vector3(wing_center.x,1.10,wing_back+.14),TEAL,40)
     _built_shell = true
     fit_camera(Vector2(get_viewport().size))
 
@@ -433,6 +434,9 @@ func _slot_at(point: Vector2) -> String:
     return String(hit["collider"].get_meta("slot_id","")) if not hit.is_empty() else ""
 
 func _unhandled_input(event: InputEvent) -> void:
+    if input_gate.is_valid() and not input_gate.call():
+        cancel_pointer_input()
+        return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
         if event.pressed:
             _down_position = event.position
@@ -486,10 +490,13 @@ func preview_slot(slot_id: String, choice_id: String) -> void:
             _label(_ghost,"PreviewLabel","変更先",Vector3(0,.2,d*.5+.25),AMBER,34)
             return
 
+func cancel_pointer_input() -> void:
+    _down_slot = ""
+    _touch_index = -1
+
 func _notification(what: int) -> void:
     if what in [NOTIFICATION_WM_WINDOW_FOCUS_OUT, NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED]:
-        _down_slot = ""
-        _touch_index = -1
+        cancel_pointer_input()
 
 func _fit_equipment(node: Node3D, dimensions: Vector3) -> void:
     var found := false
