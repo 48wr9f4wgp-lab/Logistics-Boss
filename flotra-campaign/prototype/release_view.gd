@@ -177,6 +177,10 @@ func _refresh_callouts() -> void:
         label.text = descriptor.text
         var dimensions := Vector2(ceilf(FONT.get_string_size(label.text,HORIZONTAL_ALIGNMENT_LEFT,-1,CALLOUT_FONT_SIZE).x)+18,CALLOUT_HEIGHT)
         var anchor := camera.unproject_position(descriptor.point)
+        item.anchor = anchor
+        # Zoomed/panned-offscreen locations must not masquerade as visible
+        # equipment or draw leaders across the entire warehouse.
+        if _selected.is_empty() and not Rect2(Vector2.ZERO, screen).has_point(anchor): continue
         var placement := _callout_rect(anchor,dimensions,int(descriptor.side),screen,occupied,protected)
         label.position = placement.position.round()
         label.size = placement.size

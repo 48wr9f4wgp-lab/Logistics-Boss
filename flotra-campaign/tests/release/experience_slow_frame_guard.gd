@@ -21,6 +21,8 @@ func mouse(point: Vector2, pressed: bool) -> void:
     var motion := InputEventMouseMotion.new()
     motion.position = point
     motion.global_position = point
+    # Motion precedes the transition: the left button is still held before up.
+    motion.button_mask = MOUSE_BUTTON_MASK_LEFT if not pressed else 0
     root.push_input(motion)
     var event := InputEventMouseButton.new()
     event.position = point

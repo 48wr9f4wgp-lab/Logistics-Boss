@@ -67,6 +67,8 @@ func _ready() -> void:
     hud.call("bind_sim", sim)
     add_child(hud)
     world.input_gate = func(): return is_instance_valid(hud) and hud._sheet_kind in ["", "editor"] and not hud._background_input_blocked()
+    world.camera_input_gate = func(): return is_instance_valid(hud) and hud._sheet_kind.is_empty()
+    _connect_if("camera_requested", _camera_action)
     hud.call("set_speed",speed)
     _connect_if("contract_requested", _accept_contract)
     _connect_if("upgrade_requested", _buy_upgrade)
@@ -175,6 +177,20 @@ func _report_phone_qa() -> void:
         slots[id] = {"x":point.x,"y":point.y}
     data["slots"] = slots
     data["worldVisible"] = viewport_container.visible
+    data["worldRect"] = _qa_rect(viewport_container)
+    data["camera"] = world.camera_metrics()
+    var floors: Array = []
+    for mesh in world._growth_floors + world._connector_floors:
+        var point: Vector2 = viewport_container.position + world.camera.unproject_position(mesh.global_position)
+        floors.append({"x":point.x,"y":point.y,"name":str(mesh.name)})
+    data["camera"]["floorPoints"] = floors
+    var callouts: Array = []
+    for item in world._callouts.values():
+        var label: Label = item.label
+        var rect := _qa_rect(label)
+        rect.merge({"text":label.text,"visible":label.visible,"fontSize":label.get_theme_font_size("font_size"), "anchorX":item.anchor.x, "anchorY":item.anchor.y})
+        callouts.append(rect)
+    data["camera"]["callouts"] = callouts
     var release: Dictionary = sim.release_state()
     data["growth"] = release.growth
     data["progress"] = release.progress
@@ -210,6 +226,24 @@ func _resize_world() -> void:
         world.call("cancel_pointer_input")
     if world != null and world.has_method("fit_camera"):
         world.call("fit_camera", viewport_container.size)
+
+func _camera_action(action: String) -> void:
+    if is_instance_valid(world): world.camera_action(action)
+
+func _input(event: InputEvent) -> void:
+    if not is_instance_valid(world) or not is_instance_valid(viewport_container): return
+    if OS.has_feature("web") and event is InputEventMouseMotion and world._camera_mouse_down:
+        # Godot Web retains its old button mask after a missed mouseup. The DOM
+        # capture listener runs before the engine handler for this same event.
+        var buttons := int(JavaScriptBridge.eval("window.FlotraViewport && typeof window.FlotraViewport.mouseButtons === 'number' ? window.FlotraViewport.mouseButtons : -1", true))
+        if buttons >= 0 and (buttons & 1) == 0:
+            world.cancel_pointer_input()
+            return
+    # A world gesture ends when it crosses into HUD space. Observe before GUI
+    # consumes the event, so a release over a button cannot leave a held camera.
+    if event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventScreenTouch or event is InputEventScreenDrag:
+        if not viewport_container.get_global_rect().has_point(event.position):
+            world.cancel_pointer_input()
 
 func _process(delta: float) -> void:
     if OS.has_feature("web"):
@@ -348,6 +382,7 @@ func _reset_frame_clock() -> void:
     _clock_active = running and not (bool(_preferences.pause_on_menus) and is_instance_valid(hud) and not str(hud._sheet_kind).is_empty())
 
 func _sheet_clock_changed(_kind: String) -> void:
+    if is_instance_valid(world): world.cancel_pointer_input()
     # Anchor at the actual close/open action, not at the next rendered frame.
     # A long paused menu contributes no elapsed time after it is dismissed.
     if bool(_preferences.pause_on_menus): _reset_frame_clock()
