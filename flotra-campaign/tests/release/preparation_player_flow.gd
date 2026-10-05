@@ -4,6 +4,7 @@ extends SceneTree
 const Main = preload("res://prototype/growth_main.gd")
 const Sim = preload("res://prototype/growth_sim.gd")
 var app
+var prepared_starts := 0
 var checks := 0
 var failures: Array[String] = []
 
@@ -81,6 +82,17 @@ func compare_geometry(context: String) -> void:
             var desired := clampf(top, 0, max_scroll)
             var projected := Rect2(Vector2(rect.position.x, area.position.y + top - desired), rect.size)
             check(area.grow(1).encloses(projected), context + " action scroll reachable " + str(child.name))
+
+func compact_geometry(context: String, above_fold: bool = true) -> void:
+    var scroll: ScrollContainer = app.hud._scroll
+    var start := node("StartPreparedJob")
+    check(start.get_parent() == app.hud._body and not scroll.is_ancestor_of(start), context + " start is outside scroll")
+    check(root.get_visible_rect().encloses(start.get_global_rect()), context + " pinned start inside viewport")
+    check(start.position.y >= scroll.position.y + scroll.size.y, context + " start cannot cover scroll content")
+    if above_fold:
+        check(scroll.scroll_vertical == 0, context + " starts at top")
+        for id in ["balanced", "parcel", "pallet"]:
+            check(scroll.get_global_rect().encloses(node("ChooseOperation_" + id).get_global_rect()), context + " complete mode above fold " + id)
 
 func domain_checks() -> void:
     var sim = Sim.new()
@@ -170,6 +182,17 @@ func run() -> void:
     await tap("PrepareContract_growth_1")
     check(app.hud._prepared_contract_id == "growth_1" and app.hud._release_tab == "prepare", "Optional preparation selects the requested job")
     check(app.sim.export_release_state() == original and not app.running, "Opening preparation does not accept, charge or run")
+    compact_geometry("initial short phone")
+    check(not node("PreparationDetails").visible, "Long explanations begin folded")
+    await tap("TogglePreparationDetails")
+    var pinned := node("StartPreparedJob").get_global_rect()
+    check(node("PreparationDetails").visible and app.sim.export_release_state() == original, "Expand details is read-only")
+    app.hud._scroll.scroll_vertical = 10000
+    await settle()
+    check(node("StartPreparedJob").get_global_rect() == pinned, "Start remains pinned at end of details")
+    compact_geometry("expanded details", false)
+    await tap("TogglePreparationDetails")
+    check(not node("PreparationDetails").visible and app.sim.export_release_state() == original, "Collapse details is read-only")
     await tap("CloseSheet")
     check(app.hud._release_tab == "contracts" and app.sim.export_release_state() == original, "Closing untouched preparation returns to jobs without mutation")
     await tap("PrepareContract_growth_1")
@@ -177,6 +200,7 @@ func run() -> void:
         await tap("ChooseOperation_" + mode)
         check(app.sim.operation_mode == mode and app.sim.current_contract_id.is_empty(), "Preparation commits existing free mode without starting " + mode)
         check(app.sim.campaign_wallet == 100 and app.hud._prepared_contract_id == "growth_1", "Mode change preserves selected job and wallet " + mode)
+    await tap("TogglePreparationDetails")
     await tap("PrepareLayout")
     await tap("Candidate_annex")
     await tap("CloseSheet")
@@ -191,9 +215,19 @@ func run() -> void:
         root.size = size
         await settle()
         compare_geometry("preparation " + str(size))
+        compact_geometry("prepared resized " + str(size), false)
     root.size = Vector2i(375,567)
     await settle()
+    app.hud.contract_requested.connect(func(_id: String): prepared_starts += 1)
+    var start_point := node("StartPreparedJob").get_global_rect().get_center()
+    pointer(start_point, true)
+    await settle()
+    app._cancel_web_touch()
+    pointer(start_point, false)
+    await settle()
+    check(prepared_starts == 0 and not app.running and app.hud._release_tab == "prepare", "Canceled pinned Start never accepts job")
     await tap("StartPreparedJob")
+    check(prepared_starts == 1, "Fresh pinned Start emits exactly once after canceled press")
     check(app.sim.current_contract_id == "growth_1" and app.running and app.hud._sheet_kind.is_empty(), "Held prepared-start dispatch starts selected job exactly once")
     check(app.sim.campaign_wallet == 100 and app.sim.operation_mode == "balanced" and app.sim.layout_id == "clear_aisle", "Prepared start preserves chosen setup and costs nothing")
     app.hud._start_prepared_contract()

@@ -57,3 +57,7 @@ Each available job can still start immediately, or open a preparation sheet show
 Results compare the previous completion of the same job during the current launch: game-time duration, throughput, aggregate aisle wait, operating mode and final layout. Equipment and relocation differences are disclosed. Detailed comparison state is session-only; schema 3 and saved historical best times are unchanged. A reload never invents a previous operating setup from incomplete saved records.
 
 Web touch cancellation has a separate DOM-capture notification because the Godot loader otherwise maps cancellation to a normal release. Earlier buffered starts are processed before invalidating held UI/world gestures, including several rapid start/cancel pairs before one rendered frame. Normal release cleanup and fresh input remain available.
+
+## Compact phone preparation
+
+The three full-size free operating choices appear together before long explanations, including on a 375×567 CSS-pixel phone. Detailed conditions, operating tradeoffs and reversible layout adjustment expand on demand. Start stays pinned below the scroll area. The details disclosure is session-only; selecting a mode still commits through the original guarded scene action. See `FLOTRA_COMPACT_PREPARATION_2026-10-05.md`.

@@ -166,7 +166,7 @@ async function tapName(page, context, name, scrollable = false) {
     const y = control.y + control.height / 2;
     const scroll = state.scroll;
     const inCanvas = x >= 0 && x <= m.canvas.rect.width && y >= 0 && y <= m.canvas.rect.height;
-    const inScroll = !scrollable || (control.y >= scroll.y + 8 && control.y + control.height <= scroll.y + scroll.height - 8);
+    const inScroll = !scrollable || (control.y >= scroll.y - 1 && control.y + control.height <= scroll.y + scroll.height + 1);
     if (inCanvas && inScroll) {
       assert.ok(!control.disabled, `Touchable button is enabled: ${name}`);
       assert.ok(control.height >= 56 && control.fontSize >= 18, `Readable CSS target: ${name}`);
@@ -225,6 +225,10 @@ async function prepare(page,context,id) {
 }
 async function alternateLayout(page,context,apply) {
   const before=(await ui(page)).layout.current;
+  if(!(await ui(page)).buttons.some(b=>b.name==='PrepareLayout'&&b.visible)) {
+    await tapName(page,context,'TogglePreparationDetails',true);
+    await button(page,'PrepareLayout');
+  }
   await tapName(page,context,'PrepareLayout',true);await expectUI(page,{sheet:'editor',trialRunning:false});
   const options=(await ui(page)).buttons.filter(b=>b.name.startsWith('Candidate_')&&b.visible&&!b.disabled&&!b.text.includes('使用中'));
   assert.ok(options.length,'Alternate free layout exists');
@@ -309,6 +313,33 @@ async function installFrameGate(context) {
     },{capture:true,passive:true});
   });
 }
+async function compactPreparation(page,context) {
+  const initial=await ui(page),scroll=initial.scroll;
+  assert.equal(scroll.scrollVertical,0,'Preparation opens at top');
+  for(const mode of ['balanced','parcel','pallet']) {
+    const b=await button(page,'ChooseOperation_'+mode);
+    assert.ok(b.x>=scroll.x&&b.x+b.width<=scroll.x+scroll.width+1&&b.y>=scroll.y&&b.y+b.height<=scroll.y+scroll.height+1,`All three choices above initial fold: ${mode}`);
+    assert.ok(b.height>=56&&b.fontSize>=18,'Full-size readable mode targets');
+  }
+  const start=await button(page,'StartPreparedJob'),height=(await measure(page)).canvas.rect.height;
+  assert.ok(start.y>=scroll.y+scroll.height&&start.y+start.height<=height,'Start is pinned outside scroll');
+  assert.ok(!initial.buttons.some(b=>b.name==='PrepareLayout'&&b.visible),'Long detail panel starts folded');
+  await tapName(page,context,'TogglePreparationDetails',true);await button(page,'PrepareLayout');
+  await swipe(page,context,(await ui(page)).scroll,true,180);
+  const after=await button(page,'StartPreparedJob');
+  assert.deepEqual([after.x,after.y,after.width,after.height],[start.x,start.y,start.width,start.height],'Start does not move when details are expanded/scrolled');
+  assert.deepEqual(immutableProgress(await ui(page)),immutableProgress(initial),'Details expansion is read-only');
+  await tapName(page,context,'TogglePreparationDetails',true);
+  await page.waitForFunction(()=>!window.FlotraViewport.uiMetrics.buttons.some(b=>b.name==='PrepareLayout'&&b.visible));
+  const cdp=await session(page,context),canvas=(await measure(page)).canvas.rect;
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{id:0,x:canvas.x+start.x+start.width/2,y:canvas.y+start.y+start.height/2}]});
+  await page.waitForTimeout(tapHold);
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+  await page.waitForTimeout(300);
+  assert.deepEqual(immutableProgress(await ui(page)),immutableProgress(initial),'Canceled pinned Start never accepts work');
+  assert.equal((await ui(page)).sheet,'jobs');
+  return {allModesAboveFold:true,pinnedStart:[start.x,start.y,start.width,start.height],readOnlyDetails:true,canceledStartSafe:true};
+}
 async function journey(page,context,test,mature) {
   const id=mature?'route_pick':'growth_1',reward=mature?300:140;
   const initial=await ui(page),initialWallet=initial.wallet;
@@ -329,6 +360,7 @@ async function journey(page,context,test,mature) {
   await prepare(page,context,id);
   const original=immutableProgress(await ui(page));
   await page.waitForTimeout(500);assert.deepEqual(immutableProgress(await ui(page)),original,'Preparation itself does not start/advance work');
+  test.compact=await compactPreparation(page,context);
   test.jobTitle=labelText(await ui(page),'PreparedJobTitle');
   await screenshot(page,'prepared-job-'+test.name);
   for(const mode of ['parcel','pallet','balanced','parcel'])await chooseMode(page,context,mode);
@@ -344,7 +376,7 @@ async function journey(page,context,test,mature) {
   await reloaded(page);assert.equal((await ui(page)).trialRunning,false);assert.equal((await ui(page)).wallet,initialWallet);
   assert.equal((await ui(page)).layout.current,chosenLayout);assert.equal((await ui(page)).operation.mode_id,'parcel');
   await stablePause(page);await showJobs(page,context);await prepare(page,context,id);
-  await tapName(page,context,'StartPreparedJob',true);await expectUI(page,{sheet:'',trialRunning:true,currentContract:id});
+  await tapName(page,context,'StartPreparedJob');await expectUI(page,{sheet:'',trialRunning:true,currentContract:id});
   await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.simTime>1);
   await tapName(page,context,'PauseResume');const paused=await stablePause(page);
   await reloaded(page);const restored=await ui(page);
@@ -363,7 +395,7 @@ async function journey(page,context,test,mature) {
   assert.equal((await ui(page)).simTime,first.simTime,'Adjusting a completed job does not start a new run');
   assert.equal(labelText(await ui(page),'PreparedJobTitle'),test.jobTitle,'Adjust action retains the same selected job');
   await chooseMode(page,context,'balanced');
-  await tapName(page,context,'StartPreparedJob',true);await expectUI(page,{sheet:'',trialRunning:true,currentContract:id});
+  await tapName(page,context,'StartPreparedJob');await expectUI(page,{sheet:'',trialRunning:true,currentContract:id});
   await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.status==='contract_complete',null,{timeout:150000});
   const second=await ui(page),comparison=second.jobComparison;
   assert.equal(second.wallet,initialWallet+2*reward,'Each completed replay pays exactly once');
