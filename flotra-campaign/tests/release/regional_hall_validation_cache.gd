@@ -1,4 +1,5 @@
 extends SceneTree
+const Fixture = preload("res://tests/release/regional_hall_fixture.gd")
 const Sim = preload("res://prototype/growth_sim.gd")
 const V1 = preload("res://prototype/release_sim.gd")
 const V2 = preload("res://prototype/growth_v2_sim.gd")
@@ -66,8 +67,12 @@ func parity(raw: Dictionary, target, expect_ok: bool, label: String) -> void:
         for edge in loaded._edges.values():
             check(not is_same(edge,expected[edge.id]),label+" no live edge aliases frozen geometry")
 func _initialize() -> void:
-    var path:=ProjectSettings.globalize_path("res://").path_join("../build/prototype-reference/postcap/earned_fixture.var")
-    var fixture: Dictionary=FileAccess.open(path,FileAccess.READ).get_var()
+    var input := Fixture.read_required()
+    if not input.ok:
+        push_error(str(input.error))
+        quit(1)
+        return
+    var fixture: Dictionary=input.data
     var earned=Sim.new()
     check(earned.import_release_state(fixture).ok,"earned fixture")
     earned.accept_contract("route_hub")

@@ -2,11 +2,11 @@ extends SceneTree
 
 # Independent domain-only review. Reads one synthetic fixture; never uses a save
 # store, writes campaign data, or modifies any project/domain source.
+const Fixture = preload("res://tests/release/regional_hall_fixture.gd")
 const Sim = preload("res://prototype/growth_sim.gd")
 const Frozen = preload("res://prototype/growth_v3_sim.gd")
 const Legacy = preload("res://prototype/release_sim.gd")
 const V2 = preload("res://prototype/growth_v2_sim.gd")
-const FIXTURE = "res://../build/prototype-reference/postcap/earned_fixture.var"
 var checks := 0
 var failures: Array[String] = []
 var known_limitations: Array[String] = []
@@ -294,12 +294,13 @@ func _initialize() -> void:
     check(FileAccess.get_sha256("res://prototype/jobs_sim.gd")=="cfe35051566561dcd21d4b021b19118a66afdd6d9e3f9847fbf32e8066d4dfeb","shared legacy physics dependency remains pinned")
     check(FileAccess.get_sha256("res://prototype/growth_v2_sim.gd")=="fb888e047c279ee5a12b408f949b46e0662094ca89c589a4c2131dd256bd0bee","schema2 validator remains frozen")
     check(FileAccess.get_file_as_string("res://prototype/growth_v3_sim.gd").replace("class_name FlotraGrowthV3Sim","class_name FlotraGrowthSim").sha256_text()=="f3394819b34d6dcfba011db2f5953562871df6c2d0c40519f6074657c459b904","schema3 validator differs only in class name")
-    var file = FileAccess.open(FIXTURE,FileAccess.READ)
-    check(file!=null,"synthetic earned fixture readable")
-    if file==null:
+    var input := Fixture.read_required()
+    check(input.ok,"synthetic earned fixture readable and hash-valid")
+    if not input.ok:
+        push_error(str(input.error))
         quit(1)
         return
-    fixture=file.get_var()
+    fixture=input.data
     var sim = Sim.new()
     check(sim.import_release_state(fixture).ok,"earned schema3 fixture accepted")
     check(sim.accept_contract("route_hub").ok,"earn one more hub reward")

@@ -1,5 +1,6 @@
 extends SceneTree
 
+const Fixture = preload("res://tests/release/regional_hall_fixture.gd")
 const Sim = preload("res://prototype/growth_sim.gd")
 const V3 = preload("res://prototype/growth_v3_sim.gd")
 const V2 = preload("res://prototype/growth_v2_sim.gd")
@@ -348,9 +349,13 @@ func _initialize() -> void:
     check(FileAccess.get_sha256("res://prototype/growth_v2_sim.gd")=="fb888e047c279ee5a12b408f949b46e0662094ca89c589a4c2131dd256bd0bee","frozen schema2 dependency hash")
     var original_v3 := FileAccess.get_file_as_string("res://prototype/growth_v3_sim.gd").replace("class_name FlotraGrowthV3Sim","class_name FlotraGrowthSim")
     check(original_v3.sha256_text()=="f3394819b34d6dcfba011db2f5953562871df6c2d0c40519f6074657c459b904","frozen schema3 entire original source hash")
-    var fixture_path := ProjectSettings.globalize_path("res://").path_join("../build/prototype-reference/postcap/earned_fixture.var")
-    check(FileAccess.get_sha256(fixture_path)=="f701c20bca04f7578fad3850ec02a36c6ccfc256a3f0a6c9a5917acca8819265","earned old fixture hash")
-    fixture = FileAccess.open(fixture_path,FileAccess.READ).get_var()
+    var input := Fixture.read_required()
+    if not input.ok:
+        push_error(str(input.error))
+        quit(1)
+        return
+    check(input.sha256==Fixture.SHA256,"earned old fixture hash")
+    fixture = input.data
     migrations()
     var earned = Sim.new()
     check(earned.import_release_state(fixture).ok,"earned mature import")

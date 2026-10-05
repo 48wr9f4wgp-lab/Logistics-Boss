@@ -1,5 +1,6 @@
 extends SceneTree
 ## Diagnostic latency only: full real save/export/import/I/O, disposable profile.
+const Fixture = preload("res://tests/release/regional_hall_fixture.gd")
 const Sim = preload("res://prototype/growth_sim.gd")
 const Save = preload("res://prototype/release_save.gd")
 var failures: Array[String] = []
@@ -55,18 +56,12 @@ func _init() -> void:
             print(JSON.stringify({"suite":"postcap_save_cost","failures":["benchmark requires a fresh disposable profile"]}))
             quit(1)
             return
-    var fixture_path := ProjectSettings.globalize_path("res://").path_join("../build/prototype-reference/postcap/earned_fixture.var")
-    var fixture_file := FileAccess.open(fixture_path,FileAccess.READ)
-    if fixture_file == null:
-        print(JSON.stringify({"suite":"postcap_save_cost","failures":["synthetic earned fixture missing"]}))
+    var input := Fixture.read_required()
+    if not input.ok:
+        print(JSON.stringify({"suite":"postcap_save_cost","failures":[str(input.error)]}))
         quit(1)
         return
-    var fixture: Variant = fixture_file.get_var(false)
-    require_ok(fixture is Dictionary and fixture.get("schema") == 3,"fixture must be synthetic earned schema3")
-    if not failures.is_empty():
-        print(JSON.stringify({"suite":"postcap_save_cost","failures":failures}))
-        quit(1)
-        return
+    var fixture: Dictionary = input.data
     var store := TimedStore.new()
     var original := "\n  "+store.encode(fixture)+" \n"
     require_ok(store._valid_archive(original),"earned original passes frozen schema3 validator")

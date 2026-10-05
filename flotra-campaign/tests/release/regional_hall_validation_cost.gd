@@ -1,5 +1,6 @@
 extends SceneTree
 # Read-only phase profiling on synthetic in-memory checkpoints. No save paths.
+const Fixture = preload("res://tests/release/regional_hall_fixture.gd")
 const Sim = preload("res://prototype/growth_sim.gd")
 class Profiled extends "res://prototype/growth_sim.gd":
     static var phases: Dictionary = {}
@@ -34,8 +35,12 @@ class Profiled extends "res://prototype/growth_sim.gd":
 func finish(sim) -> void:
     while not sim.finished and sim.sim_time<3000: sim.step(1)
 func _initialize() -> void:
-    var path:=ProjectSettings.globalize_path("res://").path_join("../build/prototype-reference/postcap/earned_fixture.var")
-    var fixture: Dictionary=FileAccess.open(path,FileAccess.READ).get_var()
+    var input := Fixture.read_required()
+    if not input.ok:
+        push_error(str(input.error))
+        quit(1)
+        return
+    var fixture: Dictionary=input.data
     var seed=Sim.new()
     if not seed.import_release_state(fixture).ok: quit(1); return
     seed.accept_contract("route_hub")
