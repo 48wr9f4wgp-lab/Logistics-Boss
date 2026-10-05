@@ -3,6 +3,7 @@ extends RefCounted
 const FORMAT := "flotra-campaign"
 const VERSION := 1
 const MAX_TEXT := 2800000
+const MAX_PAYLOAD_BYTES := 2000000
 const PATH := "user://campaign-v1.json"
 const BACKUP := "user://campaign-v1.backup.json"
 var blocked := false
@@ -10,7 +11,9 @@ var status := "未保存"
 var _last_good := ""
 
 func encode(data: Dictionary) -> String:
-    var bytes := var_to_bytes(data)
+    return _encode_bytes(var_to_bytes(data))
+
+func _encode_bytes(bytes: PackedByteArray) -> String:
     return JSON.stringify({"format":FORMAT,"version":VERSION,"sha256":bytes.hex_encode().sha256_text(),"payload":Marshalls.raw_to_base64(bytes)})
 
 func decode(text: String) -> Dictionary:
@@ -24,7 +27,7 @@ func decode(text: String) -> Dictionary:
     if envelope.get("version") != VERSION: return {"ok":false,"reason":"unsupported_version"}
     if not envelope.get("payload") is String or not envelope.get("sha256") is String: return {"ok":false,"reason":"invalid_envelope"}
     var bytes := Marshalls.base64_to_raw(envelope.payload)
-    if bytes.is_empty() or bytes.size() > 2000000: return {"ok":false,"reason":"invalid_payload"}
+    if bytes.is_empty() or bytes.size() > MAX_PAYLOAD_BYTES: return {"ok":false,"reason":"invalid_payload"}
     if bytes.hex_encode().sha256_text() != envelope.sha256: return {"ok":false,"reason":"checksum"}
     # bytes_to_var deliberately excludes object deserialization.
     var data: Variant = bytes_to_var(bytes)
@@ -81,7 +84,13 @@ func _valid_for_sim(text: String, sim) -> bool:
 func save_from(sim) -> Dictionary:
     if blocked: return {"ok":false,"reason":"blocked"}
     var data: Dictionary = sim.export_release_state()
-    var text := encode(data)
+    # Match the reader before encoding or touching either storage slot. Serialize
+    # once; envelope characters and raw Variant bytes are different limits.
+    var bytes := var_to_bytes(data)
+    if bytes.size() > MAX_PAYLOAD_BYTES:
+        status = "保存データが大きすぎるため保存できません。画面を閉じると未保存の進行が失われます"
+        return {"ok":false,"reason":"too_large"}
+    var text := _encode_bytes(bytes)
     if text.length() > MAX_TEXT:
         status = "保存データが大きすぎるため保存できません。画面を閉じると未保存の進行が失われます"
         return {"ok":false,"reason":"too_large"}
