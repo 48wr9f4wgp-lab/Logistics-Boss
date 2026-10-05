@@ -42,7 +42,7 @@ Growth adds independent balance, old-save migration, native-storage backup, touc
 
 ## Player-experience polish
 
-The 操作 menu remembers speed, optional menu auto-pause and reduced walking animation. Backgrounding or reloading leaves the warehouse paused until explicit resume. First-job and next/replay actions are immediately reachable; affordable equipment comes before folded future/owned equipment. Between jobs, three free operating choices provide balanced, real three-parcel-cart and pallet-priority workflows. Equipment previews show capacities and tradeoffs; queued layout changes can be cancelled before physical movement begins. See `FLOTRA_EXPERIENCE_RELEASE_2026-10-04.md` and the Japanese player guide under `docs/guides/`.
+The 操作 menu remembers speed, optional menu auto-pause and reduced walking animation. Backgrounding or reloading leaves the warehouse paused until explicit resume. First-job and next/replay actions are immediately reachable; affordable equipment comes first, while unlocked choices that still need funds stay visible with exact shortfalls; only progression/prerequisite-locked and owned equipment is folded. Between jobs, three free operating choices provide balanced, real three-parcel-cart and pallet-priority workflows. Equipment previews show capacities and tradeoffs; queued layout changes can be cancelled before physical movement begins. See `FLOTRA_EXPERIENCE_RELEASE_2026-10-04.md` and the Japanese player guide under `docs/guides/`.
 
 ## Camera controls
 
@@ -65,3 +65,11 @@ The three full-size free operating choices appear together before long explanati
 ## Save-size safety
 
 Before any storage write, campaign saving rejects a serialized Variant payload above the existing 2,000,000-byte reader limit and retains the previous primary/backup with explicit Japanese unsaved feedback. The envelope, checksum, migrations and save schedule are unchanged. Browser quota remains a separate possible failure below this bound. See `FLOTRA_SAVE_SIZE_GUARD_2026-10-05.md`.
+
+## Visible next equipment choices
+
+Unlocked equipment stays visible even before it is affordable, ordered by price after currently affordable choices. Existing free operation controls keep their prior scroll depth. During a job, the same cards explain that purchases wait until completion. No prices, effects, simulation rules or persistence change. See `FLOTRA_UPGRADE_VISIBILITY_2026-10-06.md` and the focused `upgrade_visibility.gd` / `browser_upgrade_visibility.cjs` regressions.
+
+## Combined warehouse and equipment polish
+
+The warehouse material pass uses subdued empty-floor markings, truthful live lane colors, neutral racks and carton-counted stored pallets, with 2× MSAA on the unchanged-size 3D viewport. The source is exported together with visible next equipment choices. Geometry, pallet/save parity and material-state regressions run in the aggregate suite using earned mature fixtures; existing browser performance limits remain unchanged. See `FLOTRA_COMBINED_POLISH_2026-10-06.md` for scope, gates and verification boundaries.
