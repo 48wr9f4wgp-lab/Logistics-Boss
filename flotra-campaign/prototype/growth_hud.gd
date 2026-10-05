@@ -26,6 +26,8 @@ var _camera_controls: Control
 var _camera_buttons: Array[Button] = []
 var _prepared_contract_id := ""
 var _preparation_layout_return := false
+var _preparation_details_visible := false
+var _preparation_start: Button
 
 func _init() -> void:
     _speed = 2.0
@@ -82,6 +84,7 @@ func _read_release() -> void:
         set_preferences(value)
 
 func _open_sheet(kind: String, title: String, height: float) -> void:
+    _preparation_start = null
     _quick_buttons.clear()
     if kind not in ["jobs", "editor"]:
         _prepared_contract_id = ""
@@ -167,6 +170,15 @@ func world_insets() -> Vector2:
     return insets
 
 func _layout_body() -> void:
+    if _sheet_kind == "jobs" and _release_tab == "prepare" and is_instance_valid(_scroll):
+        # Keep the guarded start action outside the scroll surface, including
+        # while reading long details or using a short landscape viewport.
+        var footer := CONTROL_HEIGHT + 12
+        if is_instance_valid(_preparation_start):
+            _rect(_preparation_start, 0, _body.size.y - CONTROL_HEIGHT, _body.size.x, CONTROL_HEIGHT)
+        _rect(_scroll, 0, 0, _body.size.x, maxf(48, _body.size.y - footer))
+        _sync_focus.call_deferred()
+        return
     if _sheet_kind == "controls" and is_instance_valid(_scroll):
         _rect(_scroll, 0, 0, _body.size.x, maxf(48, _body.size.y))
         _sync_focus.call_deferred()
@@ -445,6 +457,7 @@ func _populate_release_tab() -> void:
 func _prepare_contract(id: String) -> void:
     if _sheet_kind not in ["jobs", "records"]: return
     if _sheet_kind == "jobs" and _release_tab != "contracts": return
+    _preparation_details_visible = false
     _show_preparation(id)
 
 func _show_preparation(id: String) -> void:
@@ -458,29 +471,62 @@ func _show_preparation(id: String) -> void:
     _open_sheet("jobs", "仕事の準備", 630)
     _close.text = "仕事へ"
     _make_scroll()
+    _preparation_start = _action(_body, "この準備で仕事を始める", _start_prepared_contract, true)
+    _preparation_start.name = "StartPreparedJob"
     _populate_release_tab()
     _layout_body()
 
 func _build_preparation() -> void:
     var plan: Dictionary = sim.call("job_preparation", _prepared_contract_id)
+    if is_instance_valid(_preparation_start):
+        _preparation_start.disabled = not bool(plan.get("available", false))
     if plan.is_empty():
         _text(_content, "仕事一覧から選び直してください")
         return
+    _content.add_theme_constant_override("separation", 8)
     _text(_content, str(plan.label), 22).name = "PreparedJobTitle"
-    _text(_content, "%d個 · %s\nまとめ便%d便 · 小口便%d便" % [int(plan.total_units), _preparation_reward_copy(plan), int(plan.bulk_manifests), int(plan.pick_manifests)], 20).name = "PreparedJobSummary"
-    var start := _action(_content, "この準備で仕事を始める", _start_prepared_contract, true)
-    start.name = "StartPreparedJob"
-    start.disabled = not bool(plan.get("available", false))
-    _text(_content, "受注費用・時間制限はありません。開始するまでは仕事を受けません", BODY_FONT_SIZE, Color("476266"))
-    _text(_content, "現在の配置：" + str(plan.get("layout_label", "")), 20).name = "PreparedLayout"
-    _action(_content, "配置を調整する · 無料", _prepare_layout).name = "PrepareLayout"
-    _text(_content, "まとめ便は荷下ろし後%d秒、保管してから出荷します" % int(plan.get("dwell", 0)), BODY_FONT_SIZE, Color("476266"))
-    _text(_content, "運び方を選ぶ · 3種類とも無料", 22)
-    _text(_content, "運び方と配置は選んだ時点で反映され、準備を閉じても残ります。仕事の合間なら戻せます", BODY_FONT_SIZE, Color("476266"))
-    _build_operation_cards(_content)
+    _text(_content, "%d個 · %s" % [int(plan.total_units), _preparation_reward_copy(plan)], 18).name = "PreparedJobSummary"
+    _text(_content, "運び方は無料 · 選ぶと反映", BODY_FONT_SIZE, Color("476266")).name = "PreparedModeHint"
+    # Keep all three choices together before any explanatory copy. Full labels
+    # and a text selection marker remain readable without squeezing phone type.
+    for option in sim.call("operation_options"):
+        var id := str(option.get("id", ""))
+        var selected := bool(option.get("selected", false))
+        var label := str(option.get("label", id))
+        var button := _action(_content, ("● " if selected else "") + label, _request_operation.bind(id), selected)
+        button.name = "ChooseOperation_" + id
+        button.disabled = selected or not bool(option.get("available", false))
+        if selected:
+            button.add_theme_stylebox_override("disabled", _style(TEAL, TEAL))
+            button.add_theme_color_override("font_disabled_color", INK)
+        button.tooltip_text = label + (" · 使用中" if selected else " · 無料で変更")
+    _action(_content, "詳しい条件・配置を閉じる" if _preparation_details_visible else "詳しい条件・配置を見る", _toggle_preparation_details).name = "TogglePreparationDetails"
+    var details := VBoxContainer.new()
+    details.name = "PreparationDetails"
+    details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    details.add_theme_constant_override("separation", 12)
+    details.mouse_filter = Control.MOUSE_FILTER_PASS
+    _content.add_child(details)
+    _text(details, "現在の配置：" + str(plan.get("layout_label", "")), 20).name = "PreparedLayout"
+    _action(details, "配置を調整する · 無料", _prepare_layout).name = "PrepareLayout"
+    _text(details, "受注費用・時間制限はありません。開始するまでは仕事を受けません", BODY_FONT_SIZE, Color("476266"))
+    _text(details, "まとめ便%d便 · 小口便%d便\nまとめ便は荷下ろし後%d秒、保管してから出荷します" % [int(plan.bulk_manifests), int(plan.pick_manifests), int(plan.get("dwell", 0))], BODY_FONT_SIZE, Color("476266"))
+    _text(details, "運び方と配置は選んだ時点で反映され、準備を閉じても残ります。仕事の合間なら戻せます", BODY_FONT_SIZE, Color("476266"))
+    _build_operation_cards(details, false)
     if float(plan.get("best_time", 0.0)) > 0.0:
-        _text(_content, "この仕事の自己ベスト %s" % _record_clock(float(plan.best_time)), BODY_FONT_SIZE, Color("476266"))
-    _text(_content, "成果では同じ仕事の前回と比較できます。前回比較はこの起動中の完了分だけ、自己ベストは保存されます", BODY_FONT_SIZE, Color("476266"))
+        _text(details, "この仕事の自己ベスト %s" % _record_clock(float(plan.best_time)), BODY_FONT_SIZE, Color("476266"))
+    _text(details, "成果では同じ仕事の前回と比較できます。前回比較はこの起動中の完了分だけ、自己ベストは保存されます", BODY_FONT_SIZE, Color("476266"))
+    details.visible = _preparation_details_visible
+
+func _toggle_preparation_details() -> void:
+    if _sheet_kind != "jobs" or _release_tab != "prepare" or not is_instance_valid(_content): return
+    var details := _content.get_node_or_null("PreparationDetails") as Control
+    if not is_instance_valid(details): return
+    _input_epoch += 1
+    _preparation_details_visible = not _preparation_details_visible
+    details.visible = _preparation_details_visible
+    _content.get_node("TogglePreparationDetails").text = "詳しい条件・配置を閉じる" if _preparation_details_visible else "詳しい条件・配置を見る"
+    _sync_focus.call_deferred()
 
 func _preparation_reward_copy(plan: Dictionary) -> String:
     if bool(plan.get("repeatable", false)):
@@ -495,7 +541,7 @@ func _prepare_layout() -> void:
 
 func _start_prepared_contract() -> void:
     if _sheet_kind != "jobs" or _release_tab != "prepare" or not is_instance_valid(_content): return
-    var button := _content.get_node_or_null("StartPreparedJob") as Button
+    var button := _preparation_start
     if not is_instance_valid(button) or button.disabled: return
     var plan: Dictionary = sim.call("job_preparation", _prepared_contract_id)
     if not bool(plan.get("available", false)): return
@@ -681,7 +727,7 @@ func _build_operations() -> void:
     _build_operation_cards(group)
     group.visible = _operations_visible
 
-func _build_operation_cards(group: Node) -> void:
+func _build_operation_cards(group: Node, with_actions: bool = true) -> void:
     var options: Array = sim.call("operation_options")
     for option in options:
         var id := str(option.get("id", ""))
@@ -697,6 +743,10 @@ func _build_operation_cards(group: Node) -> void:
             _text(box, str(option.get("benefit", "")))
         if not str(option.get("tradeoff", "")).is_empty():
             _text(box, "気をつける点：" + str(option.get("tradeoff", "")), BODY_FONT_SIZE, Color("476266"))
+        if not with_actions:
+            if not bool(option.get("available", false)) and not bool(option.get("selected", false)):
+                _text(box, str(option.get("locked_reason", "仕事が終わると切り替えられます")), BODY_FONT_SIZE, Color("476266"))
+            continue
         var selected := bool(option.get("selected", false))
         var button := _action(box, "使用中" if selected else "この運び方にする · 無料", _request_operation.bind(id), not selected and bool(option.get("available", false)))
         button.name = "ChooseOperation_" + id
