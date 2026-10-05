@@ -343,17 +343,19 @@ async function compactPreparation(page,context) {
 async function journey(page,context,test,mature) {
   const id=mature?'route_pick':'growth_1',reward=mature?300:140;
   const initial=await ui(page),initialWallet=initial.wallet;
-  if(mature){assert.equal(initial.growth.wing_count,4);assert.equal(initial.growth.robot_count,4);assert.equal(initial.growth.catalog_complete,true);}
+  if(mature){assert.equal(initial.growth.wing_count,4);assert.equal(initial.growth.robot_count,4);assert.equal(initial.growth.catalog_complete,false);assert.equal(initial.hall.owned,false);}
   await cancellationBurst(page,context,test);
   await showJobs(page,context);
   if(mature){
     const copy=(await ui(page)).labels.map(l=>l.text).join('\n');
-    assert.ok(!copy.includes('次の増築や設備の資金に'),'Fully upgraded job screen does not promise more upgrades');
+    assert.ok(copy.includes('広域配送棟'),'Former mature cap truthfully offers the earned next hall');
     await tapName(page,context,'Tab_upgrades');
     // Tabs share sheet='jobs'; wait for their actual rendered content rather
     // than a fixed post-touch delay or the previous tab's diagnostics.
-    await page.waitForFunction(()=>window.FlotraViewport?.uiMetrics?.labels.some(label=>label.name==='GrowthCatalogComplete'),null,{timeout:10000});
-    assert.ok(labelText(await ui(page),'GrowthCatalogComplete').includes('すべて導入済み'),'Mature copy says the existing catalog is complete');
+    await tapName(page,context,'ToggleFutureUpgrades',true);
+    const hall=await button(page,'BuyUpgrade_regional_hall');
+    assert.equal(hall.disabled,true,'Earned original mature fixture still needs funds for the next hall');
+    assert.ok(!(await ui(page)).labels.some(label=>label.name==='GrowthCatalogComplete'),'Former four-wing cap is not misreported as the final catalog');
     await screenshot(page,'mature-catalog-'+test.name);
     await tapName(page,context,'Tab_contracts');
   }

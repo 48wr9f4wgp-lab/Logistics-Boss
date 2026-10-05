@@ -76,6 +76,7 @@ func _ready() -> void:
     _connect_if("speed_requested", _set_speed)
     _connect_if("preference_requested", _set_preference)
     _connect_if("operation_requested", _set_operation)
+    _connect_if("hall_plan_requested", _set_hall_plan)
     _connect_if("cancel_layout_requested", _cancel_layout)
     _connect_if("sheet_changed", _sheet_clock_changed)
     _connect_if("trial_started", _start_trial)
@@ -212,6 +213,9 @@ func _report_phone_qa() -> void:
     data["camera"]["callouts"] = callouts
     var release: Dictionary = sim.release_state()
     data["growth"] = release.growth
+    data["hall"] = release.get("hall",{})
+    data["schema"] = release.get("schema",0)
+    data["saving"] = {"blocked":save_store.blocked,"status":save_store.status}
     data["progress"] = release.progress
     data["status"] = sim.campaign_status
     data["wallet"] = sim.campaign_wallet
@@ -369,6 +373,12 @@ func _buy_upgrade(id: String) -> void:
     var result: Dictionary = sim.buy_upgrade(id)
     hud.call("show_upgrade_result", result)
     if result.get("ok",false): _save_now()
+    world.call("refresh")
+
+func _set_hall_plan(id: String) -> void:
+    var result: Dictionary=sim.set_hall_plan(id)
+    hud.call("show_hall_plan_result",result)
+    if result.get("ok",false):_save_now()
     world.call("refresh")
 
 func _set_speed(value: float) -> void:

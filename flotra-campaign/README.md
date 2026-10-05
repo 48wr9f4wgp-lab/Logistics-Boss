@@ -18,7 +18,7 @@ Run the suites with `bash flotra-campaign/test.sh`. Tests cover the finite campa
 
 ## Save isolation
 
-Web loader must retain `persistentPaths: []`: it never mounts the legacy `/userfs` IndexedDB database. Campaign saves use only localStorage keys `flotra.campaign.release.v1` and `.backup`, guarded by a browser-exclusive Web Lock and strict schema/domain validation. New saves use payload schema 3; valid schema-1 and schema-2 campaign progress is explicitly migrated after validation by the preserved original models. Unsupported or unavailable storage is visibly reported; gameplay does not pretend it saved. Corrupt, foreign, future-version or conflicting saves are not overwritten automatically. Native builds use the dedicated `FLOTRA-campaign-release-v1` user directory.
+Web loader must retain `persistentPaths: []`: it never mounts the legacy `/userfs` IndexedDB database. Campaign saves use localStorage keys `flotra.campaign.release.v1`, `.backup`, and the immutable `.pre-v4` original, guarded by the existing browser-exclusive Web Lock and strict schema/domain validation. New local saves use payload schema 4; valid schema-1/2/3 campaign progress is explicitly migrated after validation by the preserved original models. Loading never writes. The first schema-4 write pins the exact validated old checkpoint, and later autosaves keep it unchanged while the rolling backup advances. An optional envelope digest binds later checkpoints to that archive; an unknown, missing required, or conflicting archive blocks saves. The archive is not an automatic rollback UI. See `build/prototype-reference/postcap/LOCAL_SCHEMA4_ARCHIVE.md` at repository root for precedence, failure behavior, and rollback limits. Unsupported or unavailable storage is visibly reported; gameplay does not pretend it saved. Corrupt, foreign, future-version or conflicting saves are not overwritten automatically. Native builds use the dedicated `FLOTRA-campaign-release-v1` user directory.
 
 The game saves every five seconds during play and on successful committed actions and pause/focus changes. Resume begins paused. Browser refresh may therefore lose up to the most recent unsaved few seconds; do not close if the save status reports a failure.
 
@@ -28,7 +28,7 @@ Linux native rendering and engine-input tests at 375×667, 390×844 and 430×932
 
 ## Final readability and scoring
 
-The final pass adds readable screen-space location labels, tighter phone framing, live medal targets, explicit prerequisite/holding explanations and precise replay records. Inclusive medal thresholds use centisecond precision. Valid older boundary badges are corrected on import without changing operational progress. See `FLOTRA_FINISH_PASS_2026-10-03.md` at repository root.
+The final pass adds readable screen-space location labels, tighter phone framing, live medal targets, explicit prerequisite/holding explanations and precise replay records. Inclusive medal thresholds use centisecond precision. Schema-4 migration preserves accepted historical boundary badges exactly; new result scoring continues to use the supported medal thresholds. See `FLOTRA_FINISH_PASS_2026-10-03.md` at repository root.
 
 ## CSS-pixel phone correction
 
@@ -54,7 +54,7 @@ The 56px camera row occupies a reserved strip above the bottom HUD, not the scen
 
 Each available job can still start immediately, or open a preparation sheet showing its manifest, reward, current layout and the three existing free operating modes. Confirmed mode/layout choices persist normally; merely opening preparation or canceling an uncommitted layout preview never accepts a job. Completed jobs offer direct replay and an adjust-and-replay route back to the same job.
 
-Results compare the previous completion of the same job during the current launch: game-time duration, throughput, aggregate aisle wait, operating mode and final layout. Equipment and relocation differences are disclosed. Detailed comparison state is session-only; schema 3 and saved historical best times are unchanged. A reload never invents a previous operating setup from incomplete saved records.
+Results compare the previous completion of the same job during the current launch: game-time duration, throughput, aggregate aisle wait, operating mode and final layout. Equipment and relocation differences are disclosed. Detailed comparison state is session-only and does not add fields to saved historical records. A reload never invents a previous operating setup from incomplete saved records.
 
 Web touch cancellation has a separate DOM-capture notification because the Godot loader otherwise maps cancellation to a normal release. Earlier buffered starts are processed before invalidating held UI/world gestures, including several rapid start/cancel pairs before one rendered frame. Normal release cleanup and fresh input remain available.
 

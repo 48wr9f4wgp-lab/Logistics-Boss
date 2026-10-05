@@ -1,34 +1,10 @@
 extends "res://prototype/jobs_sim.gd"
-class_name FlotraGrowthSim
+class_name FlotraGrowthV3Sim
 
 # Bounded campaign layered over the original physical cargo ledger. Contract
 # rewards have a separate wallet; base money remains shipment-value accounting.
-const RELEASE_SCHEMA := 4
+const RELEASE_SCHEMA := 3
 const CAMPAIGN_STARTING_WALLET := 100
-const HALL := Rect2(-9, 5.5, 19, 16)
-const HALL_CONNECTORS := [Rect2(-9, -2, 2, 9), Rect2(7, 3, 3, 4)]
-const HALL_PRICE := 1800 # Immutable schema-4 economy constant.
-const REGIONAL := {"id":"route_regional","label":"広域便：街から街へ","description":"480個の荷物を保管して配送。大きな保管床と通路の使い方を比べよう。","manifest_quota":80,"bulk_manifests":72,"pick_manifests":8,"mix":"bulk_heavy","interval":0.35,"dwell":180.0,"reward":1200,"gold_seconds":500.0,"silver_seconds":800.0}
-var hall_owned := false
-var hall_plan := "storage"
-var _hall_points: Dictionary = {}
-var _hall_links: Array = []
-var _hall_revision := ""
-var _edge_lookup: Dictionary = {}
-var _adjacency: Dictionary = {}
-var _path_cache: Dictionary = {}
-var _bay_order: Array = []
-# These four-layout values do not depend on cargo, occupancy or worker state.
-var _shelf_footprints: Dictionary = {}
-var _pack_footprints: Dictionary = {}
-var _capacity_by_layout: Dictionary = {}
-var _live_bays_by_id: Dictionary = {}
-var route_cache_hits := 0
-var route_cache_misses := 0
-# Geometry comes only from trusted definitions, never from a save. Every nested
-# dictionary/array is read-only; live reservations are always separately checked.
-static var _static_graph_templates: Dictionary = {}
-
 const LEGACY_CONTRACTS := [
     {"id":"first_shift","label":"01 はじめての出荷","description":"まとめ便3・単品便3。36個を最後まで届けよう。","manifest_quota":6,"bulk_manifests":3,"pick_manifests":3,"mix":"balanced","interval":4.0,"dwell":18.0,"reward":180,"gold_seconds":145.0,"silver_seconds":210.0},
     {"id":"small_orders","label":"02 小さな注文ラッシュ","description":"まとめ便2・単品便8。棚と梱包の位置を見直そう。","manifest_quota":10,"bulk_manifests":2,"pick_manifests":8,"mix":"pick_heavy","interval":3.0,"dwell":24.0,"reward":260,"gold_seconds":220.0,"silver_seconds":320.0},
@@ -64,7 +40,6 @@ const SIM_FIELDS := [
 ]
 const LegacySim = preload("res://prototype/release_sim.gd")
 const GrowthV2Sim = preload("res://prototype/growth_v2_sim.gd")
-const GrowthV3Sim = preload("res://prototype/growth_v3_sim.gd")
 const GROWTH_CONTRACTS := [
     {"id":"growth_1","label":"01 小さな倉庫の一歩","description":"12個を出荷して、最初の増築へ。","manifest_quota":2,"bulk_manifests":1,"pick_manifests":1,"mix":"balanced","interval":1.5,"dwell":6.0,"reward":140,"gold_seconds":45.0,"silver_seconds":80.0},
     {"id":"growth_2","label":"02 町の配送拠点","description":"24個の注文。増築か人手を選ぼう。","manifest_quota":4,"bulk_manifests":2,"pick_manifests":2,"mix":"balanced","interval":1.2,"dwell":6.0,"reward":200,"gold_seconds":75.0,"silver_seconds":140.0},
@@ -118,10 +93,10 @@ func _init() -> void:
     finished = true
 
 func _contracts() -> Array:
-    return LEGACY_CONTRACTS + GROWTH_CONTRACTS + [REGIONAL]
+    return LEGACY_CONTRACTS + GROWTH_CONTRACTS
 
 func _upgrades() -> Array:
-    return LEGACY_UPGRADES + GROWTH_UPGRADES + [{"id":"regional_hall","label":"広域配送棟を建てる","description":"304㎡の新しい棟。保管32枠か、保管16枠＋直通通路を選べます。","cost":HALL_PRICE,"unlock_after":6}]
+    return LEGACY_UPGRADES + GROWTH_UPGRADES
 
 func _milestones() -> int:
     var count := 0
@@ -145,7 +120,7 @@ func _robot_count() -> int:
     if legacy_profile: return 0
     return 4 if "robot_4" in purchased_upgrades else (2 if "robot_2" in purchased_upgrades else 0)
 
-func _growth_points() -> Dictionary:
+func _points() -> Dictionary:
     var count := _wing_count()
     if count == _graph_cache_revision and not _points_cache.is_empty(): return _points_cache
     _graph_cache_revision = count
@@ -161,7 +136,7 @@ func _growth_points() -> Dictionary:
     _points_cache = points
     return points
 
-func _growth_links() -> Array:
+func _links() -> Array:
     _points()
     if not _links_cache.is_empty(): return _links_cache
     var links := LINKS.duplicate(true)
@@ -185,7 +160,7 @@ func _growth_links() -> Array:
     _links_cache = links
     return links
 
-func _growth_bays() -> Array:
+func _expected_bays() -> Array:
     var result := BAY_DEFS.duplicate(true)
     if "floor_2" in purchased_upgrades: result.append_array(EXTRA_BAYS)
     for tier in _wing_count():
@@ -229,7 +204,7 @@ func _upgrade(id: String) -> Dictionary:
 
 func contract_options() -> Array[Dictionary]:
     var result: Array[Dictionary] = []
-    for definition in GROWTH_CONTRACTS + [REGIONAL]:
+    for definition in GROWTH_CONTRACTS:
         var option: Dictionary = definition.duplicate(true)
         option.repeatable = true
         var unlocked := _contract_unlocked(str(option.id))
@@ -244,14 +219,12 @@ func contract_options() -> Array[Dictionary]:
     return result
 
 func _remaining_contracts(id: String) -> String:
-    if id == "route_regional": return "第4棟を増築し、大型便を1回届けると選べます"
     if id.begins_with("growth_"):
         return "ステップ%dを完了すると選べます" % (int(id.trim_prefix("growth_"))-1)
     if id == "route_hub": return "ステップ6の完了・増築3棟・ロボット2台が必要です"
     return "ステップ1を完了すると選べます"
 
 func _contract_unlocked(id: String) -> bool:
-    if id == "route_regional": return _wing_count() == 4 and contract_results.has("route_hub")
     if id.begins_with("growth_"):
         var number := int(id.trim_prefix("growth_"))
         return number == 1 or contract_results.has("growth_%d" % (number-1))
@@ -305,21 +278,9 @@ func upgrade_options() -> Array[Dictionary]:
         else:
             option.available = true
         result.append(option)
-    var option := _upgrade("regional_hall").duplicate(true)
-    option.owned = hall_owned
-    option.category = "wing"
-    option.unlocked = _contract_unlocked("route_regional")
-    option.available = not hall_owned and option.unlocked and campaign_status!="running" and campaign_wallet>=HALL_PRICE
-    option.locked_reason = "導入済み" if hall_owned else ("第4棟を増築し、大型便を1回届けると建てられます" if not option.unlocked else ("仕事が終わると建てられます" if campaign_status=="running" else "資金があと%d必要です"%maxi(0,HALL_PRICE-campaign_wallet)))
-    result.append(option)
     return result
 
-
 func accept_contract(id: String) -> Dictionary:
-    # Old jobs remain resumable under their frozen rules, but a new hall run
-    # must not switch back into the legacy profile and strand earned geometry.
-    if hall_owned and LEGACY_CONTRACTS.any(func(item):return item.id == id):
-        return {"ok":false,"reason":"hall_requires_growth_profile"}
     if campaign_status == "running":
         return {"ok":false,"reason":"contract_in_progress"}
     var definition := _contract(id)
@@ -348,7 +309,6 @@ func accept_contract(id: String) -> Dictionary:
     return {"ok":true,"contract_id":id,"is_replay":contract_results.has(id)}
 
 func buy_upgrade(id: String) -> Dictionary:
-    if id == "regional_hall": return buy_hall()
     _snapshot_dirty = true
     if _upgrade(id).is_empty():
         return {"ok":false,"reason":"unknown_upgrade"}
@@ -545,13 +505,10 @@ func release_state() -> Dictionary:
         objective = "全6契約を達成！ 配置を変えてベストタイムに挑戦しよう"
     elif completed_count > 0:
         objective = "設備と配置を選び、次の契約を受けよう"
-    var growth := {"wing_count":_wing_count(),"area":223.886+83.6*_wing_count()+(14.554 if _wing_count()>0 else 0.0)+(HALL.get_area()+2.0 if hall_owned else 0.0),"human_count":_human_count(),"robot_count":_robot_count(),"completed_milestones":_milestones(),"next_goal":_next_goal(),"legacy_profile":legacy_profile,"lifetime_units":_lifetime_units(),"catalog_complete":growth_catalog_complete()}
-    return {"hall":{"owned":hall_owned,"plan":hall_plan,"cost":HALL_PRICE,"hall_bays":32 if hall_plan=="storage" else 16},"operations":operation_state(),"preferences":preferences.duplicate(true),"growth":growth,"schema":RELEASE_SCHEMA,"status":campaign_status,"wallet":campaign_wallet,"completed_count":completed_count,"total_contracts":_contracts().size(),"campaign_complete":completed_count==_contracts().size(),"current_contract":definition,"current_contract_id":current_contract_id,"progress":{"shipped":shipped,"total":total,"offered":offered_units,"manifests_offered":manifest_cursor,"manifest_quota":int(definition.get("manifest_quota",0)),"remaining":maxi(0,total-shipped),"fraction":float(shipped)/float(total) if total>0 else 0.0},"elapsed":sim_time,"best_time":float(contract_results.get(current_contract_id,{}).get("best_time",0.0)),"last_earnings":int(last_result.get("earnings",0)),"last_result":last_result.duplicate(true),"objective":objective,"available":available,"upgrades":purchased_upgrades.duplicate(),"worker_count":workers.size(),"results":contract_results.duplicate(true)}
+    var growth := {"wing_count":_wing_count(),"area":223.886+83.6*_wing_count()+(14.554 if _wing_count()>0 else 0.0),"human_count":_human_count(),"robot_count":_robot_count(),"completed_milestones":_milestones(),"next_goal":_next_goal(),"legacy_profile":legacy_profile,"lifetime_units":_lifetime_units(),"catalog_complete":growth_catalog_complete()}
+    return {"operations":operation_state(),"preferences":preferences.duplicate(true),"growth":growth,"schema":RELEASE_SCHEMA,"status":campaign_status,"wallet":campaign_wallet,"completed_count":completed_count,"total_contracts":_contracts().size(),"campaign_complete":completed_count==_contracts().size(),"current_contract":definition,"current_contract_id":current_contract_id,"progress":{"shipped":shipped,"total":total,"offered":offered_units,"manifests_offered":manifest_cursor,"manifest_quota":int(definition.get("manifest_quota",0)),"remaining":maxi(0,total-shipped),"fraction":float(shipped)/float(total) if total>0 else 0.0},"elapsed":sim_time,"best_time":float(contract_results.get(current_contract_id,{}).get("best_time",0.0)),"last_earnings":int(last_result.get("earnings",0)),"last_result":last_result.duplicate(true),"objective":objective,"available":available,"upgrades":purchased_upgrades.duplicate(),"worker_count":workers.size(),"results":contract_results.duplicate(true)}
 
 func _next_goal() -> String:
-    if hall_owned: return "広域便で、保管床と直通通路の使い方を比べよう"
-    if _wing_count()==4 and _milestones()==6:
-        return "大型便を1回届けて、広域配送棟の建設へ" if not contract_results.has("route_hub") else "配送の報酬で、広域配送棟を建てよう"
     if legacy_profile and campaign_status == "running": return "以前の荷物を届けて、増築の新しい一歩へ"
     if _milestones() == 0: return "12個を届けて第1棟を増築しよう"
     for option in upgrade_options():
@@ -604,11 +561,6 @@ func snapshot() -> Dictionary:
     state.topology_revision = _wing_count()
     state.human_count = _human_count()
     state.robot_count = _robot_count()
-    state.postcap = {"owned":hall_owned,"plan":hall_plan,"cost":HALL_PRICE,"hall_bays":32 if hall_plan=="storage" else 16}
-    if hall_owned:
-        state.world.growth_wings.append(HALL)
-        state.world.growth_connectors.append_array(HALL_CONNECTORS)
-        state.topology_revision = 100+_wing_count()*10+(1 if hall_plan=="express" else 0)
     _cached_snapshot = state
     _snapshot_dirty = false
     return state
@@ -618,53 +570,38 @@ func export_release_state() -> Dictionary:
     for field in SIM_FIELDS:
         var value = get(field)
         simulation[field] = value.duplicate(true) if value is Array or value is Dictionary else value
-    return {"schema":RELEASE_SCHEMA,"hall":{"owned":hall_owned,"plan":hall_plan},"experience":{"operating_profile":operating_profile,"operation_mode":operation_mode,"preferences":preferences.duplicate(true)},"growth":{"legacy_profile":legacy_profile},"campaign":{"wallet":campaign_wallet,"completed_count":completed_count,"upgrades":purchased_upgrades.duplicate(),"current_contract_id":current_contract_id,"status":campaign_status,"manifest_cursor":manifest_cursor,"results":contract_results.duplicate(true),"last_result":last_result.duplicate(true)},"sim":simulation}
+    return {"schema":RELEASE_SCHEMA,"experience":{"operating_profile":operating_profile,"operation_mode":operation_mode,"preferences":preferences.duplicate(true)},"growth":{"legacy_profile":legacy_profile},"campaign":{"wallet":campaign_wallet,"completed_count":completed_count,"upgrades":purchased_upgrades.duplicate(),"current_contract_id":current_contract_id,"status":campaign_status,"manifest_cursor":manifest_cursor,"results":contract_results.duplicate(true),"last_result":last_result.duplicate(true)},"sim":simulation}
 
 func import_release_state(data: Dictionary) -> Dictionary:
-    var accepted := _stage_validated_release(data)
-    if not accepted.ok: return accepted
-    # Preserve raw validated history, including accepted boundary medals. Never
-    # copy the temporary validator's normalized export or detached graph indexes.
-    _load_release_unchecked(accepted.staged)
-    accepted.erase("staged")
-    return accepted
-
-func validate_release_state(data: Dictionary) -> Dictionary:
-    # Save preflight and import share every acceptance rule. A validation-only
-    # caller never commits cargo or warms a playable destination's route order.
-    var accepted := _stage_validated_release(data)
-    accepted.erase("staged")
-    return accepted
-
-func _stage_validated_release(data: Dictionary) -> Dictionary:
-    # Exact schema dispatch: no float/string coercion or mutation before both
-    # historical and current physical validation accept the original values.
-    var source_schema = data.get("schema")
-    if not source_schema is int or source_schema not in [1,2,3,4]: return _bad("schema")
-    var staged := data.duplicate(true)
-    if source_schema < RELEASE_SCHEMA:
-        var previous = LegacySim.new() if source_schema == 1 else (GrowthV2Sim.new() if source_schema == 2 else GrowthV3Sim.new())
+    if data.get("schema") in [1,2]:
+        var previous = LegacySim.new() if data.get("schema") == 1 else GrowthV2Sim.new()
         var validated: Dictionary = previous.import_release_state(data)
         if not validated.ok: return validated
-        if source_schema == 1: staged.growth = {"legacy_profile":true}
-        if source_schema <= 2:
-            staged.experience = {"operating_profile":false,"operation_mode":"balanced","preferences":{"preferred_speed":2,"pause_on_menus":false,"reduced_motion":false}}
-        staged.hall = {"owned":false,"plan":"storage"}
-        staged.schema = RELEASE_SCHEMA
-    var validation := _validate_save_shape(staged)
+        # Validate with frozen rules, but preserve the original exact domain
+        # payload rather than applying migration-time normalization or rebuilds.
+        var preserved := data.duplicate(true)
+        preserved.schema = RELEASE_SCHEMA
+        if data.schema == 1: preserved.growth = {"legacy_profile":true}
+        preserved.experience = {"operating_profile":false,"operation_mode":"balanced","preferences":{"preferred_speed":2,"pause_on_menus":false,"reduced_motion":false}}
+        var candidate = get_script().new()
+        candidate._load_release_unchecked(preserved)
+        var physical_validation: Dictionary = candidate._validate_loaded_release()
+        if not physical_validation.ok: return physical_validation
+        _load_release_unchecked(preserved)
+        _snapshot_dirty = true
+        return {"ok":true,"schema":RELEASE_SCHEMA,"migrated":true}
+    var validation := _validate_save_shape(data)
     if not validation.ok: return validation
     var candidate = get_script().new()
-    candidate._load_release_unchecked(staged,false)
+    candidate._load_release_unchecked(data)
     var result: Dictionary = candidate._validate_loaded_release()
     if not result.ok: return result
-    var accepted := {"ok":true,"schema":RELEASE_SCHEMA,"source_schema":source_schema,"staged":staged}
-    if source_schema < RELEASE_SCHEMA: accepted.migrated = true
-    return accepted
+    if candidate.operating_profile: candidate._normalize_saved_medals()
+    _load_release_unchecked(candidate.export_release_state())
+    _snapshot_dirty = true
+    return {"ok":true,"schema":RELEASE_SCHEMA}
 
-func _load_release_unchecked(data: Dictionary, prepare_routes: bool = true) -> void:
-    hall_owned = data.hall.owned
-    hall_plan = data.hall.plan
-    _invalidate_topology_caches()
+func _load_release_unchecked(data: Dictionary) -> void:
     _session_job_results.clear()
     _run_comparison_baseline.clear()
     operating_profile = data.experience.operating_profile
@@ -683,8 +620,6 @@ func _load_release_unchecked(data: Dictionary, prepare_routes: bool = true) -> v
     for field in SIM_FIELDS:
         var value = data.sim[field]
         set(field,value.duplicate(true) if value is Array or value is Dictionary else value)
-    _bind_live_indexes(prepare_routes)
-    _snapshot_dirty = true
 
 func _bad(reason: String) -> Dictionary:
     return {"ok":false,"reason":"invalid_save","detail":reason}
@@ -730,10 +665,8 @@ func _keys_and_types(value: Dictionary, template: Dictionary) -> bool:
     return true
 
 func _validate_save_shape(data: Dictionary) -> Dictionary:
-    if not _safe_variant(data) or not _keys_and_types(data,{"schema":4,"hall":{},"experience":{},"growth":{},"campaign":{},"sim":{}}) or data.schema != RELEASE_SCHEMA:
+    if not _safe_variant(data) or not _keys_and_types(data,{"schema":3,"experience":{},"growth":{},"campaign":{},"sim":{}}) or data.schema != RELEASE_SCHEMA:
         return _bad("schema")
-    if not _keys_and_types(data.hall,{"owned":false,"plan":"storage"}): return _bad("hall_shape")
-    if data.hall.plan not in ["storage","express"] or (not data.hall.owned and data.hall.plan != "storage"): return _bad("hall_plan")
     if not _keys_and_types(data.growth,{"legacy_profile":false}): return _bad("growth_shape")
     if not _keys_and_types(data.experience,{"operating_profile":false,"operation_mode":"","preferences":{}}): return _bad("experience_shape")
     if data.experience.operation_mode not in ["balanced","parcel","pallet"]: return _bad("operation_mode")
@@ -803,8 +736,6 @@ func _validate_save_shape(data: Dictionary) -> Dictionary:
     return {"ok":true}
 
 func _validate_loaded_release() -> Dictionary:
-    if hall_owned != ("regional_hall" in purchased_upgrades): return _bad("hall_ownership")
-    if hall_owned and (not _contract_unlocked("route_regional") or legacy_profile): return _bad("hall_prerequisite")
     if not current_contract_id.is_empty() and legacy_profile != LEGACY_CONTRACTS.any(func(item): return item.id == current_contract_id):
         return _bad("contract_profile")
     if campaign_status not in ["ready","running","contract_complete","campaign_complete"] or completed_count < 0 or completed_count > _contracts().size():
@@ -1010,8 +941,10 @@ func _validate_loaded_release() -> Dictionary:
             return _bad("idle_worker_cargo")
     # The static graph must be exactly reproducible; preserve only its live
     # reservations/queues after checking, never rebuild over a loaded movement.
-    var expected_edges := _expected_static_edges()
-    var live_edges := _edges
+    var live_edges := _edges.duplicate(true)
+    _build_edges()
+    var expected_edges := _edges.duplicate(true)
+    _edges = live_edges
     if live_edges.size() != expected_edges.size():
         return _bad("graph_size")
     for key in expected_edges:
@@ -1207,253 +1140,3 @@ func cancel_layout() -> Dictionary:
     relocation_history.pop_back()
     _snapshot_dirty = true
     return {"ok":true,"cost":0}
-
-func _points() -> Dictionary:
-    var base := _growth_points()
-    if not hall_owned: return base
-    var revision := "%d:%s" % [_wing_count(),hall_plan]
-    if _hall_revision == revision and not _hall_points.is_empty(): return _hall_points
-    _hall_revision = revision
-    _hall_links.clear()
-    _hall_points = base.duplicate()
-    for row in 4:
-        var z := 8.0 + 3.5*row
-        _hall_points["hall_%d_west" % row] = Vector3(-8,0,z)
-        _hall_points["hall_%d_east" % row] = Vector3(8,0,z)
-        for col in 4:
-            _hall_points["hall_%d_%d" % [row,col]] = Vector3([-6.0,-3.0,3.0,6.0][col],0,z)
-    if hall_plan == "express":
-        _hall_points["hall_cross_1"] = Vector3(1,0,11.5)
-        _hall_points["hall_cross_2"] = Vector3(-1,0,15)
-    return _hall_points
-
-func _links() -> Array:
-    var base := _growth_links()
-    if not hall_owned: return base
-    _points()
-    if not _hall_links.is_empty(): return _hall_links
-    _hall_links = base.duplicate(true)
-    for row in 4:
-        var nodes := ["hall_%d_west"%row,"hall_%d_0"%row,"hall_%d_1"%row,"hall_%d_2"%row,"hall_%d_3"%row,"hall_%d_east"%row]
-        for col in 5:
-            if hall_plan == "express" and row in [1,2] and col==2:
-                _hall_links.append([nodes[col],"hall_cross_%d"%row])
-                _hall_links.append(["hall_cross_%d"%row,nodes[col+1]])
-            else: _hall_links.append([nodes[col],nodes[col+1]])
-        _hall_links.append(["inbound" if row==0 else "hall_%d_west"%(row-1),"hall_%d_west"%row])
-        _hall_links.append(["outbound" if row==0 else "hall_%d_east"%(row-1),"hall_%d_east"%row])
-    if hall_plan == "express":
-        # A real diagonal through-aisle occupies the inner sixteen pallet bays.
-        # All original perimeter aisles remain available; speed stays unchanged.
-        _hall_links.append(["hall_3_1","hall_cross_2"])
-        _hall_links.append(["hall_cross_2","hall_cross_1"])
-        _hall_links.append(["hall_cross_1","hall_0_2"])
-    return _hall_links
-
-func _expected_bays() -> Array:
-    var bays := _growth_bays()
-    if hall_owned:
-        for row in 4:
-            for col in 4:
-                for side in 2:
-                    bays.append({"id":"H%d-%d-%d"%[row+1,col+1,side+1],"position":Vector3([-6.0,-3.0,3.0,6.0][col],0,8.0+3.5*row+(-1.1 if side==0 else 1.1)),"node":"hall_%d_%d"%[row,col]})
-    return bays
-
-func buy_hall() -> Dictionary:
-    if hall_owned: return {"ok":false,"reason":"already_owned"}
-    if campaign_status == "running": return {"ok":false,"reason":"contract_in_progress"}
-    if not _contract_unlocked("route_regional"): return {"ok":false,"reason":"four_wings_and_hub_required"}
-    if not _hall_work_drained(): return {"ok":false,"reason":"finish_current_work"}
-    if campaign_wallet < HALL_PRICE: return {"ok":false,"reason":"insufficient_funds"}
-    campaign_wallet -= HALL_PRICE
-    hall_owned = true
-    purchased_upgrades.append("regional_hall")
-    _reconfigure_hall()
-    return {"ok":true,"upgrade_id":"regional_hall","cost":HALL_PRICE,"wallet":campaign_wallet}
-
-func set_hall_plan(id: String) -> Dictionary:
-    if id not in ["storage","express"]: return {"ok":false,"reason":"unknown_plan"}
-    if not hall_owned: return {"ok":false,"reason":"hall_required"}
-    if not _hall_work_drained(): return {"ok":false,"reason":"finish_current_work"}
-    if id == hall_plan: return {"ok":true,"cost":0,"plan":id}
-    # Normal drained work ends on persistent endpoints. Refuse a topology change
-    # if an idle worker is unexpectedly standing on a disappearing cross-node.
-    if id == "storage":
-        for worker in workers:
-            if str(worker.node).begins_with("hall_cross_"): return {"ok":false,"reason":"worker_on_corridor"}
-    hall_plan = id
-    _reconfigure_hall()
-    return {"ok":true,"cost":0,"plan":id}
-
-func _reconfigure_hall() -> void:
-    _invalidate_topology_caches()
-    # Only authorized drained topology changes clear obsolete idle routes. No
-    # cargo/history/positions/clocks are reset, and all 32 hall bay IDs persist.
-    for worker in workers:
-        worker.path = []
-        worker.path_index = 0
-        worker.source = ""
-        worker.target = ""
-        worker.edge_from = ""
-        worker.edge_to = ""
-    _apply_equipment()
-
-func _shelf_footprint(id: String) -> Rect2:
-    if not _shelf_footprints.has(id): _shelf_footprints[id]=super._shelf_footprint(id)
-    return _shelf_footprints[id]
-
-func _pack_footprint(id: String) -> Rect2:
-    if not _pack_footprints.has(id): _pack_footprints[id]=super._pack_footprint(id)
-    return _pack_footprints[id]
-
-func bulk_capacity(id: String = "") -> int:
-    var selected:=layout_id if id.is_empty() else id
-    if not _capacity_by_layout.has(selected): _capacity_by_layout[selected]=super.bulk_capacity(selected)
-    return _capacity_by_layout[selected]
-
-func _bay(id: String) -> Dictionary:
-    return _live_bays_by_id.get(id,{}) if not _live_bays_by_id.is_empty() else super._bay(id)
-
-func _bay_available_in(bay: Dictionary, id: String) -> bool:
-    if hall_owned and hall_plan == "express" and str(bay.id).begins_with("H") and str(bay.id).split("-")[1] in ["2","3"]: return false
-    return super._bay_available_in(bay,id)
-
-func _build_edges() -> void:
-    _capacity_by_layout.clear()
-    super._build_edges()
-    _bind_live_indexes()
-
-func _path_length(path: Array) -> float:
-    var length := 0.0
-    for index in maxi(0,path.size()-1):
-        length += (_points()[path[index]] as Vector3).distance_to(_points()[path[index+1]])
-    return length
-
-func _find_path(source: String, target: String, manifest_transport: bool = false) -> Array:
-    var key := source+":"+target+(":bulk" if manifest_transport else ":unit")
-    if _path_cache.has(key):
-        route_cache_hits += 1
-        return _path_cache[key].duplicate()
-    route_cache_misses += 1
-    var route := _adjacent_path(source,target,manifest_transport)
-    _path_cache[key] = route.duplicate()
-    return route
-
-func _adjacent_path(source: String, target: String, bulk: bool) -> Array:
-    if _adjacency.is_empty(): return super._find_path(source,target,bulk)
-    if source == target: return [source]
-    var distances := {source:0.0}
-    var previous := {}
-    var remaining: Array = _points().keys()
-    while not remaining.is_empty():
-        var closest := ""
-        var best := INF
-        for node in remaining:
-            var distance := float(distances.get(node,INF))
-            if distance < best:
-                best=distance
-                closest=node
-        if closest.is_empty() or closest==target: break
-        remaining.erase(closest)
-        for edge in _adjacency.get(closest,[]):
-            if edge.capacity<=0 or (bulk and edge.bulk_lanes.is_empty()): continue
-            var other: String=edge.b if edge.a==closest else edge.a
-            if other not in remaining: continue
-            var distance := best+_path_edge_cost(edge)
-            if distance < float(distances.get(other,INF)):
-                distances[other]=distance
-                previous[other]=closest
-    var result: Array=[target]
-    var cursor := target
-    while cursor!=source:
-        if not previous.has(cursor): return []
-        cursor=previous[cursor]
-        result.push_front(cursor)
-    return result
-
-func _edge_between(a: String, b: String) -> Dictionary:
-    if not _edge_lookup.is_empty(): return _edge_lookup.get(a+":"+b,{})
-    return super._edge_between(a,b)
-
-func _free_bay() -> Dictionary:
-    if not hall_owned: return super._free_bay()
-    for entry in _bay_order:
-        var bay: Dictionary = entry.bay
-        if bay.available and int(bay.manifest_id)<0 and int(bay.reserved_by)<0: return bay
-    return {}
-
-func _bind_live_indexes(prepare_routes: bool = true) -> void:
-    _capacity_by_layout.clear()
-    _live_bays_by_id.clear()
-    for bay in bulk_bays: _live_bays_by_id[bay.id]=bay
-    _path_cache.clear()
-    _edge_lookup.clear()
-    _adjacency.clear()
-    _bay_order.clear()
-    for edge in _edges.values():
-        _edge_lookup[str(edge.a)+":"+str(edge.b)] = edge
-        _edge_lookup[str(edge.b)+":"+str(edge.a)] = edge
-        for node in [edge.a,edge.b]:
-            if not _adjacency.has(node): _adjacency[node]=[]
-            _adjacency[node].append(edge)
-    if hall_owned and prepare_routes:
-        # Hall adoption changes bay selection only after the earned purchase.
-        # Sort by actual loaded travel distance; never manufacture throughput.
-        for bay in bulk_bays:
-            if not bay.available: continue
-            var inbound_path := _find_path("inbound",bay.node,true)
-            var outbound_path := _find_path(bay.node,"outbound",true)
-            if inbound_path.is_empty() or outbound_path.is_empty(): continue
-            _bay_order.append({"id":bay.id,"bay":bay,"distance":_path_length(inbound_path)+_path_length(outbound_path)})
-        _bay_order.sort_custom(func(a,b): return a.distance < b.distance if not is_equal_approx(a.distance,b.distance) else str(a.id)<str(b.id))
-
-func _invalidate_topology_caches() -> void:
-    _graph_cache_revision = -1
-    _points_cache.clear()
-    _links_cache.clear()
-    _hall_revision = ""
-    _hall_points.clear()
-    _hall_links.clear()
-    _edge_lookup.clear()
-    _adjacency.clear()
-    _path_cache.clear()
-    _bay_order.clear()
-    _live_bays_by_id.clear()
-    _capacity_by_layout.clear()
-
-func _hall_work_drained() -> bool:
-    if campaign_status == "running" or cargo.size() != shipped or not pending_layout_id.is_empty() or _move_remaining > 0.0: return false
-    for worker in workers:
-        if worker.phase != "idle" or worker.carrying or not worker.cargo_ids.is_empty() or not str(worker.edge_id).is_empty(): return false
-    for bay in bulk_bays:
-        if bay.manifest_id != -1 or bay.reserved_by != -1: return false
-    for edge in _edges.values():
-        if not edge.owners.is_empty() or not edge.queue.is_empty(): return false
-    return true
-
-func _expected_static_edges() -> Dictionary:
-    # Include all topology inputs and the actual script identity. Operating mode,
-    # worker count and cargo do not alter static edges; bay geometry/availability
-    # still receives its independent, uncached per-save validation above.
-    var key := "%s:%s:%d:%s:%s:%s" % [get_script().get_instance_id(),legacy_profile,_wing_count(),hall_owned,hall_plan,layout_id]
-    if _static_graph_templates.has(key): return _static_graph_templates[key]
-    var geometry = get_script().new()
-    geometry.legacy_profile = legacy_profile
-    geometry.purchased_upgrades.assign(purchased_upgrades)
-    geometry.hall_owned = hall_owned
-    geometry.hall_plan = hall_plan
-    geometry.layout_id = layout_id
-    geometry._invalidate_topology_caches()
-    geometry._build_edges()
-    var expected: Dictionary = geometry._edges.duplicate(true)
-    _freeze_static_geometry(expected)
-    _static_graph_templates[key] = expected
-    return expected
-
-func _freeze_static_geometry(value: Variant) -> void:
-    if value is Dictionary:
-        for nested in value.values(): _freeze_static_geometry(nested)
-        value.make_read_only()
-    elif value is Array:
-        for nested in value: _freeze_static_geometry(nested)
-        value.make_read_only()

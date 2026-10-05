@@ -1,0 +1,14 @@
+{
+  "domain_schema": 3,
+  "source_commit": "4abb35b2c476321f8f43a47f2a8f72a77b29d152",
+  "source_path": "flotra-campaign/prototype/growth_sim.gd",
+  "source_sha256": "f3394819b34d6dcfba011db2f5953562871df6c2d0c40519f6074657c459b904",
+  "permitted_source_difference": "class_name FlotraGrowthSim becomes FlotraGrowthV3Sim; no other changes",
+  "dependency_sha256": {
+    "growth_v3_sim.gd": "0714617d2f8bf94a100bd7105853a278ddce74c25c004aff04e33841ce5fe7e4",
+    "growth_v2_sim.gd": "fb888e047c279ee5a12b408f949b46e0662094ca89c589a4c2131dd256bd0bee",
+    "release_sim.gd": "7dcfef204d0e1a26f0a088bd6c0aeed764ca0ee46212761b3e7988985e2ad682",
+    "jobs_sim.gd": "cfe35051566561dcd21d4b021b19118a66afdd6d9e3f9847fbf32e8066d4dfeb"
+  },
+  "compatibility_rule": "Do not change shared historical physical rules. Freeze the dependency closure before modifying any pinned dependency."
+}

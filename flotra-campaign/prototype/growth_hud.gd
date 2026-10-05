@@ -11,6 +11,7 @@ signal sheet_changed(kind: String)
 signal operation_requested(id: String)
 signal cancel_layout_requested()
 signal camera_requested(action: String)
+signal hall_plan_requested(id: String)
 
 var _history_visible := false
 var _future_upgrades_visible := false
@@ -291,7 +292,7 @@ func _throughput() -> float:
 
 func _growth_summary() -> String:
     var growth := _growth()
-    return "増築 %d/%d棟 · 広さ %.0f㎡\nスタッフ %d人 · ロボット %d台" % [int(growth.get("wing_count", 0)), WING_COUNT, float(growth.get("area", 0.0)), int(growth.get("human_count", _release.get("worker_count", 0))), int(growth.get("robot_count", 0))]
+    return ("4棟＋広域配送棟 · 広さ %.0f㎡\nスタッフ %d人 · ロボット %d台" % [float(growth.get("area",0.0)),int(growth.get("human_count",3)),int(growth.get("robot_count",0))]) if bool(_release.get("hall",{}).get("owned",false)) else "増築 %d/%d棟 · 広さ %.0f㎡\nスタッフ %d人 · ロボット %d台" % [int(growth.get("wing_count", 0)), WING_COUNT, float(growth.get("area", 0.0)), int(growth.get("human_count", _release.get("worker_count", 0))), int(growth.get("robot_count", 0))]
 
 func _next_improvement() -> Dictionary:
     # A genuinely available purchase comes first. A cheap but locked purchase
@@ -348,7 +349,7 @@ func refresh() -> void:
     _shipped.text = "出荷 %d/%d個  資金 %s" % [delivered, total, _compact_funds(wallet)] if total > 0 else "出荷 0個  資金 %s" % _compact_funds(wallet)
     _travel.text = "出荷 %.1f個/分" % _throughput()
     _travel.tooltip_text = "今回の平均出荷数（倉庫内の1分あたり）。進行速度を変えても同じ基準です"
-    _waiting.text = "%d倍 · 増築 %d/%d" % [int(_speed), int(_growth().get("wing_count", 0)), WING_COUNT]
+    _waiting.text = _live_target({})
     _waiting.tooltip_text = _growth_summary()
     _observed_note.text = "成長 %d/%d · %s" % [_milestones(), MILESTONE_COUNT, _next_goal()]
     if _notice.is_empty():
@@ -374,9 +375,9 @@ func _show_operational_reason() -> void:
         _reason_title.text = "まとめ便を保管中"
         _reason_detail.text += "\n保管が終わると自動で出荷します"
 
-func _live_target(_current: Dictionary, _elapsed: float) -> String:
+func _live_target(_current: Dictionary, _elapsed: float = 0.0) -> String:
     # Also used while the inherited refresh is running. No medal deadlines.
-    return "%d倍 · 増築 %d/%d" % [int(_speed), int(_growth().get("wing_count", 0)), WING_COUNT]
+    return ("%d倍 · 広域配送棟" % int(_speed)) if bool(_release.get("hall",{}).get("owned",false)) else "%d倍 · 増築 %d/%d" % [int(_speed), int(_growth().get("wing_count", 0)), WING_COUNT]
 
 func show_entry() -> void:
     if not _built:
@@ -444,7 +445,7 @@ func show_job_choices() -> void:
 func _signature() -> String:
     # No continuously changing counter here: rebuilding on shipment ticks would
     # invalidate a held finger. Purchases/completions alone refresh the cards.
-    return super._signature() + ":" + str(_milestones()) + ":" + str(_growth().get("wing_count", 0)) + ":" + str(_release.get("operations", {}).get("mode_id", "balanced")) + (":" + _prepared_contract_id + ":" + str(_snapshot.get("layout_id", "")) if _release_tab == "prepare" else "")
+    return str(_release.get("hall",{})) + ":" + super._signature() + ":" + str(_milestones()) + ":" + str(_growth().get("wing_count", 0)) + ":" + str(_release.get("operations", {}).get("mode_id", "balanced")) + (":" + _prepared_contract_id + ":" + str(_snapshot.get("layout_id", "")) if _release_tab == "prepare" else "")
 
 func _populate_release_tab() -> void:
     if _release_tab != "prepare":
@@ -507,6 +508,8 @@ func _build_preparation() -> void:
     details.add_theme_constant_override("separation", 12)
     details.mouse_filter = Control.MOUSE_FILTER_PASS
     _content.add_child(details)
+    if bool(_release.get("hall",{}).get("owned",false)):
+        _text(details, "広域配送棟："+("保管重視・32枠" if str(_release.hall.plan)=="storage" else "通路重視・16枠＋直通通路"), BODY_FONT_SIZE).name="PreparedHallPlan"
     _text(details, "現在の配置：" + str(plan.get("layout_label", "")), 20).name = "PreparedLayout"
     _action(details, "配置を調整する · 無料", _prepare_layout).name = "PrepareLayout"
     _text(details, "受注費用・時間制限はありません。開始するまでは仕事を受けません", BODY_FONT_SIZE, Color("476266"))
@@ -596,7 +599,7 @@ func _build_contracts() -> void:
         _text(_content, "繰り返せる仕事 · 毎回報酬", 22)
         var repeat_copy := "好きな種類を選んで、次の増築や設備の資金に"
         if int(_growth().get("wing_count", 0)) >= WING_COUNT:
-            repeat_copy = "増築は4棟まで。残りのスタッフや設備を選ぶ資金に"
+            repeat_copy = "4棟の次は広域配送棟へ。大型便を届けて、建設資金をためよう"
         if bool(_growth().get("catalog_complete", false)):
             repeat_copy = "同じ仕事で運び方や配置を比べよう。毎回報酬も受け取れます"
         _text(_content, repeat_copy, BODY_FONT_SIZE, Color("476266"))
@@ -678,12 +681,13 @@ func _build_upgrades() -> void:
             _build_upgrade_card(option)
     elif bool(_growth().get("catalog_complete", false)):
         _text(_content, "現在の増築・設備はすべて導入済み", 22).name = "GrowthCatalogComplete"
-        _text(_content, "増築は4棟まで。運び方と配置を変えて同じ仕事を比べたり、大型便に取り組めます", BODY_FONT_SIZE, Color("476266"))
+        _text(_content, "広域配送棟まで完成。保管床と通路を選び、仕事ごとの流れを比べられます", BODY_FONT_SIZE, Color("476266"))
         _action(_content, "仕事を選ぶ", _open_contracts, true).name = "ChooseMatureJob"
     else:
         _text(_content, "仕事を終えて、次の改善へ", 22)
         _text(_content, "購入は仕事が終わってから。繰り返せる仕事でも資金が増えます", BODY_FONT_SIZE, Color("476266"))
         _action(_content, "仕事を選ぶ", _open_contracts, true).name = "EarnForUpgrade"
+    _build_hall_choices()
     _build_operations()
     _text(_content, _growth_summary(), 20).name = "GrowthWarehouseSummary"
     _text(_content, "配置変更は無料です。増築・スタッフ・設備は次の仕事にも引き継がれます", BODY_FONT_SIZE, Color("476266"))
@@ -707,6 +711,36 @@ func _build_upgrades() -> void:
         for option in owned:
             _build_upgrade_card(option, group)
         group.visible = _owned_upgrades_visible
+
+func _build_hall_choices() -> void:
+    var hall: Dictionary=_release.get("hall",{})
+    if not bool(hall.get("owned",false)):return
+    _text(_content,"広域配送棟の使い方",22)
+    _text(_content,"仕事の合間なら無料で切り替えられます。運搬速度は同じです。",BODY_FONT_SIZE)
+    for plan in ["storage","express"]:
+        var selected: bool=str(hall.get("plan","storage"))==plan
+        var label: String="保管重視 · 32枠" if plan=="storage" else "通路重視 · 16枠＋直通通路"
+        _text(_content,"長く預かる広域便向け。保管待ちを抑えます。" if plan=="storage" else "保管場所を減らし、奥の荷物を運ぶ直通通路を開きます。",BODY_FONT_SIZE)
+        var action:=_action(_content,("● " if selected else "")+label,_request_hall_plan.bind(plan))
+        action.name="HallPlan_"+plan
+        action.disabled=selected or str(_release.get("status",""))=="running"
+
+func _request_hall_plan(id: String) -> void:
+    if _sheet_kind!="jobs" or _release_tab!="upgrades" or not is_instance_valid(sim):return
+    var button:=_content.get_node_or_null("HallPlan_"+id) as Button
+    if button==null or button.disabled:return
+    button.disabled=true
+    hall_plan_requested.emit(id)
+
+func show_hall_plan_result(result: Dictionary) -> void:
+    var ok:=bool(result.get("ok",false))
+    var label: String="保管重視" if str(result.get("plan","storage"))=="storage" else "通路重視"
+    _notice_title="広域配送棟を「%s」に変更しました"%label if ok else "仕事が終わると変更できます"
+    _notice="次の仕事から新しい使い方になります。変更は無料です" if ok else "荷物の出荷と設備の移動が終わってから、もう一度選んでください"
+    _notice_seconds=4.0
+    _equipment_notice=_notice_title+"\n"+_notice
+    _release_signature=""
+    refresh()
 
 func _build_operations() -> void:
     if not is_instance_valid(sim) or not sim.has_method("operation_options"):
@@ -823,7 +857,9 @@ func show_upgrade_result(result: Dictionary) -> void:
     var ok := bool(result.get("ok", false))
     var id := str(result.get("upgrade_id", ""))
     if ok:
-        if id.begins_with("wing_"):
+        if id=="regional_hall":
+            _notice_title="広域配送棟が完成しました"
+        elif id.begins_with("wing_"):
             _notice_title = "第%d棟が完成しました" % int(_growth().get("wing_count", 0))
         elif id.begins_with("crew_"):
             _notice_title = "スタッフが%d人になりました" % int(_growth().get("human_count", 0))
@@ -838,7 +874,7 @@ func show_upgrade_result(result: Dictionary) -> void:
     _equipment_notice = _notice_title + "\n" + _notice
     _notice_seconds = 4.0
     _release_signature = ""
-    if ok and id.begins_with("wing_"):
+    if ok and (id.begins_with("wing_") or id=="regional_hall"):
         close_sheet()
     refresh()
 

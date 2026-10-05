@@ -20,6 +20,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -44,6 +46,8 @@ jobs:
         dpr: [1, 2, 3]
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -72,6 +76,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -115,6 +121,8 @@ jobs:
         dpr: [1, 2, 3]
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -160,6 +168,8 @@ jobs:
         viewport: ['375x567', '390x844']
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -194,4 +204,92 @@ jobs:
         with:
           name: flotra-preparation-browser-${{ matrix.viewport }}
           path: build/preparation-browser-journey
+          retention-days: 7
+
+  regional-hall-browser-journey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+      - name: Generate strict schema-3 migration fixtures
+        run: |
+          godot --headless --editor --path flotra-campaign --import
+          mkdir -p build/regional-fixtures build/regional-browser
+          FLOTRA_REGIONAL_FIXTURES="$PWD/build/regional-fixtures" godot --headless --path flotra-campaign --script res://tests/release/regional_hall_browser_fixtures.gd
+      - name: Install isolated browser test dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Verify real archive storage and integrated hall journeys
+        shell: bash
+        run: |
+          export NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules"
+          export FLOTRA_STORAGE_BRIDGE="$PWD/flotra-campaign/campaign-storage.js"
+          node flotra-campaign/tests/release/review_browser_storage.cjs > build/regional-browser/original-storage.log
+          node flotra-campaign/tests/release/postcap_browser_storage.cjs > build/regional-browser/archive-storage.log
+          python3 -m http.server 8837 --bind 127.0.0.1 --directory docs/godot-jobs-preview > /tmp/flotra-regional-server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          node flotra-campaign/tests/release/browser_regional_hall_journey.cjs http://127.0.0.1:8837/ build/regional-browser build/regional-fixtures
+      - name: Preserve regional hall evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flotra-regional-hall-browser
+          path: build/regional-browser
+          retention-days: 7
+
+  regional-hall-renderer-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CONTROL_SHA: 4abb35b2c476321f8f43a47f2a8f72a77b29d152
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+      - name: Prepare pinned public control and identical earned checkpoints
+        run: |
+          git fetch --no-tags --depth=1 origin "$CONTROL_SHA"
+          mkdir -p build/pr152-control build/renderer-fixtures build/renderer-control
+          git archive "$CONTROL_SHA" docs/godot-jobs-preview | tar -x -C build/pr152-control
+          godot --headless --editor --path flotra-campaign --import
+          FLOTRA_REGIONAL_FIXTURES="$PWD/build/renderer-fixtures" godot --headless --path flotra-campaign --script res://tests/release/regional_hall_browser_fixtures.gd
+      - name: Install identical renderer for control and candidate
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Compare control and exact-head candidate under unchanged limits
+        shell: bash
+        run: |
+          python3 -m http.server 8838 --bind 127.0.0.1 --directory build/pr152-control/docs/godot-jobs-preview > /tmp/flotra-control-server.log 2>&1 &
+          control=$!
+          python3 -m http.server 8839 --bind 127.0.0.1 --directory docs/godot-jobs-preview > /tmp/flotra-candidate-server.log 2>&1 &
+          candidate=$!
+          trap 'kill "$control" "$candidate" 2>/dev/null || true' EXIT
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" node flotra-campaign/tests/release/browser_regional_performance_gate.cjs http://127.0.0.1:8839/ http://127.0.0.1:8838/ build/renderer-control build/renderer-fixtures "$(git rev-parse HEAD)" "$CONTROL_SHA"
+      - name: Preserve exact-head/control environment, thresholds and captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flotra-regional-renderer-control
+          path: build/renderer-control
           retention-days: 7

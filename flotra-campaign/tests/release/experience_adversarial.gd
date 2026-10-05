@@ -56,14 +56,23 @@ func ledger(sim, label: String) -> void:
 func independent_copy(sim):
     var copy=Sim.new()
     var fields: Array=Sim.SIM_FIELDS.duplicate()
-    fields.append_array(["operating_profile","operation_mode","preferences","legacy_profile","campaign_wallet","completed_count","purchased_upgrades","current_contract_id","campaign_status","manifest_cursor","contract_results","last_result"])
+    fields.append_array(["hall_owned","hall_plan","operating_profile","operation_mode","preferences","legacy_profile","campaign_wallet","completed_count","purchased_upgrades","current_contract_id","campaign_status","manifest_cursor","contract_results","last_result"])
     for field in fields:
         var value=sim.get(field)
         copy.set(field,value.duplicate(true) if value is Array or value is Dictionary else value)
+    # Constructor indexes refer to the constructor's old graph, not the copied
+    # authoritative dictionaries. This hall-free independent baseline deliberately
+    # uses the original uncached point/edge/bay lookup paths, without invoking the
+    # production importer, validator, topology builder or live-index binder.
+    for field in ["_points_cache","_links_cache","_hall_points","_hall_links","_edge_lookup","_adjacency","_path_cache","_bay_order","_live_bays_by_id","_capacity_by_layout","_shelf_footprints","_pack_footprints"]:
+        copy.get(field).clear()
+    copy._graph_cache_revision=-1
+    copy._hall_revision=""
     return copy
 
 func roundtrip(sim, label: String, continuation := 60) -> void:
     var original: Dictionary = sim.export_release_state()
+    check(not sim.hall_owned,label+" independent frozen-physics control is hall-free")
     # The control path copies live properties without invoking any import or
     # validation method, so matching continuation cannot hide importer changes.
     var control=independent_copy(sim)
@@ -257,7 +266,7 @@ func mutations() -> void:
     sim.step(4.0)
     var base: Dictionary = sim.export_release_state()
     var bad := clone(base)
-    bad.schema=4
+    bad.schema=Sim.RELEASE_SCHEMA+1
     rejects(bad,"unsupported future schema")
     for value in ["turbo","",1,null]:
         bad=clone(base)
@@ -420,6 +429,7 @@ func mutations() -> void:
         var old_shape=clone(bad)
         old_shape.schema=2
         old_shape.erase("experience")
+        old_shape.erase("hall")
         var original_v2=load(OS.get_environment("FLOTRA_QA_BASELINE_DIR")+"growth_sim.gd").new()
         legacy_validator_boundary["schema2_wrong_worksite_accepted"]=original_v2.import_release_state(old_shape).get("ok",false)
         bad=clone(inherited_state)
@@ -477,6 +487,7 @@ func write_text(path: String, content: String) -> void:
 
 func storage() -> void:
     var sandbox := OS.get_environment("FLOTRA_REVIEW_USER_ROOT")
+    if not sandbox.is_empty(): sandbox=sandbox.trim_suffix("/")+"/"
     check(not sandbox.is_empty() and ProjectSettings.globalize_path("user://").begins_with(sandbox),"storage tests explicitly isolated from user progress")
     if sandbox.is_empty() or not ProjectSettings.globalize_path("user://").begins_with(sandbox): return
     var sim = Sim.new()
@@ -501,6 +512,18 @@ func storage() -> void:
         check(outcome.get("ok",false) and store.blocked and not store.save_from(restored).ok,"unrecognized backup also blocks writes")
         check(FileAccess.get_file_as_string(Save.PATH)==valid and FileAccess.get_file_as_string(Save.BACKUP)==corrupt,"unknown backup is never overwritten")
     for name in ["release_sim","growth_sim"]:
+        # Each is an independent synthetic profile in the explicit disposable
+        # test directory. Preserve the immutable archive WITHIN each case, while
+        # removing prior case fixtures rather than relaxing archive protection.
+        check(not FileAccess.file_exists(Save.WRITER_LOCK),name+" no existing writer lock to take over")
+        if FileAccess.file_exists(Save.WRITER_LOCK): return
+        for slot in [Save.PATH,Save.BACKUP,Save.ARCHIVE]:
+            for candidate in [slot,slot+".tmp"]:
+                var absolute:=ProjectSettings.globalize_path(candidate)
+                check(absolute.begins_with(sandbox),name+" synthetic cleanup remains inside explicit sandbox")
+                if not absolute.begins_with(sandbox): return
+                if FileAccess.file_exists(candidate):
+                    check(DirAccess.remove_absolute(absolute)==OK,name+" clears prior independent synthetic fixture")
         var old_class=load(OS.get_environment("FLOTRA_QA_BASELINE_DIR")+name+".gd")
         var old=old_class.new()
         old.accept_contract("first_shift" if name=="release_sim" else "growth_1")
@@ -515,6 +538,7 @@ func storage() -> void:
         upgraded.step(.2)
         check(store.save_from(upgraded).ok,name+" explicit new checkpoint accepted")
         check(FileAccess.get_file_as_string(Save.BACKUP)==original,name+" old checkpoint remains byte-exact backup")
+        check(FileAccess.get_file_as_string(Save.ARCHIVE)==original,name+" first migration pins exact immutable old checkpoint")
         var restored=Sim.new()
         check(Save.new().load_into(restored).get("ok",false) and same_bytes(upgraded.export_release_state(),restored.export_release_state()),name+" mixed version primary backup reload exact")
 

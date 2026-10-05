@@ -11,7 +11,8 @@ const CoreGeometry = preload("res://prototype/jobs_sim.gd")
 const HIDDEN_BOX_TRANSFORM := Transform3D(Basis(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO), Vector3.ZERO)
 var _box_sources: Array[MeshInstance3D] = []
 var _box_batches: Array[MultiMeshInstance3D] = []
-var _box_batch_states: Array = []
+var _box_batch_states: Array = [] # legacy diagnostic member; compact groups own their mirrors
+var _compact_batch_states: Array = [[],[]]
 var _growth_root: Node3D
 var _growth_floors: Array[MeshInstance3D] = []
 var _connector_floors: Array[MeshInstance3D] = []
@@ -108,36 +109,35 @@ func _live_box(source: MeshInstance3D) -> bool:
     return true
 
 func _refresh_box_batches() -> void:
-    if _box_batches.is_empty():
-        return
-    var sources: Array[MeshInstance3D] = []
+    if _box_batches.is_empty(): return
+    var sources: Array[MeshInstance3D]=[]
+    var groups: Array=[[],[]]
     for source in _box_sources:
-        if _live_box(source):
-            sources.append(source)
-    _box_sources = sources
-    var count := sources.size()
-    if _box_batches[0].multimesh.instance_count != count:
-        for batch in _box_batches:
-            batch.multimesh.instance_count = count
-        _box_batch_states.clear()
-        _box_batch_states.resize(count)
-    var local_from_world := global_transform.affine_inverse()
-    for index in count:
-        var source: MeshInstance3D = sources[index]
-        var material := source.material_override as StandardMaterial3D
-        var color := material.albedo_color if material != null else Color.WHITE
-        var group := (1 if material != null and material.emission_enabled else 0) if source.is_visible_in_tree() else -1
-        var shape := source.mesh as BoxMesh
-        var transform := local_from_world * source.global_transform * Transform3D(Basis.from_scale(shape.size), Vector3.ZERO) if group >= 0 else HIDDEN_BOX_TRANSFORM
-        var state: Array = [source.get_instance_id(), transform, color, group]
-        if _box_batch_states[index] is Array and _box_batch_states[index] == state:
-            continue
-        for batch_index in 2:
-            var instances := _box_batches[batch_index].multimesh
-            instances.set_instance_transform(index, transform if batch_index == group else HIDDEN_BOX_TRANSFORM)
-            if batch_index == group:
-                instances.set_instance_color(index, color)
-        _box_batch_states[index] = state
+        if not _live_box(source): continue
+        sources.append(source)
+        var material:=source.material_override as StandardMaterial3D
+        groups[1 if material!=null and material.emission_enabled else 0].append(source)
+    _box_sources=sources
+    var local_from_world:=global_transform.affine_inverse()
+    for group in 2:
+        var instances:MultiMesh=_box_batches[group].multimesh
+        var entries:Array=groups[group]
+        if instances.instance_count!=entries.size():
+            instances.instance_count=entries.size()
+            _compact_batch_states[group]=[]
+            _compact_batch_states[group].resize(entries.size())
+        for index in entries.size():
+            var source:MeshInstance3D=entries[index]
+            var material:=source.material_override as StandardMaterial3D
+            var color:=material.albedo_color if material!=null else Color.WHITE
+            var shape:=source.mesh as BoxMesh
+            var transform:=local_from_world*source.global_transform*Transform3D(Basis.from_scale(shape.size),Vector3.ZERO) if source.is_visible_in_tree() else HIDDEN_BOX_TRANSFORM
+            var state:Array=[source.get_instance_id(),transform,color]
+            if _compact_batch_states[group][index] is Array and _compact_batch_states[group][index]==state: continue
+            instances.set_instance_transform(index,transform)
+            instances.set_instance_color(index,color)
+            _compact_batch_states[group][index]=state
+
 
 func _build_shell(state: Dictionary) -> void:
     # The inherited shell estimates the original hall from routing bounds.
