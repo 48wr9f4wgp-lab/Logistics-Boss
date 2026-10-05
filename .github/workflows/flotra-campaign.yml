@@ -60,6 +60,18 @@ jobs:
           server=$!
           trap 'kill "$server" 2>/dev/null || true' EXIT
           NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" node flotra-campaign/tests/release/browser_growth_geometry.cjs http://127.0.0.1:8812/godot-jobs-preview/ build/browser-phone
+      - uses: chickensoft-games/setup-godot@v2
+        if: matrix.dpr == 1
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Actual Web serialized-size boundary and quota regression
+        if: matrix.dpr == 1
+        shell: bash
+        run: |
+          bash flotra-campaign/tests/release/export_save_size_web.sh build/save-size-export
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" node flotra-campaign/tests/release/browser_save_size.cjs build/save-size-export build/browser-phone/save-size
       - name: Preserve actual browser evidence
         if: always()
         uses: actions/upload-artifact@v4

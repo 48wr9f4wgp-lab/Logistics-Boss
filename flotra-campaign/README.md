@@ -61,3 +61,7 @@ Web touch cancellation has a separate DOM-capture notification because the Godot
 ## Compact phone preparation
 
 The three full-size free operating choices appear together before long explanations, including on a 375×567 CSS-pixel phone. Detailed conditions, operating tradeoffs and reversible layout adjustment expand on demand. Start stays pinned below the scroll area. The details disclosure is session-only; selecting a mode still commits through the original guarded scene action. See `FLOTRA_COMPACT_PREPARATION_2026-10-05.md`.
+
+## Save-size safety
+
+Before any storage write, campaign saving rejects a serialized Variant payload above the existing 2,000,000-byte reader limit and retains the previous primary/backup with explicit Japanese unsaved feedback. The envelope, checksum, migrations and save schedule are unchanged. Browser quota remains a separate possible failure below this bound. See `FLOTRA_SAVE_SIZE_GUARD_2026-10-05.md`.
