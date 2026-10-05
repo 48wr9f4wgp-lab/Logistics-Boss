@@ -49,3 +49,11 @@ The 操作 menu remembers speed, optional menu auto-pause and reduced walking an
 Drag the warehouse with one finger or the mouse to pan. Pinch or use the mouse wheel / plus-minus buttons to zoom from whole-warehouse scale up to 3×. The visible 左90° / 右90° buttons change the camera bearing; 全体 restores the original whole-warehouse view. Camera state is session-only and never mutates campaign saves, money, equipment, cargo or the foreground clock. The layout editor retains its own precise equipment framing and restores the overview camera when closed.
 
 The 56px camera row occupies a reserved strip above the bottom HUD, not the scene's callouts. Short landscape puts it in the header. Menus, HUD crossings, canceled touch, focus loss and resize cancel any held camera input. See `FLOTRA_CAMERA_RELEASE_2026-10-04.md` for verification and boundaries.
+
+## Optional preparation and replay comparison
+
+Each available job can still start immediately, or open a preparation sheet showing its manifest, reward, current layout and the three existing free operating modes. Confirmed mode/layout choices persist normally; merely opening preparation or canceling an uncommitted layout preview never accepts a job. Completed jobs offer direct replay and an adjust-and-replay route back to the same job.
+
+Results compare the previous completion of the same job during the current launch: game-time duration, throughput, aggregate aisle wait, operating mode and final layout. Equipment and relocation differences are disclosed. Detailed comparison state is session-only; schema 3 and saved historical best times are unchanged. A reload never invents a previous operating setup from incomplete saved records.
+
+Web touch cancellation has a separate DOM-capture notification because the Godot loader otherwise maps cancellation to a normal release. Earlier buffered starts are processed before invalidating held UI/world gestures, including several rapid start/cancel pairs before one rendered frame. Normal release cleanup and fresh input remain available.

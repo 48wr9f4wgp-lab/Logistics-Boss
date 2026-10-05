@@ -150,3 +150,48 @@ jobs:
           name: flotra-camera-browser-dpr-${{ matrix.dpr }}
           path: build/camera-browser
           retention-days: 7
+
+  preparation-browser-journey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: ['375x567', '390x844']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+      - name: Build isolated earned-state fixtures
+        shell: bash
+        run: |
+          godot --headless --editor --path flotra-campaign --import
+          mkdir -p build/preparation-fixtures
+          FLOTRA_GROWTH_FIXTURES="$PWD/build/preparation-fixtures" godot --headless --path flotra-campaign --script res://tests/release/growth_browser_fixtures.gd
+      - name: Install browser test dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+          sudo apt-get install -y xvfb
+      - name: Test preparation, comparison, save and canceled input
+        env:
+          FLOTRA_PREPARATION_CASES: quickstart-${{ matrix.viewport }},fresh-${{ matrix.viewport }},mature-${{ matrix.viewport }}
+        shell: bash
+        run: |
+          python3 -m http.server 8830 --bind 127.0.0.1 --directory docs/godot-jobs-preview > /tmp/flotra-preparation-server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" xvfb-run -a node flotra-campaign/tests/release/browser_preparation_journey.cjs http://127.0.0.1:8830/ build/preparation-browser-journey build/preparation-fixtures docs/godot-jobs-preview
+      - name: Preserve preparation browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flotra-preparation-browser-${{ matrix.viewport }}
+          path: build/preparation-browser-journey
+          retention-days: 7

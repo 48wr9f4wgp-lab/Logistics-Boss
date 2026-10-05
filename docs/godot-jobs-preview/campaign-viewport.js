@@ -5,6 +5,16 @@
   const canvas = document.getElementById('canvas');
   const api = { metricsJSON: '', read: () => JSON.parse(api.metricsJSON || '{}') };
   window.FlotraViewport = api;
+  // Godot's Web loader maps touchcancel to an ordinary touchend. Notify the
+  // input owner before that loader handles the event, without swallowing the
+  // release it needs to clear engine state. The callback drains earlier input
+  // before invalidating its held gestures, so back-to-back canceled touches
+  // cannot re-arm a button when their starts are processed on a later frame.
+  let cancelTouch = null;
+  api.setTouchCancelHandler = handler => { cancelTouch = typeof handler === 'function' ? handler : null; };
+  canvas.addEventListener('touchcancel', () => {
+    if (cancelTouch) cancelTouch();
+  }, { capture: true, passive: true });
   // Godot's Web mouse-motion bridge omits the DOM buttons bitmask. Expose the
   // observed mouse state read-only so a missed release cannot keep panning on
   // hover. Pointer capture and browser defaults remain untouched.

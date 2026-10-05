@@ -62,6 +62,11 @@ func _background_input_blocked() -> bool:
     # interval before its queued input batch ends. Require a new frame too.
     return Time.get_ticks_msec() < _background_guard_until or Engine.get_process_frames() <= _background_guard_frame
 
+func cancel_pointer_input() -> void:
+    # Let BaseButton receive its release for cleanup, but never run the action
+    # captured by an interrupted gesture. A fresh GUI down re-arms normally.
+    _input_epoch += 1
+
 func _layout() -> void:
     super._layout()
     if not _built:

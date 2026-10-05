@@ -19,6 +19,7 @@ var _last_status := ""
 var _loaded := false
 var _phone_qa := false
 var _qa_elapsed := 0.0
+var _web_touch_cancel_callback: JavaScriptObject
 var _menu_paused := false
 var _preferences := {"preferred_speed": 2, "pause_on_menus": false, "reduced_motion": false}
 const MAX_FOREGROUND_FRAME_SECONDS := 0.25
@@ -102,7 +103,25 @@ func _ready() -> void:
         hud.call("show_intro")
     _update_world_visibility()
     if OS.has_feature("web"):
+        _web_touch_cancel_callback = JavaScriptBridge.create_callback(_cancel_web_touch)
+        var bridge := JavaScriptBridge.get_interface("FlotraViewport")
+        if bridge != null:
+            bridge.setTouchCancelHandler(_web_touch_cancel_callback)
         _report_web_viewport.call_deferred()
+
+func _exit_tree() -> void:
+    if OS.has_feature("web"):
+        var bridge := JavaScriptBridge.get_interface("FlotraViewport")
+        if bridge != null:
+            bridge.setTouchCancelHandler(null)
+
+func _cancel_web_touch(_arguments: Array = []) -> void:
+    # DOM capture runs before Godot queues its (uncanceled) touchend. Drain
+    # earlier starts first: invalidating only the current epoch loses a race
+    # when several start/cancel pairs arrive before one rendered frame.
+    Input.flush_buffered_events()
+    if is_instance_valid(hud): hud.cancel_pointer_input()
+    if is_instance_valid(world): world.cancel_pointer_input()
 
 # Keep logical controls and input coordinates independent of the browser's DPR.
 # The loader owns the full-resolution backing buffer; Godot stretches canvas
@@ -198,6 +217,9 @@ func _report_phone_qa() -> void:
     data["wallet"] = sim.campaign_wallet
     data["upgrades"] = sim.purchased_upgrades.duplicate()
     data["currentContract"] = sim.current_contract_id
+    data["jobComparison"] = sim.job_comparison()
+    data["currentBest"] = release.get("best_time", 0.0)
+    data["results"] = release.get("results", {})
     data["simTime"] = sim.sim_time
     data["speed"] = speed
     data["menuPaused"] = _menu_paused
