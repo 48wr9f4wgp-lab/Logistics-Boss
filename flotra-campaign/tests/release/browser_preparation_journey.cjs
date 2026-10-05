@@ -319,6 +319,9 @@ async function journey(page,context,test,mature) {
     const copy=(await ui(page)).labels.map(l=>l.text).join('\n');
     assert.ok(!copy.includes('次の増築や設備の資金に'),'Fully upgraded job screen does not promise more upgrades');
     await tapName(page,context,'Tab_upgrades');
+    // Tabs share sheet='jobs'; wait for their actual rendered content rather
+    // than a fixed post-touch delay or the previous tab's diagnostics.
+    await page.waitForFunction(()=>window.FlotraViewport?.uiMetrics?.labels.some(label=>label.name==='GrowthCatalogComplete'),null,{timeout:10000});
     assert.ok(labelText(await ui(page),'GrowthCatalogComplete').includes('すべて導入済み'),'Mature copy says the existing catalog is complete');
     await screenshot(page,'mature-catalog-'+test.name);
     await tapName(page,context,'Tab_contracts');

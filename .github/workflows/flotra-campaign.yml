@@ -154,6 +154,10 @@ jobs:
   preparation-browser-journey:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: ['375x567', '390x844']
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -176,6 +180,8 @@ jobs:
           "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
           sudo apt-get install -y xvfb
       - name: Test preparation, comparison, save and canceled input
+        env:
+          FLOTRA_PREPARATION_CASES: quickstart-${{ matrix.viewport }},fresh-${{ matrix.viewport }},mature-${{ matrix.viewport }}
         shell: bash
         run: |
           python3 -m http.server 8830 --bind 127.0.0.1 --directory docs/godot-jobs-preview > /tmp/flotra-preparation-server.log 2>&1 &
@@ -186,6 +192,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: flotra-preparation-browser-journey
+          name: flotra-preparation-browser-${{ matrix.viewport }}
           path: build/preparation-browser-journey
           retention-days: 7

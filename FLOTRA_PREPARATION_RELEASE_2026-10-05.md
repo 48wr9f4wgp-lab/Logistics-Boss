@@ -34,7 +34,7 @@ The browser preparation suite runs the actual exported WebGL application in isol
 
 All six local browser cases passed with zero browser errors: direct quickstart plus fresh and fully upgraded preparation at both sizes. The tested PCK SHA-256 is `e22fd39d98467c0fb29061fb38a9c1f610993e7afff38fdd08061896184b6d7f`. The reproducible evidence contract and measured comparison values are recorded in `docs/guides/FLOTRA_PREPARATION_BROWSER_QA.md`.
 
-The GitHub workflow adds this preparation journey to the existing eight jobs. All nine jobs must pass for the exact candidate before merge. Publication additionally requires successful Pages deployment and byte identity for the live HTML, PCK, engine JS/WASM and both bridges over verified HTTPS.
+The GitHub workflow adds two preparation viewport jobs to the existing eight jobs. The same six cases run in parallel by viewport, with no assertions removed. All ten jobs must pass for the exact candidate before merge. Publication additionally requires successful Pages deployment and byte identity for the live HTML, PCK, engine JS/WASM and both bridges over verified HTTPS.
 
 Chromium emulation and Linux Godot checks do not establish physical iPhone or Safari compatibility. The Web export retains `persistentPaths: []` and `canvasResizePolicy: 0`.
 
