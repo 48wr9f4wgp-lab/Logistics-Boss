@@ -82,6 +82,10 @@ var campaign_status := "ready"
 var manifest_cursor := 0
 var contract_results: Dictionary = {}
 var last_result: Dictionary = {}
+# Comparison is a session-only presentation aid, never part of schema 3. Keep
+# actual completed runs per job so trying another route cannot cross-compare it.
+var _session_job_results: Dictionary = {}
+var _run_comparison_baseline: Dictionary = {}
 
 func _init() -> void:
     super()
@@ -286,6 +290,7 @@ func accept_contract(id: String) -> Dictionary:
         return {"ok":false,"reason":"locked_contract"}
     if cargo.size() != shipped or not pending_layout_id.is_empty() or _move_remaining > 0.0:
         return {"ok":false,"reason":"unshipped_cargo"}
+    _run_comparison_baseline = _session_job_results.get(id, {}).duplicate(true)
     var retained_layout := layout_id
     var retained_speed := time_scale
     legacy_profile = not (id.begins_with("growth_") or id.begins_with("route_"))
@@ -447,6 +452,44 @@ func _complete_contract(definition: Dictionary) -> void:
     contract_results[current_contract_id] = {"best_time":best,"best_medal":_medal(definition,best),"attempts":attempts,"earned":int(previous.get("earned",0))+earned}
     last_result = {"contract_id":current_contract_id,"label":definition.label,"elapsed":sim_time,"best_time":best,"medal":_medal(definition,sim_time),"earnings":earned,"first_completion":first_completion,"new_best":sim_time < float(previous.get("best_time", INF)),"shipped":shipped,"total_units":int(definition.manifest_quota)*MANIFEST_SIZE,"worker_count":workers.size(),"layout_id":layout_id,"upgrades":purchased_upgrades.duplicate()}
     campaign_status = "contract_complete"
+    _session_job_results[current_contract_id] = _completed_run_summary()
+
+func _completed_run_summary() -> Dictionary:
+    return {"contract_id":current_contract_id,"elapsed":sim_time,"shipped":shipped,
+        "units_per_minute":float(shipped)*60.0/sim_time if sim_time > 0.0 else 0.0,
+        "aisle_wait_seconds":aisle_wait_seconds,"relocation_seconds":relocation_seconds,
+        "operation_id":operation_mode,"operation_label":operation_state().label,
+        "layout_id":layout_id,"layout_label":str(_option(layout_id).get("label", "")),
+        "upgrades":purchased_upgrades.duplicate(),"operating_profile":operating_profile,
+        "legacy_profile":legacy_profile}
+
+func job_preparation(id: String) -> Dictionary:
+    # Read-only: viewing a plan cannot accept a job, reset cargo, spend money,
+    # alter the mode or create a save. Existing scene actions commit choices.
+    for option in contract_options():
+        if str(option.id) != id: continue
+        var state := option.duplicate(true)
+        state.operation = operation_state()
+        state.layout_label = str(_option(layout_id).get("label", ""))
+        state.available = bool(option.available) and cargo.size() == shipped and pending_layout_id.is_empty() and _move_remaining <= 0.0
+        if bool(option.available) and not bool(state.available):
+            state.locked_reason = "荷物の出荷と設備の移動が終わると始められます"
+        return state
+    return {}
+
+func job_comparison() -> Dictionary:
+    # Never fabricate a prior operating setup from an older save: its records
+    # contain best time, but not all previous-run metrics or operating mode.
+    if campaign_status != "contract_complete" or _run_comparison_baseline.is_empty(): return {}
+    var current: Dictionary = _session_job_results.get(current_contract_id, {})
+    if current.is_empty() or str(_run_comparison_baseline.get("contract_id", "")) != current_contract_id: return {}
+    if bool(current.operating_profile) != bool(_run_comparison_baseline.operating_profile) or bool(current.legacy_profile) != bool(_run_comparison_baseline.legacy_profile): return {}
+    return {"previous":_run_comparison_baseline.duplicate(true),"current":current.duplicate(true)}
+
+func growth_catalog_complete() -> bool:
+    for option in upgrade_options():
+        if not bool(option.owned): return false
+    return true
 
 func release_state() -> Dictionary:
     var definition := _contract(current_contract_id).duplicate(true)
@@ -462,7 +505,7 @@ func release_state() -> Dictionary:
         objective = "全6契約を達成！ 配置を変えてベストタイムに挑戦しよう"
     elif completed_count > 0:
         objective = "設備と配置を選び、次の契約を受けよう"
-    var growth := {"wing_count":_wing_count(),"area":223.886+83.6*_wing_count()+(14.554 if _wing_count()>0 else 0.0),"human_count":_human_count(),"robot_count":_robot_count(),"completed_milestones":_milestones(),"next_goal":_next_goal(),"legacy_profile":legacy_profile,"lifetime_units":_lifetime_units()}
+    var growth := {"wing_count":_wing_count(),"area":223.886+83.6*_wing_count()+(14.554 if _wing_count()>0 else 0.0),"human_count":_human_count(),"robot_count":_robot_count(),"completed_milestones":_milestones(),"next_goal":_next_goal(),"legacy_profile":legacy_profile,"lifetime_units":_lifetime_units(),"catalog_complete":growth_catalog_complete()}
     return {"operations":operation_state(),"preferences":preferences.duplicate(true),"growth":growth,"schema":RELEASE_SCHEMA,"status":campaign_status,"wallet":campaign_wallet,"completed_count":completed_count,"total_contracts":_contracts().size(),"campaign_complete":completed_count==_contracts().size(),"current_contract":definition,"current_contract_id":current_contract_id,"progress":{"shipped":shipped,"total":total,"offered":offered_units,"manifests_offered":manifest_cursor,"manifest_quota":int(definition.get("manifest_quota",0)),"remaining":maxi(0,total-shipped),"fraction":float(shipped)/float(total) if total>0 else 0.0},"elapsed":sim_time,"best_time":float(contract_results.get(current_contract_id,{}).get("best_time",0.0)),"last_earnings":int(last_result.get("earnings",0)),"last_result":last_result.duplicate(true),"objective":objective,"available":available,"upgrades":purchased_upgrades.duplicate(),"worker_count":workers.size(),"results":contract_results.duplicate(true)}
 
 func _next_goal() -> String:
@@ -471,9 +514,10 @@ func _next_goal() -> String:
     for option in upgrade_options():
         if option.available: return "購入できる設備があります"
     if _milestones() < 6: return "次の配送で資金をためよう"
+    if growth_catalog_complete(): return "現在の増築・設備はすべて導入済み。運び方と配置を比べよう"
     if _wing_count() < 4: return "定期便の報酬で4棟の巨大倉庫へ"
     if _robot_count() < 4 or "auto_pack" not in purchased_upgrades: return "運搬ロボットと自動梱包で仕上げよう"
-    return "巨大物流センター完成！ 大型便やベスト記録に挑戦"
+    return "残りのスタッフ・棚を選ぶか、今の倉庫で運び方を比べよう"
 
 func _lifetime_units() -> int:
     var total := 0
@@ -558,6 +602,8 @@ func import_release_state(data: Dictionary) -> Dictionary:
     return {"ok":true,"schema":RELEASE_SCHEMA}
 
 func _load_release_unchecked(data: Dictionary) -> void:
+    _session_job_results.clear()
+    _run_comparison_baseline.clear()
     operating_profile = data.experience.operating_profile
     operation_mode = data.experience.operation_mode
     preferences = data.experience.preferences.duplicate(true)

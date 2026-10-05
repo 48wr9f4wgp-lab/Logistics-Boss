@@ -24,6 +24,8 @@ var _input_layout_size := Vector2.ZERO
 var _equipment_notice := ""
 var _camera_controls: Control
 var _camera_buttons: Array[Button] = []
+var _prepared_contract_id := ""
+var _preparation_layout_return := false
 
 func _init() -> void:
     _speed = 2.0
@@ -81,12 +83,25 @@ func _read_release() -> void:
 
 func _open_sheet(kind: String, title: String, height: float) -> void:
     _quick_buttons.clear()
+    if kind not in ["jobs", "editor"]:
+        _prepared_contract_id = ""
+        _preparation_layout_return = false
     _record_action_signature = ""
     super._open_sheet(kind, title, height)
     _announce_sheet()
 
 func close_sheet() -> void:
     var previous := _sheet_kind
+    if previous == "editor" and _preparation_layout_return:
+        _preparation_layout_return = false
+        super.close_sheet()
+        _show_preparation(_prepared_contract_id)
+        return
+    if previous == "jobs" and _release_tab == "prepare":
+        _prepared_contract_id = ""
+        _release_tab = "contracts"
+        show_job_choices()
+        return
     if previous == "entry":
         # Reading the introduction is never consent to resume restored cargo.
         # A fresh warehouse goes straight to its first free job; a saved one
@@ -291,7 +306,7 @@ func _next_improvement() -> Dictionary:
 func _improvement_summary() -> String:
     var option := _next_improvement()
     if option.is_empty():
-        return "設備がそろいました。好きな仕事で出荷を続けよう"
+        return "現在の増築・設備はすべて導入済みです。運び方と配置を変え、同じ仕事の成果を比べられます"
     var name := str(option.get("label", "次の設備"))
     var cost := int(option.get("cost", 0))
     if bool(option.get("available", false)):
@@ -333,7 +348,7 @@ func refresh() -> void:
             _reason_title.text = "最初の仕事を選ぼう"
             _reason_detail.text = _next_goal()
         elif _trial_running and str(_snapshot.get("pending_layout_id", "")).is_empty():
-            _reason_detail.text += "\n次の成長：" + _next_goal()
+            _reason_detail.text += "\n次の目標：" + _next_goal()
     if _sheet_kind == "records":
         _update_record()
 
@@ -371,6 +386,8 @@ func show_entry() -> void:
         _text(_content, "進行中の仕事を読み込みました。いまは一時停止中です", BODY_FONT_SIZE, Color("476266")).name = "ResumePauseNotice"
     _text(_content, "倉庫はドラッグで移動、ピンチで拡大できます。左右90°で回転し、「全体」で元の眺めに戻せます", BODY_FONT_SIZE, Color("476266"))
     _text(_content, "「配置変更」で棚と梱包台を無料で動かせます", BODY_FONT_SIZE, Color("476266"))
+    _text(_content, "仕事はそのまま始めるか、「準備して始める」で運び方と配置を選べます。成果から同じ仕事を調整して再挑戦できます", BODY_FONT_SIZE, Color("476266"))
+    _text(_content, "増築は最大4棟です。すべての設備を導入した後も、仕事の報酬と配置の工夫を楽しめます", BODY_FONT_SIZE, Color("476266"))
     _text(_content, _save_status, BODY_FONT_SIZE, Color("476266")).name = "EntrySaveStatus"
     _layout_body()
 
@@ -403,6 +420,8 @@ func _card(parent: Node) -> VBoxContainer:
 
 func show_job_choices() -> void:
     _read_release()
+    _prepared_contract_id = ""
+    _preparation_layout_return = false
     if _release_tab not in ["contracts", "upgrades"]:
         _release_tab = "contracts"
     _open_sheet("jobs", "仕事と成長", 630)
@@ -413,7 +432,80 @@ func show_job_choices() -> void:
 func _signature() -> String:
     # No continuously changing counter here: rebuilding on shipment ticks would
     # invalidate a held finger. Purchases/completions alone refresh the cards.
-    return super._signature() + ":" + str(_milestones()) + ":" + str(_growth().get("wing_count", 0)) + ":" + str(_release.get("operations", {}).get("mode_id", "balanced"))
+    return super._signature() + ":" + str(_milestones()) + ":" + str(_growth().get("wing_count", 0)) + ":" + str(_release.get("operations", {}).get("mode_id", "balanced")) + (":" + _prepared_contract_id + ":" + str(_snapshot.get("layout_id", "")) if _release_tab == "prepare" else "")
+
+func _populate_release_tab() -> void:
+    if _release_tab != "prepare":
+        super._populate_release_tab()
+        return
+    _release_signature = _signature()
+    _build_preparation()
+    _sync_focus.call_deferred()
+
+func _prepare_contract(id: String) -> void:
+    if _sheet_kind not in ["jobs", "records"]: return
+    if _sheet_kind == "jobs" and _release_tab != "contracts": return
+    _show_preparation(id)
+
+func _show_preparation(id: String) -> void:
+    if not is_instance_valid(sim) or not sim.has_method("job_preparation"): return
+    var plan: Dictionary = sim.call("job_preparation", id)
+    if plan.is_empty() or not bool(plan.get("available", false)): return
+    _prepared_contract_id = id
+    _release_tab = "prepare"
+    # Reuse the full-height jobs surface, including its world/render/input gate.
+    # This selection is session-only. Merely opening or closing it never starts.
+    _open_sheet("jobs", "仕事の準備", 630)
+    _close.text = "仕事へ"
+    _make_scroll()
+    _populate_release_tab()
+    _layout_body()
+
+func _build_preparation() -> void:
+    var plan: Dictionary = sim.call("job_preparation", _prepared_contract_id)
+    if plan.is_empty():
+        _text(_content, "仕事一覧から選び直してください")
+        return
+    _text(_content, str(plan.label), 22).name = "PreparedJobTitle"
+    _text(_content, "%d個 · %s\nまとめ便%d便 · 小口便%d便" % [int(plan.total_units), _preparation_reward_copy(plan), int(plan.bulk_manifests), int(plan.pick_manifests)], 20).name = "PreparedJobSummary"
+    var start := _action(_content, "この準備で仕事を始める", _start_prepared_contract, true)
+    start.name = "StartPreparedJob"
+    start.disabled = not bool(plan.get("available", false))
+    _text(_content, "受注費用・時間制限はありません。開始するまでは仕事を受けません", BODY_FONT_SIZE, Color("476266"))
+    _text(_content, "現在の配置：" + str(plan.get("layout_label", "")), 20).name = "PreparedLayout"
+    _action(_content, "配置を調整する · 無料", _prepare_layout).name = "PrepareLayout"
+    _text(_content, "まとめ便は荷下ろし後%d秒、保管してから出荷します" % int(plan.get("dwell", 0)), BODY_FONT_SIZE, Color("476266"))
+    _text(_content, "運び方を選ぶ · 3種類とも無料", 22)
+    _text(_content, "運び方と配置は選んだ時点で反映され、準備を閉じても残ります。仕事の合間なら戻せます", BODY_FONT_SIZE, Color("476266"))
+    _build_operation_cards(_content)
+    if float(plan.get("best_time", 0.0)) > 0.0:
+        _text(_content, "この仕事の自己ベスト %s" % _record_clock(float(plan.best_time)), BODY_FONT_SIZE, Color("476266"))
+    _text(_content, "成果では同じ仕事の前回と比較できます。前回比較はこの起動中の完了分だけ、自己ベストは保存されます", BODY_FONT_SIZE, Color("476266"))
+
+func _preparation_reward_copy(plan: Dictionary) -> String:
+    if bool(plan.get("repeatable", false)):
+        return "毎回の報酬 %d" % int(plan.get("reward", 0))
+    return "再挑戦の報酬 0" if bool(plan.get("completed", false)) else "初回の報酬 %d" % int(plan.get("reward", 0))
+
+func _prepare_layout() -> void:
+    if _sheet_kind != "jobs" or _release_tab != "prepare" or _prepared_contract_id.is_empty(): return
+    _preparation_layout_return = true
+    show_layout_editor()
+    _close.text = "準備へ"
+
+func _start_prepared_contract() -> void:
+    if _sheet_kind != "jobs" or _release_tab != "prepare" or not is_instance_valid(_content): return
+    var button := _content.get_node_or_null("StartPreparedJob") as Button
+    if not is_instance_valid(button) or button.disabled: return
+    var plan: Dictionary = sim.call("job_preparation", _prepared_contract_id)
+    if not bool(plan.get("available", false)): return
+    var id := _prepared_contract_id
+    button.disabled = true
+    _prepared_contract_id = ""
+    _preparation_layout_return = false
+    _release_tab = "contracts"
+    close_sheet()
+    contract_requested.emit(id)
 
 func _campaign_summary() -> String:
     var summary := "成長 %d/%d · 資金 %d\n次の目標：%s" % [_milestones(), MILESTONE_COUNT, int(_release.get("wallet", 0)), _next_goal()]
@@ -456,7 +548,12 @@ func _build_contracts() -> void:
     _action(_content, "増築・スタッフ・設備を見る", _open_upgrades).name = "OpenGrowthUpgrades"
     if not repeats.is_empty():
         _text(_content, "繰り返せる仕事 · 毎回報酬", 22)
-        _text(_content, "好きな種類を選んで、次の増築や設備の資金に", BODY_FONT_SIZE, Color("476266"))
+        var repeat_copy := "好きな種類を選んで、次の増築や設備の資金に"
+        if int(_growth().get("wing_count", 0)) >= WING_COUNT:
+            repeat_copy = "増築は4棟まで。残りのスタッフや設備を選ぶ資金に"
+        if bool(_growth().get("catalog_complete", false)):
+            repeat_copy = "同じ仕事で運び方や配置を比べよう。毎回報酬も受け取れます"
+        _text(_content, repeat_copy, BODY_FONT_SIZE, Color("476266"))
         for option in repeats:
             _build_job_card(option)
     if not milestones.is_empty():
@@ -480,6 +577,8 @@ func _build_job_card(option: Dictionary, legacy: bool = false, featured: bool = 
     var suffix := " · 達成済み" if completed and id.begins_with("growth_") else ""
     _text(box, str(option.get("label", id)) + suffix, 22)
     var description := str(option.get("description", ""))
+    if id == "growth_6" and int(_growth().get("wing_count", 0)) >= WING_COUNT:
+        description = "72個を出荷。達成後も同じ仕事で運び方と配置を比べられます。"
     if not featured and not description.is_empty():
         _text(box, description)
     var reward := int(option.get("reward", 0))
@@ -495,6 +594,9 @@ func _build_job_card(option: Dictionary, legacy: bool = false, featured: bool = 
     button.name = "AcceptContract_" + id
     button.disabled = not available
     _contract_buttons[id] = button
+    var prepare := _action(box, "準備して始める", _prepare_contract.bind(id))
+    prepare.name = "PrepareContract_" + id
+    prepare.disabled = not available
     _text(box, "まとめ便%d便 · 小口便%d便" % [int(option.get("bulk_manifests", 0)), int(option.get("pick_manifests", 0))], BODY_FONT_SIZE, Color("476266"))
     if not available:
         _text(box, _locked_text(str(option.get("locked_reason", ""))), BODY_FONT_SIZE, Color("476266"))
@@ -528,6 +630,10 @@ func _build_upgrades() -> void:
         _text(_content, "今できる改善", 22)
         for option in available:
             _build_upgrade_card(option)
+    elif bool(_growth().get("catalog_complete", false)):
+        _text(_content, "現在の増築・設備はすべて導入済み", 22).name = "GrowthCatalogComplete"
+        _text(_content, "増築は4棟まで。運び方と配置を変えて同じ仕事を比べたり、大型便に取り組めます", BODY_FONT_SIZE, Color("476266"))
+        _action(_content, "仕事を選ぶ", _open_contracts, true).name = "ChooseMatureJob"
     else:
         _text(_content, "仕事を終えて、次の改善へ", 22)
         _text(_content, "購入は仕事が終わってから。繰り返せる仕事でも資金が増えます", BODY_FONT_SIZE, Color("476266"))
@@ -572,6 +678,11 @@ func _build_operations() -> void:
     _text(group, "仕事の合間に無料で変更できます。次の仕事から有効です", BODY_FONT_SIZE, Color("476266"))
     if not str(current.get("summary", "")).is_empty():
         _text(group, str(current.get("summary", "")))
+    _build_operation_cards(group)
+    group.visible = _operations_visible
+
+func _build_operation_cards(group: Node) -> void:
+    var options: Array = sim.call("operation_options")
     for option in options:
         var id := str(option.get("id", ""))
         var box := _card(group)
@@ -592,7 +703,6 @@ func _build_operations() -> void:
         button.disabled = selected or not bool(option.get("available", false))
         if not selected and not bool(option.get("available", false)):
             _text(box, str(option.get("locked_reason", "仕事が終わると切り替えられます")), BODY_FONT_SIZE, Color("476266"))
-    group.visible = _operations_visible
 
 func _toggle_operations() -> void:
     if _sheet_kind != "jobs" or _release_tab != "upgrades" or not _content.has_node("OperationChoices"):
@@ -603,7 +713,7 @@ func _toggle_operations() -> void:
     _sync_focus.call_deferred()
 
 func _request_operation(id: String) -> void:
-    if _sheet_kind != "jobs" or _release_tab != "upgrades" or not is_instance_valid(sim) or not sim.has_method("operation_options"):
+    if _sheet_kind != "jobs" or _release_tab not in ["upgrades", "prepare"] or not is_instance_valid(sim) or not sim.has_method("operation_options"):
         return
     for option in sim.call("operation_options"):
         if str(option.get("id", "")) == id and bool(option.get("available", false)) and not bool(option.get("selected", false)):
@@ -694,11 +804,13 @@ func show_conditions() -> void:
     _text(_content, "", 24).name = "ReleaseRecordSummary"
     _text(_content, "", 20).name = "ReleaseRecordProgress"
     _text(_content, "", 20).name = "ReleaseRecordOutcome"
+    _text(_content, "", BODY_FONT_SIZE, Color("476266")).name = "CurrentJobBest"
     var quick := VBoxContainer.new()
     quick.name = "GrowthQuickActions"
     quick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     quick.add_theme_constant_override("separation", 8)
     _content.add_child(quick)
+    _text(_content, "", BODY_FONT_SIZE, Color("476266")).name = "SameJobComparison"
     _text(_content, "", 20).name = "GrowthRecordGoal"
     _action(_content, "次の仕事を選ぶ", _open_contracts, true).name = "NextContract"
     _action(_content, "増築・スタッフ・設備を見る", _open_upgrades).name = "GrowWarehouse"
@@ -748,6 +860,8 @@ func _update_quick_actions() -> void:
             var button := _action(group, "同じ仕事をもう一度", _request_quick_contract.bind(str(option.id)))
             button.name = "ReplayCurrentJob"
             _quick_buttons[str(option.id)] = button
+            var prepare := _action(group, "調整して同じ仕事をもう一度", _prepare_contract.bind(str(option.id)))
+            prepare.name = "AdjustReplayJob"
             break
     _sync_focus.call_deferred()
 
@@ -788,6 +902,9 @@ func _update_record() -> void:
     _content.get_node("ReleaseRecordSummary").text = heading
     _content.get_node("ReleaseRecordProgress").text = "%s\n出荷 %d/%d個" % [str(current.get("label", "小さな仕事から始められます")), int(progress.get("shipped", 0)), int(progress.get("total", 0))]
     _content.get_node("ReleaseRecordOutcome").text = "今回の報酬 +%d · 資金 %d" % [int(outcome.get("earnings", 0)), int(_release.get("wallet", 0))] if complete else "資金 %d" % int(_release.get("wallet", 0))
+    var best := float(_release.get("best_time", 0.0))
+    _content.get_node("CurrentJobBest").text = ("この仕事の自己ベスト %s%s" % [_record_clock(best), " · 今回更新！" if complete and bool(outcome.get("new_best", false)) else ""]) if best > 0.0 else "完了すると、この仕事の自己ベストが残ります"
+    _content.get_node("SameJobComparison").text = _comparison_copy() if complete else ""
     _content.get_node("GrowthRecordGoal").text = "成長 %d/%d\n次の目標：%s" % [_milestones(), MILESTONE_COUNT, _next_goal()]
     _content.get_node("NextContract").text = "仕事一覧を見る" if status == "running" else "次の仕事を選ぶ"
     _content.get_node("GrowthRecordImprovement").text = _improvement_summary()
@@ -795,7 +912,6 @@ func _update_record() -> void:
     _content.get_node("ReleaseRecordMetrics").text = "今回の平均出荷 %.1f個/分\n累計出荷 %d個\nゲーム内の時間で計算しています" % [_throughput(), int(_growth().get("lifetime_units", 0))]
     _content.get_node("ReleaseRecordStatus").text = _reason_title.text + "\n" + _reason_detail.text
     _content.get_node("RecordSaveStatus").text = _save_status
-    var best := float(_release.get("best_time", 0.0))
     var record := ("今回の所要時間 %s" if complete else "今回の経過時間 %s") % _record_clock(float(_release.get("elapsed", 0.0)))
     if best > 0.0:
         record += "\nこの仕事の自己ベスト %s" % _record_clock(best)
@@ -803,6 +919,22 @@ func _update_record() -> void:
         record += "\n以前の仕事の記録も引き継いでいます"
     _content.get_node("GrowthHistory/ReleaseRecordBest").text = record
     _content.get_node("GrowthHistory/SavedJobRecords").text = _saved_records_copy()
+
+func _comparison_copy() -> String:
+    var comparison: Dictionary = sim.call("job_comparison") if sim.has_method("job_comparison") else {}
+    if comparison.is_empty():
+        return "この起動中に同じ仕事を2回完了すると比較できます。前回比較はこの起動中の完了分だけです"
+    var previous: Dictionary = comparison.previous
+    var current: Dictionary = comparison.current
+    var elapsed_delta := float(current.elapsed) - float(previous.elapsed)
+    var elapsed_copy := "同じ時間" if roundi(absf(elapsed_delta) * 100.0) == 0 else "%s秒%s" % ["%.2f" % absf(elapsed_delta), "短縮" if elapsed_delta < 0 else "増加"]
+    var text := "同じ仕事の前回 → 今回\n所要時間 %s → %s（%s）\n平均出荷 %.1f → %.1f個/分\n道待ち %.1f → %.1f秒（全員合計）" % [_record_clock(float(previous.elapsed)), _record_clock(float(current.elapsed)), elapsed_copy, float(previous.units_per_minute), float(current.units_per_minute), float(previous.aisle_wait_seconds), float(current.aisle_wait_seconds)]
+    text += "\n運び方：%s → %s\n完了時の配置：%s → %s" % [str(previous.operation_label), str(current.operation_label), str(previous.layout_label), str(current.layout_label)]
+    if previous.upgrades != current.upgrades:
+        text += "\n設備も変更されています。運び方だけの効果ではありません"
+    if float(previous.relocation_seconds) > 0.0 or float(current.relocation_seconds) > 0.0:
+        text += "\n仕事中の配置移動 %.1f → %.1f秒を含みます" % [float(previous.relocation_seconds), float(current.relocation_seconds)]
+    return text + "\nゲーム内の時間を基準に比較しています"
 
 func _saved_records_copy() -> String:
     var records: Dictionary = _release.get("results", {})
@@ -833,4 +965,5 @@ func debug_state() -> Dictionary:
     state["growth_goal"] = _next_goal()
     state["average_units_per_minute"] = _throughput()
     state["history_visible"] = _history_visible
+    state["prepared_contract_id"] = _prepared_contract_id
     return state

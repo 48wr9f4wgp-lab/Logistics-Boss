@@ -10,6 +10,7 @@ let checks = 0;
 for (const dpr of [1, 1.25, 2, 3]) {
   const frames = [];
   const events = new Map();
+  const canvasEvents = new Map();
   const visualEvents = new Map();
   const queries = [];
   const insets = { left: 0, right: 0, top: 0, bottom: 0 };
@@ -29,6 +30,7 @@ for (const dpr of [1, 1.25, 2, 3]) {
     },
   };
   const canvas = {
+    addEventListener: (name, cb, options) => canvasEvents.set(name, { cb, options }),
     get width() { return width; }, set width(value) { writes++; width = value; },
     get height() { return height; }, set height(value) { writes++; height = value; },
     getBoundingClientRect: () => ({ x: insets.left, y: insets.top, width: window.innerWidth - insets.left - insets.right, height: parseFloat(heightProperty) - insets.top - insets.bottom }),
@@ -45,6 +47,23 @@ for (const dpr of [1, 1.25, 2, 3]) {
   assert.equal(metrics().height, 844);
   assert.equal(width, Math.round(390 * dpr));
   assert.equal(height, Math.round(844 * dpr));
+  checks += 4;
+  // The cancel signal reaches Godot before the loader's normal release path.
+  // Nothing is swallowed, so the loader can clear its pointer bookkeeping.
+  const cancellation = canvasEvents.get('touchcancel');
+  assert.deepEqual({ ...cancellation.options }, { capture: true, passive: true });
+  const canceledEvent = { preventDefault() { assert.fail('Cancellation must reach engine cleanup'); }, stopPropagation() { assert.fail('Cancellation must reach engine cleanup'); }, stopImmediatePropagation() { assert.fail('Cancellation must reach engine cleanup'); } };
+  cancellation.cb(canceledEvent); // Loading has not registered a native input owner yet.
+  let cancels = 0;
+  window.FlotraViewport.setTouchCancelHandler(() => { cancels++; });
+  for (let index = 0; index < 3; index++) cancellation.cb(canceledEvent);
+  assert.equal(cancels, 3, 'Each rapid cancellation is delivered synchronously, without frame coalescing');
+  window.FlotraViewport.setTouchCancelHandler(null);
+  cancellation.cb();
+  assert.equal(cancels, 3, 'A detached game owner is never called');
+  window.FlotraViewport.setTouchCancelHandler(() => { cancels += 10; });
+  cancellation.cb();
+  assert.equal(cancels, 13, 'A fresh game owner replaces the detached handler');
   checks += 4;
   // The bridge observes only real DOM mouse state, without changing input or
   // canvas geometry. It recovers a missing release even when Godot's internal
