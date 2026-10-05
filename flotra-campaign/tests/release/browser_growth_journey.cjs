@@ -390,7 +390,7 @@ async function samplePerformance(page,milliseconds) {
    // Budget the added warehouse work against the same-run covered-menu baseline.
    assert.ok(test.performance.active.rafMedianMs<=Math.max(75,test.performance.uiOnly.rafMedianMs*1.75) && test.performance.active.rafP95Ms<=Math.max(120,test.performance.uiOnly.rafP95Ms*2),'Mature 3D overhead stays within the same-renderer baseline budget');
    state=await ui(page);test.progress={before:late.shipped,after:state.progress.shipped,time:state.simTime};assert.ok(state.simTime>late.time);
-   const keys=await page.evaluate(()=>Object.keys(localStorage));assert.ok(keys.every(k=>k==='flotra.campaign.release.v1'||k==='flotra.campaign.release.v1.backup'),'Only isolated campaign save keys written');
+   const keys=await page.evaluate(()=>Object.keys(localStorage));assert.ok(keys.every(k=>k==='flotra.campaign.release.v1'||k==='flotra.campaign.release.v1.backup'||k==='flotra.campaign.release.v1.pre-v4'),'Only isolated campaign save keys written');
   });
   assert.ok(result.tests.length>0,'At least one requested journey scenario ran');
   console.log(`BROWSER_GROWTH_JOURNEY ${result.tests.length} scenarios passed`);

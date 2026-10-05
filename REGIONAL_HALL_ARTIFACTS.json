@@ -1,0 +1,18 @@
+{
+  "base": "4abb35b2c476321f8f43a47f2a8f72a77b29d152",
+  "branch": "feat/regional-hall-local-20261005",
+  "production_sources": {
+    "prototype/growth_sim.gd": "08c5007dcc5d3585fc6dce9d76a33fbea156a4e0df17665424443f86f0316d64",
+    "prototype/growth_v3_sim.gd": "0714617d2f8bf94a100bd7105853a278ddce74c25c004aff04e33841ce5fe7e4",
+    "prototype/growth_view.gd": "90bcb1b0ce307bf9d142826af91038dcc1f761e536521c631cd700da652ccda9",
+    "prototype/growth_hud.gd": "534c13a52060dad7319093b7a071f89004872337b207226e4cd6b9e3c2736d12",
+    "prototype/growth_main.gd": "ed7f386769e6ca5fa2ffb1234a3c6d12b2b8ec43857e7933244e2e506aae2b38",
+    "prototype/jobs_view.gd": "a33b1e2b872ae53bac773b2118bb9be22405fa81265da83a1fe764bb35c14dc2",
+    "prototype/release_save.gd": "30f6a1264f7ba8b36cbbb1e2a649f3377b552e02fc350960e794df495037e2be",
+    "campaign-storage.js": "05c59951a29afd9f8c5a83144100d10628dc30cdd5468bcf8c6b13b3799c7bda"
+  },
+  "candidate_pck_sha256": "381a41a87bba73262dcf0bab7fb4e271f17e71e13b83a0d0b59ae804c602cbb6",
+  "public_control_pck_sha256": "4779f9eb21a93205975dc17a65b56ffd424f166b3deb7491cf416c35c7acfd8c",
+  "synthetic_data_only": true,
+  "publication_status": "Draft PR authorized; merge and deployment are not authorized"
+}

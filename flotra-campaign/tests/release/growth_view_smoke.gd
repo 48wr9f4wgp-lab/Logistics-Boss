@@ -144,7 +144,8 @@ func check_batches(view) -> void:
     var local_from_world: Transform3D = view.global_transform.affine_inverse()
     for batch_index in view._box_batches.size():
         var batch: MultiMeshInstance3D = view._box_batches[batch_index]
-        check(batch.multimesh.instance_count == view._box_sources.size(), "Batch slots match live source count")
+        var expected_group_count: int = view._box_sources.filter(func(source): return int((source.material_override as StandardMaterial3D).emission_enabled) == batch_index).size()
+        check(batch.multimesh.instance_count == expected_group_count, "Each live box has exactly one material-group slot")
         var material := batch.material_override as StandardMaterial3D
         check(material != null, "Box batches retain standard opaque 3D materials")
         if material != null:
@@ -161,34 +162,29 @@ func check_batches(view) -> void:
             lights += 1
             check(child.shadow_enabled == (not lightweight and lights == 1) and child.light_energy > 0.0, "Key/fill lighting and shadow scope match the selected profile")
     check(lights == 2, "Original key and fill directional lights remain present")
-    for index in view._box_sources.size():
-        var source: MeshInstance3D = view._box_sources[index]
+    var group_offsets := [0,0]
+    for source in view._box_sources:
         source_ids[source.get_instance_id()] = true
         check(view._live_box(source), "Deleted or queued source never remains in a rendered batch")
         check(source.layers == 0, "Original box is excluded from direct draw calls")
         var material := source.material_override as StandardMaterial3D
-        var group := (1 if material.emission_enabled else 0) if source.is_visible_in_tree() else -1
-        var shape := source.mesh as BoxMesh
-        var expected := local_from_world * source.global_transform * Transform3D(Basis.from_scale(shape.size), Vector3.ZERO)
-        var mirrored: Array = view._box_batch_states[index]
-        check(mirrored[0] == source.get_instance_id() and mirrored[3] == group, "Batch mirror tracks current source identity, visibility and emission group")
-        check((mirrored[1] as Transform3D).is_equal_approx(expected if group >= 0 else view.HIDDEN_BOX_TRANSFORM), "Batch mirror follows exact source geometry")
-        check((mirrored[2] as Color).is_equal_approx(material.albedo_color), "Batch mirror follows current dynamic source color")
-        # Dummy headless RenderingServer does not retain MultiMesh buffers and
-        # returns identity/white for getters. Native runs verify real submitted
-        # buffers below; headless runs verify the mirror and all scene geometry.
-        if not gpu_readback:
-            continue
-        for batch_index in 2:
-            var instances: MultiMesh = view._box_batches[batch_index].multimesh
-            var actual := instances.get_instance_transform(index)
-            if batch_index == group:
-                check(actual.is_equal_approx(expected), "Visible batch instance exactly follows source transform and BoxMesh size")
-                var color := instances.get_instance_color(index)
-                var wanted := material.albedo_color
-                check(absf(color.r-wanted.r) <= .004 and absf(color.g-wanted.g) <= .004 and absf(color.b-wanted.b) <= .004 and absf(color.a-wanted.a) <= .004, "Batch color follows current material and ownership state")
-            else:
-                check(actual.is_equal_approx(view.HIDDEN_BOX_TRANSFORM), "Hidden source and unused batch slot have zero geometry")
+        var group := 1 if material.emission_enabled else 0
+        var index: int = group_offsets[group]
+        group_offsets[group] += 1
+        var expected: Transform3D = local_from_world * source.global_transform * Transform3D(Basis.from_scale((source.mesh as BoxMesh).size), Vector3.ZERO) if source.is_visible_in_tree() else view.HIDDEN_BOX_TRANSFORM
+        var mirrored: Array = view._compact_batch_states[group][index]
+        check(mirrored[0] == source.get_instance_id(), "Compact mirror tracks current source identity")
+        check((mirrored[1] as Transform3D).is_equal_approx(expected), "Compact mirror follows exact geometry and visibility")
+        check((mirrored[2] as Color).is_equal_approx(material.albedo_color), "Compact mirror follows current dynamic source color")
+        # Dummy headless RenderingServer does not retain GPU buffers. Actual
+        # native runs still verify the full submitted transform/color below.
+        if gpu_readback:
+            var instances: MultiMesh = view._box_batches[group].multimesh
+            check(instances.get_instance_transform(index).is_equal_approx(expected), "Submitted GPU slot exactly follows its source geometry")
+            var color := instances.get_instance_color(index)
+            var wanted := material.albedo_color
+            check(absf(color.r-wanted.r) <= .004 and absf(color.g-wanted.g) <= .004 and absf(color.b-wanted.b) <= .004 and absf(color.a-wanted.a) <= .004, "GPU batch color follows authoritative source material")
+    check(group_offsets[0]+group_offsets[1] == view._box_sources.size(), "No duplicate unused-material box slot is submitted")
     for node in view.find_children("*", "MeshInstance3D", true, false):
         if node.mesh is BoxMesh and view._live_box(node):
             check(source_ids.has(node.get_instance_id()), "Every live generated BoxMesh has a batch source")

@@ -91,17 +91,21 @@ func _refresh_cargo(items: Array) -> void:
     var rendered: Array = []
     var groups: Dictionary = {}
     for original in items:
-        var item: Dictionary = original.duplicate(true)
-        var kind := str(item.get("job_kind",item.get("kind","pick")))
-        var stage := str(item.get("stage",""))
+        var kind := str(original.get("job_kind",original.get("kind","pick")))
+        var stage := str(original.get("stage",""))
         var intact := kind == "bulk" or stage in ["inbound","reserved_restock","carried_restock"]
-        if intact and item.has("manifest_id"):
-            var key := str(item.manifest_id)+":"+stage
+        var grouped: bool = intact and original.has("manifest_id")
+        if grouped:
+            var key := str(original.manifest_id)+":"+stage
             if groups.has(key):
                 rendered[int(groups[key])].units += 1
                 continue
             groups[key] = rendered.size()
-            item.units = 1
+        # Only retained representatives reach presentation. Keep their input
+        # order/identity and copy before changing units; skipped members never
+        # had a visible node and do not need a second full dictionary copy.
+        var item: Dictionary = original.duplicate(true)
+        if grouped: item.units = 1
         rendered.append(item)
     super._refresh_cargo(rendered)
     for item in rendered:

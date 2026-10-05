@@ -123,7 +123,7 @@ func domain_checks() -> void:
         check(sim.job_comparison().previous.elapsed == first_elapsed, "Comparison dictionaries cannot mutate the baseline")
     check(sim.campaign_wallet == wallet + 140, "Replay pays original reward exactly once")
     var saved: Dictionary = sim.export_release_state()
-    check(saved.schema == 3 and saved.keys().size() == 5, "No comparison fields enter schema 3")
+    check(saved.schema == 4 and saved.keys().size() == 6 and saved.hall == {"owned":false,"plan":"storage"}, "Schema 4 adds only hall state, never comparison fields")
     check(not saved.campaign.has("comparison") and not saved.experience.has("preparation"), "Selection and comparison remain outside durable profile")
     var restored = Sim.new()
     check(restored.import_release_state(saved).ok, "New result still loads through existing schema validation")
@@ -156,8 +156,15 @@ func domain_checks() -> void:
             check(sim.accept_contract("route_bulk").ok, "Earn remaining upgrade funds")
             finish_job(sim)
         check(sim.buy_upgrade(id).ok, "Earn final " + id)
+    check(not sim.growth_catalog_complete(), "The former four-wing ceiling leaves the earned regional hall available")
+    check(sim.accept_contract("route_hub").ok, "Complete the actual hall-qualifying hub")
+    finish_job(sim)
+    while sim.campaign_wallet < int(sim._upgrade("regional_hall").cost):
+        check(sim.accept_contract("route_hub").ok,"Earn the hall through an existing paid hub")
+        finish_job(sim)
+    check(sim.buy_upgrade("regional_hall").ok,"Earn the final hall purchase")
     check(sim.growth_catalog_complete(), "Catalog complete requires every current improvement")
-    check(sim._next_goal().contains("すべて導入済み") and not sim._next_goal().contains("資金をため"), "Max-growth next goal is truthful")
+    check(sim._next_goal().contains("広域便") and not sim._next_goal().contains("資金をため"), "Completed-hall next goal describes its actual work")
     check(sim.release_state().growth.catalog_complete, "Presentation receives derived complete state")
 
 func run() -> void:

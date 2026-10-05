@@ -14,7 +14,7 @@ const env=n=>JSON.stringify({format:'flotra-campaign',version:1,payload:'mock'+n
  const origin='http://127.0.0.1:'+server.address().port;
  let browser;
  try {
-   browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+   browser=await chromium.launch({executablePath:process.env.FLOTRA_CHROMIUM||process.env.CHROMIUM_EXECUTABLE||undefined,headless:true,args:['--no-sandbox']});
    const context=await browser.newContext();
    const first=await context.newPage();await first.goto(origin);
    await first.waitForFunction(async()=>{const state=await navigator.locks.query();return state.held.some(lock=>lock.name==='flotra.campaign.release.v1.writer');});
