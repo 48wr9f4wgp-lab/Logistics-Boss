@@ -2,6 +2,9 @@ extends "res://prototype/release_view.gd"
 ## Growth presentation only. Floors, bays, routes and robot identities come from
 ## the simulation snapshot; this view never creates capacity or moves cargo.
 
+const EquipmentArt = preload("res://prototype/equipment_art.gd")
+var _equipment_mesh_cache: Dictionary = {}
+
 const ROBOT_BODY := Color("d8e8e6")
 const ROBOT_DARK := Color("203842")
 const HUMAN_RADIAL_SEGMENTS := 8
@@ -31,6 +34,9 @@ var reduced_motion := false
 const CAMERA_MAX_ZOOM := 3.0
 const CAMERA_DRAG_THRESHOLD := 8.0
 var _camera_zoom := 1.0
+# Session-only explicit framing preset. Manual input releases this preset;
+# simulation ticks never call it or make the camera follow moving workers.
+var _camera_work_mode := true
 var _camera_turn := 0
 var _camera_pan := Vector2.ZERO
 var _camera_fit_size := 1.0
@@ -248,6 +254,7 @@ func refresh() -> void:
         _location_data["annex"] = storage_bounds
         _callout_signature = ""
         fit_camera(Vector2(get_viewport().size))
+    _refresh_equipment_art()
     _refresh_box_batches()
 
 func _sync_growth_geometry(state: Dictionary) -> bool:
@@ -404,9 +411,51 @@ func fit_camera(view_size: Vector2) -> void:
         _camera_fit_size = camera.size
         _camera_fit_position = camera.position
         _camera_projected_size = projected.size
-        _apply_camera_view()
+        if _camera_work_mode and not _slots.is_empty():
+            _frame_work_area()
+        else:
+            _apply_camera_view()
     else:
         _refresh_callouts()
+
+func _work_area_points() -> Array[Vector3]:
+    var points: Array[Vector3] = []
+    if sim == null: return points
+    for equipment in sim.snapshot().get("equipment", []):
+        var id := str(equipment.get("id", ""))
+        if id not in ["shelf", "packing"] or not _slots.has(id): continue
+        var dimensions: Vector3 = equipment.get("size", Vector3.ONE)
+        var origin: Vector3 = (_slots[id] as Node3D).position
+        # Frame the whole actual machine, plus nearby loading/handling space.
+        # It is a presentation margin, never a new reserved physical footprint.
+        _append_corners(points, AABB(origin - Vector3(dimensions.x * .5 + .65, .05, dimensions.z * .5 + .65), dimensions + Vector3(1.3, .10, 1.3)))
+        var access: Vector3 = _position(equipment.get("access_position", origin))
+        _append_corners(points, AABB(access - Vector3(.5, .05, .5), Vector3(1.0, 1.25, 1.0)))
+    return points
+
+func _frame_work_area() -> void:
+    # Called only by an explicit preset/rotation or a viewport/editor reflow.
+    # refresh() during ordinary play does not continually recenter this view.
+    var points := _work_area_points()
+    if points.is_empty():
+        _apply_camera_view()
+        return
+    var projected := Rect2()
+    var first := true
+    var inverse := Transform3D(camera.basis, _camera_fit_position).affine_inverse()
+    for point in points:
+        var local := inverse * point
+        var xy := Vector2(local.x, -local.y)
+        projected = Rect2(xy, Vector2.ZERO) if first else projected.expand(xy)
+        first = false
+    var padding := Vector2(20, 18 if _camera_view_size.y >= 170 else 10)
+    var usable := Vector2(maxf(.2, 1.0 - padding.x * 2.0 / maxf(1.0, _camera_view_size.x)), maxf(.2, 1.0 - padding.y * 2.0 / maxf(1.0, _camera_view_size.y)))
+    var aspect := _camera_view_size.x / maxf(1.0, _camera_view_size.y)
+    var needed := maxf(projected.size.y / usable.y, projected.size.x / (aspect * usable.x))
+    _camera_zoom = clampf(_camera_fit_size / maxf(.01, needed), 1.0, CAMERA_MAX_ZOOM)
+    var center := projected.get_center()
+    _camera_pan = Vector2(center.x, -center.y)
+    _apply_camera_view()
 
 func _apply_camera_view() -> void:
     if camera == null or not _selected.is_empty(): return
@@ -431,9 +480,13 @@ func camera_action(action: String) -> void:
     cancel_pointer_input()
     match action:
         "reset":
+            _camera_work_mode = false
             _camera_zoom = 1.0
             _camera_turn = 0
             _camera_pan = Vector2.ZERO
+            fit_camera(_camera_view_size)
+        "work":
+            _camera_work_mode = true
             fit_camera(_camera_view_size)
         "left", "right":
             _camera_turn = posmod(_camera_turn + (-1 if action == "left" else 1), 4)
@@ -446,11 +499,13 @@ func _camera_allowed() -> bool:
     return _selected.is_empty() and (not input_gate.is_valid() or input_gate.call()) and (not camera_input_gate.is_valid() or camera_input_gate.call())
 
 func _pan_camera(delta: Vector2) -> void:
+    _camera_work_mode = false
     var scale := camera.size / maxf(1, _camera_view_size.y)
     _camera_pan += Vector2(-delta.x, delta.y) * scale
     _apply_camera_view()
 
 func _zoom_camera(factor: float, anchor: Vector2) -> void:
+    _camera_work_mode = false
     var before := camera.size
     _camera_zoom = clampf(_camera_zoom * factor, 1.0, CAMERA_MAX_ZOOM)
     var after := _camera_fit_size / _camera_zoom
@@ -554,7 +609,7 @@ func cancel_pointer_input() -> void:
     _camera_touch_slot = ""
 
 func camera_metrics() -> Dictionary:
-    return {"zoom":_camera_zoom, "turn":_camera_turn, "panX":_camera_pan.x, "panY":_camera_pan.y,
+    return {"framing":"work" if _camera_work_mode else ("overview" if is_equal_approx(_camera_zoom, 1.0) and _camera_pan.is_zero_approx() else "manual"), "zoom":_camera_zoom, "turn":_camera_turn, "panX":_camera_pan.x, "panY":_camera_pan.y,
         "size":camera.size, "fitSize":_camera_fit_size, "touches":_camera_touches.size(), "mouseDown":_camera_mouse_down}
 
 func _build_worker(id: String) -> Node3D:
@@ -618,6 +673,9 @@ func _refresh_workers(workers: Array) -> void:
         (robot.get_node("LeftLeg") as Node3D).rotation.x = 0.0
         (robot.get_node("RightLeg") as Node3D).rotation.x = 0.0
         (robot.get_node("SafetyVest") as Node3D).scale = Vector3.ONE
+        # Rest the existing conserved load on the lowered carrier deck.
+        var carried: Node3D = robot.get_node("CarriedParcel")
+        carried.position.y = .293 + .43 * .75 * carried.scale.y * .5
 
 
 func _refresh_cargo(items: Array) -> void:
@@ -692,3 +750,45 @@ func _refresh_bays(bays: Array) -> void:
         for child in node.get_children():
             if child is MeshInstance3D and child != pad:
                 child.material_override = _material(Color("ae9f78") if occupied else Color("74817e"))
+
+
+func _art_mesh(kind: String) -> ArrayMesh:
+    if not _equipment_mesh_cache.has(kind):
+        var builder = EquipmentArt.new()
+        _equipment_mesh_cache[kind] = builder.rack(kind == "rack_upgraded") if kind.begins_with("rack") else (builder.packing(kind == "packing_auto") if kind.begins_with("packing") else builder.robot())
+    return _equipment_mesh_cache[kind]
+
+func _install_art(parent: Node3D, kind: String) -> void:
+    var art := parent.get_node_or_null("EquipmentArtwork") as MeshInstance3D
+    if art == null:
+        art = MeshInstance3D.new()
+        art.name = "EquipmentArtwork"
+        parent.add_child(art)
+    var mesh := _art_mesh(kind)
+    if art.mesh != mesh: art.mesh = mesh
+
+func _build_rack(parent: Node3D) -> void:
+    _install_art(parent, "rack_upgraded" if sim != null and sim.rack_capacity > 12 else "rack")
+
+func _refresh_equipment_art() -> void:
+    # Update only shared mesh references on an equipment ownership transition.
+    # There are no per-frame mesh rebuilds, additional actors or cargo units.
+    if _slots.has("shelf"):
+        var rack: Node3D = _slots.shelf.get_node("RackEquipment")
+        _install_art(rack, "rack_upgraded" if sim.rack_capacity > 12 else "rack")
+        var inserts := rack.get_node_or_null("CapacityInserts")
+        if inserts != null: inserts.visible = false
+    if _slots.has("packing"):
+        var bench: Node3D = _slots.packing.get_node("PackingEquipment")
+        for old in bench.get_children():
+            if old.name != "EquipmentArtwork" and old is Node3D: old.visible = false
+        bench.scale = Vector3.ONE
+        bench.position = Vector3.ZERO
+        _install_art(bench, "packing_auto" if "auto_pack" in sim.purchased_upgrades else "packing_manual")
+        var tape: Node3D = _slots.packing.get_node_or_null("PackingUpgrade")
+        if tape != null: tape.visible = false
+    for actor in _actors.values():
+        if str(actor.get_meta("growth_actor_kind", "human")) != "robot": continue
+        for title in ["RobotChassis", "SafetyVest", "RobotHead", "RobotEyes", "RobotBeacon", "LeftLeg", "RightLeg"]:
+            actor.get_node(title).visible = false
+        _install_art(actor, "robot")

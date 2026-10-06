@@ -306,14 +306,28 @@ async function interruptions(page,context,baseline,result){
 }
 async function cameraCase(page,context,result){
   await closeSheets(page,context);
-  const start=await ui(page);assert.equal(start.growth.wing_count,4,'Validated mature fixture has all four wings');assert.equal(start.trialRunning,false,'QA starts paused');
+  const initial=await ui(page);assert.equal(initial.growth.wing_count,4,'Validated mature fixture has all four wings');assert.equal(initial.trialRunning,false,'QA starts paused');
+  // A new session now starts in the work preset. Check that independently,
+  // then use the actual Whole button before every preserved overview gate.
+  assert.equal(initial.camera.framing,'work','Fresh session defaults to work framing before any Reset input');
+  assert.equal(initial.camera.turn,0,'Fresh work view retains the original bearing');
+  assert.ok(initial.camera.zoom>=1.4 && initial.camera.zoom<=3,'Mature default work view is meaningfully closer within original zoom bounds');
+  released(initial.camera,'Initial work');
+  for(const id of ['shelf','packing']){
+    const p=initial.slots[id],r=initial.worldRect;
+    assert.ok(p && p.x>r.x && p.x<r.x+r.width && p.y>r.y && p.y<r.y+r.height,`Default work framing shows actual ${id}`);
+  }
+  result.initialWork=initial.camera;
+  await tapName(page,context,'CameraReset');
+  await page.waitForFunction(()=>{const c=window.FlotraViewport.uiMetrics.camera;return c.framing==='overview' && c.zoom===1 && c.turn===0 && Math.abs(c.panX)<.002 && Math.abs(c.panY)<.002;},null,{timeout:3000});
+  const start=await ui(page);
   const domain={wallet:start.wallet,simTime:start.simTime,upgrades:start.upgrades,progress:start.progress};
   const baseline=await freshCamera(page);result.baseline=baseline;
   const measured=await measure(page);
-  const controls=start.buttons.filter(b=>b.visible && ['CameraLeft','CameraRight','CameraOut','CameraIn','CameraReset'].includes(b.name));
-  assert.equal(controls.length,5,'All five camera controls stay visible in overview');
+  const controls=start.buttons.filter(b=>b.visible && ['CameraLeft','CameraRight','CameraOut','CameraIn','CameraWork','CameraReset'].includes(b.name));
+  assert.equal(controls.length,6,'All six camera controls stay visible in overview');
   for(const b of controls){
-    assert.ok(b.width>=56 && b.height>=56 && b.fontSize>=18,`${b.name} retains minimum CSS touch/readability size`);
+    assert.ok(b.width>=55.99 && b.height>=56 && b.fontSize>=18,`${b.name} retains minimum CSS touch/readability size (0.01px float tolerance)`);
     assert.ok(b.x>=0 && b.y>=0 && b.x+b.width<=measured.canvas.rect.width+1 && b.y+b.height<=measured.canvas.rect.height+1,`${b.name} remains inside phone HUD`);
     for(const other of start.buttons.filter(x=>x.visible && x.name!==b.name)){
       const overlapW=Math.min(b.x+b.width,other.x+other.width)-Math.max(b.x,other.x);
@@ -364,7 +378,7 @@ async function cameraCase(page,context,result){
     const style=await page.addStyleTag({content:'#canvas { position: fixed !important; left: 12px !important; top: 47px !important; width: calc(100vw - 24px) !important; height: calc(var(--flotra-visible-height) - 81px) !important; }'});
     await settle(page);await page.waitForTimeout(450);verify(await measure(page),'Camera synthetic safe area');
     const inset=await ui(page);for(const b of inset.buttons.filter(b=>b.visible && b.name.startsWith('Camera'))){
-      assert.ok(b.width>=56 && b.height>=56,`${b.name} remains a56px target with side insets`);
+      assert.ok(b.width>=55.99 && b.height>=56,`${b.name} remains a 56px target with side insets (0.01px float tolerance)`);
       assert.ok(b.x>=0 && b.x+b.width<=351,'Camera controls fit inset CSS canvas');
     }
     await onePan(page,context);await pinch(page,context);checkCallouts(await ui(page),'Synthetic inset gestures');await reset(page,context,baseline);

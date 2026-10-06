@@ -206,6 +206,20 @@ func _report_phone_qa() -> void:
         var point: Vector2 = viewport_container.position + world.camera.unproject_position(mesh.global_position)
         floors.append({"x":point.x,"y":point.y,"name":str(mesh.name)})
     data["camera"]["floorPoints"] = floors
+    # Read-only QA geometry, published only in the existing phone_qa diagnostics.
+    var equipment_bounds: Array = []
+    for equipment in sim.snapshot().get("equipment", []):
+        var id := str(equipment.get("id", ""))
+        if not world._slots.has(id): continue
+        var dimensions: Vector3 = equipment.size
+        var origin: Vector3 = world._slots[id].position
+        var bounds := AABB(origin - Vector3(dimensions.x * .5, 0, dimensions.z * .5), dimensions)
+        var corners: Array = []
+        for index in 8:
+            var point: Vector2 = viewport_container.position + world.camera.unproject_position(bounds.get_endpoint(index))
+            corners.append({"x":point.x, "y":point.y})
+        equipment_bounds.append({"id":id, "corners":corners})
+    data["camera"]["equipmentBounds"] = equipment_bounds
     var callouts: Array = []
     for item in world._callouts.values():
         var label: Label = item.label

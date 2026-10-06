@@ -46,7 +46,7 @@ The 操作 menu remembers speed, optional menu auto-pause and reduced walking an
 
 ## Camera controls
 
-Drag the warehouse with one finger or the mouse to pan. Pinch or use the mouse wheel / plus-minus buttons to zoom from whole-warehouse scale up to 3×. The visible 左90° / 右90° buttons change the camera bearing; 全体 restores the original whole-warehouse view. Camera state is session-only and never mutates campaign saves, money, equipment, cargo or the foreground clock. The layout editor retains its own precise equipment framing and restores the overview camera when closed.
+Normal play starts with the session-only 作業 view around the actual shelf and packing equipment. 作業 reapplies that framing without following workers. Drag the warehouse with one finger or the mouse to pan. Pinch or use the mouse wheel / plus-minus buttons to zoom from whole-warehouse scale up to 3×. The visible 左90° / 右90° buttons change the camera bearing; 全体 restores the original whole-warehouse view. Camera state is session-only and never mutates campaign saves, money, equipment, cargo or the foreground clock. The layout editor retains its own precise equipment framing and restores the exact preceding work/manual/whole-view camera when closed.
 
 The 56px camera row occupies a reserved strip above the bottom HUD, not the scene's callouts. Short landscape puts it in the header. Menus, HUD crossings, canceled touch, focus loss and resize cancel any held camera input. See `FLOTRA_CAMERA_RELEASE_2026-10-04.md` for verification and boundaries.
 
@@ -73,3 +73,9 @@ Unlocked equipment stays visible even before it is affordable, ordered by price 
 ## Combined warehouse and equipment polish
 
 The warehouse material pass uses subdued empty-floor markings, truthful live lane colors, neutral racks and carton-counted stored pallets, with 2× MSAA on the unchanged-size 3D viewport. The source is exported together with visible next equipment choices. Geometry, pallet/save parity and material-state regressions run in the aggregate suite using earned mature fixtures; existing browser performance limits remain unchanged. See `FLOTRA_COMBINED_POLISH_2026-10-06.md` for scope, gates and verification boundaries.
+
+## Equipment artwork and work framing
+
+Open steel racks, the genuinely purchased automatic packer, and low AMR bodies replace their earlier equipment artwork. Mesh selection follows real ownership; packing_2 remains a manual workbench and auto_pack alone enables the automatic machine. The shared geometry stays inside existing equipment and robot movement bounds; actual cargo identities/counts and all simulation, economy and schema-3 save rules are unchanged.
+
+The six 56px camera controls retain 全体, pan, pinch, rotation, editor restoration and canceled-input recovery. Work framing is reset per launch and never written to saves. Four legitimate equipment layouts and four rotations are covered by dedicated native tests; committed WebGL tests inspect all eight projected equipment corners and actual held/canceled touch events. Widths below348px use a second camera row to preserve 56px controls and visible save status; this narrow layout uses64px more height. The375/390/430px portraits retain their prior 3D area. Short landscape still has only a96px 3D region. Physical iPhone/Safari remains unverified. See `FLOTRA_EQUIPMENT_CAMERA_2026-10-06.md`.

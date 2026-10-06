@@ -103,6 +103,8 @@ func run() -> void:
     Input.emulate_touch_from_mouse = true
     app.hud.close_sheet()
     await guard()
+    # This legacy cancellation case deliberately starts from whole view.
+    app.world.camera_action("reset")
     var camera: Button = app.hud._root.find_child("CameraIn", true, false)
     var camera_point := camera.get_global_rect().get_center()
     for pair in 3:

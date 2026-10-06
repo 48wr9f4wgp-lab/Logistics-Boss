@@ -100,7 +100,7 @@ func slot_point(id: String) -> Vector2:
 
 func geometry(dimensions: Vector2i) -> void:
     var display := Rect2(Vector2.ZERO, Vector2(dimensions))
-    for title in ["CameraLeft", "CameraRight", "CameraOut", "CameraIn", "CameraReset"]:
+    for title in ["CameraLeft", "CameraRight", "CameraOut", "CameraIn", "CameraWork", "CameraReset"]:
         var button := camera_button(title)
         check(button != null and button.is_visible_in_tree(), "Overview camera controls remain visible " + title + str(dimensions))
         if button == null: continue
@@ -171,6 +171,9 @@ func run() -> void:
     app.hud.show_play()
     await guard()
     var saved: Dictionary = app.sim.export_release_state()
+    # This retained suite exercises the explicit whole-warehouse preset.
+    # The new default work preset has its own work_camera_smoke suite.
+    app.world.camera_action("reset")
     geometry(root.size)
     await tap_button("CameraRight")
     check(app.world._camera_turn == 1, "Real GUI right button rotates once, despite emulation")
@@ -350,7 +353,7 @@ func run() -> void:
         app.hud.show_play()
         await guard()
         var fixture_saved: Dictionary = fixture.export_release_state()
-        for dimensions in [Vector2i(351, 567), Vector2i(375, 567), Vector2i(375, 667), Vector2i(390, 844), Vector2i(430, 932), Vector2i(568, 320)]:
+        for dimensions in [Vector2i(320, 568), Vector2i(347, 567), Vector2i(348, 567), Vector2i(351, 567), Vector2i(375, 567), Vector2i(375, 667), Vector2i(390, 844), Vector2i(430, 932), Vector2i(568, 320)]:
             root.size = dimensions
             await settle()
             app.world.camera_action("reset")
