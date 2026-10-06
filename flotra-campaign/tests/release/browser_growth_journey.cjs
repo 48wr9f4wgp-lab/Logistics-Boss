@@ -9,6 +9,10 @@ const { chromium } = require('playwright');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
+const qualifiedExportDirectory = process.env.FLOTRA_EXPORTED_DIRECTORY;
+const qualifiedAssetNames = ['index.html', 'index.pck', 'index.js', 'index.wasm', 'campaign-viewport.js', 'campaign-storage.js'];
+const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const requestedURL = process.argv[2];
 const output = process.argv[3] || '/tmp/flotra-phone-browser';
 if (!requestedURL) throw new Error('Supply the local or published FLOTRA export URL');
@@ -278,9 +282,30 @@ async function samplePerformance(page,milliseconds) {
    const context=await (focusBrowser||browser).newContext({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true});
    if(fixture)await context.addInitScript(encoded=>{if(localStorage.getItem('flotra.campaign.release.v1')===null)localStorage.setItem('flotra.campaign.release.v1',encoded);},fixture.encoded);
    const page=await context.newPage();const errors=[];
+   const loadedAssets={};
+   if(qualifiedExportDirectory) {
+    // Capture exact bytes before the engine receives them. Fetch/fulfill avoids
+    // DevTools response-cache eviction of the large WASM; timing starts later.
+    await context.route('**/*',async route=>{
+     const asset=new URL(route.request().url()).pathname.split('/').pop()||'index.html';
+     if(!qualifiedAssetNames.includes(asset))return route.continue();
+     try {
+      const response=await route.fetch();const body=await response.body();
+      loadedAssets[asset]=sha256(body);
+      assert.equal(loadedAssets[asset],sha256(fs.readFileSync(path.join(qualifiedExportDirectory,asset))),asset+' loaded export identity');
+      await route.fulfill({response,body});
+     } catch(error) { errors.push(error.message);await route.abort(); }
+    });
+   }
    page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
    const test={name,presentation:focusBrowser?'headed actual focus':'headless renderer baseline'};result.tests.push(test);
-   try{await boot(page);test.environment=await page.evaluate(()=>{
+   try{await boot(page);
+    if(qualifiedExportDirectory) {
+     assert.deepEqual(Object.keys(loadedAssets).sort(),qualifiedAssetNames.slice().sort(),'All six exact export assets loaded');
+     test.loadedAssets=loadedAssets;
+    }
+    test.chromiumVersion=browser.version();
+    test.environment=await page.evaluate(()=>{
     const gl=document.querySelector('#canvas').getContext('webgl2');
     const ext=gl?.getExtension('WEBGL_debug_renderer_info');
     return {visibility:document.visibilityState,dpr:devicePixelRatio,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,vendor:ext?gl.getParameter(ext.UNMASKED_VENDOR_WEBGL):null};
@@ -366,7 +391,7 @@ async function samplePerformance(page,milliseconds) {
   });
   const late=JSON.parse(fs.readFileSync(path.join(fixturesDirectory,'late.json'),'utf8'));
   await scenario('mature-performance',late,async(page,context,test)=>{
-   let state=await ui(page);assert.equal(state.growth.wing_count,4);assert.equal(state.growth.robot_count,4);assert.equal(state.progress.shipped,late.shipped);assert.equal(state.wallet,late.wallet);assert.equal(state.trialRunning,false);
+   let state=await ui(page);test.initialState={simTime:state.simTime,wallet:state.wallet,growth:state.growth,progress:state.progress,camera:state.camera};assert.equal(state.growth.wing_count,4);assert.equal(state.growth.robot_count,4);assert.equal(state.progress.shipped,late.shipped);assert.equal(state.wallet,late.wallet);assert.equal(state.trialRunning,false);
    await closeSheets(page,context);await setRunning(page,context,false);await page.waitForTimeout(1000);
    const idle=await samplePerformance(page,6000);
    await tapName(page,context,'SessionRecord');await expectUI(page,{sheet:'records',worldVisible:false});
@@ -380,7 +405,7 @@ async function samplePerformance(page,milliseconds) {
    await page.setViewportSize({width:375,height:567});await settle(page);verify(await measure(page),'mature shortphone');
    await page.screenshot({path:path.join(output,'mature-short-phone.png'),scale:'css'});
    const idleAfter=await samplePerformance(page,6000);
-   function summarize(samples){const cpu=samples.metrics.map(m=>m.processMs),nodes=samples.metrics.map(m=>m.nodes),draws=samples.metrics.map(m=>m.drawCalls);return {rafMedianMs:percentile(samples.frames,.5),rafP95Ms:percentile(samples.frames,.95),processMedianMs:percentile(cpu,.5),processP95Ms:percentile(cpu,.95),nodesMin:Math.min(...nodes),nodesMax:Math.max(...nodes),drawCallsMax:Math.max(...draws)};}
+   function summarize(samples){const cpu=samples.metrics.map(m=>m.processMs),nodes=samples.metrics.map(m=>m.nodes),draws=samples.metrics.map(m=>m.drawCalls);return {rafMedianMs:percentile(samples.frames,.5),rafP95Ms:percentile(samples.frames,.95),processMedianMs:percentile(cpu,.5),processP95Ms:percentile(cpu,.95),nodesMin:Math.min(...nodes),nodesMax:Math.max(...nodes),drawCallsMax:Math.max(...draws),rafSamples:samples.frames.length,telemetrySamples:samples.metrics.length,distinctMetricValues:new Set(samples.metrics.map(m=>JSON.stringify(m))).size};}
    test.performance={uiOnly:summarize(uiOnly),idle:summarize(idle),active:summarize(active),idleAfter:summarize(idleAfter)};
    assert.ok(test.performance.idleAfter.nodesMax-test.performance.idleAfter.nodesMin<=4,'Mature paused warehouse has stable node count');
    assert.ok(test.performance.active.processP95Ms<100,'Mature simulation/render CPU updates stay below 100ms on software Chromium');

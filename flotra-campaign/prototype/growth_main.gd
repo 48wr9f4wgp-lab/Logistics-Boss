@@ -58,6 +58,9 @@ func _ready() -> void:
     add_child(viewport_container)
     viewport = SubViewport.new()
     viewport.name = "WarehouseViewport"
+    # Small CSS-sized 3D surface: smooth subpixel rack/floor edges without
+    # increasing its resolution or changing the full-DPR HUD.
+    viewport.msaa_3d = Viewport.MSAA_2X
     viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
     viewport.handle_input_locally = true
     viewport_container.add_child(viewport)

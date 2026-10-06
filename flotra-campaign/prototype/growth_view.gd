@@ -12,6 +12,7 @@ const HIDDEN_BOX_TRANSFORM := Transform3D(Basis(Vector3.ZERO, Vector3.ZERO, Vect
 var _box_sources: Array[MeshInstance3D] = []
 var _box_batches: Array[MultiMeshInstance3D] = []
 var _box_batch_states: Array = []
+var _box_batch_sources: Array = [[], [], []]
 var _growth_root: Node3D
 var _growth_floors: Array[MeshInstance3D] = []
 var _connector_floors: Array[MeshInstance3D] = []
@@ -59,6 +60,16 @@ func _process(delta: float) -> void:
 
 func _ready() -> void:
     super._ready()
+    # Existing lights only: a warmer key and quieter ambient fill give the
+    # unchanged box faces readable depth without a new lighting/shadow pass.
+    var light_index := 0
+    for child in get_children():
+        if child is WorldEnvironment:
+            child.environment.ambient_light_energy = .30
+            child.environment.ambient_light_color = Color("aabdc9")
+        elif child is DirectionalLight3D:
+            child.light_energy = .86 if light_index == 0 else .16
+            light_index += 1
     _make_box_batches()
     _growth_root = Node3D.new()
     _growth_root.name = "AuthoritativeGrowthFloors"
@@ -67,10 +78,14 @@ func _ready() -> void:
 func _make_box_batches() -> void:
     var cube := BoxMesh.new()
     cube.size = Vector3.ONE
-    for emissive in [false, true]:
+    # Ground markings receive shadows but never cast a second floor onto
+    # themselves. Genuine equipment/wall casters keep the original key light.
+    for group in 3:
+        var emissive := group == 2
         var material := StandardMaterial3D.new()
         material.albedo_color = Color.WHITE
-        material.roughness = .82
+        material.roughness = 1.0 if group == 0 else .82
+        material.metallic_specular = .15 if group == 0 else .5
         material.vertex_color_use_as_albedo = true
         material.emission_enabled = emissive
         if emissive:
@@ -82,19 +97,49 @@ func _make_box_batches() -> void:
         instances.use_colors = true
         instances.mesh = cube
         var batch := MultiMeshInstance3D.new()
-        batch.name = "EmissiveBoxBatch" if emissive else "WarehouseBoxBatch"
+        batch.name = ["GroundBoxBatch", "WarehouseBoxBatch", "EmissiveBoxBatch"][group]
+        batch.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if group == 1 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
         batch.multimesh = instances
         batch.material_override = material
         add_child(batch)
         _box_batches.append(batch)
 
 func _box(parent: Node, title: String, size: Vector3, position: Vector3, color: Color) -> MeshInstance3D:
-    var source := super._box(parent, title, size, position, color)
+    # Cohesive industrial materials: concrete is quieter than live cyan routes.
+    # Keep all dimensions, positions and inherited source identities unchanged.
+    var tint := color
+    if title.ends_with("Foundation"):
+        tint = Color("132735")
+    elif title == "MainWorkingFloor":
+        tint = Color("41484d")
+    elif title in ["AnnexWorkingFloor", "GrowthWorkingFloor"]:
+        tint = Color("2e404a")
+    elif title == "ServiceConnectorFloor":
+        tint = Color("354b52")
+    elif title == "InboundReceivingPad":
+        tint = Color("3d5a6a")
+    elif title == "OutboundReceivingPad":
+        tint = Color("37645e")
+    elif title == "ExpansionJoint":
+        tint = Color("637780")
+    elif title == "SlabJoint":
+        tint = Color("4a5257")
+    elif title == "RackPost":
+        tint = Color("d9994c")
+    elif title in ["RackShelf", "ExtraShelf"]:
+        tint = Color("263b49")
+    elif title == "RackBeam":
+        tint = Color("e6a859")
+    var source := super._box(parent, title, size, position, tint)
     # Keep the original named node for authoritative transform/visibility,
     # selection geometry and existing tests. Only the batched copy is drawn.
     # A zero layer mask leaves `visible` available to the inherited renderer.
     source.layers = 0
     _box_sources.append(source)
+    # A narrow cap remains inside each existing cutaway wall. Parenting it to
+    # the authoritative wall makes connector openings and hidden walls exact.
+    if title in ["AnnexBackWall", "AnnexLeftWall", "AnnexRightWall", "MainBackWall", "MainBackWallRight", "GrowthBackWall", "OuterCurb"] or title.ends_with("OpenSection"):
+        _box(source, "WallCap", Vector3(size.x, .035, size.z), Vector3(0, size.y * .5 - .0175, 0), Color("657b85"))
     return source
 
 func _live_box(source: MeshInstance3D) -> bool:
@@ -111,33 +156,48 @@ func _refresh_box_batches() -> void:
     if _box_batches.is_empty():
         return
     var sources: Array[MeshInstance3D] = []
+    var grouped: Array = [[], [], []]
     for source in _box_sources:
-        if _live_box(source):
-            sources.append(source)
-    _box_sources = sources
-    var count := sources.size()
-    if _box_batches[0].multimesh.instance_count != count:
-        for batch in _box_batches:
-            batch.multimesh.instance_count = count
-        _box_batch_states.clear()
-        _box_batch_states.resize(count)
-    var local_from_world := global_transform.affine_inverse()
-    for index in count:
-        var source: MeshInstance3D = sources[index]
-        var material := source.material_override as StandardMaterial3D
-        var color := material.albedo_color if material != null else Color.WHITE
-        var group := (1 if material != null and material.emission_enabled else 0) if source.is_visible_in_tree() else -1
-        var shape := source.mesh as BoxMesh
-        var transform := local_from_world * source.global_transform * Transform3D(Basis.from_scale(shape.size), Vector3.ZERO) if group >= 0 else HIDDEN_BOX_TRANSFORM
-        var state: Array = [source.get_instance_id(), transform, color, group]
-        if _box_batch_states[index] is Array and _box_batch_states[index] == state:
+        if not _live_box(source):
             continue
-        for batch_index in 2:
-            var instances := _box_batches[batch_index].multimesh
-            instances.set_instance_transform(index, transform if batch_index == group else HIDDEN_BOX_TRANSFORM)
-            if batch_index == group:
-                instances.set_instance_color(index, color)
-        _box_batch_states[index] = state
+        sources.append(source)
+        if not source.is_visible_in_tree():
+            continue
+        var material := source.material_override as StandardMaterial3D
+        var bounds := source.global_transform * source.get_aabb()
+        var floor_level := bounds.end.y <= .12
+        var group := 2 if material != null and material.emission_enabled else (0 if floor_level else 1)
+        grouped[group].append(source)
+    _box_sources = sources
+    # Pack only visible sources into their one owning batch. Adding the ground
+    # category must not submit three zero-sized copies of every source cube.
+    var local_from_world := global_transform.affine_inverse()
+    if _box_batch_states.size() != _box_batches.size():
+        _box_batch_states = [[], [], []]
+    for group in _box_batches.size():
+        var instances: MultiMesh = _box_batches[group].multimesh
+        var members: Array = grouped[group]
+        if instances.instance_count < members.size():
+            # Reserve in small blocks: busy lanes change emissive category and
+            # must not reallocate GPU buffers on every authoritative step.
+            instances.instance_count = ceili(float(members.size()) / 32.0) * 32
+            _box_batch_states[group] = []
+            _box_batch_states[group].resize(instances.instance_count)
+        if instances.visible_instance_count != members.size():
+            instances.visible_instance_count = members.size()
+        for index in members.size():
+            var source: MeshInstance3D = members[index]
+            var material := source.material_override as StandardMaterial3D
+            var color := material.albedo_color if material != null else Color.WHITE
+            var shape := source.mesh as BoxMesh
+            var transform := local_from_world * source.global_transform * Transform3D(Basis.from_scale(shape.size), Vector3.ZERO)
+            var state: Array = [source.get_instance_id(), transform, color]
+            if _box_batch_states[group][index] is Array and _box_batch_states[group][index] == state:
+                continue
+            instances.set_instance_transform(index, transform)
+            instances.set_instance_color(index, color)
+            _box_batch_states[group][index] = state
+        _box_batch_sources[group] = members
 
 func _build_shell(state: Dictionary) -> void:
     # The inherited shell estimates the original hall from routing bounds.
@@ -297,6 +357,8 @@ func fit_camera(view_size: Vector2) -> void:
         center = (_slots[_selected] as Node3D).position
         if is_instance_valid(_ghost):
             center = (center + _ghost.position) * .5
+    # Let the long real northward warehouse use portrait height. Selected
+    # equipment retains its established framing and all corners are still fit.
     var bearing := Vector3(28, 38, 22)
     if not focus:
         bearing = bearing.rotated(Vector3.UP, float(_camera_turn) * PI * .5)
@@ -556,3 +618,77 @@ func _refresh_workers(workers: Array) -> void:
         (robot.get_node("LeftLeg") as Node3D).rotation.x = 0.0
         (robot.get_node("RightLeg") as Node3D).rotation.x = 0.0
         (robot.get_node("SafetyVest") as Node3D).scale = Vector3.ONE
+
+
+func _refresh_cargo(items: Array) -> void:
+    super._refresh_cargo(items)
+    # A stationary six-unit bulk manifest is a real pallet load, not one tiny
+    # decorative cube. Each visible carton below corresponds to one actual unit.
+    # Carrying/inbound parcels keep their original reserved transport envelope.
+    var counts := {}
+    for item in items:
+        if str(item.get("job_kind", item.get("kind", ""))) != "bulk":
+            continue
+        var key := str(item.get("manifest_id", -1)) + ":" + str(item.get("stage", ""))
+        counts[key] = int(counts.get(key, 0)) + 1
+    for item in items:
+        var id := str(item.get("id", 0))
+        if not _cargo.has(id):
+            continue
+        var node: Node3D = _cargo[id]
+        var bulk := str(item.get("job_kind", item.get("kind", ""))) == "bulk"
+        var on_bay := bulk and not str(item.get("bay_id", "")).is_empty() and str(item.get("stage", "")) in ["bulk_storage", "reserved_bulk_ship"]
+        var load := node.get_node_or_null("BulkPallet") as Node3D
+        if on_bay and load == null:
+            load = Node3D.new()
+            load.name = "BulkPallet"
+            node.add_child(load)
+            _box(load, "PalletDeck", Vector3(.84, .05, .64), Vector3(0, -.15, 0), Color("96764f"))
+            for x in [-.28, .28]:
+                _box(load, "PalletRunner", Vector3(.12, .065, .62), Vector3(x, -.2075, 0), Color("665139"))
+            for index in 6:
+                _box(load, "Unit%d" % index, Vector3(.25, .27, .27), Vector3((index % 3 - 1) * .27, .01, (-.15 if index < 3 else .15)), BULK_COLOR.darkened(.035 * float(index % 3)))
+            for z in [-.15, .15]:
+                _box(load, "LoadStrap", Vector3(.82, .012, .038), Vector3(0, .151, z), Color("e7d6ad"))
+        (node.get_node("Carton") as Node3D).visible = not on_bay
+        (node.get_node("Tape") as Node3D).visible = not on_bay
+        if load != null:
+            load.visible = on_bay
+            if on_bay:
+                var key := str(item.get("manifest_id", -1)) + ":" + str(item.get("stage", ""))
+                var units := int(counts.get(key, 0))
+                load.set_meta("represented_units", units)
+                for index in 6:
+                    (load.get_node("Unit%d" % index) as Node3D).visible = index < units
+
+
+func _refresh_routes(edges: Array) -> void:
+    super._refresh_routes(edges)
+    # Idle lanes are quiet physical floor marks; live flow and actual queued
+    # traffic retain distinct cyan/amber semantic signals. Never alter visibility.
+    for edge in edges:
+        var id := str(edge.get("id", ""))
+        if not _routes.has(id):
+            continue
+        var busy := int(edge.get("occupied", 0)) > 0
+        var waiting := int(edge.get("waiters", 0)) > 0
+        var tint := Color("ffc472") if waiting else (Color("53c6b7") if busy else Color("3c4e57"))
+        var route: Node3D = _routes[id]
+        for lane in 2:
+            (route.get_node("Lane%d" % lane) as MeshInstance3D).material_override = _material(tint, busy)
+
+func _refresh_bays(bays: Array) -> void:
+    super._refresh_bays(bays)
+    for bay in bays:
+        var id := str(bay.get("id", ""))
+        if not _bay_nodes.has(id):
+            continue
+        var node: Node3D = _bay_nodes[id]
+        var occupied := bool(bay.get("occupied", false))
+        var pad := node.get_node("Footprint") as MeshInstance3D
+        pad.material_override = _material(Color("3b4950") if occupied else Color("293b45"))
+        # Empty bays stay visible as subdued floor paint, instead of a grid of
+        # glowing brown tiles. Occupied boundaries remain readable around loads.
+        for child in node.get_children():
+            if child is MeshInstance3D and child != pad:
+                child.material_override = _material(Color("ae9f78") if occupied else Color("74817e"))

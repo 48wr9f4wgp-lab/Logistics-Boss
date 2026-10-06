@@ -657,6 +657,7 @@ func _build_upgrades() -> void:
     if not _equipment_notice.is_empty():
         _text(_content, _equipment_notice, BODY_FONT_SIZE, Color("476266")).name = "UpgradeFeedback"
     var available: Array = []
+    var saving_for: Array = []
     var later: Array = []
     var owned: Array = []
     for option in _upgrades:
@@ -664,6 +665,8 @@ func _build_upgrades() -> void:
             owned.append(option)
         elif bool(option.get("available", false)):
             available.append(option)
+        elif bool(option.get("unlocked", false)):
+            saving_for.append(option)
         else:
             later.append(option)
     # Keep the next physical expansion easy to discover, then show every other
@@ -684,7 +687,21 @@ func _build_upgrades() -> void:
         _text(_content, "仕事を終えて、次の改善へ", 22)
         _text(_content, "購入は仕事が終わってから。繰り返せる仕事でも資金が増えます", BODY_FONT_SIZE, Color("476266"))
         _action(_content, "仕事を選ぶ", _open_contracts, true).name = "EarnForUpgrade"
+    # Preserve the existing free-mode selector's scroll depth.
     _build_operations()
+    if not saving_for.is_empty():
+        # These choices already meet the progression requirements. Keep their
+        # original disabled actions and exact reasons visible, nearest price
+        # first, so saving for automation is a choice before spending on a shelf.
+        saving_for.sort_custom(func(a, b): return int(a.get("cost", 0)) < int(b.get("cost", 0)))
+        _text(_content, "仕事の後に導入" if str(_release.get("status", "")) == "running" else "資金をためて導入", 22).name = "UnlockedUpgradesHeading"
+        var group := VBoxContainer.new()
+        group.name = "UnlockedUpgrades"
+        group.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        group.add_theme_constant_override("separation", 12)
+        _content.add_child(group)
+        for option in saving_for:
+            _build_upgrade_card(option, group)
     _text(_content, _growth_summary(), 20).name = "GrowthWarehouseSummary"
     _text(_content, "配置変更は無料です。増築・スタッフ・設備は次の仕事にも引き継がれます", BODY_FONT_SIZE, Color("476266"))
     if not later.is_empty():
