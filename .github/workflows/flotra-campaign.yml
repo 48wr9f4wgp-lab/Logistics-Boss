@@ -131,6 +131,9 @@ jobs:
       fail-fast: false
       matrix:
         dpr: [1, 2, 3]
+        # Keep the identical full gesture suite per viewport; independent jobs
+        # prevent a slow software renderer exhausting the unchanged 20m limit.
+        viewport: ['375x567', '375x667', '390x844', '430x932']
     steps:
       - uses: actions/checkout@v5
         with:
@@ -157,6 +160,7 @@ jobs:
       - name: Test real camera gestures and recovery
         env:
           FLOTRA_TEST_DPRS: ${{ matrix.dpr }}
+          FLOTRA_TEST_CASES: ${{ matrix.viewport }}
         shell: bash
         run: |
           python3 -m http.server 8826 --bind 127.0.0.1 --directory docs/godot-jobs-preview > /tmp/flotra-camera-server.log 2>&1 &
@@ -167,7 +171,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: flotra-camera-browser-dpr-${{ matrix.dpr }}
+          name: flotra-camera-browser-dpr-${{ matrix.dpr }}-${{ matrix.viewport }}
           path: build/camera-browser
           retention-days: 7
 
