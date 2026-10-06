@@ -1,5 +1,5 @@
-extends "res://prototype/jobs_sim.gd"
-class_name FlotraGrowthSim
+extends "res://prototype/legacy_dispatch/jobs_sim.gd"
+class_name FlotraFrozenDispatchGrowthSim
 
 # Bounded campaign layered over the original physical cargo ledger. Contract
 # rewards have a separate wallet; base money remains shipment-value accounting.
@@ -38,8 +38,8 @@ const SIM_FIELDS := [
     "_edges","_next_cargo","_next_manifest","_inbound_timer","_accumulator","_move_remaining",
     "_move_duration","_round_robin","_mix_credit",
 ]
-const LegacySim = preload("res://prototype/release_sim.gd")
-const GrowthV2Sim = preload("res://prototype/growth_v2_sim.gd")
+const LegacySim = preload("res://prototype/legacy_dispatch/release_sim.gd")
+const GrowthV2Sim = preload("res://prototype/legacy_dispatch/growth_v2_sim.gd")
 const GROWTH_CONTRACTS := [
     {"id":"growth_1","label":"01 小さな倉庫の一歩","description":"12個を出荷して、最初の増築へ。","manifest_quota":2,"bulk_manifests":1,"pick_manifests":1,"mix":"balanced","interval":1.5,"dwell":6.0,"reward":140,"gold_seconds":45.0,"silver_seconds":80.0},
     {"id":"growth_2","label":"02 町の配送拠点","description":"24個の注文。増築か人手を選ぼう。","manifest_quota":4,"bulk_manifests":2,"pick_manifests":2,"mix":"balanced","interval":1.2,"dwell":6.0,"reward":200,"gold_seconds":75.0,"silver_seconds":140.0},
@@ -1076,12 +1076,12 @@ func _assign(worker: Dictionary) -> void:
             task="ship"
             source=_pack_node()
             target="outbound"
-        elif candidate=="pick" and pending_layout_id.is_empty() and not storage.is_empty() and packing.size()+pack_jobs.size()+_pick_units_in_transit()<_pick_admission_limit():
+        elif candidate=="pick" and pending_layout_id.is_empty() and not storage.is_empty() and packing.size()+pack_jobs.size()+_pick_units_in_transit()<6:
             var id: int=storage.pop_front()
             ids=[id]
             if operation_mode=="parcel":
                 for extra in storage.duplicate():
-                    if ids.size()>=3 or packing.size()+pack_jobs.size()+_pick_units_in_transit()+ids.size()>=_pick_admission_limit(): break
+                    if ids.size()>=3 or packing.size()+pack_jobs.size()+_pick_units_in_transit()+ids.size()>=6: break
                     if cargo[extra].manifest_id==cargo[id].manifest_id:
                         storage.erase(extra)
                         ids.append(extra)

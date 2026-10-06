@@ -1,0 +1,22 @@
+{
+  "commit": "3a4b6e7c45aadf175268993aa8004c2969c5a136",
+  "changes": "Resource paths and global class names only; domain logic frozen",
+  "files": [
+    {
+      "file": "jobs_sim.gd",
+      "original_git_blob_sha": "39e652658566d0d61531b263c0abd9bf833544c7"
+    },
+    {
+      "file": "release_sim.gd",
+      "original_git_blob_sha": "3138591911eb8099e42538e930c453a586da015e"
+    },
+    {
+      "file": "growth_v2_sim.gd",
+      "original_git_blob_sha": "f22daa45d0c664784751d2b1e8dcc5bb95d2bb9a"
+    },
+    {
+      "file": "growth_sim.gd",
+      "original_git_blob_sha": "917f3d55460b0e54146321c46d84994b89228569"
+    }
+  ]
+}

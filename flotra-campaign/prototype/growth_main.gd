@@ -1,8 +1,8 @@
 extends Node
 
 # Campaign entry point. Storage is isolated from all legacy Godot saves.
-const SimScript = preload("res://prototype/growth_sim.gd")
-const HudScript = preload("res://prototype/growth_hud.gd")
+const SimScript = preload("res://prototype/dispatch_sim.gd")
+const HudScript = preload("res://prototype/dispatch_hud.gd")
 const ViewScript = preload("res://prototype/growth_view.gd")
 var sim
 var hud: CanvasLayer
@@ -11,12 +11,13 @@ var viewport: SubViewport
 var viewport_container: SubViewportContainer
 var running := false
 var speed := 2.0
-const SaveScript = preload("res://prototype/release_save.gd")
+const SaveScript = preload("res://prototype/dispatch_save.gd")
 var save_store = SaveScript.new()
 var persistence_enabled := true
 var _save_elapsed := 0.0
 var _last_status := ""
 var _loaded := false
+var _save_load_result: Dictionary = {}
 var _phone_qa := false
 var _qa_elapsed := 0.0
 var _web_touch_cancel_callback: JavaScriptObject
@@ -43,7 +44,7 @@ func _ready() -> void:
         get_tree().root.content_scale_size = Vector2i.ZERO
     sim = SimScript.new()
     if persistence_enabled:
-        save_store.load_into(sim)
+        _save_load_result = save_store.load_into(sim)
     _apply_preferences()
     _loaded = true
     var background := ColorRect.new()
@@ -79,6 +80,7 @@ func _ready() -> void:
     _connect_if("speed_requested", _set_speed)
     _connect_if("preference_requested", _set_preference)
     _connect_if("operation_requested", _set_operation)
+    _connect_if("dispatch_window_requested", _set_dispatch_window)
     _connect_if("cancel_layout_requested", _cancel_layout)
     _connect_if("sheet_changed", _sheet_clock_changed)
     _connect_if("trial_started", _start_trial)
@@ -105,6 +107,8 @@ func _ready() -> void:
     if hud.has_method("show_intro"):
         hud.call("show_intro")
     _update_world_visibility()
+    if _save_protected() and hud.has_method("show_save_protection"):
+        hud.call("show_save_protection", save_store.status)
     if OS.has_feature("web"):
         _web_touch_cancel_callback = JavaScriptBridge.create_callback(_cancel_web_touch)
         var bridge := JavaScriptBridge.get_interface("FlotraViewport")
@@ -280,6 +284,9 @@ func _process(delta: float) -> void:
                 _report_phone_qa()
     if sim == null:
         return
+    if _save_protected() and running:
+        running = false
+        hud.call("set_trial_running", false)
     _menu_paused = running and bool(_preferences.pause_on_menus) and is_instance_valid(hud) and not str(hud._sheet_kind).is_empty()
     var active := running and not _menu_paused
     var now_usec: int = frame_clock.call()
@@ -312,6 +319,7 @@ func _update_world_visibility() -> void:
     viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if visible_world else SubViewport.UPDATE_DISABLED
 
 func _start_trial() -> void:
+    if _reject_if_save_protected(): return
     # An imported domain-level pause remains intact until explicit Resume.
     if sim.time_scale == 0.0: sim.time_scale = 1.0
     running = true
@@ -319,6 +327,7 @@ func _start_trial() -> void:
     hud.call("set_trial_running", true)
 
 func _pause_trial(paused: bool) -> void:
+    if not paused and _reject_if_save_protected(): return
     if not paused and sim.time_scale == 0.0: sim.time_scale = 1.0
     running = not paused
     _reset_frame_clock()
@@ -331,6 +340,7 @@ func _return_to_intro() -> void:
     hud.call("show_intro")
 
 func _apply_layout(id: String) -> void:
+    if _reject_if_save_protected(): return
     var result: Dictionary = sim.apply_layout(id)
     hud.call("show_action_result", result)
     if result.get("ok",false): _save_now()
@@ -338,12 +348,14 @@ func _apply_layout(id: String) -> void:
     world.call("refresh")
 
 func _apply_slot(slot_id: String, choice_id: String) -> void:
+    if _reject_if_save_protected(): return
     var result: Dictionary = sim.apply_slot(slot_id, choice_id)
     hud.call("show_action_result", result)
     if result.get("ok",false): _save_now()
     world.call("refresh")
 
 func _change_workload(id: String) -> void:
+    if _reject_if_save_protected(): return
     # Changing future contracts must never erase existing cargo or measurement.
     var result: Dictionary = sim.set_mix(id)
     if hud.has_method("show_job_mix_result"):
@@ -358,6 +370,7 @@ func _restart_trial() -> void:
     hud.call("show_job_choices")
 
 func _accept_contract(id: String) -> void:
+    if _reject_if_save_protected(): return
     var result: Dictionary = sim.accept_contract(id)
     hud.call("show_contract_result", result)
     if result.get("ok",false):
@@ -369,12 +382,14 @@ func _accept_contract(id: String) -> void:
     world.call("refresh")
 
 func _buy_upgrade(id: String) -> void:
+    if _reject_if_save_protected(): return
     var result: Dictionary = sim.buy_upgrade(id)
     hud.call("show_upgrade_result", result)
     if result.get("ok",false): _save_now()
     world.call("refresh")
 
 func _set_speed(value: float) -> void:
+    if _reject_if_save_protected(): return
     speed = value if value in [1.0,2.0,4.0] else 2.0
     if sim.has_method("set_preference"):
         sim.set_preference("preferred_speed", int(speed))
@@ -395,6 +410,7 @@ func _apply_preferences() -> void:
         world.call("set_reduced_motion", bool(preferences.get("reduced_motion", false)))
 
 func _set_preference(key: String, value: Variant) -> void:
+    if _reject_if_save_protected(): return
     if not sim.has_method("set_preference"): return
     var result: Dictionary = sim.set_preference(key, value)
     if result.get("ok", false):
@@ -413,6 +429,7 @@ func _sheet_clock_changed(_kind: String) -> void:
     if bool(_preferences.pause_on_menus): _reset_frame_clock()
 
 func _set_operation(id: String) -> void:
+    if _reject_if_save_protected(): return
     if not sim.has_method("set_operation"): return
     var result: Dictionary = sim.set_operation(id)
     if hud.has_method("show_operation_result"): hud.call("show_operation_result", result)
@@ -420,16 +437,39 @@ func _set_operation(id: String) -> void:
     world.call("refresh")
 
 func _cancel_layout() -> void:
+    if _reject_if_save_protected(): return
     if not sim.has_method("cancel_layout"): return
     var result: Dictionary = sim.cancel_layout()
     if hud.has_method("show_cancel_layout_result"): hud.call("show_cancel_layout_result", result)
     if result.get("ok", false): _save_now()
     world.call("refresh")
 
+func _set_dispatch_window(value: int) -> void:
+    if _reject_if_save_protected(): return
+    var result: Dictionary = sim.set_dispatch_window(value)
+    if hud.has_method("show_dispatch_window_result"): hud.call("show_dispatch_window_result", result)
+    if result.get("ok", false): _save_now()
+
+func _save_protected() -> bool:
+    return persistence_enabled and (save_store.blocked or bool(_save_load_result.get("blocked", false)))
+
+func _reject_if_save_protected() -> bool:
+    if not _save_protected(): return false
+    running = false
+    _reset_frame_clock()
+    if is_instance_valid(hud):
+        hud.call("set_trial_running", false)
+        hud.call("set_save_status", save_store.status)
+        if hud.has_method("show_save_protection"): hud.call("show_save_protection", save_store.status)
+    return true
+
 func _save_now() -> void:
     _save_elapsed = 0.0
     if not persistence_enabled or not _loaded or sim == null: return
     save_store.save_from(sim)
+    # A writer conflict or uncertain write is terminal for this session. Show
+    # the stop immediately, including saves made while already paused.
+    if _reject_if_save_protected(): return
     if is_instance_valid(hud): hud.call("set_save_status",save_store.status)
 
 func _notification(what: int) -> void:
@@ -457,7 +497,7 @@ func _world_slot_selected(id: String) -> void:
         world.call("select_slot", id)
 
 func isolation_status() -> Dictionary:
-    return {"release":true,"persistent_writes":persistence_enabled,"production_save_loaded":false,"web_storage":"flotra.campaign.release.v1","filesystem_persistence":false,"user_directory":OS.get_user_data_dir(),"app_name":ProjectSettings.get_setting("application/config/name")}
+    return {"release":true,"persistent_writes":persistence_enabled,"production_save_loaded":false,"web_storage":"flotra.campaign.dispatch.v5","filesystem_persistence":false,"user_directory":OS.get_user_data_dir(),"app_name":ProjectSettings.get_setting("application/config/name")}
 
 func _exit_trial() -> void:
     # This application has its own profile and never enters production main.

@@ -1,5 +1,5 @@
 extends RefCounted
-class_name FlotraJobsSim
+class_name FlotraFrozenDispatchJobsSim
 
 # ISOLATED DOMAIN EXPERIMENT. No disk access, production save/schema changes,
 # layout-specific rates, score multipliers, or hidden demand deletion.
@@ -445,9 +445,6 @@ func _rack_occupied() -> int:
             count += worker.cargo_ids.size()
     return count
 
-func _pick_admission_limit() -> int:
-    return 6
-
 func _assign(worker: Dictionary) -> void:
     var task := ""
     var source := ""
@@ -475,7 +472,7 @@ func _assign(worker: Dictionary) -> void:
         target = "outbound"
     # During relocation drain only already started packing and released pallets.
     # Keep all remaining rack stock; it moves with the rack at relocation speed.
-    if task.is_empty() and pending_layout_id.is_empty() and not storage.is_empty() and packing.size()+pack_jobs.size()+_worker_count("pick") < _pick_admission_limit():
+    if task.is_empty() and pending_layout_id.is_empty() and not storage.is_empty() and packing.size()+pack_jobs.size()+_worker_count("pick") < 6:
         var id: int = storage.pop_front()
         ids = [id]
         task = "pick"
