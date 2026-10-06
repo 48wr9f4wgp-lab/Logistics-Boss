@@ -40,7 +40,7 @@ func _build() -> void:
     _camera_controls.name = "CameraControls"
     _camera_controls.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _root.add_child(_camera_controls)
-    for item in [["CameraLeft", "左90°", "left"], ["CameraRight", "右90°", "right"], ["CameraOut", "−", "out"], ["CameraIn", "＋", "in"], ["CameraReset", "全体", "reset"]]:
+    for item in [["CameraLeft", "左90°", "left"], ["CameraRight", "右90°", "right"], ["CameraOut", "−", "out"], ["CameraIn", "＋", "in"], ["CameraWork", "作業", "work"], ["CameraReset", "全体", "reset"]]:
         var button := _button(_camera_controls, item[1], func(): camera_requested.emit(item[2]), false, false)
         button.name = item[0]
         for style_name in ["normal", "hover", "pressed", "focus", "disabled"]:
@@ -53,7 +53,8 @@ func _build() -> void:
     _camera_buttons[1].tooltip_text = "右に90度回転"
     _camera_buttons[2].tooltip_text = "縮小"
     _camera_buttons[3].tooltip_text = "拡大"
-    _camera_buttons[4].tooltip_text = "最初の向きで倉庫全体を表示"
+    _camera_buttons[4].tooltip_text = "棚と梱包の作業域を表示"
+    _camera_buttons[5].tooltip_text = "最初の向きで倉庫全体を表示"
     _layout()
 
 func _button(parent: Node, value: String, action: Callable, primary: bool = false, light: bool = true) -> Button:
@@ -147,18 +148,33 @@ func _layout_camera_controls() -> void:
     if is_instance_valid(_camera_controls):
         _camera_controls.visible = _sheet_kind.is_empty()
         var compact := _compact_camera_header()
-        var row_width := _root.size.x - (196 if compact else 24)
-        _rect(_camera_controls, 102 if compact else 12, 10 if compact else _root.size.y - 216, row_width, CONTROL_HEIGHT)
-        var x := 0.0
-        var gap := clampf((row_width - CONTROL_HEIGHT * 5) / 4.0, 0, 8)
-        var rotation_width := clampf((row_width - gap * 4 - CONTROL_HEIGHT * 3) / 2.0, CONTROL_HEIGHT, 64)
-        var widths := [rotation_width, rotation_width, CONTROL_HEIGHT, CONTROL_HEIGHT, maxf(CONTROL_HEIGHT, row_width - rotation_width * 2 - CONTROL_HEIGHT * 2 - gap * 4)]
-        for index in _camera_buttons.size():
-            _rect(_camera_buttons[index], x, 0, widths[index], CONTROL_HEIGHT)
-            x += widths[index] + gap
+        var narrow := _narrow_camera_rows()
+        var count := float(_camera_buttons.size())
+        var margin := 12.0 if narrow else minf(12.0, maxf(6.0, (_root.size.x - CONTROL_HEIGHT * count) * .5))
+        var row_width: float = _root.size.x - (196 if compact else margin * 2.0)
+        _rect(_camera_controls, 102 if compact else margin, 10 if compact else _root.size.y - (280 if narrow else 216), row_width, 120 if narrow else CONTROL_HEIGHT)
+        if narrow:
+            # Preserve all 56px targets and the visible save status on older
+            # 320px phones. Only these sub-348px viewports use a second row.
+            var width := (row_width - 24.0) / 4.0
+            for index in 4:
+                _rect(_camera_buttons[index], index * (width + 8.0), 0, width, CONTROL_HEIGHT)
+            var preset_width := (row_width - 8.0) / 2.0
+            for index in 2:
+                _rect(_camera_buttons[index + 4], index * (preset_width + 8.0), 64, preset_width, CONTROL_HEIGHT)
+        else:
+            var x := 0.0
+            var gap := clampf((row_width - CONTROL_HEIGHT * count) / maxf(1.0, count - 1.0), 0, 8)
+            var width: float = (row_width - gap * (count - 1.0)) / count
+            for button in _camera_buttons:
+                _rect(button, x, 0, width, CONTROL_HEIGHT)
+                x += width + gap
         _title.visible = not compact
         _safe_note.visible = not compact
         if compact: _reason_panel.hide()
+
+func _narrow_camera_rows() -> bool:
+    return _root.size.x < 348
 
 func _compact_camera_header() -> bool:
     return _sheet_kind.is_empty() and _root.size.y < 500 and _root.size.x >= 540
@@ -166,7 +182,7 @@ func _compact_camera_header() -> bool:
 func world_insets() -> Vector2:
     var insets := super.world_insets()
     if _compact_camera_header(): return Vector2(76, 156)
-    if _sheet_kind.is_empty(): insets.y += 64
+    if _sheet_kind.is_empty(): insets.y += 128 if _narrow_camera_rows() else 64
     return insets
 
 func _layout_body() -> void:

@@ -15,7 +15,7 @@ const assets = ['index.html', 'index.pck', 'index.js', 'index.wasm', 'campaign-v
 const hashes = directory => Object.fromEntries(assets.map(name => [name, digest(fs.readFileSync(path.join(directory, name)))]));
 const journey = path.join(__dirname, 'browser_growth_journey.cjs');
 const repositoryRoot = path.resolve(__dirname, '../../..');
-const provenancePath = path.join(repositoryRoot, 'FLOTRA_COMBINED_ARTIFACTS.json');
+const provenancePath = path.resolve(repositoryRoot, process.env.FLOTRA_COMPARISON_MANIFEST || 'FLOTRA_EQUIPMENT_CAMERA_ARTIFACTS.json');
 const provenance = JSON.parse(fs.readFileSync(provenancePath, 'utf8'));
 assert.equal(controlSHA, provenance.controlCommit, 'Pinned public control commit');
 for (const [name, expected] of Object.entries(provenance.sourceSHA256)) {
@@ -36,6 +36,7 @@ const report = {
   exports: { A: hashes(controlDirectory), B: hashes(candidateDirectory) },
   limits: { processP95MsStrictlyBelow: 100, drawCallsMaximum: 250, pausedNodeRangeMaximum: 4,
     rafMedian: 'max(75ms, same-run UI-only median * 1.75)', rafP95: 'max(120ms, same-run UI-only p95 * 2)' },
+  comparisonCamera: provenance.comparisonCamera || 'release-default',
   validity: 'Every A and B must pass all unchanged journey assertions, match loaded assets, initial state and renderer. No best-run selection or timing retry.',
   results: [],
 };
@@ -47,7 +48,7 @@ try {
     const directory = path.join(output, label);
     fs.mkdirSync(directory, { recursive: true });
     const run = spawnSync(process.execPath, [journey, control ? controlURL : candidateURL, directory, fixtures], {
-      env: { ...process.env, FLOTRA_JOURNEY_CASES: 'mature-performance', FLOTRA_EXPORTED_DIRECTORY: control ? controlDirectory : candidateDirectory },
+      env: { ...process.env, FLOTRA_JOURNEY_CASES: 'mature-performance', FLOTRA_PERFORMANCE_CAMERA: provenance.comparisonCamera || '', FLOTRA_EXPORTED_DIRECTORY: control ? controlDirectory : candidateDirectory },
       encoding: 'utf8', timeout: 240000, maxBuffer: 16 * 1024 * 1024,
     });
     fs.writeFileSync(path.join(directory, 'run.log'), (run.stdout || '') + (run.stderr || ''));
@@ -79,7 +80,32 @@ try {
     try {
       assert.deepEqual(row.test.environment, reference.environment);
       assert.equal(row.test.chromiumVersion, reference.chromiumVersion);
-      assert.deepEqual(row.test.initialState, reference.initialState);
+      // New read-only diagnostics do not exist in the immutable older export.
+      // Retain equality of every original camera/domain field; assert the
+      // explicitly selected real overview before removing additive diagnostics.
+      function comparisonState(test, candidate = false) {
+        const state = structuredClone(test.initialState);
+        if (provenance.comparisonCamera === 'overview') {
+          const camera = state.camera;
+          if (candidate) assert.ok('framing' in camera && 'equipmentBounds' in camera, 'Candidate exposes qualified work-camera diagnostics');
+          assert.equal(camera.zoom, 1); assert.equal(camera.turn, 0);
+          assert.ok(Math.abs(camera.panX) < .002 && Math.abs(camera.panY) < .002);
+          assert.equal(camera.touches, 0); assert.equal(camera.mouseDown, false);
+          if ('framing' in camera) {
+            assert.equal(camera.framing, 'overview');
+            assert.deepEqual(camera.equipmentBounds.map(item => item.id).sort(), ['packing', 'shelf']);
+            for (const item of camera.equipmentBounds) {
+              assert.equal(item.corners.length, 8);
+              assert.ok(item.corners.every(point => Number.isFinite(point.x) && Number.isFinite(point.y)));
+            }
+          }
+          delete camera.framing;
+          delete camera.equipmentBounds;
+          assert.equal(test.performanceCamera, 'overview');
+        }
+        return state;
+      }
+      assert.deepEqual(comparisonState(row.test, row.label.startsWith('B')), comparisonState(reference));
       assert.deepEqual(row.test.loadedAssets, report.exports[row.label[0]]);
       return true;
     } catch { return false; }

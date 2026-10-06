@@ -195,6 +195,9 @@ func check_batches(view) -> void:
             check(source_ids.has(node.get_instance_id()), "Every live generated BoxMesh has a batch source")
 
 func inspect(view, sim, dimensions: Vector2i) -> void:
+    # These unchanged whole-floor assertions exercise the explicit overview.
+    # work_camera_smoke and work_camera_layouts cover the new default framing.
+    view.camera_action("reset")
     view.refresh()
     view.fit_camera(Vector2(dimensions))
     var state: Dictionary = sim.snapshot()

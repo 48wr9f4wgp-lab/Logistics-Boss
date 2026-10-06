@@ -391,7 +391,13 @@ async function samplePerformance(page,milliseconds) {
   });
   const late=JSON.parse(fs.readFileSync(path.join(fixturesDirectory,'late.json'),'utf8'));
   await scenario('mature-performance',late,async(page,context,test)=>{
-   let state=await ui(page);test.initialState={simTime:state.simTime,wallet:state.wallet,growth:state.growth,progress:state.progress,camera:state.camera};assert.equal(state.growth.wing_count,4);assert.equal(state.growth.robot_count,4);assert.equal(state.progress.shipped,late.shipped);assert.equal(state.wallet,late.wallet);assert.equal(state.trialRunning,false);
+   // The release control comparison explicitly selects the same real whole-view
+   // preset in both builds. Normal journey runs retain the new work default.
+   if(process.env.FLOTRA_PERFORMANCE_CAMERA==='overview'){
+    await closeSheets(page,context);await tapName(page,context,'CameraReset');
+    await page.waitForFunction(()=>{const c=window.FlotraViewport.uiMetrics.camera;return c.zoom===1&&c.turn===0&&Math.abs(c.panX)<.002&&Math.abs(c.panY)<.002&&!c.mouseDown&&c.touches===0;});
+   }
+   let state=await ui(page);test.initialState={simTime:state.simTime,wallet:state.wallet,growth:state.growth,progress:state.progress,camera:state.camera};test.performanceCamera=process.env.FLOTRA_PERFORMANCE_CAMERA||'release-default';assert.equal(state.growth.wing_count,4);assert.equal(state.growth.robot_count,4);assert.equal(state.progress.shipped,late.shipped);assert.equal(state.wallet,late.wallet);assert.equal(state.trialRunning,false);
    await closeSheets(page,context);await setRunning(page,context,false);await page.waitForTimeout(1000);
    const idle=await samplePerformance(page,6000);
    await tapName(page,context,'SessionRecord');await expectUI(page,{sheet:'records',worldVisible:false});
