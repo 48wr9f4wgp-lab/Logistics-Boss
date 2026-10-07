@@ -6,6 +6,15 @@ const Save = preload("res://prototype/dispatch_save.gd")
 var checks := 0
 var failures: Array[String] = []
 
+class QAStartSpy extends Main:
+    var notifications := 0
+    var events: Array = []
+    func _notify_autosave_started_qa(result: Dictionary) -> void:
+        notifications += 1
+        super._notify_autosave_started_qa(result)
+    func _emit_autosave_started_qa(details: Dictionary) -> void:
+        events.append(details.duplicate(true))
+
 class MemoryStore extends Save:
     var live_sim
     var captures: Array = []
@@ -15,13 +24,19 @@ class MemoryStore extends Save:
     var flushes := 0
     var synchronous_saves := 0
     var fail_write := ""
+    var latest_begin_result: Dictionary = {}
+    var diagnostics_reads := 0
     func _read_pair() -> Dictionary:
         return {"ok":true,"source":"v5","primary":"","backup":"","primary_present":false,"backup_present":false}
     func begin_autosave(sim) -> Dictionary:
         var result: Dictionary = super.begin_autosave(sim)
+        latest_begin_result = result.duplicate(true)
         if result.get("started", false):
             captures.append({"state":sim.export_release_state(),"generation":result.get("generation",-1)})
         return result
+    func autosave_status() -> Dictionary:
+        diagnostics_reads += 1
+        return super.autosave_status()
     func advance_autosave(expected_generation: int = -1) -> Dictionary:
         advances += 1
         return super.advance_autosave(expected_generation)
@@ -62,9 +77,9 @@ func check(value: bool, label: String) -> void:
         failures.append(label)
         push_error(label)
 
-func make_app(store = null, persistent: bool = true) -> Dictionary:
+func make_app(store = null, persistent: bool = true, script = Main) -> Dictionary:
     var clock := {"now":1000000}
-    var app = Main.new()
+    var app = script.new()
     if store == null: store = MemoryStore.new()
     app.save_store = store
     app.persistence_enabled = persistent
@@ -92,6 +107,50 @@ func begin_capture(fixture: Dictionary) -> void:
 
 func dispose(fixture: Dictionary) -> void:
     fixture.app.free()
+
+func qa_start_notification() -> void:
+    var quiet := make_app(null, true, QAStartSpy)
+    begin_capture(quiet)
+    check(quiet.app.notifications == 0 and quiet.app.events.is_empty() and quiet.store.diagnostics_reads == 0, "QA-off capture skips notification helper, scalar inspection and bridge emission")
+    for tick in 3: frame(quiet, 0.25)
+    quiet.app._save_now()
+    check(quiet.app.notifications == 0 and quiet.app.events.is_empty(), "QA-off phases and synchronous save emit nothing")
+    dispose(quiet)
+
+    var observed := make_app(null, true, QAStartSpy)
+    var control := make_app()
+    observed.app._phone_qa = true
+    begin_capture(observed)
+    begin_capture(control)
+    check(observed.app.notifications == 0 and observed.store.diagnostics_reads == 0, "Native execution skips the Web-only helper even when phone QA is enabled")
+    # Exercise the same guarded helper directly with a native emitter spy;
+    # this substitutes only the browser event sink, never a phase or sim tick.
+    observed.app._notify_autosave_started_qa(observed.store.latest_begin_result)
+    check(observed.app.events.size() == 1 and observed.store.diagnostics_reads == 1, "A successful new pending capture emits one QA start notification")
+    var details: Dictionary = observed.app.events[0]
+    check(details.size() == 5 and details.pending and details.phase == 1 and details.generation == observed.store.latest_begin_result.generation, "Start notification contains the five scalar diagnostics for the exact phase-one generation")
+    check(details.values().all(func(value): return value is bool or value is int), "Start notification exposes no capture, payload or model reference")
+    var elapsed: float = observed.app._save_elapsed
+    observed.app._begin_autosave()
+    observed.app._notify_autosave_started_qa(observed.store.latest_begin_result)
+    check(observed.app.events.size() == 1 and observed.store.diagnostics_reads == 1 and observed.app._save_elapsed == elapsed, "Busy begin neither emits a duplicate event nor changes capture cadence")
+    for tick in 3:
+        frame(observed, 0.25)
+        frame(control, 0.25)
+        check(observed.app.sim.export_release_state() == control.app.sim.export_release_state() and observed.app._save_elapsed == control.app._save_elapsed, "QA start notification leaves exact state and capture cadence unchanged through phase %d" % (tick + 2))
+    check(observed.app.events.size() == 1 and observed.store.writes == control.store.writes, "Later phases emit no new start event and preserve the committed snapshot")
+    var calls: int = observed.app.notifications
+    observed.app._save_now()
+    check(observed.app.notifications == calls and observed.app.events.size() == 1, "Synchronous explicit save cannot masquerade as an autosave start")
+    observed.app.sim.contract_results["growth_1"] = {"attempts":1,"best_time":100.0,"best_medal":"silver","earned":0,"padding":"x".repeat(Save.MAX_PAYLOAD_BYTES)}
+    observed.app._begin_autosave()
+    observed.app._notify_autosave_started_qa(observed.store.latest_begin_result)
+    check(observed.store.latest_begin_result.started and not observed.store.latest_begin_result.pending and observed.app.events.size() == 1 and observed.store.diagnostics_reads == 1, "Failed phase-one capture emits no start event or scalar inspection")
+    observed.app._phone_qa = false
+    observed.app._notify_autosave_started_qa({"ok":true,"started":true,"pending":true})
+    check(observed.app.events.size() == 1 and observed.store.diagnostics_reads == 1, "Notification helper also rejects disabled QA before inspecting or emitting")
+    dispose(observed)
+    dispose(control)
 
 func cadence_and_snapshot() -> void:
     var fixture := make_app()
@@ -305,6 +364,7 @@ func run() -> void:
     root.content_scale_size = Vector2i.ZERO
     root.size = Vector2i(390,844)
     check(Main.MAX_FOREGROUND_FRAME_SECONDS == 0.25, "Original simulation catch-up budget is unchanged")
+    qa_start_notification()
     cadence_and_snapshot()
     synchronous_boundaries()
     phase_and_clock_bounds()

@@ -491,12 +491,23 @@ func _begin_autosave() -> void:
         _save_now()
         return
     var result: Dictionary = save_store.begin_autosave(sim)
+    if _phone_qa and OS.has_feature("web"):
+        _notify_autosave_started_qa(result)
     if result.get("started", false):
         # Capture cadence is independent of when the staged commit finishes.
         _save_elapsed = 0.0
         _autosave_subsequent_frames = 0
         _autosave_foreground_elapsed = 0.0
     _publish_save_status()
+
+func _notify_autosave_started_qa(result: Dictionary) -> void:
+    if not _phone_qa or not result.get("ok", false) or not result.get("started", false) or not result.get("pending", false): return
+    if not save_store.has_method("autosave_status"): return
+    _emit_autosave_started_qa(save_store.autosave_status())
+
+func _emit_autosave_started_qa(details: Dictionary) -> void:
+    # Read-only, scalar-only notification; no simulation command or phase delay.
+    JavaScriptBridge.eval("window.dispatchEvent(new CustomEvent('flotra-autosave-started',{detail:%s}))" % JSON.stringify(details), true)
 
 func _advance_autosave(foreground_seconds: float) -> void:
     if not persistence_enabled or not _loaded or not _supports_staged_autosave() or not save_store.has_pending_autosave(): return
