@@ -15,6 +15,11 @@ const SaveScript = preload("res://prototype/dispatch_save.gd")
 var save_store = SaveScript.new()
 var persistence_enabled := true
 var _save_elapsed := 0.0
+const AUTOSAVE_CAPTURE_SECONDS := 5.0
+const MAX_AUTOSAVE_SUBSEQUENT_FRAMES := 3
+const MAX_AUTOSAVE_FOREGROUND_SECONDS := 1.0
+var _autosave_subsequent_frames := 0
+var _autosave_foreground_elapsed := 0.0
 var _last_status := ""
 var _loaded := false
 var _save_load_result: Dictionary = {}
@@ -230,6 +235,9 @@ func _report_phone_qa() -> void:
     data["simTime"] = sim.sim_time
     data["speed"] = speed
     data["menuPaused"] = _menu_paused
+    if persistence_enabled and save_store.has_method("autosave_status"):
+        # Scalar-only inspection: never expose captures or a save command.
+        data["autosave"] = save_store.autosave_status()
     data["preferences"] = release.get("preferences", {})
     data["operation"] = release.get("operations", {})
     data["batchWorkers"] = sim.workers.filter(func(worker): return worker.task in ["pick", "ship"] and worker.cargo_ids.size() > 1).size()
@@ -285,8 +293,7 @@ func _process(delta: float) -> void:
     if sim == null:
         return
     if _save_protected() and running:
-        running = false
-        hud.call("set_trial_running", false)
+        _reject_if_save_protected()
     _menu_paused = running and bool(_preferences.pause_on_menus) and is_instance_valid(hud) and not str(hud._sheet_kind).is_empty()
     var active := running and not _menu_paused
     var now_usec: int = frame_clock.call()
@@ -295,14 +302,18 @@ func _process(delta: float) -> void:
         foreground_seconds = minf(float(now_usec - _last_frame_usec) / 1000000.0, MAX_FOREGROUND_FRAME_SECONDS)
     _last_frame_usec = now_usec
     _clock_active = active
-    if active:
+    # Service an older immutable capture before granting more live progress.
+    # This is a foreground-progress/frame bound, not a wall-clock deadline:
+    # suspended render frames cannot finish a staged write by themselves.
+    _advance_autosave(foreground_seconds)
+    if active and not _save_protected():
         sim.step(foreground_seconds * speed)
         _save_elapsed += foreground_seconds
         if sim.campaign_status != _last_status:
             _last_status = sim.campaign_status
             _save_now()
-        elif _save_elapsed >= 5.0:
-            _save_now()
+        elif _save_elapsed >= AUTOSAVE_CAPTURE_SECONDS:
+            _begin_autosave()
     if hud != null:
         hud.call("refresh")
     if world != null:
@@ -336,8 +347,10 @@ func _pause_trial(paused: bool) -> void:
 
 func _return_to_intro() -> void:
     running = false
+    _reset_frame_clock()
     hud.call("set_trial_running", false)
     hud.call("show_intro")
+    _save_now()
 
 func _apply_layout(id: String) -> void:
     if _reject_if_save_protected(): return
@@ -463,14 +476,52 @@ func _reject_if_save_protected() -> bool:
         if hud.has_method("show_save_protection"): hud.call("show_save_protection", save_store.status)
     return true
 
-func _save_now() -> void:
-    _save_elapsed = 0.0
-    if not persistence_enabled or not _loaded or sim == null: return
-    save_store.save_from(sim)
+func _supports_staged_autosave() -> bool:
+    # Older in-memory adapters and the no-save review path stay usable.
+    return save_store.has_method("begin_autosave") and save_store.has_method("advance_autosave") and save_store.has_method("flush_autosave") and save_store.has_method("has_pending_autosave")
+
+func _publish_save_status() -> void:
     # A writer conflict or uncertain write is terminal for this session. Show
     # the stop immediately, including saves made while already paused.
     if _reject_if_save_protected(): return
     if is_instance_valid(hud): hud.call("set_save_status",save_store.status)
+
+func _begin_autosave() -> void:
+    if not persistence_enabled or not _loaded or sim == null or not _supports_staged_autosave():
+        _save_now()
+        return
+    var result: Dictionary = save_store.begin_autosave(sim)
+    if result.get("started", false):
+        # Capture cadence is independent of when the staged commit finishes.
+        _save_elapsed = 0.0
+        _autosave_subsequent_frames = 0
+        _autosave_foreground_elapsed = 0.0
+    _publish_save_status()
+
+func _advance_autosave(foreground_seconds: float) -> void:
+    if not persistence_enabled or not _loaded or not _supports_staged_autosave() or not save_store.has_pending_autosave(): return
+    _autosave_subsequent_frames += 1
+    var previous_status: String = save_store.status
+    if _autosave_subsequent_frames >= MAX_AUTOSAVE_SUBSEQUENT_FRAMES or _autosave_foreground_elapsed + foreground_seconds > MAX_AUTOSAVE_FOREGROUND_SECONDS:
+        save_store.flush_autosave()
+    else:
+        save_store.advance_autosave()
+    if previous_status != save_store.status or _save_protected():
+        _publish_save_status()
+    if save_store.has_pending_autosave():
+        _autosave_foreground_elapsed += foreground_seconds
+    else:
+        _autosave_subsequent_frames = 0
+        _autosave_foreground_elapsed = 0.0
+
+func _save_now() -> void:
+    _save_elapsed = 0.0
+    _autosave_subsequent_frames = 0
+    _autosave_foreground_elapsed = 0.0
+    if not persistence_enabled or not _loaded or sim == null: return
+    # The store invalidates the older generation before capturing current state.
+    save_store.save_from(sim)
+    _publish_save_status()
 
 func _notification(what: int) -> void:
     if what in [NOTIFICATION_WM_WINDOW_FOCUS_OUT, NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED]:
@@ -502,6 +553,9 @@ func isolation_status() -> Dictionary:
 func _exit_trial() -> void:
     # This application has its own profile and never enters production main.
     running = false
+    _reset_frame_clock()
+    _save_now()
+    if _save_protected(): return
     get_tree().quit()
 
 func _preview_slot(slot_id: String, choice_id: String) -> void:

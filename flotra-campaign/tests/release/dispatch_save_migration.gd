@@ -6,6 +6,7 @@ const OldSave = preload("res://prototype/release_save.gd")
 const V1 = preload("res://prototype/legacy_dispatch/release_sim.gd")
 const V2 = preload("res://prototype/legacy_dispatch/growth_v2_sim.gd")
 const V3 = preload("res://prototype/legacy_dispatch/growth_sim.gd")
+const Codec = preload("res://prototype/dispatch_state_codec.gd")
 var failures: Array[String] = []
 var checks := 0
 
@@ -18,6 +19,26 @@ class FailureStore extends Save:
     func _encode_bytes(bytes: PackedByteArray) -> String:
         encodes += 1
         return super._encode_bytes(bytes)
+
+class CountedSim extends Sim:
+    static var constructors := 0
+    static var loads := 0
+    static var root_safe_scans := 0
+    func _init() -> void:
+        super()
+        constructors += 1
+    func _load_release_unchecked(data: Dictionary) -> void:
+        loads += 1
+        super._load_release_unchecked(data)
+    func _safe_variant(value, depth: int = 0) -> bool:
+        if depth == 0: root_safe_scans += 1
+        return super._safe_variant(value,depth)
+
+class MemoryWriteStore extends FailureStore:
+    var writes := 0
+    func _write(_text: String) -> Dictionary:
+        writes += 1
+        return {"ok":true}
 
 func check(ok: bool, label: String) -> void:
     checks += 1
@@ -36,6 +57,7 @@ func _initialize() -> void:
     new_feature_roundtrip()
     rejection_and_failures()
     size_boundary()
+    validation_only_guards()
     print(JSON.stringify({"suite":"dispatch_save_migration","checks":checks,"failures":failures,"profile":"explicit_disposable_only"}))
     quit(0 if failures.is_empty() else 1)
 
@@ -89,6 +111,9 @@ func migration_case(version: int) -> void:
         source.campaign.results.growth_1.best_time = 45.0000001
         source.campaign.results.growth_1.best_medal = "silver"
     var source_bytes := var_to_bytes(source)
+    var detached := Codec.validate_state(Sim.new(),source)
+    check(detached.ok and detached.migrated,"schema%d validation-only migration accepted"%version)
+    check(var_to_bytes(source)==source_bytes,"schema%d validation-only source exact"%version)
     var old_primary := codec.encode(source)
     put(Save.OLD_PATH,old_primary)
     put(Save.OLD_BACKUP,old_backup)
@@ -138,6 +163,7 @@ func new_feature_roundtrip() -> void:
             break
         if sim.finished: break
     check(saw_twelve,"real twelve-window in-flight fixture")
+    validation_only_parity(sim.export_release_state(),"active owned12")
     var truncated_window: Dictionary = sim.export_release_state()
     truncated_window.dispatch.dispatch_window = 6
     reject_domain(truncated_window,"cannot reduce active admission to fit an inconsistent save")
@@ -175,7 +201,10 @@ func reject_domain(data: Dictionary, label: String) -> void:
     var target := Sim.new()
     var before := var_to_bytes(target.export_release_state())
     var source_before := var_to_bytes(data)
-    check(not target.import_release_state(data).ok,label+" rejected")
+    var validated := Codec.validate_state(target,data)
+    check(not validated.ok and var_to_bytes(target.export_release_state())==before and var_to_bytes(data)==source_before,label+" validation-only rejected without mutation")
+    var imported: Dictionary = target.import_release_state(data)
+    check(not imported.ok and imported==validated,label+" validation/import rejection parity")
     check(var_to_bytes(target.export_release_state())==before and var_to_bytes(data)==source_before,label+" transactional rejection")
 
 func rejection_and_failures() -> void:
@@ -274,3 +303,74 @@ func size_boundary() -> void:
     check(store.encodes==encodes_before and slots()==before,"oversize before encoding or slot writes")
     check(FileAccess.get_file_as_string(Save.PATH+".tmp")=="temporary sentinel","oversize leaves temp untouched")
     check(not store.blocked and store.status.contains("未保存の進行が失われます"),"oversize warning without corrupting usable storage")
+
+func validation_only_parity(source: Dictionary, label: String) -> void:
+    var live := CountedSim.new()
+    check(live.accept_contract("growth_1").ok,label+" distinct live target")
+    live.step(0.1)
+    var live_before := var_to_bytes(live.export_release_state())
+    var source_before := var_to_bytes(source)
+    var constructors := CountedSim.constructors
+    var loads := CountedSim.loads
+    var scans := CountedSim.root_safe_scans
+    var validated := Codec.validate_state(live,source)
+    check(validated.ok,label+" validation-only accepts")
+    check(CountedSim.constructors==constructors+1 and CountedSim.loads==loads+1 and CountedSim.root_safe_scans==scans+1,label+" exactly one candidate/load/safe scan")
+    check(var_to_bytes(live.export_release_state())==live_before and var_to_bytes(source)==source_before,label+" no live/source mutation")
+    var imported := Sim.new()
+    check(imported.import_release_state(source).ok,label+" import accepts same state")
+    var from_validation: Dictionary = validated.projected.duplicate(true)
+    from_validation.schema = 5
+    from_validation.dispatch = {"dispatch_window":validated.dispatch_window}
+    check(var_to_bytes(imported.export_release_state())==var_to_bytes(from_validation),label+" validation/import output parity")
+    validated.projected.campaign.wallet = -999
+    validated.projected.sim.workers[0].work_remaining = -999.0
+    check(var_to_bytes(source)==source_before and var_to_bytes(live.export_release_state())==live_before,label+" returned projection has no source/live aliases")
+
+func validation_only_guards() -> void:
+    validation_only_parity(Sim.new().export_release_state(),"idle schema5")
+    var live := CountedSim.new()
+    var store := MemoryWriteStore.new()
+    store._read_ready = true
+    var before := var_to_bytes(live.export_release_state())
+    var constructors := CountedSim.constructors
+    var loads := CountedSim.loads
+    var scans := CountedSim.root_safe_scans
+    check(store.save_from(live).ok,"save validation-only path accepts")
+    check(CountedSim.constructors==constructors+1 and CountedSim.loads==loads+1 and CountedSim.root_safe_scans==scans+1,"save has one detached candidate and no outer commit")
+    check(store.encodes==1 and store.writes==1 and var_to_bytes(live.export_release_state())==before,"save validates without changing live state")
+
+    var invalid := Sim.new()
+    invalid.campaign_wallet += 1
+    before = var_to_bytes(invalid.export_release_state())
+    var rejected_store := MemoryWriteStore.new()
+    rejected_store._read_ready = true
+    check(rejected_store.save_from(invalid).get("reason")=="invalid_state","invalid current state still rejected by save")
+    check(rejected_store.encodes==0 and rejected_store.writes==0 and var_to_bytes(invalid.export_release_state())==before,"invalid save neither encodes/writes nor mutates live state")
+
+    var large := CountedSim.new()
+    check(large.import_release_state(padded(large.export_release_state(),2000004)).ok,"oversize preflight fixture remains valid")
+    var too_large := MemoryWriteStore.new()
+    too_large._read_ready = true
+    constructors = CountedSim.constructors
+    loads = CountedSim.loads
+    scans = CountedSim.root_safe_scans
+    check(too_large.save_from(large).get("reason")=="too_large","oversize rejected before validation")
+    check(CountedSim.constructors==constructors and CountedSim.loads==loads and CountedSim.root_safe_scans==scans and too_large.encodes==0 and too_large.writes==0,"oversize constructs/scans/encodes/writes nothing")
+
+    var unsafe: Dictionary = Sim.new().export_release_state()
+    unsafe.sim.sim_time = INF
+    reject_domain(unsafe,"nonfinite retained tree")
+    unsafe = Sim.new().export_release_state()
+    unsafe.dispatch.dispatch_window = "6"
+    reject_domain(unsafe,"dispatch subtree has exact integer type")
+    unsafe = Sim.new().export_release_state()
+    unsafe.dispatch.extra = {}
+    reject_domain(unsafe,"dispatch subtree rejects extra fields")
+    unsafe = Sim.new().export_release_state()
+    var leaf := {}
+    unsafe.sim.comparison = leaf
+    for index in 25:
+        leaf.next = {}
+        leaf = leaf.next
+    reject_domain(unsafe,"retained tree depth guard unchanged")

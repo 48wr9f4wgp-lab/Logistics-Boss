@@ -3,6 +3,11 @@ extends SceneTree
 ## dispatch; accelerated domain stepping is used only to avoid wall-clock waits.
 ## Headless geometry/input is not a screenshot or physical-device verification.
 const Main = preload("res://prototype/growth_main.gd")
+const Save = preload("res://prototype/dispatch_save.gd")
+class TransientWriteFailure extends Save:
+    func _write(_text: String) -> Dictionary:
+        return {"ok":false, "reason":"write"}
+
 var app
 var checks := 0
 var failures: Array[String] = []
@@ -355,14 +360,35 @@ func run() -> void:
     await tap(node("ControlsPause"))
     await process_elapsed(.1)
     check(app.running and app.sim.sim_time > before.sim.sim_time, "Real explicit resume continues restored cargo")
-    # A blocked store is represented faithfully in all full-height read screens.
-    app.save_store.blocked = true
-    app.save_store.status = "保存できませんでした。画面を閉じると未保存の進行が失われます"
+    # Ordinary write warnings still remain readable through settings. A terminal
+    # schema-5 protection stop is a separate state, tested below.
+    var transient_store := TransientWriteFailure.new()
+    transient_store._read_ready = true
+    app.save_store = transient_store
     app._save_now()
+    check(not app.save_store.blocked and app.save_store.status == "保存できませんでした。画面を閉じると未保存の進行が失われます", "Nonterminal write failure retains the ordinary unsaved warning")
     await tap(app.hud._back)
     var warning := node("ControlsSaveStatus")
     check(await reach(warning) and warning.text == app.save_store.status, "Full Japanese save warning is reachable via real settings scroll")
     mark("Exact isolated native reload, explicit resume and reachable save warning")
+    await tap(app.hud._close)
+    before = app.sim.export_release_state()
+    app.save_store.blocked = true
+    app.save_store.status = "別の画面の更新または書込み結果を確認できません。データを保護して進行を停止しました"
+    app._save_now()
+    await settle()
+    check(app.hud._sheet_kind == "save_protection" and not app.running, "Terminal save protection immediately stops the scene")
+    warning = node("SaveProtectionReason")
+    check(await reach(warning) and warning.text == app.save_store.status, "Full Japanese protection reason is reachable in the stop screen")
+    check(app.hud._close.disabled and app.hud._pause.disabled, "Protection disables dismissal and resume actions")
+    check(app.hud._content.find_children("*", "Button", true, false).is_empty(), "Protected screen exposes no start, purchase or overwrite action")
+    await tap(app.hud._back)
+    await tap(app.hud._close)
+    await tap(app.hud._pause)
+    await process_elapsed(.2)
+    check(app.hud._sheet_kind == "save_protection" and not app.running and app.sim.export_release_state() == before, "Real Back, close and resume input cannot escape protection or advance cargo")
+    await verify_reachability("protected save 375x567")
+    mark("Terminal save protection shows the full reason and blocks player actions")
     app.queue_free()
     await settle()
     finish()

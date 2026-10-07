@@ -3,6 +3,7 @@ extends RefCounted
 # The old campaign files are read-only. The native user directory stays the
 # same so old installations can be found, but every write uses new v5 paths.
 const LegacyCodec = preload("res://prototype/release_save.gd")
+const StateCodec = preload("res://prototype/dispatch_state_codec.gd")
 const FORMAT := "flotra-campaign"
 const VERSION := 5
 const MAX_TEXT := 2800000
@@ -17,6 +18,10 @@ var status := "未保存"
 var _read_ready := false
 var _observed: Dictionary = {}
 var _source := ""
+var _generation := 0
+var _pending: Dictionary = {}
+var last_saved_generation := -1
+var _last_superseded_generation := -1
 
 func encode(data: Dictionary) -> String:
     var bytes := var_to_bytes(data)
@@ -91,10 +96,10 @@ func _unsupported(decoded: Dictionary) -> bool:
 
 func _valid_for_sim(decoded: Dictionary, sim) -> bool:
     if not decoded.get("ok",false) or _unsupported(decoded): return false
-    var candidate = sim.get_script().new()
-    return candidate.import_release_state(decoded.data).get("ok",false)
+    return StateCodec.validate_state(sim, decoded.data).get("ok",false)
 
 func load_into(sim) -> Dictionary:
+    _cancel_pending()
     # A blocked store is terminal for this session. Reopening is explicit.
     if blocked: return {"ok":false,"reason":"blocked","blocked":true,"fresh":false}
     var pair := _read_pair()
@@ -128,30 +133,147 @@ func load_into(sim) -> Dictionary:
     return _stop("unrecognized_save", "保存データを読み込めません。元のデータを保護して進行を停止しました")
 
 func _stop(reason: String, message: String) -> Dictionary:
+    _cancel_pending(false)
     blocked = true
     status = message
-    return {"ok":false,"reason":reason,"blocked":true,"fresh":false}
+    return {"ok":false,"reason":reason,"blocked":true,"fresh":false,"pending":false}
 
 func save_from(sim) -> Dictionary:
-    if blocked: return {"ok":false,"reason":"blocked"}
-    if not _read_ready: return {"ok":false,"reason":"load_required"}
+    # Committed actions, job completion and lifecycle saves always supersede
+    # an older autosave capture, even when this latest attempt fails.
+    _cancel_pending()
+    var started := _begin_capture(sim,_generation)
+    if not started.get("ok",false): return started
+    return flush_autosave(int(started.generation))
+
+func has_pending_autosave() -> bool:
+    return not _pending.is_empty()
+
+func autosave_status() -> Dictionary:
+    # Scalar, read-only diagnostics only; never expose the snapshot or model.
+    return {"pending":has_pending_autosave(),"phase":int(_pending.get("phase",0)),"generation":_generation,"last_saved_generation":last_saved_generation,"last_superseded_generation":_last_superseded_generation}
+
+func begin_autosave(sim) -> Dictionary:
+    if blocked:
+        _cancel_pending(false)
+        return {"ok":false,"reason":"blocked","pending":false,"blocked":true,"started":false}
+    if has_pending_autosave(): return _pending_result(false)
+    _cancel_pending()
+    return _begin_capture(sim,_generation)
+
+func _cancel_pending(record_superseded: bool = true) -> void:
+    if record_superseded and has_pending_autosave():
+        _last_superseded_generation = int(_pending.generation)
+    _generation += 1
+    _pending = {}
+
+func _current(generation: int) -> bool:
+    return generation == _generation and not _pending.is_empty() and int(_pending.generation) == generation
+
+func _superseded() -> Dictionary:
+    # A stale continuation may not write, change status or block a newer save.
+    return {"ok":false,"reason":"superseded","pending":has_pending_autosave(),"started":false,"generation":_generation}
+
+func _pending_result(started: bool = false) -> Dictionary:
+    return {"ok":true,"pending":true,"started":started,"generation":_pending.generation,"phase":_pending.phase}
+
+func _begin_capture(sim, generation: int) -> Dictionary:
+    if blocked: return {"ok":false,"reason":"blocked","pending":false,"blocked":true,"started":false}
+    if not _read_ready: return {"ok":false,"reason":"load_required","pending":false,"started":false}
+    # export_release_state deeply copies every mutable domain field. This
+    # private capture is never exposed to callers or changed by later sim ticks.
     var data: Dictionary = sim.export_release_state()
     # Preserve the released 2 MB preflight: serialize once and reject before
     # hashing/base64/encoding or touching any primary, backup or temporary file.
     var bytes := var_to_bytes(data)
+    if generation != _generation: return _superseded()
     if bytes.size() > MAX_PAYLOAD_BYTES:
         status = "保存データが大きすぎるため保存できません。画面を閉じると未保存の進行が失われます"
-        return {"ok":false,"reason":"too_large"}
-    var candidate = sim.get_script().new()
-    if data.get("schema") != 5 or not candidate.import_release_state(data).get("ok",false):
+        return {"ok":false,"reason":"too_large","pending":false,"started":true,"generation":generation}
+    if data.get("schema") != 5:
+        return _capture_invalid(generation)
+    var validation := StateCodec.begin_validation(sim,data)
+    if generation != _generation: return _superseded()
+    if blocked:
+        _cancel_pending(false)
+        return {"ok":false,"reason":"blocked","pending":false,"blocked":true,"started":true}
+    if not validation.get("ok",false):
+        return _capture_invalid(generation)
+    _pending = {"generation":generation,"phase":1,"bytes":bytes,"validation":validation}
+    status = "自動保存中"
+    return _pending_result(true)
+
+func _capture_invalid(generation: int) -> Dictionary:
+    var result := _stop("invalid_state", "現在の状態を検証できません。以前の保存を保護して進行を停止しました")
+    result.started = true
+    result.generation = generation
+    return result
+
+func advance_autosave(expected_generation: int = -1) -> Dictionary:
+    if expected_generation >= 0 and expected_generation != _generation: return _superseded()
+    if blocked:
+        _cancel_pending(false)
+        return {"ok":false,"reason":"blocked","pending":false,"blocked":true}
+    if not has_pending_autosave(): return {"ok":true,"pending":false,"idle":true}
+    var job := _pending
+    var generation := int(job.generation)
+    if not _current(generation): return _superseded()
+    var checked: Dictionary
+    if job.phase == 1:
+        checked = StateCodec.validate_shape_phase(job.validation)
+    elif job.phase == 2:
+        checked = StateCodec.validate_domain_phase(job.validation)
+    elif job.phase == 3:
+        return _commit_capture(job)
+    else:
+        return _stop("invalid_state", "保存の検証段階を確認できません。以前の保存を保護して進行を停止しました")
+    if not _current(generation): return _superseded()
+    if blocked:
+        _cancel_pending(false)
+        return {"ok":false,"reason":"blocked","pending":false,"blocked":true}
+    if not checked.get("ok",false):
         return _stop("invalid_state", "現在の状態を検証できません。以前の保存を保護して進行を停止しました")
-    var text := _encode_bytes(bytes)
+    job.phase += 1
+    return _pending_result()
+
+func flush_autosave(expected_generation: int = -1) -> Dictionary:
+    if expected_generation >= 0 and expected_generation != _generation: return _superseded()
+    if blocked:
+        _cancel_pending(false)
+        return {"ok":false,"reason":"blocked","pending":false,"blocked":true}
+    if not has_pending_autosave(): return {"ok":true,"pending":false,"idle":true}
+    var generation := int(_pending.generation)
+    var result := _pending_result()
+    while _current(generation):
+        result = advance_autosave(generation)
+        if not result.get("ok",false): return result
+    return result
+
+func _commit_capture(job: Dictionary) -> Dictionary:
+    var generation := int(job.generation)
+    if not _current(generation): return _superseded()
+    if job.validation.get("stage") != 2:
+        return _stop("invalid_state", "保存の検証完了を確認できません。以前の保存を保護して進行を停止しました")
+    var text := _encode_bytes(job.bytes)
+    if not _current(generation): return _superseded()
+    if blocked:
+        _cancel_pending(false)
+        return {"ok":false,"reason":"blocked","pending":false,"blocked":true}
     if text.is_empty() or text.length() > MAX_TEXT:
+        _pending = {}
         status = "保存データが大きすぎるため保存できません。画面を閉じると未保存の進行が失われます"
-        return {"ok":false,"reason":"too_large"}
+        return {"ok":false,"reason":"too_large","pending":false}
+    # No yield or callback between the last generation guard and this existing
+    # synchronous transaction. It rechecks writer ownership and observed slots.
     var result: Dictionary = _write(text)
+    if not _current(generation): return _superseded()
+    _pending = {}
+    result.pending = false
+    result.generation = generation
+    result.phase = 4
     if result.get("ok",false):
         _source = "v5"
+        last_saved_generation = generation
         status = "自動保存済み"
     else:
         status = "保存できませんでした。画面を閉じると未保存の進行が失われます"
