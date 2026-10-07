@@ -4,6 +4,9 @@ extends SceneTree
 const Main = preload("res://prototype/growth_main.gd")
 const Sim = preload("res://prototype/growth_sim.gd")
 const Store = preload("res://prototype/release_save.gd")
+const FrozenSim = preload("res://prototype/legacy_dispatch/growth_sim.gd")
+const DispatchSim = preload("res://prototype/dispatch_sim.gd")
+const DispatchStore = preload("res://prototype/dispatch_save.gd")
 var app
 var checks := 0
 var failures: Array[String] = []
@@ -56,11 +59,29 @@ func write_fixture(sim, label: String) -> void:
     var directory := OS.get_environment("FLOTRA_UPGRADE_FIXTURES")
     if directory.is_empty(): return
     DirAccess.make_dir_recursive_absolute(directory)
-    var saved: Dictionary = sim.export_release_state()
-    var restored = Sim.new()
-    check(restored.import_release_state(saved).ok and restored.export_release_state() == saved, "Exact fixture roundtrip " + label)
+    # Re-earn the original schema3 fixture with frozen rules. The scene now
+    # exports schema5; never wrap that payload in a legacy version1 envelope.
+    var legacy = FrozenSim.new()
+    finish_job(legacy, "growth_1")
+    check(legacy.buy_upgrade("wing_1").ok and legacy.buy_upgrade("crew_4").ok, "Earn legacy fixture equipment " + label)
+    finish_job(legacy, "growth_2")
+    if label == "funded340": finish_job(legacy, "growth_1")
+    var saved: Dictionary = legacy.export_release_state()
+    var restored = FrozenSim.new()
+    check(saved.schema == 3 and restored.import_release_state(saved).ok and var_to_bytes(restored.export_release_state()) == var_to_bytes(saved), "Exact frozen legacy fixture roundtrip " + label)
+    var migrated = DispatchSim.new()
+    check(migrated.import_release_state(saved).ok, "Candidate imports earned legacy fixture " + label)
+    var expected: Dictionary = migrated.export_release_state()
+    check(expected.schema == 5 and expected.dispatch == {"dispatch_window":6}, "Explicit candidate fixture schema " + label)
+    for key in ["sim", "campaign", "growth", "experience"]:
+        check(var_to_bytes(expected[key]) == var_to_bytes(saved[key]), "Migration preserves complete " + key + " fixture " + label)
+    check(var_to_bytes(sim.export_release_state()) == var_to_bytes(expected), "Candidate scene equals exact migrated fixture " + label)
+    var dispatch_encoded: String = DispatchStore.new().encode(expected)
+    var decoded: Dictionary = DispatchStore.new().decode(dispatch_encoded)
+    check(decoded.ok and var_to_bytes(decoded.data) == var_to_bytes(expected), "Exact schema5 fixture envelope " + label)
+    check(migrated.buy_upgrade("auto_pack").ok if label == "funded340" else true, "Expected funded purchase " + label)
     var file := FileAccess.open(directory.path_join(label + ".json"), FileAccess.WRITE)
-    file.store_string(JSON.stringify({"encoded":Store.new().encode(saved), "wallet":sim.campaign_wallet,"upgrades":sim.purchased_upgrades,"status":sim.campaign_status,"simTime":sim.sim_time}))
+    file.store_string(JSON.stringify({"encoded":Store.new().encode(saved), "dispatchEncoded":dispatch_encoded,"dispatchPurchasedEncoded":DispatchStore.new().encode(migrated.export_release_state()) if label == "funded340" else "", "wallet":legacy.campaign_wallet,"upgrades":legacy.purchased_upgrades,"status":legacy.campaign_status,"simTime":legacy.sim_time}))
 func geometry(label: String) -> void:
     var pending: Array[Node] = [app.hud._content]
     while not pending.is_empty():

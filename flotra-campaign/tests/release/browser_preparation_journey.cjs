@@ -11,6 +11,8 @@ const requestedURL = process.argv[2];
 const output = process.argv[3];
 const fixturesDirectory = process.argv[4];
 const exportedDirectory = process.argv[5];
+const exportContract = require('./browser_export_contract.cjs');
+const fixedContract = exportedDirectory ? exportContract.fromDirectory(exportedDirectory) : null;
 assert.ok(requestedURL && output && fixturesDirectory, 'Usage: browser_preparation_journey.cjs URL OUTPUT FIXTURES [EXPORTED_DIRECTORY]');
 const target = new URL(requestedURL); target.searchParams.set('phone_qa', '1');
 const url = target.href;
@@ -20,9 +22,7 @@ const report = {kind:'Actual cloud Chromium WebGL; CSS phone emulation at DPR 3,
   startedAt:new Date().toISOString(), results:[], hashes:{}};
 const hash = data => crypto.createHash('sha256').update(data).digest('hex');
 report.hashes.harness = hash(fs.readFileSync(__filename));
-if(exportedDirectory) for(const name of ['index.html','index.pck','index.js','index.wasm','campaign-viewport.js','campaign-storage.js']) {
-  const file=path.join(exportedDirectory,name); if(fs.existsSync(file))report.hashes[name]=hash(fs.readFileSync(file));
-}
+if(exportedDirectory) for(const name of fixedContract.assets) report.hashes[name]=hash(fs.readFileSync(path.join(exportedDirectory,name)));
 const closeEnough = (actual, expected, label, tolerance = 1) => assert.ok(Math.abs(actual - expected) <= tolerance, `${label}: ${actual} != ${expected}`);
 const cdpSessions = new WeakMap();
 
@@ -343,17 +343,26 @@ async function compactPreparation(page,context) {
 async function journey(page,context,test,mature) {
   const id=mature?'route_pick':'growth_1',reward=mature?300:140;
   const initial=await ui(page),initialWallet=initial.wallet;
-  if(mature){assert.equal(initial.growth.wing_count,4);assert.equal(initial.growth.robot_count,4);assert.equal(initial.growth.catalog_complete,true);}
+  if(mature){assert.equal(initial.growth.wing_count,4);assert.equal(initial.growth.robot_count,4);assert.equal(initial.growth.catalog_complete,test.storageContract.version!==5);}
   await cancellationBurst(page,context,test);
   await showJobs(page,context);
   if(mature){
     const copy=(await ui(page)).labels.map(l=>l.text).join('\n');
-    assert.ok(!copy.includes('次の増築や設備の資金に'),'Fully upgraded job screen does not promise more upgrades');
+    if(test.storageContract.version!==5)assert.ok(!copy.includes('次の増築や設備の資金に'),'Fully upgraded job screen does not promise more upgrades');
+    else assert.ok(!initial.upgrades.includes('pick_dispatch_board'),'Legacy mature fixture has not already bought the new board');
     await tapName(page,context,'Tab_upgrades');
     // Tabs share sheet='jobs'; wait for their actual rendered content rather
     // than a fixed post-touch delay or the previous tab's diagnostics.
-    await page.waitForFunction(()=>window.FlotraViewport?.uiMetrics?.labels.some(label=>label.name==='GrowthCatalogComplete'),null,{timeout:10000});
-    assert.ok(labelText(await ui(page),'GrowthCatalogComplete').includes('すべて導入済み'),'Mature copy says the existing catalog is complete');
+    if(test.storageContract.version===5){
+      const board=await button(page,'BuyUpgrade_pick_dispatch_board');
+      assert.equal(board.disabled,false,'Legacy mature fixture can buy the newly added board');
+      assert.ok(board.text.includes('資金300'),'New board preserves approved 300 price');
+      assert.ok(!labelText(await ui(page),'GrowthCatalogComplete'),'Candidate does not claim the unbought board is already owned');
+      assert.deepEqual((await ui(page)).upgrades,initial.upgrades,'Inspecting newly available equipment preserves every earned legacy upgrade');
+    } else {
+      await page.waitForFunction(()=>window.FlotraViewport?.uiMetrics?.labels.some(label=>label.name==='GrowthCatalogComplete'),null,{timeout:10000});
+      assert.ok(labelText(await ui(page),'GrowthCatalogComplete').includes('すべて導入済み'),'Mature copy says the existing catalog is complete');
+    }
     await screenshot(page,'mature-catalog-'+test.name);
     await tapName(page,context,'Tab_contracts');
   }
@@ -433,10 +442,12 @@ async function journey(page,context,test,mature) {
     const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
     try {
       await boot(page);
+      test.storageContract=await exportContract.fromPage(page,fixedContract);
       test.environment=await page.evaluate(()=>{const gl=document.querySelector('#canvas').getContext('webgl2'),ext=gl?.getExtension('WEBGL_debug_renderer_info');return {dpr:devicePixelRatio,userAgent:navigator.userAgent,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null};});
       if(profile==='quickstart'){
         await tapName(page,context,'CloseSheet');await expectUI(page,{sheet:'jobs'});await tapName(page,context,'AcceptContract_growth_1',true);await expectUI(page,{sheet:'',trialRunning:true,currentContract:'growth_1'});test.directStartPreserved=true;
       } else await journey(page,context,test,profile==='mature');
+      await exportContract.assertStorage(page,test.storageContract,profile==='mature'?fixture:null);
       assert.deepEqual(errors,[],'No browser JavaScript or console errors');test.status='passed';console.log('PASS '+name);
     } catch(error){test.status='failed';test.error=error.stack;test.last=await ui(page).catch(()=>null);await screenshot(page,'failure-'+name).catch(()=>{});throw error;}
     finally{test.errors=errors;saveReport();await context.close();}

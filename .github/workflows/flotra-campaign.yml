@@ -6,12 +6,14 @@ on:
       - 'flotra-campaign/**'
       - 'docs/godot-jobs-preview/**'
       - '.github/workflows/flotra-campaign.yml'
+      - 'FLOTRA_DISPATCH_ARTIFACTS_2026-10-07.json'
   push:
     branches: [main]
     paths:
       - 'flotra-campaign/**'
       - 'docs/godot-jobs-preview/**'
       - '.github/workflows/flotra-campaign.yml'
+      - 'FLOTRA_DISPATCH_ARTIFACTS_2026-10-07.json'
 permissions:
   contents: read
 jobs:
@@ -130,7 +132,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dpr: [1, 2, 3]
+        # Keep all twelve existing camera cases and every assertion. DPR 3's
+        # four sequential viewports exceeded the unchanged 20-minute job cap.
+        include:
+          - dpr: 1
+            viewports: '375x567,375x667,390x844,430x932'
+            group: all
+          - dpr: 2
+            viewports: '375x567,375x667,390x844,430x932'
+            group: all
+          - dpr: 3
+            viewports: '375x567,375x667'
+            group: compact
+          - dpr: 3
+            viewports: '390x844,430x932'
+            group: large
     steps:
       - uses: actions/checkout@v5
         with:
@@ -157,6 +173,7 @@ jobs:
       - name: Test real camera gestures and recovery
         env:
           FLOTRA_TEST_DPRS: ${{ matrix.dpr }}
+          FLOTRA_TEST_CASES: ${{ matrix.viewports }}
         shell: bash
         run: |
           python3 -m http.server 8826 --bind 127.0.0.1 --directory docs/godot-jobs-preview > /tmp/flotra-camera-server.log 2>&1 &
@@ -167,7 +184,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: flotra-camera-browser-dpr-${{ matrix.dpr }}
+          name: flotra-camera-browser-dpr-${{ matrix.dpr }}-${{ matrix.group }}
           path: build/camera-browser
           retention-days: 7
 
@@ -226,6 +243,7 @@ jobs:
     timeout-minutes: 20
     env:
       CONTROL_SHA: deaeb376c1265b0bb3ffe933ac1975f8db5f1048
+      FLOTRA_COMBINED_PROVENANCE: FLOTRA_DISPATCH_ARTIFACTS_2026-10-07.json
     steps:
       - uses: actions/checkout@v5
         with:

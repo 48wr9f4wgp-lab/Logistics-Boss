@@ -10,8 +10,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const exportContract = require('./browser_export_contract.cjs');
 const qualifiedExportDirectory = process.env.FLOTRA_EXPORTED_DIRECTORY;
-const qualifiedAssetNames = ['index.html', 'index.pck', 'index.js', 'index.wasm', 'campaign-viewport.js', 'campaign-storage.js'];
+const fixedContract = qualifiedExportDirectory ? exportContract.fromDirectory(qualifiedExportDirectory) : null;
+const qualifiedAssetNames = fixedContract?.assets;
 const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const requestedURL = process.argv[2];
 const output = process.argv[3] || '/tmp/flotra-phone-browser';
@@ -300,6 +302,7 @@ async function samplePerformance(page,milliseconds) {
    page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
    const test={name,presentation:focusBrowser?'headed actual focus':'headless renderer baseline'};result.tests.push(test);
    try{await boot(page);
+    test.storageContract=await exportContract.fromPage(page,fixedContract);
     if(qualifiedExportDirectory) {
      assert.deepEqual(Object.keys(loadedAssets).sort(),qualifiedAssetNames.slice().sort(),'All six exact export assets loaded');
      test.loadedAssets=loadedAssets;
@@ -309,7 +312,7 @@ async function samplePerformance(page,milliseconds) {
     const gl=document.querySelector('#canvas').getContext('webgl2');
     const ext=gl?.getExtension('WEBGL_debug_renderer_info');
     return {visibility:document.visibilityState,dpr:devicePixelRatio,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,vendor:ext?gl.getParameter(ext.UNMASKED_VENDOR_WEBGL):null};
-   });await action(page,context,test);assert.deepEqual(errors,[]);test.status='passed';}
+   });await action(page,context,test);await exportContract.assertStorage(page,test.storageContract,fixture);assert.deepEqual(errors,[]);test.status='passed';}
    catch(error){test.status='failed';test.error=error.message;test.last=await ui(page).catch(()=>null);await page.screenshot({path:path.join(output,'failure-'+name+'.png'),scale:'css'}).catch(()=>{});throw error;}
    finally{test.errors=errors;fs.writeFileSync(path.join(output,'growth-journey.json'),JSON.stringify(result,null,2));await context.close();await focusBrowser?.close();}
   }
@@ -391,7 +394,10 @@ async function samplePerformance(page,milliseconds) {
   });
   const late=JSON.parse(fs.readFileSync(path.join(fixturesDirectory,'late.json'),'utf8'));
   await scenario('mature-performance',late,async(page,context,test)=>{
-   let state=await ui(page);test.initialState={simTime:state.simTime,wallet:state.wallet,growth:state.growth,progress:state.progress,camera:state.camera};assert.equal(state.growth.wing_count,4);assert.equal(state.growth.robot_count,4);assert.equal(state.progress.shipped,late.shipped);assert.equal(state.wallet,late.wallet);assert.equal(state.trialRunning,false);
+   let state=await ui(page);test.initialState={simTime:state.simTime,wallet:state.wallet,growth:state.growth,progress:state.progress,camera:state.camera};
+   if(late.expectedGrowth)assert.deepEqual(state.growth,late.expectedGrowth[test.storageContract.version===5?'dispatch':'legacy'],'Entire initial growth snapshot matches its actual native model');
+   else assert.notEqual(test.storageContract.version,5,'Schema5 performance requires its native fixture expectation');
+   assert.equal(state.growth.wing_count,4);assert.equal(state.growth.robot_count,4);assert.equal(state.progress.shipped,late.shipped);assert.equal(state.wallet,late.wallet);assert.equal(state.trialRunning,false);
    await closeSheets(page,context);await setRunning(page,context,false);await page.waitForTimeout(1000);
    const idle=await samplePerformance(page,6000);
    await tapName(page,context,'SessionRecord');await expectUI(page,{sheet:'records',worldVisible:false});
@@ -415,7 +421,7 @@ async function samplePerformance(page,milliseconds) {
    // Budget the added warehouse work against the same-run covered-menu baseline.
    assert.ok(test.performance.active.rafMedianMs<=Math.max(75,test.performance.uiOnly.rafMedianMs*1.75) && test.performance.active.rafP95Ms<=Math.max(120,test.performance.uiOnly.rafP95Ms*2),'Mature 3D overhead stays within the same-renderer baseline budget');
    state=await ui(page);test.progress={before:late.shipped,after:state.progress.shipped,time:state.simTime};assert.ok(state.simTime>late.time);
-   const keys=await page.evaluate(()=>Object.keys(localStorage));assert.ok(keys.every(k=>k==='flotra.campaign.release.v1'||k==='flotra.campaign.release.v1.backup'),'Only isolated campaign save keys written');
+   await exportContract.assertStorage(page,test.storageContract,late);
   });
   assert.ok(result.tests.length>0,'At least one requested journey scenario ran');
   console.log(`BROWSER_GROWTH_JOURNEY ${result.tests.length} scenarios passed`);

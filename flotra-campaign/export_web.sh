@@ -5,7 +5,7 @@ out=${1:-"$project/../docs/godot-jobs-preview"}
 mkdir -p "$out"
 out=$(cd "$out" && pwd)
 "${GODOT:-godot}" --headless --path "$project" --export-release Web "$out/index.html"
-cp "$project/campaign-storage.js" "$project/campaign-viewport.js" "$out/"
+cp "$project/dispatch-storage.js" "$project/campaign-viewport.js" "$out/"
 # The loader must never mount the original game's IndexedDB filesystem.
 python3 - "$out/index.html" <<'PY'
 from pathlib import Path

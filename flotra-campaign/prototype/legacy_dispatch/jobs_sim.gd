@@ -1,5 +1,5 @@
 extends RefCounted
-class_name FlotraJobsSim
+class_name FlotraFrozenDispatchJobsSim
 
 # ISOLATED DOMAIN EXPERIMENT. No disk access, production save/schema changes,
 # layout-specific rates, score multipliers, or hidden demand deletion.
@@ -257,9 +257,6 @@ func _build_edges() -> void:
     for bay in bulk_bays:
         bay.available = _bay_available_in(bay,layout_id)
     var obstacles := [{"id":"shelf","rect":_shelf_footprint(layout_id).grow(WORKER_RADIUS)},{"id":"packing","rect":_pack_footprint(layout_id).grow(WORKER_RADIUS)}]
-    # Equipment footprints stay fixed throughout this graph rebuild. Reuse the
-    # same grown rectangles for every lane sample without changing any checks.
-    var bulk_obstacles := [_shelf_footprint(layout_id).grow(MANIFEST_RADIUS),_pack_footprint(layout_id).grow(MANIFEST_RADIUS)]
     for link in _links():
         var key := str(link[0])+":"+str(link[1])
         var a: Vector3 = _points()[link[0]]
@@ -289,8 +286,8 @@ func _build_edges() -> void:
             for sample in 41:
                 var t := float(sample)/40.0
                 var position := a.lerp(b,t)+normal*(-.32 if lane==0 else .32)*sin(PI*t)
-                for bounds in bulk_obstacles:
-                    if bounds.has_point(Vector2(position.x,position.z)):
+                for bounds in [_shelf_footprint(layout_id),_pack_footprint(layout_id)]:
+                    if bounds.grow(MANIFEST_RADIUS).has_point(Vector2(position.x,position.z)):
                         safe = false
             if safe:
                 bulk_lanes.append(lane)
@@ -448,9 +445,6 @@ func _rack_occupied() -> int:
             count += worker.cargo_ids.size()
     return count
 
-func _pick_admission_limit() -> int:
-    return 6
-
 func _assign(worker: Dictionary) -> void:
     var task := ""
     var source := ""
@@ -478,7 +472,7 @@ func _assign(worker: Dictionary) -> void:
         target = "outbound"
     # During relocation drain only already started packing and released pallets.
     # Keep all remaining rack stock; it moves with the rack at relocation speed.
-    if task.is_empty() and pending_layout_id.is_empty() and not storage.is_empty() and packing.size()+pack_jobs.size()+_worker_count("pick") < _pick_admission_limit():
+    if task.is_empty() and pending_layout_id.is_empty() and not storage.is_empty() and packing.size()+pack_jobs.size()+_worker_count("pick") < 6:
         var id: int = storage.pop_front()
         ids = [id]
         task = "pick"

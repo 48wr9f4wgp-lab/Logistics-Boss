@@ -11,19 +11,21 @@ const [controlURL, candidateURL, output, fixtures, controlDirectory, candidateDi
 assert.ok(controlURL && candidateURL && output && fixtures && controlDirectory && candidateDirectory && controlSHA && candidateSHA,
   'Supply control URL, candidate URL, output, fixtures, export directories, and immutable commit SHAs');
 const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
-const assets = ['index.html', 'index.pck', 'index.js', 'index.wasm', 'campaign-viewport.js', 'campaign-storage.js'];
-const hashes = directory => Object.fromEntries(assets.map(name => [name, digest(fs.readFileSync(path.join(directory, name)))]));
+const exportContract = require('./browser_export_contract.cjs');
+const hashes = directory => Object.fromEntries(exportContract.fromDirectory(directory).assets.map(name => [name, digest(fs.readFileSync(path.join(directory, name)))]));
 const journey = path.join(__dirname, 'browser_growth_journey.cjs');
 const repositoryRoot = path.resolve(__dirname, '../../..');
-const provenancePath = path.join(repositoryRoot, 'FLOTRA_COMBINED_ARTIFACTS.json');
+const provenancePath = process.env.FLOTRA_COMBINED_PROVENANCE ? path.resolve(process.env.FLOTRA_COMBINED_PROVENANCE) : path.join(repositoryRoot, 'FLOTRA_COMBINED_ARTIFACTS.json');
 const provenance = JSON.parse(fs.readFileSync(provenancePath, 'utf8'));
 assert.equal(controlSHA, provenance.controlCommit, 'Pinned public control commit');
 for (const [name, expected] of Object.entries(provenance.sourceSHA256)) {
   assert.equal(digest(fs.readFileSync(path.join(repositoryRoot, name))), expected, 'Frozen runtime source: ' + name);
 }
+if (Object.hasOwn(provenance, 'fullProjectSourceSHA256')) exportContract.assertFullProjectSources(repositoryRoot, provenance.fullProjectSourceSHA256);
 assert.deepEqual(hashes(controlDirectory), provenance.controlAssetsSHA256, 'Pinned public export');
 assert.deepEqual(hashes(candidateDirectory), provenance.candidateAssetsSHA256, 'Fresh combined export');
 fs.mkdirSync(output, { recursive: true });
+const lateFixture = JSON.parse(fs.readFileSync(path.join(fixtures, 'late.json'), 'utf8'));
 const report = {
   scope: 'Same-runner sequential Chromium/SwiftShader WebGL comparison; not physical iPhone/Safari',
   startedAt: new Date().toISOString(),
@@ -33,10 +35,11 @@ const report = {
   viewport: { width: 390, height: 844, dpr: 3 },
   fixtureSHA256: digest(fs.readFileSync(path.join(fixtures, 'late.json'))),
   journeySHA256: digest(fs.readFileSync(journey)),
+  contractHelperSHA256: digest(fs.readFileSync(path.join(__dirname, 'browser_export_contract.cjs'))),
   exports: { A: hashes(controlDirectory), B: hashes(candidateDirectory) },
   limits: { processP95MsStrictlyBelow: 100, drawCallsMaximum: 250, pausedNodeRangeMaximum: 4,
     rafMedian: 'max(75ms, same-run UI-only median * 1.75)', rafP95: 'max(120ms, same-run UI-only p95 * 2)' },
-  validity: 'Every A and B must pass all unchanged journey assertions, match loaded assets, initial state and renderer. No best-run selection or timing retry.',
+  validity: 'Every A and B must pass all journey gates, match loaded assets, initial physical state and renderer. Only catalog_complete and next_goal may differ across schemas, each pinned to its complete native growth snapshot. No best-run selection or timing retry.',
   results: [],
 };
 function save() { fs.writeFileSync(path.join(output, 'comparison.json'), JSON.stringify(report, null, 2)); }
@@ -63,6 +66,7 @@ try {
   }
   assert.deepEqual(hashes(controlDirectory), report.exports.A, 'Control export stayed frozen');
   assert.deepEqual(hashes(candidateDirectory), report.exports.B, 'Candidate export stayed frozen');
+  if (Object.hasOwn(provenance, 'fullProjectSourceSHA256')) exportContract.assertFullProjectSources(repositoryRoot, provenance.fullProjectSourceSHA256);
   const controls = report.results.filter(row => row.label.startsWith('A'));
   const candidates = report.results.filter(row => row.label.startsWith('B'));
   const complete = row => row.exitCode === 0 && row.test?.status === 'passed' && row.test?.performance;
@@ -79,7 +83,7 @@ try {
     try {
       assert.deepEqual(row.test.environment, reference.environment);
       assert.equal(row.test.chromiumVersion, reference.chromiumVersion);
-      assert.deepEqual(row.test.initialState, reference.initialState);
+      exportContract.assertComparableInitialState(row.test.initialState, reference.initialState, row.test.storageContract, reference.storageContract, lateFixture);
       assert.deepEqual(row.test.loadedAssets, report.exports[row.label[0]]);
       return true;
     } catch { return false; }

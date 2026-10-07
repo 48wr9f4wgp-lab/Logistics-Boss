@@ -12,9 +12,12 @@ const [requestedURL, output, fixturesDirectory, exportedDirectory] = process.arg
 assert.ok(requestedURL && output && fixturesDirectory && exportedDirectory,
   'Usage: browser_upgrade_visibility.cjs URL OUTPUT FIXTURES EXPORTED_DIRECTORY');
 const target=new URL(requestedURL); target.searchParams.set('phone_qa','1');
-const url=target.href, tapHold=90, saveKey='flotra.campaign.release.v1';
+const exportContract=require('./browser_export_contract.cjs');
+const fixedContract=exportContract.fromDirectory(exportedDirectory);
+const url=target.href, tapHold=90, saveKey=fixedContract.saveKey;
+const futureUpgrades=['crew_6','wing_3','robot_4','wing_4',...(fixedContract.version===5?['pick_dispatch_board']:[])];
 const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
-const exportedFiles=['index.html','index.pck','index.js','index.wasm','campaign-viewport.js','campaign-storage.js'];
+const exportedFiles=fixedContract.assets;
 fs.mkdirSync(output,{recursive:true});
 const report={kind:'Actual cloud Chromium WebGL; CSS phone emulation at DPR 3, not physical iPhone/Safari',
   startedAt:new Date().toISOString(),url,status:'running',results:[],hashes:{harness:hash(fs.readFileSync(__filename))}};
@@ -170,6 +173,7 @@ async function revealButton(page, context, name, scrollable = false) {
 const saveReport=()=>fs.writeFileSync(path.join(output,'upgrade-visibility.json'),JSON.stringify(report,null,2));
 const saved=page=>page.evaluate(key=>localStorage.getItem(key),saveKey);
 const backupSaved=page=>page.evaluate(key=>localStorage.getItem(key+'.backup'),saveKey);
+const expectedEncoded=fixture=>fixedContract.version===5?fixture.dispatchEncoded:fixture.encoded;
 const progress=state=>Object.fromEntries(['wallet','upgrades','currentContract','status','simTime','progress','results','growth','preferences','operation','layout','speed','trialRunning','currentBest','jobComparison'].map(key=>[key,state[key]]));
 const visibleUpgrades=state=>state.buttons.filter(b=>b.visible&&b.name.startsWith('BuyUpgrade_')).sort((a,b)=>a.y-b.y);
 async function screenshot(page,name) {await page.screenshot({path:path.join(output,name+'.png'),scale:'css'});}
@@ -205,6 +209,7 @@ async function invariant(page,baseline,test,label,allowBackupRotation=false) {
   if(allowBackupRotation)assert.ok(backup===baseline.backup||backup===baseline.encoded,`${label}: lifecycle save can only rotate the identical state into backup`);
   else assert.equal(backup,baseline.backup,`${label}: saved backup is unchanged`);
   assert.deepEqual(progress(await ui(page)),baseline.ui,`${label}: all read-only gameplay diagnostics are unchanged`);
+  await exportContract.assertStorage(page,fixedContract,baseline.fixture);
   test.invariants.push(label);
 }
 async function installTrace(context) {
@@ -245,13 +250,13 @@ function assertCatalog(state,wallet) {
     assert.equal(b.disabled,costs[id]>wallet,`${id} is enabled only when affordable`);
     assert.ok(b.height>=56&&b.fontSize>=18,`${id} keeps 56px/18px geometry`);
   }
-  for(const id of ['crew_6','wing_3','robot_4','wing_4','wing_1','crew_4'])assert.ok(!state.buttons.some(b=>b.name==='BuyUpgrade_'+id&&b.visible),`${id} stays in its folded group`);
-  assert.ok(state.buttons.find(b=>b.name==='ToggleFutureUpgrades'&&b.visible).text.includes('4件'),'Only four truly locked upgrades count as future');
+  for(const id of [...futureUpgrades,'wing_1','crew_4'])assert.ok(!state.buttons.some(b=>b.name==='BuyUpgrade_'+id&&b.visible),`${id} stays in its folded group`);
+  assert.ok(state.buttons.find(b=>b.name==='ToggleFutureUpgrades'&&b.visible).text.includes(futureUpgrades.length+'件'),'Exact build-specific truly locked upgrade count');
   if(wallet===200)for(const shortfall of [40,60,150])assert.ok(state.labels.some(l=>l.text==='資金があと'+shortfall+'必要です'&&l.fontSize>=18),`Exact readable shortfall ${shortfall}`);
   const heading=state.labels.find(l=>l.name==='UnlockedUpgradesHeading');
   assert.equal(heading?.text,'資金をためて導入');
   assert.ok(heading.y>cards.filter(b=>!b.disabled).at(-1).y,'Saving section follows every affordable card');
-  return {ids,cards:cards.map(b=>({name:b.name,text:b.text,disabled:b.disabled,height:b.height,fontSize:b.fontSize})),futureCount:4};
+  return {ids,cards:cards.map(b=>({name:b.name,text:b.text,disabled:b.disabled,height:b.height,fontSize:b.fontSize})),futureCount:futureUpgrades.length};
 }
 async function exposeReason(page,context,amount) {
   const text='資金があと'+amount+'必要です';
@@ -283,8 +288,8 @@ async function verifyOperations(page,context,test,packingSeconds) {
   await page.waitForFunction(()=>!window.FlotraViewport.uiMetrics.buttons.some(b=>b.name==='ChooseOperation_parcel'&&b.visible));
 }
 async function walletScenario(page,context,test,fixture) {
-  const baseline={encoded:await saved(page),backup:await backupSaved(page),ui:progress(await ui(page))};
-  assert.equal(baseline.encoded,fixture.encoded,'Imported domain-earned completed save stays exact');
+  const baseline={encoded:await saved(page),backup:await backupSaved(page),ui:progress(await ui(page)),fixture};
+  assert.equal(baseline.encoded,expectedEncoded(fixture),'Imported domain-earned completed save stays exact for its explicit schema');
   assert.equal(baseline.ui.wallet,200);assert.deepEqual(baseline.ui.upgrades,['wing_1','crew_4']);
   assert.equal(baseline.ui.growth.completed_milestones,2);
   test.invariants=[];test.inputs=[];
@@ -300,8 +305,8 @@ async function walletScenario(page,context,test,fixture) {
   await verifyOperations(page,context,test,'1.5');await invariant(page,baseline,test,'Expand, scroll, and collapse operations');
   await tapName(page,context,'ToggleFutureUpgrades',true);await button(page,'BuyUpgrade_crew_6');
   const expanded=visibleUpgrades(await ui(page));
-  assert.deepEqual(expanded.map(b=>b.name.replace('BuyUpgrade_','')).slice(-4),['crew_6','wing_3','robot_4','wing_4'],'Future disclosure contains only truly locked upgrades');
-  assert.ok(expanded.slice(-4).every(b=>b.disabled),'Future choices stay disabled');
+  assert.deepEqual(expanded.map(b=>b.name.replace('BuyUpgrade_','')).slice(-futureUpgrades.length),futureUpgrades,'Future disclosure contains only truly locked upgrades');
+  assert.ok(expanded.slice(-futureUpgrades.length).every(b=>b.disabled),'Future choices stay disabled');
   await screenshot(page,'future-'+test.name);await invariant(page,baseline,test,'Expand locked roadmap');
   await tapName(page,context,'ToggleFutureUpgrades',true);
   await page.waitForFunction(()=>!window.FlotraViewport.uiMetrics.buttons.some(b=>b.name==='BuyUpgrade_crew_6'&&b.visible));
@@ -320,14 +325,15 @@ async function walletScenario(page,context,test,fixture) {
   fs.writeFileSync(path.join(output,'readonly-'+test.name+'.json'),JSON.stringify({encoded:await saved(page),ui:progress(await ui(page))},null,2));
 }
 async function fundedScenario(page,context,test,fixture) {
-  assert.equal((await ui(page)).wallet,340);assert.equal(await saved(page),fixture.encoded);
+  assert.equal((await ui(page)).wallet,340);assert.equal(await saved(page),expectedEncoded(fixture));
   await openUpgrades(page,context);test.catalog=assertCatalog(await ui(page),340);
   const before=await ui(page),encodedBefore=await saved(page);
   await revealButton(page,context,'BuyUpgrade_auto_pack',true);await screenshot(page,'funded-before-'+test.name);
   test.input=await heldTouch(page,context,'BuyUpgrade_auto_pack');
   await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.wallet===100&&window.FlotraViewport.uiMetrics.upgrades.includes('auto_pack'),null,{timeout:10000});
-  await page.waitForFunction(before=>localStorage.getItem('flotra.campaign.release.v1')!==before,encodedBefore,{timeout:10000});
+  await page.waitForFunction(({key,before})=>localStorage.getItem(key)!==before,{key:saveKey,before:encodedBefore},{timeout:10000});
   const after=await ui(page),encodedAfter=await saved(page);
+  if(fixedContract.version===5)assert.equal(encodedAfter,fixture.dispatchPurchasedEncoded,'Web purchase matches full native schema5 state, including all physical cargo');
   assert.deepEqual(after.upgrades,[...before.upgrades,'auto_pack'],'One actual held purchase adds exactly one upgrade');
   for(const key of ['simTime','results','progress','currentContract','status','preferences','layout'])assert.deepEqual(after[key],before[key],`Purchase preserves ${key}`);
   assert.equal(after.wallet,before.wallet-240,'One actual held purchase charges exactly 240');
@@ -369,14 +375,30 @@ async function fundedScenario(page,context,test,fixture) {
     report.hashes[profile]=hash(fixtureText);
     const test={name,width,height,dpr:3,status:'running',scrollGestures:[]};currentTest=test;report.results.push(test);saveReport();console.log('SCENARIO '+name);
     const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:3,isMobile:true,hasTouch:true});
-    await context.addInitScript(({key,encoded})=>{if(localStorage.getItem(key)===null)localStorage.setItem(key,encoded);},{key:saveKey,encoded:fixture.encoded});
+    await context.addInitScript(({key,encoded})=>{if(localStorage.getItem(key)===null)localStorage.setItem(key,encoded);},{key:exportContract.legacyKey,encoded:fixture.encoded});
     await installTrace(context);
     const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
     try {
       await boot(page);
+      test.storageContract=await exportContract.fromPage(page,fixedContract);
+      if(fixedContract.version===5){
+        assert.ok(typeof fixture.dispatchEncoded==='string'&&JSON.parse(fixture.dispatchEncoded).version===5,'Fixture has exact native schema5 migration expectation');
+        await exportContract.assertStorage(page,fixedContract,fixture);
+        // The HUD ignores a same-speed press. Change and restore the preference
+        // with trusted input while completed/paused, then require the entire
+        // final state to equal the exact native migration before testing reads.
+        await closeSheets(page,context);await tapName(page,context,'Back');await expectUI(page,{sheet:'controls'});
+        assert.equal((await ui(page)).speed,2);await tapName(page,context,'Speed1x',true);await expectUI(page,{speed:1,trialRunning:false});
+        await tapName(page,context,'Speed2x',true);await expectUI(page,{speed:2,trialRunning:false});
+        await page.waitForFunction(({key,encoded})=>localStorage.getItem(key)===encoded,{key:saveKey,encoded:fixture.dispatchEncoded},{timeout:10000});
+        await closeSheets(page,context);
+        await exportContract.assertStorage(page,fixedContract,fixture);
+        test.legacyMigratedExactly=true;
+      }
       test.environment=await page.evaluate(()=>{const gl=document.querySelector('#canvas').getContext('webgl2'),ext=gl?.getExtension('WEBGL_debug_renderer_info');return {dpr:devicePixelRatio,userAgent:navigator.userAgent,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null};});
       if(profile==='wallet200')await walletScenario(page,context,test,fixture);else await fundedScenario(page,context,test,fixture);
       test.touchTrace=await page.evaluate(()=>window.__upgradeTrace);
+      await exportContract.assertStorage(page,fixedContract,fixture);
       assert.deepEqual(errors,[],'No browser JavaScript or console errors');test.status='passed';console.log('PASS '+name);
     } catch(error){test.status='failed';test.error=error.stack;test.last=await ui(page).catch(()=>null);await screenshot(page,'failure-'+name).catch(()=>{});throw error;}
     finally{test.errors=errors;saveReport();await context.close();}

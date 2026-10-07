@@ -1,10 +1,12 @@
 extends SceneTree
 # Test-only fixtures made exclusively through real domain actions. Browser tests
 # install them in fresh profiles, never in any user's existing saved warehouse.
-const Growth=preload("res://prototype/growth_sim.gd")
-const Legacy=preload("res://prototype/release_sim.gd")
-const GrowthV2=preload("res://prototype/growth_v2_sim.gd")
+const Growth=preload("res://prototype/legacy_dispatch/growth_sim.gd")
+const Legacy=preload("res://prototype/legacy_dispatch/release_sim.gd")
+const GrowthV2=preload("res://prototype/legacy_dispatch/growth_v2_sim.gd")
 const Store=preload("res://prototype/release_save.gd")
+const Dispatch=preload("res://prototype/dispatch_sim.gd")
+var failures := 0
 func _initialize():
     var directory=OS.get_environment("FLOTRA_GROWTH_FIXTURES")
     if directory.is_empty(): push_error("Set FLOTRA_GROWTH_FIXTURES");quit(1);return
@@ -40,10 +42,21 @@ func _initialize():
     growth.accept_contract("route_pick")
     growth.step(10.0)
     write_fixture(directory,"parcel",growth)
-    quit()
+    quit(0 if failures == 0 else 1)
 func write_fixture(directory:String,name:String,sim):
-    var encoded=Store.new().encode(sim.export_release_state())
-    var imported=sim.get_script().new().import_release_state(sim.export_release_state())
-    if not imported.ok:push_error(str(imported));quit(1);return
+    var source: Dictionary = sim.export_release_state()
+    var encoded=Store.new().encode(source)
+    var imported=sim.get_script().new().import_release_state(source)
+    if not imported.ok:push_error(str(imported));failures+=1;return
+    # Expectations describe the two actual loaded models independently. Keep
+    # the original encoded migration input and every physical field intact.
+    var control=Growth.new()
+    var candidate=Dispatch.new()
+    if not control.import_release_state(source).ok or not candidate.import_release_state(source).ok:
+        push_error("Both builds must import fixture " + name);failures+=1;return
+    var migrated: Dictionary = candidate.export_release_state()
+    for key in ["sim", "campaign"]:
+        if var_to_bytes(migrated[key]) != var_to_bytes(source[key]):
+            push_error("Migration changed complete " + key + " fixture " + name);failures+=1;return
     var file=FileAccess.open(directory+"/"+name+".json",FileAccess.WRITE)
-    file.store_string(JSON.stringify({"encoded":encoded,"wallet":sim.campaign_wallet,"shipped":sim.shipped,"offered":sim.offered_units,"status":sim.campaign_status,"upgrades":sim.purchased_upgrades,"time":sim.sim_time}))
+    file.store_string(JSON.stringify({"encoded":encoded,"wallet":sim.campaign_wallet,"shipped":sim.shipped,"offered":sim.offered_units,"status":sim.campaign_status,"upgrades":sim.purchased_upgrades,"time":sim.sim_time,"expectedGrowth":{"legacy":control.release_state().growth,"dispatch":candidate.release_state().growth}}))
