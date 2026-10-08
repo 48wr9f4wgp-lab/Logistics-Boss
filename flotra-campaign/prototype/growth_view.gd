@@ -26,6 +26,7 @@ var _rendered_preview := ""
 var _rendered_ghost_present := false
 var _rendered_ghost_position := Vector3.ZERO
 var reduced_motion := false
+var visible_growth_enabled := true
 # Session-only view preferences, deliberately independent of saved game state
 # and the layout editor's automatic equipment framing.
 const CAMERA_MAX_ZOOM := 3.0
@@ -234,6 +235,7 @@ func refresh() -> void:
     _human_count = int(state.get("human_count", state.get("workers", []).size()))
     var changed := _sync_growth_geometry(state)
     super.refresh()
+    _refresh_visual_auto_pack()
     # The original annex wall must open into the newly purchased, connected
     # working floor rather than visually bisect an authoritative route.
     var old_wall := get_node_or_null("AnnexBackWall") as Node3D
@@ -692,3 +694,58 @@ func _refresh_bays(bays: Array) -> void:
         for child in node.get_children():
             if child is MeshInstance3D and child != pad:
                 child.material_override = _material(Color("ae9f78") if occupied else Color("74817e"))
+
+
+# Isolated presentation slice: one real owned machine, never extra capacity/cargo.
+func _refresh_visual_auto_pack() -> void:
+    if not _slots.has("packing"): return
+    var slot: Node3D = _slots.packing
+    var owned: bool = visible_growth_enabled and not sim.legacy_profile and "auto_pack" in sim.purchased_upgrades
+    var machine := slot.get_node_or_null("VisualAutoPack") as Node3D
+    if owned and machine == null:
+        machine = Node3D.new()
+        machine.name = "VisualAutoPack"
+        # Keep every solid inside the existing 1.6 x 1.0 physical footprint.
+        # Height preserves the gantry silhouette without occupying a traffic lane.
+        machine.scale = Vector3(.64, 1.0, .49)
+        slot.add_child(machine)
+        # Open central bay preserves sight of the authoritative packing parcels.
+        _box(machine,"Plinth",Vector3(2.48,.16,1.96),Vector3(0,.16,0),Color("172f3d"))
+        _box(machine,"WorkDeck",Vector3(2.12,.12,1.30),Vector3(0,.53,0),Color("627b85"))
+        for side in [-1,1]:
+            _box(machine,"Foot",Vector3(.36,.36,1.8),Vector3(side*1.04,.34,0),Color("e5ece5"))
+            _box(machine,"GantryPillar",Vector3(.30,1.66,.42),Vector3(side*.98,1.17,-.56),Color("f2b345"))
+            _box(machine,"DarkInset",Vector3(.32,.87,.05),Vector3(side*.98,1.12,-.40),Color("344853"))
+            _box(machine,"SafetyCap",Vector3(.38,.12,.50),Vector3(side*.98,2.01,-.51),Color("fff1c6"))
+        _box(machine,"GantryBridge",Vector3(2.42,.40,.60),Vector3(0,1.95,-.51),Color("f2b345"))
+        _box(machine,"TopCover",Vector3(2.46,.10,.66),Vector3(0,2.20,-.51),Color("e9efe6"))
+        _box(machine,"ControlCabinet",Vector3(.16,.91,1.02),Vector3(1.155,1.06,.22),Color("e5ece5"))
+        _box(machine,"ControlScreen",Vector3(.16,.25,.04),Vector3(1.155,1.30,.75),Color("1e5658"))
+        _box(machine,"StatusStrip",Vector3(1.66,.13,.055),Vector3(0,1.97,-.18),Color("668079"))
+        _box(machine,"PressRail",Vector3(.15,.40,.18),Vector3(0,1.60,-.50),Color("a4b9bd"))
+        _box(machine,"SealingHead",Vector3(.78,.25,.53),Vector3(0,1.33,-.26),Color("e9efe6"))
+        for x in [-.62,0,.62]:
+            _box(machine,"FrontTrim",Vector3(.28,.09,.03),Vector3(x,.20,.99),Color("f2b345"))
+    (slot.get_node("PackingEquipment") as Node3D).visible = not owned
+    var old_tool := slot.get_node_or_null("PackingUpgrade") as Node3D
+    if old_tool != null and owned: old_tool.visible = false
+    if machine == null: return
+    machine.visible = owned
+    if not owned: return
+    var working: bool = not sim.pack_jobs.is_empty()
+    var fraction := 0.0
+    if working:
+        fraction = clampf(1.0-float(sim.pack_jobs[0].remaining)/sim.pack_seconds,0.0,1.0)
+    # No wall-clock animation: pausing or an empty station leaves this exactly still.
+    var head := machine.get_node("SealingHead") as Node3D
+    head.position = Vector3(0,1.33,-.26)
+    if working and _cargo.has(str(sim.pack_jobs[0].cargo_id)):
+        var parcel: Node3D = _cargo[str(sim.pack_jobs[0].cargo_id)]
+        var actual_position := machine.to_local(parcel.global_position)
+        head.position.x = actual_position.x
+        head.position.z = actual_position.z
+    head.position.y = 1.33 - .31*sin(fraction*PI)
+    machine.set_meta("actual_pack_cargo_id", int(sim.pack_jobs[0].cargo_id) if working else -1)
+    machine.set_meta("actual_pack_fraction",fraction)
+    var strip := machine.get_node("StatusStrip") as MeshInstance3D
+    strip.material_override = _material(Color("65f4b1") if working else Color("668079"))
