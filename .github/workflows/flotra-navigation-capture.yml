@@ -8,8 +8,6 @@ jobs:
   navigation-capture:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    env:
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/navigation-browsers
     steps:
       - uses: actions/checkout@v5
         with:
@@ -23,6 +21,8 @@ jobs:
           version: 4.7.2
           use-dotnet: false
           include-templates: true
+      - name: Set disposable browser directory
+        run: echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/navigation-browsers" >> "$GITHUB_ENV"
       - name: Install pinned disposable browser
         run: |
           npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
