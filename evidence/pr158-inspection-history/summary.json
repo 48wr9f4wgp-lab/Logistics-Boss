@@ -1,0 +1,204 @@
+{
+  "controlSHA": "a6f885e4f70ed3122fc1c776c3c6fa0661ca954a",
+  "candidateSHA": "6e3829793d771f25a828c0d169db6dcc77e525e3",
+  "classification": "candidate_failed",
+  "controlsHealthy": true,
+  "candidatesPassed": false,
+  "sameConditions": true,
+  "relativeDiagnostics": [
+    {
+      "pair": [
+        "A1",
+        "B1"
+      ],
+      "ratios": {
+        "processMedianMs": 0.9972972972972972,
+        "processP95Ms": 0.8491171749598716,
+        "rafMedianMs": 1,
+        "rafP95Ms": 1
+      }
+    },
+    {
+      "pair": [
+        "A2",
+        "B2"
+      ],
+      "ratios": {
+        "processMedianMs": 0.8914141414141413,
+        "processP95Ms": 0.8711256117455138,
+        "rafMedianMs": 0.9997272975184313,
+        "rafP95Ms": 0.9584896224056052
+      }
+    }
+  ],
+  "rows": [
+    {
+      "label": "A1",
+      "browser": "151.0.7922.34",
+      "normalGate": {
+        "status": "passed"
+      },
+      "inspectionGate": {
+        "status": "not_requested"
+      },
+      "normal": {
+        "rafMedianMs": 366.59999999999854,
+        "rafP95Ms": 383.29999999999563,
+        "processMedianMs": 37,
+        "processP95Ms": 62.3,
+        "nodesMin": 1250,
+        "nodesMax": 1306,
+        "drawCallsMax": 92,
+        "rafSamples": 29,
+        "telemetrySamples": 29,
+        "distinctMetricValues": 14
+      },
+      "normalUiOnly": {
+        "rafMedianMs": 250,
+        "rafP95Ms": 266.70000000000437,
+        "processMedianMs": 13,
+        "processP95Ms": 14.4,
+        "nodesMin": 1258,
+        "nodesMax": 1258,
+        "drawCallsMax": 81,
+        "rafSamples": 21,
+        "telemetrySamples": 21,
+        "distinctMetricValues": 6
+      },
+      "inspection": null,
+      "returned": null
+    },
+    {
+      "label": "B1",
+      "browser": "151.0.7922.34",
+      "normalGate": {
+        "status": "passed"
+      },
+      "inspectionGate": {
+        "status": "failed",
+        "error": "Optional inspection stays within unchanged same-run UI-only frame budget"
+      },
+      "normal": {
+        "rafMedianMs": 366.59999999999854,
+        "rafP95Ms": 383.29999999999563,
+        "processMedianMs": 36.9,
+        "processP95Ms": 52.9,
+        "nodesMin": 1271,
+        "nodesMax": 1331,
+        "drawCallsMax": 87,
+        "rafSamples": 30,
+        "telemetrySamples": 30,
+        "distinctMetricValues": 16
+      },
+      "normalUiOnly": {
+        "rafMedianMs": 250,
+        "rafP95Ms": 250.09999999999854,
+        "processMedianMs": 12.7,
+        "processP95Ms": 14,
+        "nodesMin": 1279,
+        "nodesMax": 1279,
+        "drawCallsMax": 81,
+        "rafSamples": 21,
+        "telemetrySamples": 21,
+        "distinctMetricValues": 5
+      },
+      "inspection": {
+        "rafMedianMs": 483.3000000000029,
+        "rafP95Ms": 500,
+        "processMedianMs": 35.6,
+        "processP95Ms": 48.6,
+        "nodesMin": 1463,
+        "nodesMax": 1479,
+        "drawCallsMax": 68,
+        "rafSamples": 21,
+        "telemetrySamples": 21,
+        "distinctMetricValues": 11
+      },
+      "returned": true
+    },
+    {
+      "label": "B2",
+      "browser": "151.0.7922.34",
+      "normalGate": {
+        "status": "passed"
+      },
+      "inspectionGate": {
+        "status": "failed",
+        "error": "Optional inspection stays within unchanged same-run UI-only frame budget"
+      },
+      "normal": {
+        "rafMedianMs": 366.6000000000058,
+        "rafP95Ms": 383.3000000000029,
+        "processMedianMs": 35.3,
+        "processP95Ms": 53.4,
+        "nodesMin": 1271,
+        "nodesMax": 1331,
+        "drawCallsMax": 87,
+        "rafSamples": 30,
+        "telemetrySamples": 30,
+        "distinctMetricValues": 15
+      },
+      "normalUiOnly": {
+        "rafMedianMs": 250,
+        "rafP95Ms": 250.10000000000218,
+        "processMedianMs": 13.1,
+        "processP95Ms": 16.2,
+        "nodesMin": 1279,
+        "nodesMax": 1279,
+        "drawCallsMax": 81,
+        "rafSamples": 21,
+        "telemetrySamples": 21,
+        "distinctMetricValues": 6
+      },
+      "inspection": {
+        "rafMedianMs": 483.3999999999942,
+        "rafP95Ms": 516.6999999999971,
+        "processMedianMs": 35.2,
+        "processP95Ms": 53.2,
+        "nodesMin": 1463,
+        "nodesMax": 1479,
+        "drawCallsMax": 68,
+        "rafSamples": 21,
+        "telemetrySamples": 21,
+        "distinctMetricValues": 11
+      },
+      "returned": true
+    },
+    {
+      "label": "A2",
+      "browser": "151.0.7922.34",
+      "normalGate": {
+        "status": "passed"
+      },
+      "inspectionGate": {
+        "status": "not_requested"
+      },
+      "normal": {
+        "rafMedianMs": 366.6999999999971,
+        "rafP95Ms": 399.90000000000146,
+        "processMedianMs": 39.6,
+        "processP95Ms": 61.3,
+        "nodesMin": 1250,
+        "nodesMax": 1306,
+        "drawCallsMax": 92,
+        "rafSamples": 29,
+        "telemetrySamples": 29,
+        "distinctMetricValues": 15
+      },
+      "normalUiOnly": {
+        "rafMedianMs": 250,
+        "rafP95Ms": 266.6999999999971,
+        "processMedianMs": 13.5,
+        "processP95Ms": 14.5,
+        "nodesMin": 1258,
+        "nodesMax": 1258,
+        "drawCallsMax": 81,
+        "rafSamples": 21,
+        "telemetrySamples": 21,
+        "distinctMetricValues": 6
+      },
+      "inspection": null,
+      "returned": null
+    }
+  ]
+}

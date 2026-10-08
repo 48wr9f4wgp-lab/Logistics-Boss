@@ -27,8 +27,6 @@ var _rendered_ghost_present := false
 var _rendered_ghost_position := Vector3.ZERO
 var reduced_motion := false
 var visible_growth_enabled := true
-var _inspection_slot := ""
-var _inspection_return: Dictionary = {}
 # Session-only view preferences, deliberately independent of saved game state
 # and the layout editor's automatic equipment framing.
 const CAMERA_MAX_ZOOM := 3.0
@@ -356,22 +354,21 @@ func fit_camera(view_size: Vector2) -> void:
     _camera_view_size = view_size
     camera.keep_aspect = Camera3D.KEEP_HEIGHT
     var center := _world_center
-    var focus_id := _inspection_slot if not _inspection_slot.is_empty() else _selected
-    var focus := not focus_id.is_empty() and _slots.has(focus_id)
+    var focus := not _selected.is_empty() and _slots.has(_selected)
     if focus:
-        center = (_slots[focus_id] as Node3D).position
+        center = (_slots[_selected] as Node3D).position
         if is_instance_valid(_ghost):
             center = (center + _ghost.position) * .5
     # Let the long real northward warehouse use portrait height. Selected
     # equipment retains its established framing and all corners are still fit.
     var bearing := Vector3(28, 38, 22)
-    if not focus or not _inspection_slot.is_empty():
+    if not focus:
         bearing = bearing.rotated(Vector3.UP, float(_camera_turn) * PI * .5)
     camera.position = center + bearing
     camera.look_at(center, Vector3.UP)
     var points: Array[Vector3] = []
     if focus:
-        var current: Vector3 = (_slots[focus_id] as Node3D).position
+        var current: Vector3 = (_slots[_selected] as Node3D).position
         _append_corners(points, AABB(current - Vector3(2.0, .15, 2.0), Vector3(4.0, 3.0, 4.0)))
         if is_instance_valid(_ghost):
             _append_corners(points, AABB(_ghost.position - Vector3(2.0, .15, 2.0), Vector3(4.0, 3.0, 4.0)))
@@ -405,7 +402,7 @@ func fit_camera(view_size: Vector2) -> void:
     var padding := Vector2(22, 24) if not focus else Vector2(28, 36)
     var usable := Vector2(maxf(.2, 1.0 - padding.x * 2 / maxf(1, view_size.x)), maxf(.2, 1.0 - padding.y * 2 / maxf(1, view_size.y)))
     camera.size = maxf(projected.size.y / usable.y, projected.size.x / (aspect * usable.x))
-    if not focus or not _inspection_slot.is_empty():
+    if not focus:
         _camera_fit_size = camera.size
         _camera_fit_position = camera.position
         _camera_projected_size = projected.size
@@ -436,9 +433,6 @@ func camera_action(action: String) -> void:
     cancel_pointer_input()
     match action:
         "reset":
-            if not _inspection_slot.is_empty():
-                end_equipment_inspection()
-                return
             _camera_zoom = 1.0
             _camera_turn = 0
             _camera_pan = Vector2.ZERO
@@ -711,19 +705,22 @@ func _refresh_visual_auto_pack() -> void:
     if owned and machine == null:
         machine = Node3D.new()
         machine.name = "VisualAutoPack"
+        # Keep every solid inside the existing 1.6 x 1.0 physical footprint.
+        # Height preserves the gantry silhouette without occupying a traffic lane.
+        machine.scale = Vector3(.64, 1.0, .49)
         slot.add_child(machine)
         # Open central bay preserves sight of the authoritative packing parcels.
         _box(machine,"Plinth",Vector3(2.48,.16,1.96),Vector3(0,.16,0),Color("172f3d"))
         _box(machine,"WorkDeck",Vector3(2.12,.12,1.30),Vector3(0,.53,0),Color("627b85"))
         for side in [-1,1]:
-            _box(machine,"Foot",Vector3(.36,.48,1.8),Vector3(side*1.04,.40,0),Color("e5ece5"))
-            _box(machine,"GantryPillar",Vector3(.30,1.66,.42),Vector3(side*.98,1.17,-.51),Color("f2b345"))
-            _box(machine,"DarkInset",Vector3(.32,.87,.05),Vector3(side*.98,1.12,-.285),Color("344853"))
+            _box(machine,"Foot",Vector3(.36,.36,1.8),Vector3(side*1.04,.34,0),Color("e5ece5"))
+            _box(machine,"GantryPillar",Vector3(.30,1.66,.42),Vector3(side*.98,1.17,-.56),Color("f2b345"))
+            _box(machine,"DarkInset",Vector3(.32,.87,.05),Vector3(side*.98,1.12,-.40),Color("344853"))
             _box(machine,"SafetyCap",Vector3(.38,.12,.50),Vector3(side*.98,2.01,-.51),Color("fff1c6"))
         _box(machine,"GantryBridge",Vector3(2.42,.40,.60),Vector3(0,1.95,-.51),Color("f2b345"))
         _box(machine,"TopCover",Vector3(2.46,.10,.66),Vector3(0,2.20,-.51),Color("e9efe6"))
-        _box(machine,"ControlCabinet",Vector3(.44,.91,1.02),Vector3(1.02,1.06,.22),Color("e5ece5"))
-        _box(machine,"ControlScreen",Vector3(.28,.25,.04),Vector3(1.02,1.30,.75),Color("1e5658"))
+        _box(machine,"ControlCabinet",Vector3(.16,.91,1.02),Vector3(1.155,1.06,.22),Color("e5ece5"))
+        _box(machine,"ControlScreen",Vector3(.16,.25,.04),Vector3(1.155,1.30,.75),Color("1e5658"))
         _box(machine,"StatusStrip",Vector3(1.66,.13,.055),Vector3(0,1.97,-.18),Color("668079"))
         _box(machine,"PressRail",Vector3(.15,.40,.18),Vector3(0,1.60,-.50),Color("a4b9bd"))
         _box(machine,"SealingHead",Vector3(.78,.25,.53),Vector3(0,1.33,-.26),Color("e9efe6"))
@@ -744,7 +741,7 @@ func _refresh_visual_auto_pack() -> void:
     head.position = Vector3(0,1.33,-.26)
     if working and _cargo.has(str(sim.pack_jobs[0].cargo_id)):
         var parcel: Node3D = _cargo[str(sim.pack_jobs[0].cargo_id)]
-        var actual_position := slot.to_local(parcel.global_position)
+        var actual_position := machine.to_local(parcel.global_position)
         head.position.x = actual_position.x
         head.position.z = actual_position.z
     head.position.y = 1.33 - .31*sin(fraction*PI)
@@ -752,35 +749,3 @@ func _refresh_visual_auto_pack() -> void:
     machine.set_meta("actual_pack_fraction",fraction)
     var strip := machine.get_node("StatusStrip") as MeshInstance3D
     strip.material_override = _material(Color("65f4b1") if working else Color("668079"))
-
-
-func begin_equipment_inspection(id: String) -> bool:
-    if not _inspection_slot.is_empty(): return false
-    if not _selected.is_empty() or not _slots.has(id): return false
-    if id != "packing" or sim.legacy_profile or "auto_pack" not in sim.purchased_upgrades: return false
-    # A previously queued relocation can move the target after inspection starts.
-    # Keep camera control voluntary: wait for placement to settle instead of chasing it.
-    if not sim.pending_layout_id.is_empty() or sim._move_remaining > 0.0: return false
-    cancel_pointer_input()
-    _inspection_return = {"zoom":_camera_zoom,"turn":_camera_turn,"pan":_camera_pan}
-    _inspection_slot = id
-    _camera_turn = 0
-    _camera_zoom = 1.0
-    _camera_pan = Vector2.ZERO
-    fit_camera(_camera_view_size)
-    return true
-
-func end_equipment_inspection() -> void:
-    if _inspection_slot.is_empty(): return
-    cancel_pointer_input()
-    _inspection_slot = ""
-    _camera_zoom = float(_inspection_return.zoom)
-    _camera_turn = int(_inspection_return.turn)
-    _camera_pan = _inspection_return.pan
-    _inspection_return = {}
-    fit_camera(_camera_view_size)
-
-func _slot_at(point: Vector2) -> String:
-    # Inspection cannot accidentally move equipment or open the layout editor.
-    if not _inspection_slot.is_empty(): return ""
-    return super._slot_at(point)

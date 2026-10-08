@@ -8,6 +8,7 @@ on:
       - '.github/workflows/flotra-campaign.yml'
       - 'FLOTRA_DISPATCH_ARTIFACTS_2026-10-07.json'
       - 'FLOTRA_VISUAL_GROWTH_ARTIFACTS_2026-10-07.json'
+      - 'FLOTRA_VISUAL_ONLY_ARTIFACTS_2026-10-08.json'
   push:
     branches: [main]
     paths:
@@ -16,6 +17,7 @@ on:
       - '.github/workflows/flotra-campaign.yml'
       - 'FLOTRA_DISPATCH_ARTIFACTS_2026-10-07.json'
       - 'FLOTRA_VISUAL_GROWTH_ARTIFACTS_2026-10-07.json'
+      - 'FLOTRA_VISUAL_ONLY_ARTIFACTS_2026-10-08.json'
 permissions:
   contents: read
 jobs:
@@ -120,12 +122,52 @@ jobs:
           server=$!
           trap 'kill "$server" 2>/dev/null || true' EXIT
           NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" xvfb-run -a node flotra-campaign/tests/release/browser_growth_journey.cjs http://127.0.0.1:8820/ build/growth-browser-journey build/growth-fixtures
+      - name: Capture ordinary-view purchase and actual packing pixels
+        shell: bash
+        run: |
+          # Native rendered evidence only; not WebGL timing or physical-phone proof.
+          # Reuse the unchanged, source-hashed capture script and earned fixtures.
+          profile="$RUNNER_TEMP/flotra-native-visual-profile"
+          mkdir -p "$profile/home" "$profile/data" "$profile/config" "$profile/cache" build/native-visual-growth
+          test -s build/growth-fixtures/late.json
+          HOME="$profile/home" XDG_DATA_HOME="$profile/data" XDG_CONFIG_HOME="$profile/config" XDG_CACHE_HOME="$profile/cache" \
+            FLOTRA_GROWTH_FIXTURES="$PWD/build/growth-fixtures" FLOTRA_VISUAL_OUTPUT="$PWD/build/native-visual-growth" \
+            LIBGL_ALWAYS_SOFTWARE=1 timeout 180 xvfb-run -a -s "-screen 0 1280x1024x24" \
+            godot --path flotra-campaign --rendering-method gl_compatibility --script res://tests/release/visual_growth_capture.gd \
+            2>&1 | tee build/native-visual-growth/engine.log
+          python3 - <<'PY_CAPTURE'
+          import json
+          from pathlib import Path
+          output = Path("build/native-visual-growth")
+          report = json.loads((output / "result.json").read_text())
+          rows = {row["name"]: row for row in report["results"]}
+          for width in [375, 390]:
+              before = rows[f"{width}-before-purchase"]
+              after = rows[f"{width}-after-purchase"]
+              active = rows[f"{width}-active-overview"]
+              assert not before["machineVisible"] and after["machineVisible"]
+              assert "auto_pack" not in before["upgrades"] and "auto_pack" in after["upgrades"]
+              assert active["machineVisible"] and active["packCargo"] >= 0
+          for frame in range(24):
+              assert f"motion-{frame:02d}" in rows
+          assert all(row["domainUnchanged"] and row["savingDisabled"] for row in rows.values())
+          assert all((output / (name + ".png")).stat().st_size > 0 for name in rows)
+          print(f"Verified {len(rows)} native normal-camera captures; no browser-performance claim.")
+          PY_CAPTURE
       - name: Preserve growth browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: flotra-growth-browser-journey
           path: build/growth-browser-journey
+          retention-days: 7
+      - name: Preserve native purchase and packing visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flotra-native-visual-growth
+          path: build/native-visual-growth
+          if-no-files-found: error
           retention-days: 7
 
   camera-browser-regression:
@@ -245,8 +287,7 @@ jobs:
     timeout-minutes: 20
     env:
       CONTROL_SHA: a6f885e4f70ed3122fc1c776c3c6fa0661ca954a
-      FLOTRA_COMBINED_PROVENANCE: FLOTRA_VISUAL_GROWTH_ARTIFACTS_2026-10-07.json
-      FLOTRA_INSPECTION_GATE: '1'
+      FLOTRA_COMBINED_PROVENANCE: FLOTRA_VISUAL_ONLY_ARTIFACTS_2026-10-08.json
     steps:
       - uses: actions/checkout@v5
         with:

@@ -50,7 +50,10 @@ func run() -> void:
         assert(not app.sim.pack_jobs.is_empty())
         await capture("%d-active-overview"%size.x)
         if size.x==390:
-            # Capture actual work at the unchanged normal overview camera.
+            # Existing reversible camera controls only, not a new close-camera policy.
+            app.world.select_slot("packing")
+            app.world.fit_camera(Vector2(app.viewport.size))
+            await capture("390-active-detail")
             var frozen: Vector3 = app.world._slots.packing.get_node("VisualAutoPack/SealingHead").position
             await settle()
             assert(frozen == app.world._slots.packing.get_node("VisualAutoPack/SealingHead").position)
@@ -59,9 +62,7 @@ func run() -> void:
                 app.sim.step(.05)
         app.queue_free()
         await process_frame
-    var fixture_dir := OS.get_environment("FLOTRA_GROWTH_FIXTURES")
-    assert(not fixture_dir.is_empty(), "Set FLOTRA_GROWTH_FIXTURES to earned-state fixtures")
-    var fixture: Dictionary=JSON.parse_string(FileAccess.get_file_as_string(fixture_dir.path_join("late.json")))
+    var fixture: Dictionary=JSON.parse_string(FileAccess.get_file_as_string("/workspace/scratch/401574fe42e3/flotra-recovered-web-evidence-20261007/fixtures/late.json"))
     var decoded=preload("res://prototype/release_save.gd").new().decode(fixture.encoded)
     assert(decoded.ok)
     for size in [Vector2i(390,844),Vector2i(375,667)]:
@@ -79,6 +80,6 @@ func run() -> void:
         app.queue_free()
         await process_frame
     var f:=FileAccess.open(output.path_join("result.json"),FileAccess.WRITE)
-    f.store_string(JSON.stringify({"scope":"Visual-only native Linux normal-camera preview; no optional inspection, WebGL, performance or physical phone verification","base":"a6f885e4f70ed3122fc1c776c3c6fa0661ca954a","results":results},"  "))
+    f.store_string(JSON.stringify({"scope":"Native Linux rendered preview; no WebGL or physical phone verification","base":"a6f885e4f70ed3122fc1c776c3c6fa0661ca954a","results":results},"  "))
     print("VISIBLE_GROWTH_CAPTURE_PASS")
     quit()

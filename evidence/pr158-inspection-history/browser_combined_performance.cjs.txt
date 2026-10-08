@@ -50,7 +50,7 @@ try {
     const directory = path.join(output, label);
     fs.mkdirSync(directory, { recursive: true });
     const run = spawnSync(process.execPath, [journey, control ? controlURL : candidateURL, directory, fixtures], {
-      env: { ...process.env, FLOTRA_JOURNEY_CASES: 'mature-performance', FLOTRA_EXPORTED_DIRECTORY: control ? controlDirectory : candidateDirectory },
+      env: { ...process.env, FLOTRA_JOURNEY_CASES: 'mature-performance', FLOTRA_EXPORTED_DIRECTORY: control ? controlDirectory : candidateDirectory, FLOTRA_INSPECTION_GATE: control ? '0' : (process.env.FLOTRA_INSPECTION_GATE || '0') },
       encoding: 'utf8', timeout: 240000, maxBuffer: 16 * 1024 * 1024,
     });
     fs.writeFileSync(path.join(directory, 'run.log'), (run.stdout || '') + (run.stderr || ''));

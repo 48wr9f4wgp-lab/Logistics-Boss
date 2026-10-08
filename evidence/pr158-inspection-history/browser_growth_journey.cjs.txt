@@ -413,13 +413,57 @@ async function samplePerformance(page,milliseconds) {
    const idleAfter=await samplePerformance(page,6000);
    function summarize(samples){const cpu=samples.metrics.map(m=>m.processMs),nodes=samples.metrics.map(m=>m.nodes),draws=samples.metrics.map(m=>m.drawCalls);return {rafMedianMs:percentile(samples.frames,.5),rafP95Ms:percentile(samples.frames,.95),processMedianMs:percentile(cpu,.5),processP95Ms:percentile(cpu,.95),nodesMin:Math.min(...nodes),nodesMax:Math.max(...nodes),drawCallsMax:Math.max(...draws),rafSamples:samples.frames.length,telemetrySamples:samples.metrics.length,distinctMetricValues:new Set(samples.metrics.map(m=>JSON.stringify(m))).size};}
    test.performance={uiOnly:summarize(uiOnly),idle:summarize(idle),active:summarize(active),idleAfter:summarize(idleAfter)};
-   assert.ok(test.performance.idleAfter.nodesMax-test.performance.idleAfter.nodesMin<=4,'Mature paused warehouse has stable node count');
-   assert.ok(test.performance.active.processP95Ms<100,'Mature simulation/render CPU updates stay below 100ms on software Chromium');
-   assert.ok(test.performance.active.drawCallsMax<=250,'Mature geometry stays within 250 draw calls, including shadows');
-   // A full-DPR HUD-only diagnostic already costs ~117ms on this cloud
-   // SwiftShader renderer; do not confuse that compositor floor with 3D cost.
-   // Budget the added warehouse work against the same-run covered-menu baseline.
-   assert.ok(test.performance.active.rafMedianMs<=Math.max(75,test.performance.uiOnly.rafMedianMs*1.75) && test.performance.active.rafP95Ms<=Math.max(120,test.performance.uiOnly.rafP95Ms*2),'Mature 3D overhead stays within the same-renderer baseline budget');
+   let normalGateError=null,inspectionGateError=null;
+   test.normalGate={status:'pending'};test.inspectionGate={status:'not_requested'};
+   try {
+    assert.ok(test.performance.idleAfter.nodesMax-test.performance.idleAfter.nodesMin<=4,'Mature paused warehouse has stable node count');
+    assert.ok(test.performance.active.processP95Ms<100,'Mature simulation/render CPU updates stay below 100ms on software Chromium');
+    assert.ok(test.performance.active.drawCallsMax<=250,'Mature geometry stays within 250 draw calls, including shadows');
+    // A full-DPR HUD-only diagnostic already costs ~117ms on this cloud
+    // SwiftShader renderer; do not confuse that compositor floor with 3D cost.
+    // Budget the added warehouse work against the same-run covered-menu baseline.
+    assert.ok(test.performance.active.rafMedianMs<=Math.max(75,test.performance.uiOnly.rafMedianMs*1.75) && test.performance.active.rafP95Ms<=Math.max(120,test.performance.uiOnly.rafP95Ms*2),'Mature 3D overhead stays within the same-renderer baseline budget');
+    test.normalGate={status:'passed'};
+   } catch(error) {
+    normalGateError=error;test.normalGate={status:'failed',error:error.message};
+   }
+   if (process.env.FLOTRA_INSPECTION_GATE === '1') {
+    test.inspectionGate={status:'pending'};
+    try {
+    // Optional close inspection is an additional phase, never a replacement
+    // for the unchanged normal/UI-only/paused budgets above.
+    await page.setViewportSize({width:390,height:844});await settle(page);
+    const returnCamera=(await ui(page)).camera;
+    await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs'});
+    await tapName(page,context,'Tab_upgrades');await tapName(page,context,'InspectOwnedAutoPack');
+    await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.inspection?.active===true);
+    await expectUI(page,{sheet:'',worldVisible:true,trialRunning:false});
+    const inspectionIdle=await samplePerformance(page,6000);
+    await setRunning(page,context,true);await page.waitForTimeout(1000);
+    const inspectionActive=await samplePerformance(page,12000);
+    await setRunning(page,context,false);await page.waitForTimeout(500);
+    await page.screenshot({path:path.join(output,'mature-optional-inspection.png'),scale:'css'});
+    const inspectionIdleAfter=await samplePerformance(page,6000);
+    test.inspectionPerformance={idle:summarize(inspectionIdle),active:summarize(inspectionActive),idleAfter:summarize(inspectionIdleAfter),uiOnly:test.performance.uiOnly};
+    await tapName(page,context,'CameraReset');
+    await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.inspection?.active===false);
+    const returned=(await ui(page)).camera;
+    for (const key of ['turn','zoom','panX','panY','size']) assert.equal(returned[key],returnCamera[key],'Optional inspection restores camera '+key);
+    test.inspectionReturned=true;
+    const extra=test.inspectionPerformance;
+    assert.ok(extra.idleAfter.nodesMax-extra.idleAfter.nodesMin<=4,'Optional inspection paused node count stays stable');
+    assert.ok(extra.active.processP95Ms<100,'Optional inspection CPU updates stay below unchanged 100ms');
+    assert.ok(extra.active.drawCallsMax<=250,'Optional inspection stays within unchanged 250 draw calls');
+    assert.ok(extra.active.rafMedianMs<=Math.max(75,extra.uiOnly.rafMedianMs*1.75) && extra.active.rafP95Ms<=Math.max(120,extra.uiOnly.rafP95Ms*2),'Optional inspection stays within unchanged same-run UI-only frame budget');
+     test.inspectionGate={status:'passed'};
+    } catch(error) {
+     inspectionGateError=error;test.inspectionGate={status:'failed',error:error.message};
+    }
+   }
+   // Diagnostics may complete after a failed normal phase, but no failed
+   // phase can become an overall pass. Control A retains its normal failure.
+   if(normalGateError)throw normalGateError;
+   if(inspectionGateError)throw inspectionGateError;
    state=await ui(page);test.progress={before:late.shipped,after:state.progress.shipped,time:state.simTime};assert.ok(state.simTime>late.time);
    await exportContract.assertStorage(page,test.storageContract,late);
   });

@@ -79,7 +79,6 @@ func _ready() -> void:
     world.input_gate = func(): return is_instance_valid(hud) and hud._sheet_kind in ["", "editor"] and not hud._background_input_blocked()
     world.camera_input_gate = func(): return is_instance_valid(hud) and hud._sheet_kind.is_empty()
     _connect_if("camera_requested", _camera_action)
-    _connect_if("equipment_inspection_requested", _inspect_equipment)
     hud.call("set_speed",speed)
     _connect_if("contract_requested", _accept_contract)
     _connect_if("upgrade_requested", _buy_upgrade)
@@ -211,11 +210,6 @@ func _report_phone_qa() -> void:
     data["worldVisible"] = viewport_container.visible
     data["worldRect"] = _qa_rect(viewport_container)
     data["camera"] = world.camera_metrics()
-    data["inspection"] = {"active":not world._inspection_slot.is_empty(),"packCargo":-1,"packFraction":0.0,"headY":0.0,"machineVisible":false}
-    if world._slots.has("packing"):
-        var machine := world._slots.packing.get_node_or_null("VisualAutoPack") as Node3D
-        if machine != null:
-            data.inspection.merge({"packCargo":machine.get_meta("actual_pack_cargo_id",-1),"packFraction":machine.get_meta("actual_pack_fraction",0.0),"headY":machine.get_node("SealingHead").position.y,"machineVisible":machine.visible},true)
     var floors: Array = []
     for mesh in world._growth_floors + world._connector_floors:
         var point: Vector2 = viewport_container.position + world.camera.unproject_position(mesh.global_position)
@@ -271,9 +265,7 @@ func _resize_world() -> void:
         world.call("fit_camera", viewport_container.size)
 
 func _camera_action(action: String) -> void:
-    if is_instance_valid(world):
-        world.camera_action(action)
-        hud.set_equipment_inspection(not world._inspection_slot.is_empty())
+    if is_instance_valid(world): world.camera_action(action)
 
 func _input(event: InputEvent) -> void:
     if not is_instance_valid(world) or not is_instance_valid(viewport_container): return
@@ -444,9 +436,6 @@ func _reset_frame_clock() -> void:
     _clock_active = running and not (bool(_preferences.pause_on_menus) and is_instance_valid(hud) and not str(hud._sheet_kind).is_empty())
 
 func _sheet_clock_changed(_kind: String) -> void:
-    if not _kind.is_empty() and is_instance_valid(world) and not world._inspection_slot.is_empty():
-        world.end_equipment_inspection()
-        hud.set_equipment_inspection(false)
     if is_instance_valid(world): world.cancel_pointer_input()
     # Anchor at the actual close/open action, not at the next rendered frame.
     # A long paused menu contributes no elapsed time after it is dismissed.
@@ -583,9 +572,3 @@ func _exit_trial() -> void:
 func _preview_slot(slot_id: String, choice_id: String) -> void:
     world.call("preview_slot", slot_id, choice_id)
     _resize_world()
-
-
-func _inspect_equipment(id: String) -> void:
-    _update_world_visibility()
-    if world.begin_equipment_inspection(id):
-        hud.set_equipment_inspection(true)

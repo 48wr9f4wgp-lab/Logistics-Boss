@@ -11,8 +11,6 @@ signal sheet_changed(kind: String)
 signal operation_requested(id: String)
 signal cancel_layout_requested()
 signal camera_requested(action: String)
-signal equipment_inspection_requested(id: String)
-var _equipment_inspection_active := false
 
 var _history_visible := false
 var _future_upgrades_visible := false
@@ -148,9 +146,6 @@ func _update_world_region() -> void:
 func _layout_camera_controls() -> void:
     if is_instance_valid(_camera_controls):
         _camera_controls.visible = _sheet_kind.is_empty()
-        if _camera_buttons.size() == 5:
-            _camera_buttons[4].text = "戻る" if _equipment_inspection_active else "全体"
-            _camera_buttons[4].tooltip_text = "直前の倉庫の眺めへ戻る" if _equipment_inspection_active else "最初の向きで倉庫全体を表示"
         var compact := _compact_camera_header()
         var row_width := _root.size.x - (196 if compact else 24)
         _rect(_camera_controls, 102 if compact else 12, 10 if compact else _root.size.y - 216, row_width, CONTROL_HEIGHT)
@@ -348,7 +343,6 @@ func refresh() -> void:
     _back.text = "操作" if _sheet_kind.is_empty() else "戻る"
     if _compact_camera_header(): _reason_panel.hide()
     _update_controls()
-    _update_inspection_entry()
     if str(_release.get("status", "ready")) != "running":
         _pause.text = "仕事"
     _shipped.text = "出荷 %d/%d個  資金 %s" % [delivered, total, _compact_funds(wallet)] if total > 0 else "出荷 0個  資金 %s" % _compact_funds(wallet)
@@ -660,10 +654,6 @@ func _is_wing(option: Dictionary) -> bool:
 func _build_upgrades() -> void:
     _sheet_summary = _text(_content, "資金 %d · 増築 %d/%d棟" % [int(_release.get("wallet", 0)), int(_growth().get("wing_count", 0)), WING_COUNT], 20)
     _sheet_summary.name = "UpgradeWallet"
-    if "auto_pack" in _release.get("upgrades",[]) and not sim.legacy_profile:
-        _action(_content, "自動梱包機を近くで見る", _inspect_owned_auto_pack, true).name = "InspectOwnedAutoPack"
-        _text(_content, "好きな時に眺めて、元の視点に戻れます", BODY_FONT_SIZE, Color("476266"))
-        _update_inspection_entry()
     if not _equipment_notice.is_empty():
         _text(_content, _equipment_notice, BODY_FONT_SIZE, Color("476266")).name = "UpgradeFeedback"
     var available: Array = []
@@ -1044,21 +1034,3 @@ func debug_state() -> Dictionary:
     state["history_visible"] = _history_visible
     state["prepared_contract_id"] = _prepared_contract_id
     return state
-
-
-func _inspect_owned_auto_pack() -> void:
-    close_sheet()
-    equipment_inspection_requested.emit("packing")
-
-func set_equipment_inspection(active: bool) -> void:
-    _equipment_inspection_active = active
-    _layout_camera_controls()
-
-
-func _update_inspection_entry() -> void:
-    if _sheet_kind != "jobs" or _release_tab != "upgrades" or not is_instance_valid(_content): return
-    var button := _content.get_node_or_null("InspectOwnedAutoPack") as Button
-    if button == null: return
-    var moving: bool = not sim.pending_layout_id.is_empty() or sim._move_remaining > 0.0
-    button.disabled = moving
-    button.text = "配置変更の完了後に確認" if moving else "自動梱包機を近くで見る"
