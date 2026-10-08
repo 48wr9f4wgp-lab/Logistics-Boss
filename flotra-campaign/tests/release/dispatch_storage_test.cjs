@@ -115,7 +115,7 @@ async function test(name, action) {
     a.event('pagehide'); await flush(); const b=boot(map,{},manager); await ready(b);
     assert(b.store.write(env(2)).ok); b.event('pagehide'); await flush();
     a.event('pageshow',{persisted:true}); await flush();
-    assert.equal(a.store.write(env(3)).reason,'concurrent_change'); assert.equal(map.get(P),env(2));
+    assert.equal(a.store.write(env(3)).reason,'page_restore_required'); assert.equal(map.get(P),env(2));
   });
   await test('2 MB decoded ceiling applies before browser writes', async () => {
     const map=new Map(), app=boot(map); await ready(app);

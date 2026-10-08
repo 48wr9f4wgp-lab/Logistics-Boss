@@ -19,6 +19,8 @@ for suite in domain_campaign domain_effects save_store_test save_size_preflight 
 done
 FLOTRA_STORAGE_BRIDGE="$project/campaign-storage.js" node "$project/tests/release/review_storage_test.cjs"
 node "$project/tests/release/dispatch_storage_test.cjs"
+node "$project/tests/release/dispatch_writer_ready_test.cjs"
+node "$project/tests/release/dispatch_loader_ready_test.cjs"
 node "$project/tests/release/browser_export_contract_test.cjs"
 node "$project/tests/release/review_probe_safety.cjs" "$project/../docs/godot-jobs-preview/storage-check.html"
 echo '=== readability_input ==='

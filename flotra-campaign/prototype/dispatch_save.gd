@@ -103,6 +103,7 @@ func load_into(sim) -> Dictionary:
     # A blocked store is terminal for this session. Reopening is explicit.
     if blocked: return {"ok":false,"reason":"blocked","blocked":true,"fresh":false}
     var pair := _read_pair()
+    if pair.get("reason") == "page_restore_required": return protect_restored_page()
     if not pair.get("ok",false): return _stop("storage_unavailable", "保存機能を利用できません。以前のデータを守るため、進行を停止しました")
     _observed = pair.duplicate(true)
     _source = str(pair.source)
@@ -131,6 +132,9 @@ func load_into(sim) -> Dictionary:
         status = "バックアップを読み込みました。元のデータを保護して進行を停止しました"
         return {"ok":true,"fresh":false,"restored":true,"backup":true,"blocked":true}
     return _stop("unrecognized_save", "保存データを読み込めません。元のデータを保護して進行を停止しました")
+
+func protect_restored_page() -> Dictionary:
+    return _stop("page_restore_required", "ブラウザーの戻る操作で以前の画面を復元したため、保存データを保護して停止しました。このページを再読み込みしてください。未保存の進行は復元されません")
 
 func _stop(reason: String, message: String) -> Dictionary:
     _cancel_pending(false)
@@ -279,6 +283,8 @@ func _commit_capture(job: Dictionary) -> Dictionary:
         status = "保存できませんでした。画面を閉じると未保存の進行が失われます"
         if result.get("reason") in ["writer_unavailable","legacy_writer_unavailable"]:
             return _stop(str(result.reason), "保存を安全に開始できないため、データを保護して進行を停止しました。旧版を含む他のタブを閉じて再読み込みしてください。解消しない場合はブラウザーの保存対応を確認してください。未保存の進行は失われます")
+        elif result.get("reason") == "page_restore_required":
+            return protect_restored_page()
         elif result.get("reason") == "native_writer_unavailable":
             status = "別の画面が保存中、または前回の保存が中断されました。元の保存は保護しています。未保存の進行は画面を閉じると失われます"
         elif result.get("reason") in ["concurrent_change","write_uncertain"]:

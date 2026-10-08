@@ -14,6 +14,21 @@
   let releaseLegacyWriter = null;
   let legacyRequested = false;
   let generation = 0;
+  const writerState = {new:'idle', legacy:'idle'};
+  const acquisitions = {};
+  const resolutions = {};
+  let startup = null;
+  let restoreHandler = null;
+  // Ownership and readiness are distinct: a queued callback is not a refusal.
+  function readiness(which) {
+    const state = writerState[which];
+    return {ok:state === 'held', state, writer:which};
+  }
+  function finish(which, state) {
+    writerState[which] = state;
+    if (resolutions[which]) resolutions[which](readiness(which));
+    delete resolutions[which];
+  }
 
   function validEnvelope(text) {
     if (typeof text !== 'string' || !text.length || text.length > MAX_TEXT) return false;
@@ -29,30 +44,50 @@
     } catch (_) { return false; }
   }
   function acquire(which) {
-    if (!root.navigator || !root.navigator.locks) return;
+    if (writerState[which] === 'pending' || writerState[which] === 'held') return acquisitions[which];
     const epoch = generation;
+    writerState[which] = 'pending';
+    acquisitions[which] = new Promise(resolve => { resolutions[which] = resolve; });
+    if (!root.navigator || !root.navigator.locks) {
+      finish(which, 'unavailable');
+      return acquisitions[which];
+    }
     const key = which === 'legacy' ? OLD_PRIMARY : PRIMARY;
     try {
       root.navigator.locks.request(key + '.writer', {mode:'exclusive', ifAvailable:true}, lock => {
-        if (!lock || epoch !== generation) return;
+        if (epoch !== generation) return;
+        if (!lock) { finish(which, 'occupied'); return; }
         if (which === 'legacy') ownsLegacyWriter = true;
         else ownsWriter = true;
+        finish(which, 'held');
         return new Promise(resolve => {
           if (which === 'legacy') releaseLegacyWriter = resolve;
           else releaseWriter = resolve;
         });
-      }).catch(() => {});
-    } catch (_) { /* Missing/refused Web Locks fail closed. */ }
+      }).catch(() => { if (epoch === generation) finish(which, 'unavailable'); });
+    } catch (_) { finish(which, 'unavailable'); }
+    return acquisitions[which];
   }
   function acquireLegacy() {
-    if (legacyRequested) return;
+    if (legacyRequested) return acquisitions.legacy;
     legacyRequested = true;
-    acquire('legacy');
+    return acquire('legacy');
   }
   function releaseLegacy() {
     ownsLegacyWriter = false;
     if (releaseLegacyWriter) releaseLegacyWriter();
     releaseLegacyWriter = null;
+  }
+  function cancelAcquisition(state) {
+    startup = null;
+    generation += 1;
+    ownsWriter = false;
+    if (releaseWriter) releaseWriter();
+    releaseWriter = null;
+    releaseLegacy();
+    legacyRequested = false;
+    finish('new', state);
+    finish('legacy', state);
   }
   function snapshot(includeLegacy) {
     const state = {primary:root.localStorage.getItem(PRIMARY), backup:root.localStorage.getItem(BACKUP)};
@@ -66,21 +101,58 @@
     return Object.keys(a).every(key => a[key] === b[key]) && Object.keys(a).length === Object.keys(b).length;
   }
   acquire('new');
-  if (root.addEventListener) root.addEventListener('pagehide', () => {
-    generation += 1;
-    ownsWriter = false;
-    if (releaseWriter) releaseWriter();
-    releaseWriter = null;
-    releaseLegacy();
-    legacyRequested = false;
-  });
+  if (root.addEventListener) root.addEventListener('pagehide', () => cancelAcquisition('cancelled'));
   if (root.addEventListener) root.addEventListener('pageshow', event => {
     if (!event.persisted) return;
-    acquire('new');
-    if (observed && 'legacyPrimary' in observed) acquireLegacy();
+    // A restored heap may hold an old checkpoint. Never reacquire and resume it.
+    // Only an explicit page reload may load a new snapshot under fresh locks.
+    cancelAcquisition('reload_required');
+    if (restoreHandler) restoreHandler();
   });
   root.FlotraDispatchStore = Object.freeze({
+    cancelStartup() { cancelAcquisition('cancelled'); },
+    setRestoreHandler(handler) {
+      restoreHandler = typeof handler === 'function' ? handler : null;
+      if (restoreHandler && writerState.new === 'reload_required') restoreHandler();
+    },
+    // The loader calls this before Godot can load, mutate or save a warehouse.
+    // Existing v5 data (including invalid/backup-only data) never needs the old
+    // writer lock. Decoding and migration safety remain owned by the old reader.
+    ready() {
+      if (startup) return startup;
+      startup = (async () => {
+        const startupEpoch = generation;
+        let timer;
+        const timeout = new Promise(resolve => {
+          timer = root.setTimeout(() => {
+            cancelAcquisition('timeout');
+            resolve({ok:false, state:'timeout'});
+          }, 10000);
+        });
+        const granted = (async () => {
+          const current = await acquisitions.new;
+          if (!current.ok) return current;
+          let pair;
+          try { pair = snapshot(false); }
+          catch (_) { return {ok:false, state:'storage_unavailable'}; }
+          if (pair.primary === null && pair.backup === null) {
+            const legacy = await acquireLegacy();
+            if (!legacy.ok) return legacy;
+          }
+          return startupEpoch === generation && ownsWriter
+            ? {ok:true, state:'held'} : {ok:false, state:'cancelled'};
+        })();
+        const result = await Promise.race([granted, timeout]);
+        root.clearTimeout(timer);
+        // A refused startup cannot retain a different writer lock indefinitely.
+        if (!result.ok && result.state !== 'timeout' && result.state !== 'cancelled') cancelAcquisition(result.state);
+        return result;
+      })();
+      return startup;
+    },
+    readiness() { return {current:readiness('new'), legacy:readiness('legacy')}; },
     read() {
+      if (writerState.new === 'reload_required') return {ok:false,reason:'page_restore_required'};
       try {
         const current = snapshot(false);
         const legacy = current.primary === null && current.backup === null;
@@ -97,6 +169,7 @@
       } catch (_) { return {ok:false,reason:'storage_unavailable'}; }
     },
     write(text) {
+      if (writerState.new === 'reload_required') return {ok:false,reason:'page_restore_required'};
       if (!ownsWriter) return {ok:false,reason:'writer_unavailable'};
       if (!observed) return {ok:false,reason:'load_required'};
       const migrating = 'legacyPrimary' in observed;
