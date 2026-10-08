@@ -36,6 +36,7 @@ async function shot(page, item, state) {
   await page.screenshot({ path: path.join(output, name + '.jpg'), type: 'jpeg', quality: 85, scale: 'css' });
   item.screenshots.push(name + '.jpg');
   item.states[state] = await ui(page);
+  console.log('NAVIGATION_CAPTURE_SCREEN '+JSON.stringify({case:item.name,screen:state,sheet:item.states[state].sheet,worldRect:item.states[state].worldRect,status:item.states[state].status}));
 }
 (async () => {
   let browser;
@@ -76,8 +77,12 @@ async function shot(page, item, state) {
           }
           const reset=state.buttons.find(b=>b.name==='CameraReset');
           assert.ok(reset.width<=80,'Whole-view is a restrained button');
-          const save=state.labels.find(l=>l.text.includes('保存'));
-          assert.ok(save,'Save status remains visible');
+          // dispatch_save.load_into owns these two fixture states. A fresh
+          // warehouse has status '新しい倉庫', which correctly lacks '保存'.
+          const expectedStatus=mature?'旧保存を読み込みました。旧データを残して新版専用に保存します':'新しい倉庫';
+          const save=state.labels.find(l=>l.text===expectedStatus&&l.x===(mobile?104:220)&&l.y===(mobile?40:14));
+          assert.ok(save,'Actual header status control exposes exact source-owned fixture text');
+          assert.ok(save.fontSize>=18&&save.width>0&&save.height>0&&save.x>=0&&save.y>=0&&save.x+save.width<=width&&save.y+save.height<=(mobile?76:60),'Header status remains readable and inside its visible header');
         }
         await shot(page,item,'warehouse');
         await click(page,'WorkChoice',mobile); await waitSheet(page,'jobs');
@@ -96,6 +101,7 @@ async function shot(page, item, state) {
         item.status='passed';
       } catch (error) {
         item.status='failed'; item.error=error.stack;
+        console.error('NAVIGATION_CAPTURE_FIRST_FAILURE '+JSON.stringify({case:item.name,completedScreens:Object.keys(item.states),error:error.stack}));
         await shot(page,item,'failure').catch(()=>{});
         throw error;
       } finally { await context.close(); fs.writeFileSync(path.join(output,'navigation-space.json'),JSON.stringify(report,null,2)); }

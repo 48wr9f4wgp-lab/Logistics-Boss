@@ -73,7 +73,7 @@
     "flotra-campaign/tests/release/browser_export_contract_test.cjs": "884116ddca7982c53a8de4a789376aaf42f380e2787f6c145d5fb7dd31281b77",
     "flotra-campaign/tests/release/browser_growth_geometry.cjs": "245b14f304e9b075163086836c7d8e7af6d2719f9a88087564f7ed2a5abed5c4",
     "flotra-campaign/tests/release/browser_growth_journey.cjs": "772399efa810b7d5e04762b6fd996d7aec41daf480ad45f6a2aec17dcc9acfc7",
-    "flotra-campaign/tests/release/browser_navigation_space.cjs": "202ef0853c56aec9a86cf4416192900b03b6bb236504e735bdb9bb28861c118d",
+    "flotra-campaign/tests/release/browser_navigation_space.cjs": "ef860571e4ef17b8ac65310a39e5ff2c6ad4bdd9f9a2b4b67a824b12866e7244",
     "flotra-campaign/tests/release/browser_phone_geometry.cjs": "ef2fd9090e40b7b5f3f86267559c273fc943597854724449caaa695ee3e65243",
     "flotra-campaign/tests/release/browser_preparation_journey.cjs": "63e9012cadb6398d76a3b2a16b967f87d7bd3f07f8b9b520f3a74e1efabed402",
     "flotra-campaign/tests/release/browser_save_size.cjs": "4b4dcc26976d4936eea002581ee1eff3c9791a9dc7611fb2e7770e63139fa975",
@@ -260,9 +260,9 @@
       "path": "flotra-campaign/tests/release/browser_navigation_space.cjs",
       "mode": "100644",
       "type": "blob",
-      "gitBlobSha": "e8570c48cf02abed3d2bd73730d4563260407aeb",
-      "sha256": "202ef0853c56aec9a86cf4416192900b03b6bb236504e735bdb9bb28861c118d",
-      "bytes": 7147,
+      "gitBlobSha": "93119489c6796bd4a15fb89104e03adc69b63307",
+      "sha256": "ef860571e4ef17b8ac65310a39e5ff2c6ad4bdd9f9a2b4b67a824b12866e7244",
+      "bytes": 8106,
       "baselineGitBlobSha": null
     },
     {
@@ -328,5 +328,11 @@
       "bytes": 1508,
       "baselineGitBlobSha": null
     }
-  ]
+  ],
+  "captureHarnessCorrection": {
+    "oldSHA256": "202ef0853c56aec9a86cf4416192900b03b6bb236504e735bdb9bb28861c118d",
+    "newSHA256": "ef860571e4ef17b8ac65310a39e5ff2c6ad4bdd9f9a2b4b67a824b12866e7244",
+    "evidenceRun": 37739915938,
+    "reason": "Fresh status is source-owned 新しい倉庫, not hidden save label; exact text and visible header bounds now asserted. Product hashes unchanged."
+  }
 }
