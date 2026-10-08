@@ -1,0 +1,50 @@
+name: FLOTRA isolated ground-culling diagnostic
+on:
+  push:
+    branches: [diagnostic/flotra-ground-culling-20261008]
+    paths:
+      - '.github/workflows/flotra-ground-profile.yml'
+      - 'diagnostics/flotra-ground-profile/**'
+permissions:
+  contents: read
+jobs:
+  ground-culling-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out immutable candidate runtime
+        uses: actions/checkout@v5
+        with:
+          ref: 6e3829793d771f25a828c0d169db6dcc77e525e3
+          path: runtime
+          persist-credentials: false
+      - name: Check out test harness
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          path: harness
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Install exact established browser dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-ground-browser" --no-save playwright@1.62.1 pngjs@7.0.0
+          "$RUNNER_TEMP/flotra-ground-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Run one bounded causal diagnostic
+        env:
+          NODE_PATH: ${{ runner.temp }}/flotra-ground-browser/node_modules
+          FLOTRA_DIAGNOSTIC_HARNESS_SHA: ${{ github.sha }}
+        run: bash harness/diagnostics/flotra-ground-profile/run.sh "$PWD/runtime" "$PWD/ground-profile-evidence"
+      - name: Preserve successes and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flotra-ground-culling-diagnostic-${{ github.sha }}
+          path: ground-profile-evidence
+          retention-days: 7
