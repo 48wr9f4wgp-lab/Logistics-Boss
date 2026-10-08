@@ -346,7 +346,8 @@ func close_sheet() -> void:
     if previous == "jobs" and _sheet_kind.is_empty() and not _compare.disabled:
         _compare.grab_focus()
     elif previous in ["records", "comparison", "loading"] and _sheet_kind.is_empty():
-        _conditions.grab_focus()
+        # A responsive HUD may put records behind its controls entry.
+        (_conditions if _conditions.is_visible_in_tree() else _back).grab_focus()
 
 func _open_sheet(kind: String, title: String, height: float) -> void:
     _input_epoch += 1

@@ -70,7 +70,12 @@ func run() -> void:
             app.hud.show_play()
             await settle()
             verify_screen(css, dpr, label)
-            await create_timer(0.22).timeout
+            # The dismissal guard uses wall time; SceneTreeTimer may finish
+            # sooner after a slow frame. Wait for readiness before one tap.
+            var deadline := Time.get_ticks_msec() + 2000
+            while app.hud._background_input_blocked() and Time.get_ticks_msec() < deadline:
+                await process_frame
+            check(not app.hud._background_input_blocked(), label + ": dismissal guard expires before fresh navigation")
             await tap(app.hud._compare)
             check(app.hud._sheet_kind == "jobs", label + ": physical-pixel touch opens contracts once")
             check(Rect2(Vector2.ZERO, Vector2(css)).encloses(app.hud._sheet.get_global_rect()), label + ": contract sheet remains inside CSS screen")

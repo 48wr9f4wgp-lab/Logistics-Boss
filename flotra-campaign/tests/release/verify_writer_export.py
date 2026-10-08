@@ -2,6 +2,7 @@
 """Compare full 4.7.2 export to committed qualification bytes without editing either."""
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import sys
@@ -12,7 +13,10 @@ root = Path(__file__).resolve().parents[3]
 exported = Path(sys.argv[1])
 evidence = Path(sys.argv[2])
 evidence.mkdir(parents=True, exist_ok=True)
-manifest = json.loads((root / 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json').read_text())
+manifest_path = Path(os.environ.get('FLOTRA_EXPORT_PROVENANCE', 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json'))
+if not manifest_path.is_absolute():
+    manifest_path = root / manifest_path
+manifest = json.loads(manifest_path.read_text())
 sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
 names = ['index.html', 'index.js', 'index.wasm', 'index.pck', 'campaign-viewport.js', 'dispatch-storage.js']
 actual = {name: sha(exported / name) for name in names}
