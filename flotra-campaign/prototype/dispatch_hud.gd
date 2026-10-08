@@ -13,6 +13,26 @@ func show_save_protection(reason: String) -> void:
     _close.text = "停止中"
     _close.disabled = true
     _layout_body()
+    _sync_protection_controls()
+
+func refresh() -> void:
+    super.refresh()
+    _sync_protection_controls()
+
+func _layout() -> void:
+    super._layout()
+    _sync_protection_controls()
+
+func _sync_protection_controls() -> void:
+    if not _built or not is_instance_valid(_back) or not is_instance_valid(_pause): return
+    var protected := _sheet_kind == "save_protection"
+    _back.disabled = protected
+    if protected:
+        _pause.disabled = true
+        _back.text = "保護中"
+        _pause.text = "停止中"
+    _back.tooltip_text = "保存データの保護中です。画面内の案内をご確認ください" if protected else ""
+    _pause.tooltip_text = _back.tooltip_text
 
 func close_sheet() -> void:
     if _sheet_kind == "save_protection": return

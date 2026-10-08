@@ -35,7 +35,7 @@ async function run(missing, fail) {
   const context = { Engine,
     document: { getElementById: id => elements[id], createTextNode: text => ({ text }), createElement: () => ({ text: '\n' }) },
     console: { error: (...args) => errors.push(args) },
-    navigator: {}, window: { location: { reload() { throw new Error('unexpected reload'); } } }, setTimeout,
+    navigator: {}, window: { FlotraDispatchStore: {ready:()=>Promise.resolve({ok:true}),cancelStartup(){}}, location: { reload() { throw new Error('unexpected reload'); } } }, setTimeout,
   };
   vm.runInNewContext(script, context);
   await new Promise(resolve => setImmediate(resolve));

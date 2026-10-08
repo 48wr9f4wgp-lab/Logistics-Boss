@@ -9,6 +9,7 @@ on:
       - 'FLOTRA_DISPATCH_ARTIFACTS_2026-10-07.json'
       - 'FLOTRA_VISUAL_GROWTH_ARTIFACTS_2026-10-07.json'
       - 'FLOTRA_VISUAL_ONLY_ARTIFACTS_2026-10-08.json'
+      - 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json'
   push:
     branches: [main]
     paths:
@@ -18,6 +19,7 @@ on:
       - 'FLOTRA_DISPATCH_ARTIFACTS_2026-10-07.json'
       - 'FLOTRA_VISUAL_GROWTH_ARTIFACTS_2026-10-07.json'
       - 'FLOTRA_VISUAL_ONLY_ARTIFACTS_2026-10-08.json'
+      - 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json'
 permissions:
   contents: read
 jobs:
@@ -286,8 +288,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      CONTROL_SHA: a6f885e4f70ed3122fc1c776c3c6fa0661ca954a
-      FLOTRA_COMBINED_PROVENANCE: FLOTRA_VISUAL_ONLY_ARTIFACTS_2026-10-08.json
+      CONTROL_SHA: a7c60e8c86785137a90b517227b5def8b329c1bc
+      FLOTRA_COMBINED_PROVENANCE: FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json
     steps:
       - uses: actions/checkout@v5
         with:
@@ -326,4 +328,64 @@ jobs:
         with:
           name: flotra-combined-renderer-control
           path: build/combined-renderer
+          retention-days: 7
+
+  desktop-save-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Full official Web export and synthetic legacy fixtures
+        shell: bash
+        run: |
+          test "$(godot --version)" = '4.7.2.stable.official.ed1daf0bf'
+          templates="${XDG_DATA_HOME:-$HOME/.local/share}/godot/export_templates"
+          test -s "$templates/4.7.2.stable/web_release.zip"
+          profile="$RUNNER_TEMP/flotra-readiness-native"
+          mkdir -p "$profile"/{home,data,config,cache} build/writer-fixtures build/writer-readiness
+          mkdir -p "$profile/data/godot"
+          ln -s "$templates" "$profile/data/godot/export_templates"
+          export HOME="$profile/home" XDG_DATA_HOME="$profile/data" XDG_CONFIG_HOME="$profile/config" XDG_CACHE_HOME="$profile/cache"
+          godot --headless --editor --path flotra-campaign --import
+          FLOTRA_GROWTH_FIXTURES="$PWD/build/writer-fixtures" godot --headless --path flotra-campaign --script res://tests/release/growth_browser_fixtures.gd
+          bash flotra-campaign/export_web.sh build/writer-web
+          printf '<!doctype html><title>Writer lifecycle fixture</title><p>Disposable CI navigation</p>\n' > build/writer-web/writer-away.html
+      - name: Verify exact source, engine and candidate export bytes
+        id: export-check
+        continue-on-error: true
+        run: python3 flotra-campaign/tests/release/verify_writer_export.py build/writer-web build/writer-readiness
+      - name: Install isolated desktop browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+          sudo apt-get install -y xvfb
+      - name: Actual desktop startup, ownership, mouse and lifecycle checks
+        shell: bash
+        run: |
+          python3 -m http.server 8860 --bind 127.0.0.1 --directory build/writer-web > build/writer-readiness/server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" xvfb-run -a node flotra-campaign/tests/release/browser_writer_readiness.cjs http://127.0.0.1:8860/ build/writer-readiness build/writer-fixtures
+      - name: Enforce full-export comparison
+        if: always() && steps.export-check.outcome != 'success'
+        run: |
+          echo 'Full export differs or source coherence failed; preserve generated assets and require review.'
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flotra-desktop-save-readiness
+          path: |
+            build/writer-readiness
+            build/writer-web
           retention-days: 7

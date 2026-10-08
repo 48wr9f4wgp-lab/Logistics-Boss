@@ -26,6 +26,7 @@ var _save_load_result: Dictionary = {}
 var _phone_qa := false
 var _qa_elapsed := 0.0
 var _web_touch_cancel_callback: JavaScriptObject
+var _web_save_restore_callback: JavaScriptObject
 var _menu_paused := false
 var _preferences := {"preferred_speed": 2, "pause_on_menus": false, "reduced_motion": false}
 const MAX_FOREGROUND_FRAME_SECONDS := 0.25
@@ -115,14 +116,24 @@ func _ready() -> void:
     if _save_protected() and hud.has_method("show_save_protection"):
         hud.call("show_save_protection", save_store.status)
     if OS.has_feature("web"):
+        _web_save_restore_callback = JavaScriptBridge.create_callback(_protect_restored_web_page)
+        var store_bridge := JavaScriptBridge.get_interface("FlotraDispatchStore")
+        if store_bridge != null: store_bridge.setRestoreHandler(_web_save_restore_callback)
         _web_touch_cancel_callback = JavaScriptBridge.create_callback(_cancel_web_touch)
         var bridge := JavaScriptBridge.get_interface("FlotraViewport")
         if bridge != null:
             bridge.setTouchCancelHandler(_web_touch_cancel_callback)
         _report_web_viewport.call_deferred()
 
+func _protect_restored_web_page(_arguments: Array = []) -> void:
+    if not persistence_enabled or not _loaded: return
+    save_store.protect_restored_page()
+    _reject_if_save_protected()
+
 func _exit_tree() -> void:
     if OS.has_feature("web"):
+        var store_bridge := JavaScriptBridge.get_interface("FlotraDispatchStore")
+        if store_bridge != null: store_bridge.setRestoreHandler(null)
         var bridge := JavaScriptBridge.get_interface("FlotraViewport")
         if bridge != null:
             bridge.setTouchCancelHandler(null)

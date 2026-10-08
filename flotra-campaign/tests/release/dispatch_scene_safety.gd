@@ -16,6 +16,7 @@ func check(ok: bool, label: String) -> void:
 func _initialize() -> void: run.call_deferred()
 
 func run() -> void:
+    root.size = Vector2i(1280, 720)
     var app = Main.new()
     app.persistence_enabled = false
     root.add_child(app)
@@ -40,11 +41,31 @@ func run() -> void:
     check(not app.running,"Blocked store stops foreground progress")
     check(app.sim.export_release_state()==before,"Protected actions preserve the entire loaded state")
     check(app.hud._sheet_kind=="save_protection","Protected load has an explicit stop sheet")
+    check(app.hud._back.disabled and app.hud._back.text=="保護中", "Protected Back is honestly disabled")
+    check(app.hud._pause.disabled and app.hud._pause.text=="停止中", "Protected Work is honestly disabled")
+    app.hud.refresh()
+    app.hud._layout()
+    check(app.hud._back.disabled and app.hud._pause.disabled, "Refresh and resize preserve disabled protection controls")
+    app.hud._go_back()
+    check(app.hud._sheet_kind=="save_protection", "Back guard remains intact")
+    for control in [app.hud._back, app.hud._pause]:
+        var point: Vector2 = control.get_global_rect().get_center()
+        for pressed in [true, false]:
+            var event := InputEventMouseButton.new()
+            event.button_index = MOUSE_BUTTON_LEFT
+            event.position = point
+            event.pressed = pressed
+            Input.parse_input_event(event)
+            await process_frame
+    check(app.hud._sheet_kind=="save_protection" and app.sim.export_release_state()==before, "Desktop clicks cannot leave protection or mutate state")
     # The no-save verification route is still usable, and normal actions bind
     # to the new model without touching any adapter files.
     app.persistence_enabled = false
     app._accept_contract("growth_1")
     check(app.running and app.sim.campaign_status=="running","No-save scene can start normal work")
+    app.hud.show_intro()
+    app.hud.refresh()
+    check(not app.hud._back.disabled and app.hud._pause.disabled, "Normal intro restores Back and preserves modal Work guard")
     app._pause_trial(true)
     check(not app.running and app.sim.campaign_status=="running","Pause preserves job status for selection guard")
     for refusal in ["writer_unavailable", "legacy_writer_unavailable"]:
@@ -61,6 +82,11 @@ func run() -> void:
         app._pause_trial(false)
         app._set_preference("reduced_motion",true)
         check(app.sim.export_release_state()==before, "Refused Web writer blocks later mutations " + refusal)
+    before = app.sim.export_release_state()
+    app._protect_restored_web_page()
+    check(app.save_store.blocked and not app.running, "Restored page is immediately protected without save")
+    check(app.hud._sheet_kind=="save_protection", "Restored page displays reload guidance")
+    check(app.sim.export_release_state()==before, "Restored page does not reset or rewrite domain state")
     app.free()
     print("DISPATCH_SCENE_SAFETY ",JSON.stringify({"failures":failures,"scope":"Blocked-load mutation/clock boundary plus no-save action binding"}))
     quit(0 if failures.is_empty() else 1)
