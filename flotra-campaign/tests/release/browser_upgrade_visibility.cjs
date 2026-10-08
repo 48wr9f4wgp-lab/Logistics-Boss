@@ -197,8 +197,7 @@ async function closeSheets(page,context) {
   await expectUI(page,{sheet:''});
 }
 async function openUpgrades(page,context) {
-  await closeSheets(page,context);await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs'});
-  await tapName(page,context,'Tab_upgrades');
+  await closeSheets(page,context);await tapName(page,context,'EquipmentChoice');await expectUI(page,{sheet:'jobs'});
   await button(page,'BuyUpgrade_rack_48');
   await page.waitForTimeout(250);
 }

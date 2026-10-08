@@ -247,7 +247,9 @@ async function touchJourney(page, context, label, result) {
   await page.screenshot({ path: path.join(output, `editor-${label}.png`), scale: 'css' });
   await tapName(page, context, 'ApplyChoice');
   await expectUI(page, { sheet: '', trialRunning: false });
-  await tapName(page, context, 'SessionRecord');
+  await tapName(page, context, 'Back');
+  await expectUI(page, { sheet: 'controls', trialRunning: false });
+  await tapName(page, context, 'OpenRecords', true);
   await expectUI(page, { sheet: 'records', trialRunning: false });
   await page.screenshot({ path: path.join(output, `results-${label}.png`), scale: 'css' });
   await tapName(page, context, 'CloseSheet');

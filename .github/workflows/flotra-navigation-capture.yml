@@ -1,0 +1,75 @@
+name: FLOTRA Navigation Capture Only
+on:
+  push:
+    branches: ['diag/flotra-navigation-space-20261008-0647']
+permissions:
+  contents: read
+jobs:
+  navigation-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/navigation-browsers
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Install pinned disposable browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Check immutable source and prepare baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/navigation_capture_evidence.py verify
+          git fetch --no-tags --depth=1 origin 0f39e620634d2c7d48a4d3620c0489ea3b45bb09
+          mkdir -p "$RUNNER_TEMP/navigation-baseline"
+          git archive 0f39e620634d2c7d48a4d3620c0489ea3b45bb09 flotra-campaign | tar -x -C "$RUNNER_TEMP/navigation-baseline"
+          mkdir -p "$RUNNER_TEMP/navigation-profile/data/godot"
+          cp -a "$HOME/.local/share/godot/export_templates" "$RUNNER_TEMP/navigation-profile/data/godot/"
+          echo "NAVIGATION_CAPTURE_HEAD $(git rev-parse HEAD)"
+          godot --version
+      - name: Build and capture frozen baseline and candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          export HOME="$RUNNER_TEMP/navigation-profile/home"
+          export XDG_DATA_HOME="$RUNNER_TEMP/navigation-profile/data"
+          export XDG_CONFIG_HOME="$RUNNER_TEMP/navigation-profile/config"
+          export XDG_CACHE_HOME="$RUNNER_TEMP/navigation-profile/cache"
+          export FLOTRA_REVIEW_USER_ROOT="$RUNNER_TEMP/navigation-profile/"
+          mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$RUNNER_TEMP/navigation-evidence"
+          export GODOT="$(command -v godot)"
+          export NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules"
+          trap 'python3 scripts/navigation_capture_evidence.py report "$RUNNER_TEMP/navigation-evidence"' EXIT
+          bash flotra-campaign/tests/release/run_navigation_space_ci.sh "$RUNNER_TEMP/navigation-evidence" "$RUNNER_TEMP/navigation-baseline/flotra-campaign" 2>&1 | tee "$RUNNER_TEMP/navigation-evidence/capture.log"
+      - name: Prepare small review evidence even after failure
+        if: always()
+        shell: bash
+        run: python3 scripts/navigation_capture_evidence.py package "$RUNNER_TEMP/navigation-evidence"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: navigation-review-small
+          path: ${{ runner.temp }}/navigation-evidence/review/*
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: navigation-heavy-evidence
+          path: |
+            ${{ runner.temp }}/navigation-evidence/**
+            !${{ runner.temp }}/navigation-evidence/review/**
+          if-no-files-found: error
+          retention-days: 7

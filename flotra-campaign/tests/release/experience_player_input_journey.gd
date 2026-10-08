@@ -125,6 +125,12 @@ func tap(control: Control, kind: String = "touch", held: int = 5) -> void:
     point_input(point, false, kind)
     await settle()
 
+func open_records() -> void:
+    await tap(app.hud._back)
+    check(app.hud._sheet_kind == "controls", "Phone records entry opens controls")
+    await tap(node("OpenRecords"))
+    check(app.hud._sheet_kind == "records", "Visible controls action opens records")
+
 func node(name: String) -> Control:
     return app.hud._root.find_child(name, true, false) as Control
 
@@ -284,17 +290,17 @@ func run() -> void:
         await process_elapsed(.1)
         refresh()
     check(app.sim.campaign_wallet == completed_wallet, "Repeated completion refresh cannot double-award")
-    await tap(app.hud._conditions)
+    await open_records()
     await verify_reachability("completed 375x567")
     await tap(node("GrowWarehouse"))
     await tap(node("BuyUpgrade_wing_1"))
     check(app.sim.purchased_upgrades.has("wing_1") and app.sim.campaign_wallet == completed_wallet - 150, "Actual first wing purchase deducts cost exactly once")
     check(app.hud._sheet_kind.is_empty(), "Wing purchase reveals its earned world reward")
-    await tap(app.hud._conditions)
+    await open_records()
     await tap(node("StartNextJob"))
     check(app.sim.current_contract_id == "growth_2" and app.running, "Actual results next action starts next milestone")
     finish_job()
-    await tap(app.hud._conditions)
+    await open_records()
     completed_wallet = app.sim.campaign_wallet
     await tap(node("ReplayCurrentJob"))
     check(app.sim.current_contract_id == "growth_2" and not app.sim.finished, "Actual replay action restarts completed paid job")
@@ -302,8 +308,7 @@ func run() -> void:
     check(app.sim.campaign_wallet == completed_wallet + 200, "Replay pays exactly one recurring reward")
     mark("Paid completion, earned expansion, next milestone and paid replay")
 
-    await tap(app.hud._compare)
-    await tap(node("Tab_upgrades"))
+    await tap(node("EquipmentChoice"))
     await tap(node("ToggleOperations"))
     var wallet: int = app.sim.campaign_wallet
     for id in ["parcel","pallet","balanced"]:
@@ -323,15 +328,15 @@ func run() -> void:
         await tap(node("OpenHelp"))
         await verify_reachability("help " + str(dimensions))
         await tap(app.hud._close)
-        await tap(app.hud._conditions)
+        await open_records()
         await verify_reachability("results " + str(dimensions))
         await tap(node("ToggleGrowthHistory"))
         await verify_reachability("expanded records " + str(dimensions))
         await tap(app.hud._close)
         await tap(app.hud._compare)
-        await tap(node("Tab_contracts"))
         await verify_reachability("work " + str(dimensions))
-        await tap(node("Tab_upgrades"))
+        await tap(app.hud._close)
+        await tap(node("EquipmentChoice"))
         if not app.hud._future_upgrades_visible: await tap(node("ToggleFutureUpgrades"))
         if not app.hud._owned_upgrades_visible: await tap(node("ToggleOwnedUpgrades"))
         await verify_reachability("equipment " + str(dimensions))
@@ -344,7 +349,7 @@ func run() -> void:
 
     root.size = Vector2i(375,567)
     await settle()
-    await tap(app.hud._conditions)
+    await open_records()
     await tap(node("StartNextJob"))
     await process_elapsed(.2)
     await tap(app.hud._pause)

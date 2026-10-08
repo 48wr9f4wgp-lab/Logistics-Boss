@@ -198,6 +198,8 @@ async function tapName(page, context, name, scrollable = false) {
 async function touchJourney(page, context, label, result) {
   await expectUI(page, { sheet: '' });
   await tapName(page, context, 'Back');
+  await expectUI(page, { sheet: 'controls' });
+  await tapName(page, context, 'OpenHelp', true);
   await expectUI(page, { sheet: 'entry' });
   await tapName(page, context, 'StartTrial', true);
   await expectUI(page, { sheet: '' });
@@ -232,7 +234,7 @@ async function touchJourney(page, context, label, result) {
   await page.screenshot({ path: path.join(output, `editor-${label}.png`), scale: 'css' });
   await tapName(page, context, 'ApplyChoice');
   await expectUI(page, { sheet: '', trialRunning: false });
-  await tapName(page, context, 'SessionRecord');
+  await showRecords(page, context);
   await expectUI(page, { sheet: 'records', trialRunning: false });
   await page.screenshot({ path: path.join(output, `results-${label}.png`), scale: 'css' });
   await tapName(page, context, 'CloseSheet');
@@ -258,6 +260,11 @@ async function closeSheets(page,context) {
     await page.waitForFunction(previous=>window.FlotraViewport.uiMetrics.sheet!==previous,previous,{timeout:10000});
   }
   await expectUI(page,{sheet:''});
+}
+async function showRecords(page,context) {
+  await closeSheets(page,context);
+  await tapName(page,context,'Back');await expectUI(page,{sheet:'controls'});
+  await tapName(page,context,'OpenRecords',true);await expectUI(page,{sheet:'records'});
 }
 async function setRunning(page,context,running) {
   if ((await ui(page)).trialRunning !== running) await tapName(page,context,'PauseResume');
@@ -322,19 +329,19 @@ async function samplePerformance(page,milliseconds) {
    await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.status==='contract_complete',null,{timeout:90000});
    let state=await ui(page);assert.equal(state.wallet,240);assert.equal(state.progress.shipped,12);
    test.firstDeliveryWallSeconds=(Date.now()-started)/1000;
-   await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs'});
-   await tapName(page,context,'Tab_upgrades');await tapName(page,context,'BuyUpgrade_wing_1',true);
+   await tapName(page,context,'EquipmentChoice');await expectUI(page,{sheet:'jobs'});
+   await tapName(page,context,'BuyUpgrade_wing_1',true);
    await expectUI(page,{sheet:''});await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.growth.wing_count===1);
    state=await ui(page);assert.equal(state.wallet,90);test.firstExpansionWallSeconds=(Date.now()-started)/1000;
    assert.ok(test.firstExpansionWallSeconds<60,'First real expansion arrives within 60 seconds with real touch navigation');
    await page.screenshot({path:path.join(output,'first-earned-expansion.png'),scale:'css'});
-   await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs'});await tapName(page,context,'Tab_upgrades');
+   await tapName(page,context,'EquipmentChoice');await expectUI(page,{sheet:'jobs'});
    await tapName(page,context,'BuyUpgrade_crew_4',true);await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.growth.human_count===4);
    assert.equal((await ui(page)).wallet,0);await closeSheets(page,context);
    await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.FlotraViewport?.uiMetrics,null,{timeout:120000});
    await settle(page);state=await ui(page);assert.equal(state.wallet,0);assert.equal(state.growth.wing_count,1);assert.equal(state.growth.human_count,4);assert.equal(state.trialRunning,false);
    test.reload={wallet:state.wallet,wings:state.growth.wing_count,humans:state.growth.human_count,paused:!state.trialRunning};
-   await closeSheets(page,context);await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs'});await tapName(page,context,'Tab_contracts');
+   await closeSheets(page,context);await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs'});
    await tapName(page,context,'AcceptContract_growth_2',true);await expectUI(page,{sheet:'',trialRunning:true});
    await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.status==='contract_complete',null,{timeout:90000});
    assert.equal((await ui(page)).wallet,200);test.zeroWalletRecovery=true;
@@ -363,12 +370,12 @@ async function samplePerformance(page,milliseconds) {
    await tapName(page,context,'ReducedMotionSetting',true);await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.preferences.reduced_motion===true);
    await closeSheets(page,context);await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.FlotraViewport?.uiMetrics,null,{timeout:120000});await settle(page);
    let state=await ui(page);assert.equal(state.speed,4);assert.equal(state.preferences.pause_on_menus,true);assert.equal(state.preferences.reduced_motion,true);assert.equal(state.trialRunning,false);test.preferencesPersisted=true;
-   await closeSheets(page,context);await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs'});await tapName(page,context,'Tab_upgrades');
+   await closeSheets(page,context);await tapName(page,context,'EquipmentChoice');await expectUI(page,{sheet:'jobs'});
    await tapName(page,context,'ToggleOperations',true);await tapName(page,context,'ChooseOperation_parcel',true);
    await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.operation.mode_id==='parcel');
    assert.equal((await ui(page)).wallet,complete.wallet,'Free operating choices never spend the wallet');
    await page.screenshot({path:path.join(output,'parcel-operation-choice.png'),scale:'css'});
-   await tapName(page,context,'Tab_contracts');await tapName(page,context,'AcceptContract_route_pick',true);await expectUI(page,{sheet:'',trialRunning:true});
+   await closeSheets(page,context);await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs'});await tapName(page,context,'AcceptContract_route_pick',true);await expectUI(page,{sheet:'',trialRunning:true});
    await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.batchWorkers>0,null,{timeout:45000});test.actualParcelCart=true;
    // Playwright forces every page to look focused by default. Turn off only
    // that testing override so the headed browser can supply actual tab events.
@@ -390,7 +397,7 @@ async function samplePerformance(page,milliseconds) {
    assert.equal((await ui(page)).trialRunning,false,'Manual pause survives opening and closing controls');
    await setRunning(page,context,true);await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.status==='contract_complete',null,{timeout:90000});
    state=await ui(page);assert.equal(state.progress.shipped,36);assert.equal(state.wallet,complete.wallet+300);test.cartDeliveryPaysExactlyOnce=true;
-   await tapName(page,context,'SessionRecord');await expectUI(page,{sheet:'records'});await page.screenshot({path:path.join(output,'completed-parcel-route.png'),scale:'css'});
+   await showRecords(page,context);await expectUI(page,{sheet:'records'});await page.screenshot({path:path.join(output,'completed-parcel-route.png'),scale:'css'});
   });
   const late=JSON.parse(fs.readFileSync(path.join(fixturesDirectory,'late.json'),'utf8'));
   await scenario('mature-performance',late,async(page,context,test)=>{
@@ -400,7 +407,7 @@ async function samplePerformance(page,milliseconds) {
    assert.equal(state.growth.wing_count,4);assert.equal(state.growth.robot_count,4);assert.equal(state.progress.shipped,late.shipped);assert.equal(state.wallet,late.wallet);assert.equal(state.trialRunning,false);
    await closeSheets(page,context);await setRunning(page,context,false);await page.waitForTimeout(1000);
    const idle=await samplePerformance(page,6000);
-   await tapName(page,context,'SessionRecord');await expectUI(page,{sheet:'records',worldVisible:false});
+   await showRecords(page,context);await expectUI(page,{sheet:'records',worldVisible:false});
    await page.waitForTimeout(800);
    const uiOnly=await samplePerformance(page,6000);
    await closeSheets(page,context);await expectUI(page,{worldVisible:true});

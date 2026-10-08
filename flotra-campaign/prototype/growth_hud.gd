@@ -22,6 +22,7 @@ var _announced_sheet := ""
 var _operations_visible := false
 var _input_layout_size := Vector2.ZERO
 var _equipment_notice := ""
+var _equipment: Button
 var _camera_controls: Control
 var _camera_buttons: Array[Button] = []
 var _prepared_contract_id := ""
@@ -36,6 +37,14 @@ func _build() -> void:
     super._build()
     _root.name = "GrowthHUD"
     _root.theme.default_font_size = BODY_FONT_SIZE
+    _equipment = _button(_bottom, "設備・増築", _open_upgrades, false, false)
+    _equipment.name = "EquipmentChoice"
+    _equipment.tooltip_text = "増築・スタッフ・設備を確認する。購入は仕事の合間のみ"
+    for style_name in ["normal", "hover", "pressed", "focus", "disabled"]:
+        var style := _equipment.get_theme_stylebox(style_name).duplicate() as StyleBoxFlat
+        style.content_margin_left = 4
+        style.content_margin_right = 4
+        _equipment.add_theme_stylebox_override(style_name, style)
     _camera_controls = Control.new()
     _camera_controls.name = "CameraControls"
     _camera_controls.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -95,6 +104,7 @@ func _open_sheet(kind: String, title: String, height: float) -> void:
 
 func close_sheet() -> void:
     var previous := _sheet_kind
+    var was_equipment := previous == "jobs" and _release_tab == "upgrades"
     if previous == "editor" and _preparation_layout_return:
         _preparation_layout_return = false
         super.close_sheet()
@@ -116,6 +126,8 @@ func close_sheet() -> void:
             _open_contracts()
     else:
         super.close_sheet()
+    if was_equipment and _sheet_kind.is_empty() and is_instance_valid(_equipment):
+        _equipment.grab_focus()
     _announce_sheet()
 
 func _announce_sheet() -> void:
@@ -141,20 +153,75 @@ func _layout() -> void:
 
 func _update_world_region() -> void:
     super._update_world_region()
+    _layout_navigation()
     _layout_camera_controls()
+
+func _wide_warehouse_layout() -> bool:
+    return _root.size.x >= 1000 and _root.size.y >= 500
+
+func _layout_navigation() -> void:
+    if not _built or not is_instance_valid(_equipment): return
+    var width := _root.size.x
+    var height := _root.size.y
+    var wide := _wide_warehouse_layout()
+    var playing := _sheet_kind.is_empty()
+    var navigation_parent: Node = _header if wide else _bottom
+    for button in [_compare, _equipment, _primary, _conditions]:
+        if button.get_parent() != navigation_parent:
+            button.reparent(navigation_parent, false)
+        button.custom_minimum_size.y = 44 if wide else CONTROL_HEIGHT
+        button.visible = playing and (wide or button != _conditions)
+        button.focus_mode = Control.FOCUS_ALL if button.visible else Control.FOCUS_NONE
+    _equipment.disabled = not playing
+    for button in [_back, _pause]:
+        if is_instance_valid(button): button.custom_minimum_size.y = 44 if wide else CONTROL_HEIGHT
+    if not wide:
+        var tab_width := (width - 64) / 3
+        _rect(_compare, 12, 72, tab_width, CONTROL_HEIGHT)
+        _rect(_equipment, 20 + tab_width, 72, tab_width, CONTROL_HEIGHT)
+        _rect(_primary, 28 + tab_width * 2, 72, tab_width, CONTROL_HEIGHT)
+        return
+    # Desktop uses horizontal space rather than enlarging phone-sized rows.
+    # No change to text scale, render resolution, camera range or scene input.
+    _rect(_header, 0, 0, width, 60)
+    _rect(_back, 12, 8, 72, 44)
+    _rect(_title, 100, 12, 108, 36)
+    _rect(_safe_note, 220, 14, 220, 32)
+    var x := width - 520
+    for item in [[_compare, 88], [_equipment, 140], [_primary, 80], [_conditions, 72], [_pause, 80]]:
+        _rect(item[0], x, 8, item[1], 44)
+        x += item[1] + 8
+    _rect(_reason_panel, 12, 64, width - 24, 36)
+    _rect(_reason_title, 12, 0, width - 48, 36)
+    _rect(_bottom, 12, height - 80, width - 24, 72)
+    _rect(_shipped, 12, 4, width - 400, 30)
+    _rect(_travel, 12, 36, 220, 28)
+    _rect(_waiting, 244, 36, width - 632, 28)
+    _rect(_mask, 0, 60, width, height - 60)
+
+func _sync_focus() -> void:
+    _layout_navigation()
+    super._sync_focus()
+    if is_instance_valid(_equipment):
+        _equipment.focus_mode = Control.FOCUS_ALL if _sheet_kind.is_empty() else Control.FOCUS_NONE
 
 func _layout_camera_controls() -> void:
     if is_instance_valid(_camera_controls):
         _camera_controls.visible = _sheet_kind.is_empty()
         var compact := _compact_camera_header()
-        var row_width := _root.size.x - (196 if compact else 24)
-        _rect(_camera_controls, 102 if compact else 12, 10 if compact else _root.size.y - 216, row_width, CONTROL_HEIGHT)
+        var wide := _wide_warehouse_layout()
+        var row_width := 328.0 if wide else minf(344, _root.size.x - (196 if compact else 24))
+        var row_height := 44.0 if wide else CONTROL_HEIGHT
+        var row_x := _root.size.x - row_width - 24 if wide else (102.0 if compact else (_root.size.x - row_width) / 2)
+        var row_y := _root.size.y - 66 if wide else (10.0 if compact else _root.size.y - 216)
+        _rect(_camera_controls, row_x, row_y, row_width, row_height)
         var x := 0.0
-        var gap := clampf((row_width - CONTROL_HEIGHT * 5) / 4.0, 0, 8)
-        var rotation_width := clampf((row_width - gap * 4 - CONTROL_HEIGHT * 3) / 2.0, CONTROL_HEIGHT, 64)
-        var widths := [rotation_width, rotation_width, CONTROL_HEIGHT, CONTROL_HEIGHT, maxf(CONTROL_HEIGHT, row_width - rotation_width * 2 - CONTROL_HEIGHT * 2 - gap * 4)]
+        var gap := clampf((row_width - row_height * 5) / 4.0, 0, 8)
+        var rotation_width := clampf((row_width - gap * 4 - row_height * 3) / 2.0, row_height, 68 if wide else 64)
+        var widths := [rotation_width, rotation_width, row_height, row_height, maxf(row_height, row_width - rotation_width * 2 - row_height * 2 - gap * 4)]
         for index in _camera_buttons.size():
-            _rect(_camera_buttons[index], x, 0, widths[index], CONTROL_HEIGHT)
+            _camera_buttons[index].custom_minimum_size = Vector2(row_height, row_height)
+            _rect(_camera_buttons[index], x, 0, widths[index], row_height)
             x += widths[index] + gap
         _title.visible = not compact
         _safe_note.visible = not compact
@@ -165,6 +232,7 @@ func _compact_camera_header() -> bool:
 
 func world_insets() -> Vector2:
     var insets := super.world_insets()
+    if _sheet_kind.is_empty() and _wide_warehouse_layout(): return Vector2(104, 84)
     if _compact_camera_header(): return Vector2(76, 156)
     if _sheet_kind.is_empty(): insets.y += 64
     return insets
@@ -200,6 +268,7 @@ func show_controls() -> void:
         button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         _speed_buttons[value] = button
     _text(_content, "標準は2倍です。速さで報酬は変わりません", BODY_FONT_SIZE, Color("476266"))
+    _action(_content, "成果と記録を見る", show_conditions).name = "OpenRecords"
     _text(_content, "メニューを開くと一時停止", 20)
     _action(_content, "", _toggle_preference.bind("pause_on_menus")).name = "PauseMenusSetting"
     _text(_content, "自分で一時停止した倉庫は、メニューを閉じても止まったままです", BODY_FONT_SIZE, Color("476266"))
@@ -340,6 +409,7 @@ func refresh() -> void:
     var wallet := int(_release.get("wallet", 0))
     _compare.text = "次の仕事" if _complete() else "仕事"
     _conditions.text = "成果"
+    _primary.text = "配置"
     _back.text = "操作" if _sheet_kind.is_empty() else "戻る"
     if _compact_camera_header(): _reason_panel.hide()
     _update_controls()
@@ -397,25 +467,15 @@ func show_entry() -> void:
     if str(_release.get("status", "ready")) == "running" and not _trial_running:
         _text(_content, "進行中の仕事を読み込みました。いまは一時停止中です", BODY_FONT_SIZE, Color("476266")).name = "ResumePauseNotice"
     _text(_content, "倉庫はドラッグで移動、ピンチで拡大できます。左右90°で回転し、「全体」で元の眺めに戻せます", BODY_FONT_SIZE, Color("476266"))
-    _text(_content, "「配置変更」で棚と梱包台を無料で動かせます", BODY_FONT_SIZE, Color("476266"))
-    _text(_content, "仕事はそのまま始めるか、「準備して始める」で運び方と配置を選べます。成果から同じ仕事を調整して再挑戦できます", BODY_FONT_SIZE, Color("476266"))
+    _text(_content, "「配置」で棚と梱包台を無料で動かせます", BODY_FONT_SIZE, Color("476266"))
+    _text(_content, "仕事はそのまま始めるか、「準備して始める」で運び方と配置を選べます。「操作」→「成果と記録」で同じ仕事を調整して再挑戦できます", BODY_FONT_SIZE, Color("476266"))
     _text(_content, "増築は最大4棟です。すべての設備を導入した後も、仕事の報酬と配置の工夫を楽しめます", BODY_FONT_SIZE, Color("476266"))
     _text(_content, _save_status, BODY_FONT_SIZE, Color("476266")).name = "EntrySaveStatus"
     _layout_body()
 
-func _make_scroll(with_tabs: bool = false) -> void:
-    # Two roomy sections replace the old contract/equipment/demand tab trio.
-    # Layout editing calls this without tabs and keeps its inherited pinned UI.
-    if with_tabs:
-        _tabs = HBoxContainer.new()
-        _tabs.name = "CampaignTabs"
-        _tabs.add_theme_constant_override("separation", 8)
-        _body.add_child(_tabs)
-        for id in ["contracts", "upgrades"]:
-            var title := "仕事" if id == "contracts" else "倉庫を育てる"
-            var button := _button(_tabs, title, _switch_release_tab.bind(id), _release_tab == id)
-            button.name = "Tab_" + id
-            button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+func _make_scroll(_with_tabs: bool = false) -> void:
+    # Jobs and equipment have distinct direct entries, not competing tabs.
+    # The editor builds its own slot tabs and retains the pinned apply action.
     super._make_scroll(false)
 
 func _card(parent: Node) -> VBoxContainer:
@@ -431,15 +491,25 @@ func _card(parent: Node) -> VBoxContainer:
     return box
 
 func show_job_choices() -> void:
+    _show_choice_section("contracts")
+
+func _show_choice_section(section: String) -> void:
+    # Keep the established internal sheet kind and section IDs: scene pause,
+    # purchase and dispatch guards continue to use the exact original checks.
+    if _sheet_kind == "save_protection": return
     _read_release()
     _prepared_contract_id = ""
     _preparation_layout_return = false
-    if _release_tab not in ["contracts", "upgrades"]:
-        _release_tab = "contracts"
-    _open_sheet("jobs", "仕事と成長", 630)
-    _make_scroll(true)
+    _release_tab = section
+    _open_sheet("jobs", "設備・増築" if section == "upgrades" else "仕事", 630)
+    _make_scroll()
     _populate_release_tab()
     _layout_body()
+
+func _switch_release_tab(id: String) -> void:
+    # Compatibility for programmatic callers; there is no shared tab strip.
+    if _sheet_kind == "jobs" and id in ["contracts", "upgrades"]:
+        _show_choice_section(id)
 
 func _signature() -> String:
     # No continuously changing counter here: rebuilding on shipment ticks would
@@ -590,8 +660,6 @@ func _build_contracts() -> void:
     if not next_milestone.is_empty():
         _text(_content, "次の成長ステップ", 22)
         _build_job_card(next_milestone, false, true)
-    _text(_content, _improvement_summary(), BODY_FONT_SIZE, Color("476266")).name = "NextImprovement"
-    _action(_content, "増築・スタッフ・設備を見る", _open_upgrades).name = "OpenGrowthUpgrades"
     if not repeats.is_empty():
         _text(_content, "繰り返せる仕事 · 毎回報酬", 22)
         var repeat_copy := "好きな種類を選んで、次の増築や設備の資金に"
@@ -826,8 +894,7 @@ func _build_upgrade_card(option: Dictionary, parent: Node = null) -> void:
         _text(box, _locked_text(str(option.get("locked_reason", ""))), BODY_FONT_SIZE, Color("476266"))
 
 func _open_upgrades() -> void:
-    _release_tab = "upgrades"
-    show_job_choices()
+    _show_choice_section("upgrades")
 
 func show_contract_result(result: Dictionary) -> void:
     _notice_title = "仕事を受けました" if bool(result.get("ok", false)) else "仕事を確認してください"

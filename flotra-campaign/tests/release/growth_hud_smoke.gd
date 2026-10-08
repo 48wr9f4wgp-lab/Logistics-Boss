@@ -29,6 +29,15 @@ func touch_at(point: Vector2, pressed: bool):
     event.position = point
     event.pressed = pressed
     Input.parse_input_event(event)
+func tap_control(control: Button):
+    check(control.is_visible_in_tree() and not control.disabled, "Visible enabled navigation " + str(control.name))
+    check(root.get_visible_rect().encloses(control.get_global_rect()), "Navigation inside viewport " + str(control.name))
+    await create_timer(0.20).timeout
+    var point := control.get_global_rect().get_center()
+    touch_at(point, true)
+    await process_frame
+    touch_at(point, false)
+    await settled()
 func swipe_from(point: Vector2, distance: float):
     touch_at(point, true)
     await process_frame
@@ -111,15 +120,22 @@ func _run():
         hud.show_entry()
         await settled()
         inspect(hud._root)
-        hud._open_contracts()
-        await settled()
-        check(hud._tabs.get_child_count() == 2, "Only two work tabs")
+        await tap_control(hud._close)
+        for name in ["WorkChoice", "EquipmentChoice", "ChangeLayout"]:
+            var control := hud._root.find_child(name, true, false) as Button
+            check(is_instance_valid(control) and control.is_visible_in_tree(), "Direct phone navigation " + name)
+        check(not hud._conditions.is_visible_in_tree(), "Phone records remain in controls")
+        await tap_control(hud._compare)
+        check(hud._release_tab == "contracts", "Work opens contracts directly")
+        check(hud._body.find_child("CampaignTabs", true, false) == null, "Work has no shared tab strip")
         check(hud._contract_buttons.has("growth_1"), "Initial growth job present")
         check(not hud._contract_buttons["growth_1"].disabled, "First job available")
-        check(hud._content.has_node("OpenGrowthUpgrades"), "Expansion quick path")
+        check(not hud._content.has_node("OpenGrowthUpgrades"), "Work content stays focused on jobs")
         inspect(hud._root)
-        hud._open_upgrades()
-        await settled()
+        await tap_control(hud._close)
+        await tap_control(hud._equipment)
+        check(hud._release_tab == "upgrades", "Equipment opens upgrades directly")
+        check(hud._body.find_child("CampaignTabs", true, false) == null, "Equipment has no shared tab strip")
         check(hud._upgrade_buttons.has("wing_4"), "Four wings shown")
         inspect(hud._root)
         hud.show_controls()
