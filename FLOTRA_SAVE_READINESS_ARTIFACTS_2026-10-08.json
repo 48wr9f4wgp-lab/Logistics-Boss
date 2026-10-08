@@ -148,7 +148,7 @@
     "flotra-campaign/tests/release/browser_preparation_journey.cjs": "2fa8bc5ace4fb565eea6b3866bdcbe1d7b466b1d5f672579eb9aef18629c1492",
     "flotra-campaign/tests/release/browser_save_size.cjs": "4b4dcc26976d4936eea002581ee1eff3c9791a9dc7611fb2e7770e63139fa975",
     "flotra-campaign/tests/release/browser_upgrade_visibility.cjs": "13c1c6f319ae36697d914ec4f72f62a575b9d1c5bec6b5e8743d71936b62f596",
-    "flotra-campaign/tests/release/browser_writer_readiness.cjs": "43ce982365b97eb63a230185e6a76ce169410f49edcba06cbefb66a29f3bea05",
+    "flotra-campaign/tests/release/browser_writer_readiness.cjs": "3469db82ac2935a029d7c786ece930e819184d308f6a52ab839425427ebc21b6",
     "flotra-campaign/tests/release/camera_interaction_review.gd": "5b813b8a1d752466f00d495a8c4cd4cde81e96b2654cb91d835aa2be9fab0313",
     "flotra-campaign/tests/release/camera_interaction_review.gd.uid": "4ec2a4743f3b755061210e3ed8c99c49a4e7c53cc502cb7be64294f2fbeb1ccb",
     "flotra-campaign/tests/release/canceled_touch_input.gd": "c533017d3c06e0aeb17742274b84e37591fc3b7387c152cd7b3217202c6900b1",
@@ -309,5 +309,11 @@
     "run": 37728822623,
     "desktop": "6 passed;9 failed/unqualified; detailed old artifact not materialized",
     "strictPckHashMismatch": true
+  },
+  "priorFailedQualification2": {
+    "head": "5d4be1c6141a133060a871cdd54413c6db38f826",
+    "run": 37730571591,
+    "desktop": "7 passed8 failed; four startup cases reached real saved paused state then failed mistaken wallet0 expectation; source starting wallet100. Four dependentcases lacked earnedfixture.",
+    "coherence": "prospective bounded ID-only rule passed; strictByteMatch false; committed b2ed94 PCK tested"
   }
 }

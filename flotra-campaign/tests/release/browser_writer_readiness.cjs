@@ -354,7 +354,7 @@ async function startAndSave(page) {
   const checkpoint = await savedCheckpoint(page);
   assert.equal(checkpoint.state.currentContract, 'growth_1');
   assert.equal(checkpoint.state.status, 'running');
-  assert.equal(checkpoint.state.wallet, 0);
+  assert.equal(checkpoint.state.wallet, 100, 'Unfinished first job preserves CAMPAIGN_STARTING_WALLET from growth_sim.gd');
   assert.ok(Number.isInteger(checkpoint.state.progress.shipped) && checkpoint.state.progress.shipped >= 0 && checkpoint.state.progress.shipped < 12, 'Started job has not completed');
   assert.ok(checkpoint.state.simTime > 0);
   return checkpoint;
