@@ -7,6 +7,7 @@ on:
       - 'docs/godot-jobs-preview/**'
       - '.github/workflows/flotra-campaign.yml'
       - 'FLOTRA_DISPATCH_ARTIFACTS_2026-10-07.json'
+      - 'FLOTRA_VISUAL_GROWTH_ARTIFACTS_2026-10-07.json'
   push:
     branches: [main]
     paths:
@@ -14,6 +15,7 @@ on:
       - 'docs/godot-jobs-preview/**'
       - '.github/workflows/flotra-campaign.yml'
       - 'FLOTRA_DISPATCH_ARTIFACTS_2026-10-07.json'
+      - 'FLOTRA_VISUAL_GROWTH_ARTIFACTS_2026-10-07.json'
 permissions:
   contents: read
 jobs:
@@ -242,8 +244,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      CONTROL_SHA: deaeb376c1265b0bb3ffe933ac1975f8db5f1048
-      FLOTRA_COMBINED_PROVENANCE: FLOTRA_DISPATCH_ARTIFACTS_2026-10-07.json
+      CONTROL_SHA: a6f885e4f70ed3122fc1c776c3c6fa0661ca954a
+      FLOTRA_COMBINED_PROVENANCE: FLOTRA_VISUAL_GROWTH_ARTIFACTS_2026-10-07.json
+      FLOTRA_INSPECTION_GATE: '1'
     steps:
       - uses: actions/checkout@v5
         with:

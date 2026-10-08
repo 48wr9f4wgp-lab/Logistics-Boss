@@ -1,0 +1,27 @@
+extends SceneTree
+const Sim=preload("res://prototype/dispatch_sim.gd")
+const Save=preload("res://prototype/dispatch_save.gd")
+func write_fixture(output:String,name:String,sim):
+    var encoded:=Save.new().encode(sim.export_release_state())
+    var decoded:=Save.new().decode(encoded)
+    assert(decoded.ok)
+    var again:=Sim.new()
+    assert(again.import_release_state(decoded.data).ok)
+    assert(var_to_bytes(again.export_release_state())==var_to_bytes(sim.export_release_state()))
+    var f:=FileAccess.open(output.path_join(name+"-slots.json"),FileAccess.WRITE)
+    f.store_string(JSON.stringify({"flotra.campaign.dispatch.v5":encoded}))
+func _initialize():
+    var output:=OS.get_environment("FLOTRA_VISUAL_OUTPUT")
+    var sim:=Sim.new()
+    for id in ["growth_1","growth_2"]:
+        assert(sim.accept_contract(id).ok)
+        while not sim.finished and sim.sim_time<800:sim.step(.25)
+        assert(sim.finished)
+    write_fixture(output,"purchase",sim)
+    var source:Dictionary=JSON.parse_string(FileAccess.get_file_as_string("/workspace/scratch/401574fe42e3/flotra-recovered-web-evidence-20261007/fixtures/late.json"))
+    var decoded=preload("res://prototype/release_save.gd").new().decode(source.encoded)
+    assert(decoded.ok)
+    assert(sim.import_release_state(decoded.data).ok)
+    write_fixture(output,"late",sim)
+    print("VISUAL_WEB_FIXTURES_PASS")
+    quit()
