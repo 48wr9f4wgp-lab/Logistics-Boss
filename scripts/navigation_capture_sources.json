@@ -26,7 +26,7 @@
     "flotra-campaign/prototype/dispatch_state_codec.gd": "25f6a5cccda0184d6b18ef24188f637ee56e17e94ce6987215a61839f1adad81",
     "flotra-campaign/prototype/dispatch_state_codec.gd.uid": "be72d0a4542ca6077db1ced397af2394a5232f01c0322f0d72e2a81edbb5955f",
     "flotra-campaign/prototype/growth.tscn": "06c99f500cb5c4ec3b8970cada9f3b004258b51104a15b4647cfeeb65743477b",
-    "flotra-campaign/prototype/growth_hud.gd": "e1b2b3fdf75970dc5626843cf8ddeb83c709f88b43954f33aaacd73df60b4cbe",
+    "flotra-campaign/prototype/growth_hud.gd": "484355ef55341f42ab6cbfc80a61889e846efd7f090f0246a930b2018cb59f97",
     "flotra-campaign/prototype/growth_hud.gd.uid": "f6e053a87198bb3c47a3adab8eb1c28e97a05fb504cd97e10b9e4672ec3b11d7",
     "flotra-campaign/prototype/growth_main.gd": "ebccab104f7098738cdd310b19aa7cbeb787e72e3efec1c5524d4b2ef18c1014",
     "flotra-campaign/prototype/growth_main.gd.uid": "5bf8d76e547a0143b60349ffd628e39be874b9580c7a99cfc50835e628359948",
@@ -73,7 +73,7 @@
     "flotra-campaign/tests/release/browser_export_contract_test.cjs": "884116ddca7982c53a8de4a789376aaf42f380e2787f6c145d5fb7dd31281b77",
     "flotra-campaign/tests/release/browser_growth_geometry.cjs": "245b14f304e9b075163086836c7d8e7af6d2719f9a88087564f7ed2a5abed5c4",
     "flotra-campaign/tests/release/browser_growth_journey.cjs": "772399efa810b7d5e04762b6fd996d7aec41daf480ad45f6a2aec17dcc9acfc7",
-    "flotra-campaign/tests/release/browser_navigation_space.cjs": "ef860571e4ef17b8ac65310a39e5ff2c6ad4bdd9f9a2b4b67a824b12866e7244",
+    "flotra-campaign/tests/release/browser_navigation_space.cjs": "652af543aef9190df0c327f0e0f95d7d786f7a96878d95b974bb61d46dfb2bae",
     "flotra-campaign/tests/release/browser_phone_geometry.cjs": "ef2fd9090e40b7b5f3f86267559c273fc943597854724449caaa695ee3e65243",
     "flotra-campaign/tests/release/browser_preparation_journey.cjs": "63e9012cadb6398d76a3b2a16b967f87d7bd3f07f8b9b520f3a74e1efabed402",
     "flotra-campaign/tests/release/browser_save_size.cjs": "4b4dcc26976d4936eea002581ee1eff3c9791a9dc7611fb2e7770e63139fa975",
@@ -149,7 +149,7 @@
     "flotra-campaign/tests/release/hold_across_refresh.gd.uid": "4f580f651a23111a742cabe6a592dbfa61013107aa0717732889803a6e5f3c4b",
     "flotra-campaign/tests/release/integration_save.gd": "85c652206207c4b0e52ed440a11c9368cbb153843b1698fd648f00f226beb0ff",
     "flotra-campaign/tests/release/integration_save.gd.uid": "68d95917cda60ae3a98c9d72c94abb09b3e460b95ccd73d783f46ba44e40896d",
-    "flotra-campaign/tests/release/navigation_space_input.gd": "e16e6f9defe5ad4589329d27b540acf2b105cb12e7ed15917952f29637e2b848",
+    "flotra-campaign/tests/release/navigation_space_input.gd": "84d91d04dfc2a0f9d070704a9263ddaaa4b4dc6461af6cb6570f7ebd643f900c",
     "flotra-campaign/tests/release/navigation_space_input.gd.uid": "76e0f64752332bbdf53c6ee48f8c6f8beee67edf9a95072614c002963efc6629",
     "flotra-campaign/tests/release/phone_hud_capture.gd": "b985c36fc669b7e83d0f952f32daf6b25d5fafeaeaaa742f6850ec9d077cc69e",
     "flotra-campaign/tests/release/phone_hud_capture.gd.uid": "28213e1c0c4aeaa9aadaf6423727961d66a4e27a094535a3a86016c918b8ca19",
@@ -215,9 +215,9 @@
       "path": "flotra-campaign/prototype/growth_hud.gd",
       "mode": "100644",
       "type": "blob",
-      "gitBlobSha": "58076016dbdd258a09ebfa3b12c47d453e8ec14e",
-      "sha256": "e1b2b3fdf75970dc5626843cf8ddeb83c709f88b43954f33aaacd73df60b4cbe",
-      "bytes": 62599,
+      "gitBlobSha": "5fe72bef988cd77ddf2ea6ce76ea7f0cdb76e4d7",
+      "sha256": "484355ef55341f42ab6cbfc80a61889e846efd7f090f0246a930b2018cb59f97",
+      "bytes": 63813,
       "baselineGitBlobSha": "4d069b0d723a9616ac30dd162cf91d413359f752"
     },
     {
@@ -260,9 +260,9 @@
       "path": "flotra-campaign/tests/release/browser_navigation_space.cjs",
       "mode": "100644",
       "type": "blob",
-      "gitBlobSha": "93119489c6796bd4a15fb89104e03adc69b63307",
-      "sha256": "ef860571e4ef17b8ac65310a39e5ff2c6ad4bdd9f9a2b4b67a824b12866e7244",
-      "bytes": 8106,
+      "gitBlobSha": "b242f2199b67cec1647396cfbd608a4e5bcd87af",
+      "sha256": "652af543aef9190df0c327f0e0f95d7d786f7a96878d95b974bb61d46dfb2bae",
+      "bytes": 8690,
       "baselineGitBlobSha": null
     },
     {
@@ -305,9 +305,9 @@
       "path": "flotra-campaign/tests/release/navigation_space_input.gd",
       "mode": "100644",
       "type": "blob",
-      "gitBlobSha": "2c8296d30ce41edc269c5ddca5437f3b130e4819",
-      "sha256": "e16e6f9defe5ad4589329d27b540acf2b105cb12e7ed15917952f29637e2b848",
-      "bytes": 18023,
+      "gitBlobSha": "c7df1f97020a9cdc7e6c8ce12bf9bad7cde07463",
+      "sha256": "84d91d04dfc2a0f9d070704a9263ddaaa4b4dc6461af6cb6570f7ebd643f900c",
+      "bytes": 23299,
       "baselineGitBlobSha": null
     },
     {
@@ -334,5 +334,17 @@
     "newSHA256": "ef860571e4ef17b8ac65310a39e5ff2c6ad4bdd9f9a2b4b67a824b12866e7244",
     "evidenceRun": 37739915938,
     "reason": "Fresh status is source-owned 新しい倉庫, not hidden save label; exact text and visible header bounds now asserted. Product hashes unchanged."
+  },
+  "visualCorrection": {
+    "evidenceRun": 37739915938,
+    "evidenceImage": "1280x720-dpr1-starter-failure.jpg",
+    "scope": "Single consistent WorkChoice; hide duplicate idle/completed pause-work action;108px desktop active pause;8px header padding to fit protected labels;focused7931checks",
+    "noDomainOrSaveChanges": true
+  },
+  "captureHarnessStateWaitCorrection": {
+    "evidenceRun": 37741208897,
+    "failure": "FreshDPR2 intro transition metrics stale; game correctly on jobs sheet",
+    "change": "Wait for explicit source-defined jobs/restored-play transition before next actual click; original15000ms timeout unchanged",
+    "scope": "Four mature review sizes only;actual active/paused headers at1280 and375;1000px bounds in focused native test. FullDPR/input sweep remains a later required gate. Immutable baseline reused by fixture hash."
   }
 }

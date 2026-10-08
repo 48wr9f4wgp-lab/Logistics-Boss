@@ -3,7 +3,9 @@
 import hashlib,json,pathlib,sys,zipfile
 
 def report(out):
-    for variant in ['baseline','candidate']:
+    reuse=json.loads((out/'baseline-reuse.json').read_text()) if (out/'baseline-reuse.json').exists() else None
+    if reuse:print('NAVIGATION_BASELINE_REUSE',json.dumps(reuse),flush=True)
+    for variant in ['candidate'] if reuse else ['baseline','candidate']:
         p=out/variant/'navigation-space.json'
         if not p.exists():
             print('NAVIGATION_STAGE',json.dumps({'variant':variant,'state':'no browser report; inspect preceding build/native stage'}),flush=True);continue
@@ -12,6 +14,12 @@ def report(out):
             states=c.get('states',{});last=next(reversed(states.values()),{}) if states else {}
             print('NAVIGATION_CASE',json.dumps({'variant':variant,'case':c['name'],'status':c.get('status'),'completedScreens':list(states),'error':c.get('error'),'viewport':c.get('viewport'),'last':{'sheet':last.get('sheet'),'worldRect':last.get('worldRect'),'status':last.get('status'),'wallet':last.get('wallet'),'progress':last.get('progress'),'saveLabels':[l['text'] for l in last.get('labels',[]) if '保存' in l.get('text','')],'visibleButtons':[{k:b.get(k) for k in ['name','text','x','y','width','height','disabled','fontSize']} for b in last.get('buttons',[]) if b.get('visible')]}},ensure_ascii=False),flush=True)
         if d.get('error'):print('NAVIGATION_FIRST_FAILURE',variant,d['error'],flush=True)
+
+    p=out/'headers/navigation-headers.json'
+    if p.exists():
+        d=json.loads(p.read_text())
+        for c in d.get('cases',[]):print('NAVIGATION_HEADER_CASE',json.dumps({'case':c['name'],'status':c.get('status'),'states':list(c.get('states',{})),'measurements':c.get('measurements'),'error':c.get('error')},ensure_ascii=False),flush=True)
+        if d.get('error'):print('NAVIGATION_HEADER_FIRST_FAILURE',d['error'],flush=True)
 
 def package(out):
     out.mkdir(parents=True,exist_ok=True);dest=out/'review';dest.mkdir(exist_ok=True)
@@ -26,7 +34,11 @@ def package(out):
     # Preserve an actual failure screen if the planned matrix stopped early.
     if len(images)!=24:
         images+=list(out.glob('*/*failure.jpg'))
-    summary={'requiredPrimaryImages':24,'actualPrimaryImages':len([p for p in images if not p.name.endswith('-failure.jpg')]),'capturedFiles':[str(p.relative_to(out)) for p in images],'qualification':'pixels require human review; source geometry is not visual acceptance'}
+    primary_count=len([p for p in images if not p.name.endswith('-failure.jpg')])
+    reuse=json.loads((out/'baseline-reuse.json').read_text()) if (out/'baseline-reuse.json').exists() else None
+    images+=list((out/'headers').glob('*.jpg'))
+    reports+=[p for p in [out/'headers/navigation-headers.json',out/'baseline-reuse.json'] if p.exists()]
+    summary={'requiredPrimaryImages':12 if reuse else 24,'actualPrimaryImages':primary_count,'baselinePrimaryImagesReused':12 if reuse else 0,'baselineProvenance':reuse,'capturedFiles':[str(p.relative_to(out)) for p in images],'qualification':'pixels require human review; source geometry is not visual acceptance'}
     (dest/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
     batches=[('navigation-review-images.zip',images)]
     def write(name,files):
@@ -37,7 +49,7 @@ def package(out):
     target=write(batches[0][0],images)
     if target.stat().st_size>=5_000_000:
         target.unlink()
-        for label,prefixes in [('desktop',sizes[:2]),('phone',sizes[2:])]:
+        for label,prefixes in [('desktop',['1000x720-dpr1']+sizes[:2]),('phone',sizes[2:])]:
             target=write('navigation-review-'+label+'.zip',[p for p in images if any(p.name.startswith(pre) for pre in prefixes)])
             assert target.stat().st_size<5_000_000,'Review artifact unexpectedly exceeds5MB'
     print('NAVIGATION_REVIEW_ARTIFACT',json.dumps(summary),flush=True)

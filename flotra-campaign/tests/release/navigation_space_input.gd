@@ -3,7 +3,7 @@ extends SceneTree
 ## separate work/equipment routes. Geometry and real engine input only; this
 ## does not establish rendered appearance, browser or physical-phone behavior.
 const Main = preload("res://prototype/growth_main.gd")
-const DIMENSIONS := [Vector2i(1280, 720), Vector2i(1920, 1080), Vector2i(375, 667), Vector2i(390, 844)]
+const DIMENSIONS := [Vector2i(1000, 720), Vector2i(1280, 720), Vector2i(1920, 1080), Vector2i(375, 667), Vector2i(390, 844)]
 const CAMERA_KEYS := ["CameraLeft", "CameraRight", "CameraOut", "CameraIn", "CameraReset"]
 var app
 var checks := 0
@@ -92,11 +92,79 @@ func readable(branch: Node, label: String) -> void:
     if branch is Button and root.size.x < 1000:
         check(branch.size.x >= 56 and branch.size.y >= 56, label + " phone target56 " + str(branch.name))
 
+func button_text_fits(button: Button, label: String) -> void:
+    if not button.is_visible_in_tree(): return
+    var font := button.get_theme_font("font")
+    var font_size := button.get_theme_font_size("font_size")
+    var style := button.get_theme_stylebox("disabled" if button.disabled else "normal")
+    var available: Vector2 = button.size - style.get_minimum_size()
+    var required: Vector2 = font.get_string_size(button.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+    check(font_size >= 18, label + " text remains at least18px " + str(button.name))
+    check(not button.text.contains("\n") and required.x <= available.x + 0.1,
+        "%s single-line text fits %s '%s' required%.2f available%.2f" % [label, button.name, button.text, required.x, available.x])
+    check(font.get_height(font_size) <= available.y + 0.1, label + " full text height fits " + str(button.name))
+    check(Rect2(Vector2.ZERO, Vector2(root.size)).encloses(button.get_global_rect()), label + " button bounds stay onscreen " + str(button.name))
+
+func header_state(state: String) -> void:
+    var label := "%s %s" % [state, root.size]
+    var desktop := root.size.x >= 1000 and root.size.y >= 500
+    var modal: bool = not app.hud._sheet_kind.is_empty()
+    var active := state in ["running", "paused"]
+    var pause: Button = app.hud._pause
+    check(app.hud._compare.text == "仕事", label + " WorkChoice keeps unambiguous fixed label")
+    check(pause.is_visible_in_tree() == (modal or active), label + " PauseResume visible only for active job or guarded modal")
+    check(pause.focus_mode == (Control.FOCUS_ALL if active and not modal else Control.FOCUS_NONE), label + " PauseResume focus follows usable visibility")
+    if not modal and not active:
+        check(root.gui_get_focus_owner() != pause, label + " hidden PauseResume never retains keyboard focus")
+    if modal:
+        check(pause.disabled, label + " modal PauseResume stays disabled")
+    elif active:
+        check(not pause.disabled, label + " active PauseResume is enabled")
+        var expected := "再開" if state == "paused" else ("一時停止" if desktop else "停止")
+        check(pause.text == expected, label + " active pause label is explicit and size appropriate")
+    if state == "protected":
+        check(pause.text == "停止中" and app.hud._back.text == "保護中", label + " protected header retains guard labels")
+        check(app.hud._back.disabled and app.hud._back.focus_mode == Control.FOCUS_NONE, label + " protected Back is disabled and unfocusable")
+    for button in [app.hud._back, app.hud._compare, app.hud._equipment, app.hud._primary, app.hud._conditions, pause]:
+        button_text_fits(button, label)
+    var header_controls: Array[Control] = [app.hud._back, app.hud._title, app.hud._safe_note]
+    if pause.is_visible_in_tree(): header_controls.append(pause)
+    if desktop:
+        check(is_equal_approx(app.hud._safe_note.position.x, 220) and is_equal_approx(app.hud._safe_note.size.x, 220), label + " save label keeps its reserved220px rectangle")
+        check(is_equal_approx(pause.size.x, 108), label + " desktop PauseResume has108px width")
+        if not modal:
+            check(is_equal_approx(app.hud._compare.position.x, root.size.x - 544), label + " desktop navigation leaves room for full pause label")
+            for button in [app.hud._compare, app.hud._equipment, app.hud._primary, app.hud._conditions]: header_controls.append(button)
+    for first in header_controls.size():
+        check(app.hud._header.get_global_rect().encloses(header_controls[first].get_global_rect()), label + " header control stays in header " + str(header_controls[first].name))
+        for second in range(first + 1, header_controls.size()):
+            check(not header_controls[first].get_global_rect().intersects(header_controls[second].get_global_rect()), label + " header controls do not overlap %s/%s" % [header_controls[first].name, header_controls[second].name])
+
+func state_geometry_matrix(state: String) -> void:
+    var original := root.size
+    var before: Dictionary = app.sim.export_release_state()
+    for dimensions in DIMENSIONS:
+        root.size = dimensions
+        app.hud.refresh()
+        await settle()
+        header_state(state)
+        overview_geometry(dimensions, state)
+        app.hud.show_controls()
+        await settle()
+        header_state("modal")
+        app.hud.close_sheet()
+        await settle()
+        header_state(state)
+    check(app.sim.export_release_state() == before, state + " responsive header and modal checks preserve entire campaign")
+    root.size = original
+    await settle()
+
 func sheet(expected_tab: String, label: String) -> void:
     check(app.hud._sheet_kind == "jobs" and app.hud._release_tab == expected_tab, label + " preserves jobs/domain route " + expected_tab)
     check(node("CampaignTabs") == null, label + " has no redundant CampaignTabs")
     check(not app.viewport_container.visible, label + " suspends covered world")
     check(is_zero_approx(app.hud._scroll.position.y), label + " scroll starts directly below title")
+    header_state("modal")
     readable(app.hud._root, label)
 
 func overview_geometry(dimensions: Vector2i, phase: String = "initial") -> void:
@@ -109,7 +177,8 @@ func overview_geometry(dimensions: Vector2i, phase: String = "initial") -> void:
     check(is_equal_approx(app.hud._header.size.y, 60 if desktop else 76), "Header height " + str(dimensions))
     check(is_equal_approx(app.hud._bottom.size.y, 72 if desktop else 136), "Bottom status height " + str(dimensions))
     check(app.hud._conditions.is_visible_in_tree() == desktop, "Results stays in desktop overview only " + str(dimensions))
-    var actions: Array[Control] = [app.hud._back, app.hud._pause]
+    var actions: Array[Control] = [app.hud._back]
+    if app.hud._pause.is_visible_in_tree(): actions.append(app.hud._pause)
     for key in ["WorkChoice", "EquipmentChoice", "ChangeLayout"] + CAMERA_KEYS:
         var action := node(key)
         check(action != null and action.is_visible_in_tree(), "Overview exposes " + key + " " + str(dimensions))
@@ -240,6 +309,13 @@ func running_and_pause_guards() -> void:
     await tap("WorkChoice")
     await click(await reveal("AcceptContract_growth_1"))
     check(app.sim.campaign_status == "running" and app.running, "Actual job route still accepts through scene guard")
+    await state_geometry_matrix("running")
+    await click(app.hud._pause)
+    check(not app.running and not app.hud._trial_running, "Visible desktop header pause stops the unfinished job")
+    header_state("paused")
+    await click(app.hud._pause)
+    check(app.running and app.hud._trial_running, "Visible desktop header resume restarts the same unfinished job")
+    header_state("running")
     app._set_preference("pause_on_menus", false)
     await tap("EquipmentChoice")
     var running_before: Dictionary = app.sim.export_release_state()
@@ -263,6 +339,7 @@ func running_and_pause_guards() -> void:
         advance(0.1)
         check(not app._menu_paused and app.running and app.sim.sim_time > before.sim.sim_time, "Closing menu resumes only previous run intent " + key)
     app._pause_trial(true)
+    await state_geometry_matrix("paused")
     for key in ["EquipmentChoice", "WorkChoice"]:
         await tap(key)
         var before: Dictionary = app.sim.export_release_state()
@@ -283,6 +360,7 @@ func protection_guards() -> void:
         root.size = dimensions
         app.hud.show_save_protection("既存の保存データを確認できないため、保護しています")
         await settle()
+        header_state("protected")
         check(app.hud._close.disabled and app.hud._back.disabled and app.hud._pause.disabled, "Protection keeps close/back/pause disabled " + str(dimensions))
         for key in ["WorkChoice", "EquipmentChoice", "ChangeLayout", "SessionRecord"] + CAMERA_KEYS:
             var control := node(key) as Button
@@ -322,6 +400,7 @@ func run() -> void:
         app.hud.show_play()
         await settle()
         await guard()
+        header_state("idle")
         overview_geometry(dimensions)
         await routes(dimensions)
     check(app.sim.accept_contract("growth_1").ok, "Earn interrupted-purchase fixture by accepting real cargo")
@@ -330,6 +409,7 @@ func run() -> void:
         app.sim.step(0.25)
     check(app.sim.finished and app.sim.check_invariants().ok, "Earn interrupted-purchase funds by finishing real cargo")
     app.hud.refresh()
+    await state_geometry_matrix("completed")
     await canceled_and_held_input()
     await running_and_pause_guards()
     await protection_guards()

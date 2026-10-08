@@ -13,7 +13,8 @@ url.searchParams.set('phone_qa', '1');
 const output = path.resolve(process.argv[3]);
 const fixture = JSON.parse(fs.readFileSync(path.join(process.argv[4], 'complete.json'), 'utf8'));
 const baseline = process.env.FLOTRA_UI_BASELINE === '1';
-const report = { kind: 'Fresh Chromium WebGL pixels and CSS geometry; not physical Windows/iPhone qualification', baseline, url: url.href, cases: [] };
+const reviewOnly = process.env.FLOTRA_CAPTURE_REVIEW_ONLY === '1';
+const report = { kind: 'Fresh Chromium WebGL pixels and CSS geometry; not physical Windows/iPhone qualification', baseline, reviewOnly, url: url.href, cases: [] };
 const sizes = [[1280,720,1], [1920,1080,1], [1280,720,2], [375,667,2], [390,844,3]];
 fs.mkdirSync(output, { recursive: true });
 const ui = page => page.evaluate(() => window.FlotraViewport?.uiMetrics);
@@ -44,6 +45,9 @@ async function shot(page, item, state) {
     browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, headless: true });
     report.chromiumVersion = browser.version();
     for (const [width,height,dpr] of sizes) for (const mature of [false,true]) {
+      // Four mature comparison sizes only. The full input/DPR matrix
+      // remains a separate required qualification gate.
+      if (reviewOnly && (!mature || (width===1280 && dpr===2))) continue;
       const mobile = width < 1000;
       const item = { name: `${width}x${height}-dpr${dpr}-${mature ? 'mature' : 'starter'}`, screenshots: [], states: {}, errors: [] };
       report.cases.push(item);
@@ -58,7 +62,10 @@ async function shot(page, item, state) {
         await page.waitForFunction(() => !!window.FlotraViewport?.uiMetrics, null, {timeout:120000});
         await waitSheet(page,'entry');
         await click(page,'CloseSheet',mobile);
-        if ((await ui(page)).sheet === 'jobs') await click(page,'CloseSheet',mobile);
+        // Wait for the actual source-defined next sheet before inspecting it.
+        // On a software GPU the read-only metrics can lag the real intro click.
+        await waitSheet(page,mature?'':'jobs');
+        if (!mature) await click(page,'CloseSheet',mobile);
         await waitSheet(page,'');
         const state = await ui(page);
         const canvas = await page.evaluate(() => { const c=document.querySelector('#canvas'),r=c.getBoundingClientRect(); return {width:c.width,height:c.height,cssWidth:r.width,cssHeight:r.height}; });
@@ -93,6 +100,7 @@ async function shot(page, item, state) {
         else await click(page,'EquipmentChoice',mobile);
         await waitSheet(page,'jobs'); await shot(page,item,'equipment');
         await click(page,'CloseSheet',mobile); await waitSheet(page,'');
+        if (reviewOnly) { assert.deepEqual(item.errors,[],'No runtime/browser errors'); item.status='passed'; continue; }
         await click(page,'ChangeLayout',mobile); await waitSheet(page,'editor'); await shot(page,item,'placement');
         await click(page,'CloseSheet',mobile); await waitSheet(page,'');
         await click(page,'CameraIn',mobile); await click(page,'CameraRight',mobile); await shot(page,item,'camera');

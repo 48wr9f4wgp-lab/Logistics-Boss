@@ -37,6 +37,14 @@ func _build() -> void:
     super._build()
     _root.name = "GrowthHUD"
     _root.theme.default_font_size = BODY_FONT_SIZE
+    # Three-character protection labels must also fit the compact 72px
+    # controls. Preserve 18px type and hit size, with symmetric 8px padding.
+    for header_button in [_back, _pause]:
+        for style_name in ["normal", "hover", "pressed", "focus", "disabled"]:
+            var style := header_button.get_theme_stylebox(style_name).duplicate() as StyleBoxFlat
+            style.content_margin_left = 8
+            style.content_margin_right = 8
+            header_button.add_theme_stylebox_override(style_name, style)
     _equipment = _button(_bottom, "設備・増築", _open_upgrades, false, false)
     _equipment.name = "EquipmentChoice"
     _equipment.tooltip_text = "増築・スタッフ・設備を確認する。購入は仕事の合間のみ"
@@ -173,6 +181,7 @@ func _layout_navigation() -> void:
         button.visible = playing and (wide or button != _conditions)
         button.focus_mode = Control.FOCUS_ALL if button.visible else Control.FOCUS_NONE
     _equipment.disabled = not playing
+    _sync_pause_entry()
     for button in [_back, _pause]:
         if is_instance_valid(button): button.custom_minimum_size.y = 44 if wide else CONTROL_HEIGHT
     if not wide:
@@ -187,8 +196,8 @@ func _layout_navigation() -> void:
     _rect(_back, 12, 8, 72, 44)
     _rect(_title, 100, 12, 108, 36)
     _rect(_safe_note, 220, 14, 220, 32)
-    var x := width - 520
-    for item in [[_compare, 88], [_equipment, 140], [_primary, 80], [_conditions, 72], [_pause, 80]]:
+    var x := width - 544
+    for item in [[_compare, 88], [_equipment, 140], [_primary, 80], [_conditions, 72], [_pause, 108]]:
         _rect(item[0], x, 8, item[1], 44)
         x += item[1] + 8
     _rect(_reason_panel, 12, 64, width - 24, 36)
@@ -198,6 +207,17 @@ func _layout_navigation() -> void:
     _rect(_travel, 12, 36, 220, 28)
     _rect(_waiting, 244, 36, width - 632, 28)
     _rect(_mask, 0, 60, width, height - 60)
+
+func _sync_pause_entry() -> void:
+    if not is_instance_valid(_pause): return
+    var playing := _sheet_kind.is_empty()
+    var active_job := str(_release.get("status", "ready")) == "running"
+    # Idle/completed warehouses already have one clear WorkChoice entry.
+    # Modal/protection controls keep their original visible disabled state.
+    _pause.visible = not playing or active_job
+    _pause.focus_mode = Control.FOCUS_ALL if playing and active_job and not _pause.disabled else Control.FOCUS_NONE
+    if active_job and _sheet_kind != "save_protection":
+        _pause.text = ("一時停止" if _wide_warehouse_layout() else "停止") if _trial_running else "再開"
 
 func _sync_focus() -> void:
     _layout_navigation()
@@ -407,7 +427,7 @@ func refresh() -> void:
     var total := int(progress.get("total", 0))
     var delivered := int(progress.get("shipped", 0))
     var wallet := int(_release.get("wallet", 0))
-    _compare.text = "次の仕事" if _complete() else "仕事"
+    _compare.text = "仕事"
     _conditions.text = "成果"
     _primary.text = "配置"
     _back.text = "操作" if _sheet_kind.is_empty() else "戻る"
@@ -415,6 +435,7 @@ func refresh() -> void:
     _update_controls()
     if str(_release.get("status", "ready")) != "running":
         _pause.text = "仕事"
+    _sync_pause_entry()
     _shipped.text = "出荷 %d/%d個  資金 %s" % [delivered, total, _compact_funds(wallet)] if total > 0 else "出荷 0個  資金 %s" % _compact_funds(wallet)
     _travel.text = "出荷 %.1f個/分" % _throughput()
     _travel.tooltip_text = "今回の平均出荷数（倉庫内の1分あたり）。進行速度を変えても同じ基準です"
