@@ -218,6 +218,11 @@ async function closeSheets(page,context) {
 async function showJobs(page,context) {
   await closeSheets(page,context);await tapName(page,context,'WorkChoice');await expectUI(page,{sheet:'jobs'});
 }
+async function showRecords(page,context) {
+  await closeSheets(page,context);
+  await tapName(page,context,'Back');await expectUI(page,{sheet:'controls'});
+  await tapName(page,context,'OpenRecords',true);await expectUI(page,{sheet:'records'});
+}
 async function prepare(page,context,id) {
   await tapName(page,context,'PrepareContract_'+id,true);
   await page.waitForFunction(()=>window.FlotraViewport.uiMetrics.buttons.some(b=>b.name==='StartPreparedJob'&&b.visible),null,{timeout:10000});
@@ -350,9 +355,9 @@ async function journey(page,context,test,mature) {
     const copy=(await ui(page)).labels.map(l=>l.text).join('\n');
     if(test.storageContract.version!==5)assert.ok(!copy.includes('次の増築や設備の資金に'),'Fully upgraded job screen does not promise more upgrades');
     else assert.ok(!initial.upgrades.includes('pick_dispatch_board'),'Legacy mature fixture has not already bought the new board');
-    await tapName(page,context,'Tab_upgrades');
-    // Tabs share sheet='jobs'; wait for their actual rendered content rather
-    // than a fixed post-touch delay or the previous tab's diagnostics.
+    await closeSheets(page,context);await tapName(page,context,'EquipmentChoice');await expectUI(page,{sheet:'jobs'});
+    // The choice sections share sheet='jobs'; wait for actual equipment
+    // content rather than a fixed delay or previous section's diagnostics.
     if(test.storageContract.version===5){
       const board=await button(page,'BuyUpgrade_pick_dispatch_board');
       assert.equal(board.disabled,false,'Legacy mature fixture can buy the newly added board');
@@ -364,7 +369,7 @@ async function journey(page,context,test,mature) {
       assert.ok(labelText(await ui(page),'GrowthCatalogComplete').includes('すべて導入済み'),'Mature copy says the existing catalog is complete');
     }
     await screenshot(page,'mature-catalog-'+test.name);
-    await tapName(page,context,'Tab_contracts');
+    await showJobs(page,context);
   }
   await prepare(page,context,id);
   const original=immutableProgress(await ui(page));
@@ -397,7 +402,7 @@ async function journey(page,context,test,mature) {
   const first=await ui(page);assert.equal(first.wallet,initialWallet+reward);assert.equal(first.progress.shipped,mature?36:12);
   assert.deepEqual(first.jobComparison,{},'First current-session completion never fabricates prior setup');
   test.first={elapsed:first.simTime,wallet:first.wallet,results:first.results[id],layout:first.layout.current,operation:first.operation.mode_id};
-  await tapName(page,context,'SessionRecord');await expectUI(page,{sheet:'records'});
+  await showRecords(page,context);await expectUI(page,{sheet:'records'});
   assert.ok(labelText(await ui(page),'SameJobComparison').includes('この起動中'),'Unavailable baseline is explained honestly');
   await tapName(page,context,'AdjustReplayJob',true);await expectUI(page,{sheet:'jobs',status:'contract_complete'});
   await button(page,'StartPreparedJob');
@@ -416,13 +421,13 @@ async function journey(page,context,test,mature) {
   assert.equal(second.currentBest,Math.min(first.currentBest,second.simTime),'Best remains the minimum completed time');
   assert.equal(second.results[id].attempts,first.results[id].attempts+1,'Replay increments only its own attempt count');
   test.comparison=comparison;test.finalRecord=second.results[id];
-  await tapName(page,context,'SessionRecord');await expectUI(page,{sheet:'records'});
+  await showRecords(page,context);await expectUI(page,{sheet:'records'});
   assert.ok(labelText(await ui(page),'SameJobComparison').includes('前回 → 今回'),'Visible result has same-job comparison');
   await revealLabel(page,context,'SameJobComparison');await screenshot(page,'same-job-comparison-'+test.name);
   await reloaded(page);const final=await stablePause(page);
   assert.equal(final.wallet,second.wallet);assert.deepEqual(final.results,second.results);assert.equal(final.currentBest,second.currentBest);
   assert.deepEqual(final.jobComparison,{},'Reload never fabricates session-only comparison');
-  await closeSheets(page,context);await tapName(page,context,'SessionRecord');await expectUI(page,{sheet:'records'});
+  await showRecords(page,context);await expectUI(page,{sheet:'records'});
   assert.ok(labelText(await ui(page),'SameJobComparison').includes('この起動中') && labelText(await ui(page),'SameJobComparison').includes('2回'),'Reload fallback accurately requires two same-job completions in this session');
   test.reload={inFlightPreserved:true,preparationNeverStarted:true,rewardsNotDuplicated:true,bestPersisted:final.currentBest,sessionComparisonCleared:true};
 }

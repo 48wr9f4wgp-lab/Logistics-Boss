@@ -50,7 +50,7 @@ The 操作 menu remembers speed, optional menu auto-pause and reduced walking an
 
 Drag the warehouse with one finger or the mouse to pan. Pinch or use the mouse wheel / plus-minus buttons to zoom from whole-warehouse scale up to 3×. The visible 左90° / 右90° buttons change the camera bearing; 全体 restores the original whole-warehouse view. Camera state is session-only and never mutates campaign saves, money, equipment, cargo or the foreground clock. The layout editor retains its own precise equipment framing and restores the overview camera when closed.
 
-The 56px camera row occupies a reserved strip above the bottom HUD, not the scene's callouts. Short landscape puts it in the header. Menus, HUD crossings, canceled touch, focus loss and resize cancel any held camera input. See `FLOTRA_CAMERA_RELEASE_2026-10-04.md` for verification and boundaries.
+On phones, the 56px camera row occupies a reserved strip above the bottom HUD, not the scene's callouts. Short landscape puts it in the header. Wide desktop windows (at least1000×500 logical pixels) use a60px header and72px bottom status/camera strip;44px camera controls remain separate from the warehouse, while text stays18px or larger. Menus, HUD crossings, canceled touch, focus loss and resize cancel any held camera input. See `FLOTRA_CAMERA_RELEASE_2026-10-04.md` for verification and boundaries.
 
 ## Optional preparation and replay comparison
 
@@ -104,3 +104,9 @@ old checkpoint and cannot carry newer purchases/progress backward.
 
 This is a local source candidate. See FLOTRA_DISPATCH_CANDIDATE_2026-10-07.md
 for the checked scope and remaining publication gates.
+
+## Direct navigation and warehouse space
+
+仕事 opens only the job list; 設備・増築 opens equipment, staffing and expansion directly; 配置 keeps the existing free layout editor. Jobs and equipment no longer share a tab strip. Equipment prices, prerequisites, job-time purchase locks and save rules are unchanged. Phones retain three56px primary targets, with results under 操作 → 成果と記録. Desktop also keeps a direct 成果 entry.
+
+The idle/completed overview has one 仕事 button. During an unfinished job the header instead exposes the separate pause/resume control; a restored job still waits for explicit 再開. Protection and modal guards remain visible and disabled as before. Normal warehouse height at1280×720 is532px instead of360px; phone viewport sizes are unchanged. Rendering resolution, visual quality, camera range and save format are unchanged.

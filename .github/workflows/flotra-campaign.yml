@@ -10,6 +10,7 @@ on:
       - 'FLOTRA_VISUAL_GROWTH_ARTIFACTS_2026-10-07.json'
       - 'FLOTRA_VISUAL_ONLY_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json'
+      - 'FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json'
   push:
     branches: [main]
     paths:
@@ -20,6 +21,7 @@ on:
       - 'FLOTRA_VISUAL_GROWTH_ARTIFACTS_2026-10-07.json'
       - 'FLOTRA_VISUAL_ONLY_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json'
+      - 'FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json'
 permissions:
   contents: read
 jobs:
@@ -289,7 +291,7 @@ jobs:
     timeout-minutes: 20
     env:
       CONTROL_SHA: a7c60e8c86785137a90b517227b5def8b329c1bc
-      FLOTRA_COMBINED_PROVENANCE: FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json
+      FLOTRA_COMBINED_PROVENANCE: FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json
     steps:
       - uses: actions/checkout@v5
         with:
@@ -331,6 +333,8 @@ jobs:
           retention-days: 7
 
   desktop-save-readiness:
+    env:
+      FLOTRA_EXPORT_PROVENANCE: FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -384,9 +388,9 @@ jobs:
           cp -a docs/godot-jobs-preview build/writer-committed
           printf '<!doctype html><title>Writer lifecycle fixture</title><p>Disposable CI navigation</p>\n' > build/writer-committed/writer-away.html
           python3 - <<'PY_IDENTITY'
-          import hashlib, json
+          import hashlib, json, os
           from pathlib import Path
-          manifest = json.loads(Path('FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json').read_text())
+          manifest = json.loads(Path(os.environ['FLOTRA_EXPORT_PROVENANCE']).read_text())
           actual = {name: hashlib.sha256((Path('build/writer-committed') / name).read_bytes()).hexdigest() for name in manifest['candidateAssetsSHA256']}
           assert actual == manifest['candidateAssetsSHA256'], 'Browser must serve exact committed qualified bytes'
           print('DESKTOP_COMMITTED_WEB_IDENTITY ' + json.dumps(actual))
@@ -407,4 +411,42 @@ jobs:
           path: |
             build/writer-readiness
             build/writer-web
+          retention-days: 7
+
+  navigation-browser-input:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+      - name: Prepare identical domain-earned navigation fixtures
+        run: |
+          godot --headless --editor --path flotra-campaign --import
+          FLOTRA_GROWTH_FIXTURES="$PWD/build/navigation-fixtures" godot --headless --path flotra-campaign --script res://tests/release/growth_browser_fixtures.gd
+      - name: Install pinned isolated browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Full real navigation, layout and camera input matrix
+        shell: bash
+        run: |
+          mkdir -p build/navigation-browser
+          python3 -m http.server 8870 --bind 127.0.0.1 --directory docs/godot-jobs-preview > build/navigation-browser/server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" node flotra-campaign/tests/release/browser_navigation_space.cjs http://127.0.0.1:8870/ build/navigation-browser build/navigation-fixtures
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flotra-navigation-browser-input
+          path: build/navigation-browser
           retention-days: 7
