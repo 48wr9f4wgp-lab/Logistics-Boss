@@ -34,6 +34,40 @@ const report = {
 };
 const digest = value => crypto.createHash('sha256').update(value).digest('hex');
 let browser, target, legacy, earned;
+const contextCases = new WeakMap();
+function markPhase(page, phase, details) {
+  const test = contextCases.get(page.context());
+  if (!test) return;
+  test.phase = phase;
+  const item = { phase, at: new Date().toISOString(), ...(details ? { details } : {}) };
+  (test.phases ||= []).push(item);
+  console.log('BROWSER_WRITER_PHASE ' + JSON.stringify({ case: test.name, ...item }));
+}
+// Future-run diagnostics are emitted as they occur. Never read old artifacts
+// here, and never print encoded saves (including assertion diffs) to CI logs.
+const logSafeText = value => String(value ?? '')
+  .replace(/[A-Za-z0-9+/]{80,}={0,2}/g, '[encoded data redacted]')
+  .slice(0, 6000);
+function stdoutFailure(test) {
+  const d = test.final || {}, h = d.harness || {}, state = d.ui;
+  return {
+    case: test.name, status: test.status, phase: test.phase, elapsedSeconds: test.elapsedSeconds,
+    error: logSafeText(test.error || test.traceError || test.reason),
+    readiness: d.readiness, notice: logSafeText(d.notice), label: logSafeText(d.label),
+    engineInstances: h.engineInstances, starts: h.starts?.map(item => ({ ...item, error: logSafeText(item.error) })),
+    locks: h.locks, writes: h.writes, input: h.input?.slice(-16), lifecycle: h.lifecycle,
+    ui: state ? {
+      sheet: state.sheet, trialRunning: state.trialRunning, status: state.status,
+      currentContract: state.currentContract, simTime: state.simTime, wallet: state.wallet, speed: state.speed,
+      autosave: state.autosave, scroll: state.scroll,
+      buttons: state.buttons.filter(item => item.visible).map(({ name, disabled, x, y, width, height }) => ({ name, disabled, x, y, width, height })),
+    } : null,
+    lastMouseTarget: test.lastMouseTarget,
+    storageFingerprints: test.finalStorage,
+    consoleErrors: test.errors?.map(logSafeText), pageErrors: test.pageErrors?.map(logSafeText),
+    requestFailures: test.requestFailures,
+  };
+}
 const saveReport = () => fs.writeFileSync(path.join(output, 'writer-readiness.json'), JSON.stringify(report, null, 2));
 const briefStorage = storage => Object.fromEntries(Object.entries(storage).map(([key, value]) => [key, { bytes: Buffer.byteLength(value), sha256: digest(value) }]));
 const storage = page => page.evaluate(() => Object.fromEntries(Object.keys(localStorage).sort().map(key => [key, localStorage.getItem(key)])));
@@ -55,16 +89,20 @@ async function shot(page, name) {
   await page.screenshot({ path: path.join(output, name + '.png'), scale: 'css', timeout: 15000 });
 }
 async function expectUI(page, expected) {
+  markPhase(page, 'wait-ui', expected);
   await page.waitForFunction(expected => {
     const state = window.FlotraViewport?.uiMetrics;
     return state && Object.entries(expected).every(([key, value]) => state[key] === value);
   }, expected, { timeout: UI_MS });
   // Respect the real 180ms dismissal guard; do not bypass engine input.
   await page.waitForTimeout(240);
+  markPhase(page, 'matched-ui', expected);
 }
 async function readyUI(page, sheet = 'entry') {
+  markPhase(page, 'wait-real-game-qa');
   await page.waitForFunction(() => !!window.FlotraViewport?.uiMetrics, null, { timeout: BOOT_MS });
   await expectUI(page, { sheet, trialRunning: false });
+  markPhase(page, 'wait-viewport-geometry');
   await page.waitForFunction(() => {
     const c = document.querySelector('#canvas');
     const e = window.FlotraViewport?.engineMetrics;
@@ -72,6 +110,7 @@ async function readyUI(page, sheet = 'entry') {
     const r = c.getBoundingClientRect();
     return Math.abs(e.logicalWidth - r.width) <= 1 && Math.abs(e.logicalHeight - r.height) <= 1 && e.rootWidth === c.width && e.rootHeight === c.height;
   }, null, { timeout: UI_MS });
+  markPhase(page, 'check-real-loader-contract');
   const contract = await exportContract.fromPage(page);
   assert.equal(contract.version, 5, 'Candidate is actually the schema-5 export');
   const d = await diagnostics(page);
@@ -80,18 +119,27 @@ async function readyUI(page, sheet = 'entry') {
   assert.ok(d.harness.statuses.some(item => item.text.includes('保存データの安全を確認しています')), 'Real loader displayed its readiness phase');
 }
 async function mouseButton(page, name, { disabled = false, scroll = false } = {}) {
+  markPhase(page, 'find-mouse-control', { name, disabled, scroll });
   for (let attempt = 0; attempt < 18; attempt++) {
     await page.waitForFunction(name => window.FlotraViewport?.uiMetrics?.buttons.some(item => item.name === name && item.visible), name, { timeout: UI_MS });
     const state = await ui(page);
     const b = state.buttons.find(item => item.name === name && item.visible);
+    const test = contextCases.get(page.context());
+    if (test) test.lastMouseTarget = { name, attempt, requestedDisabled: disabled, button: { name: b.name, disabled: b.disabled, x: b.x, y: b.y, width: b.width, height: b.height }, sheet: state.sheet, scroll: state.scroll };
     assert.equal(b.disabled, disabled, name + ': actual disabled state');
     const canvas = await page.locator('#canvas').boundingBox();
     assert.ok(canvas, 'Actual canvas is visible');
+    if (test) test.lastMouseTarget.canvas = canvas;
     const x = b.x + b.width / 2, y = b.y + b.height / 2;
     const s = state.scroll;
     const visible = x >= 0 && x <= canvas.width && y >= 0 && y <= canvas.height;
     const inScroll = !scroll || (s && b.y >= s.y + 2 && b.y + b.height <= s.y + s.height - 2);
     if (visible && inScroll) {
+      if (test) test.lastMouseTarget.domHit = await page.evaluate(({ x, y }) => {
+        const element = document.elementFromPoint(x, y);
+        return { id: element?.id, tag: element?.nodeName, focused: document.hasFocus(), visibility: document.visibilityState, dpr: devicePixelRatio, engine: window.FlotraViewport?.engineMetrics };
+      }, { x: canvas.x + x, y: canvas.y + y });
+      markPhase(page, 'mouse-control', { name, x: canvas.x + x, y: canvas.y + y, disabled });
       await page.mouse.move(canvas.x + x, canvas.y + y);
       await page.mouse.down();
       await page.waitForTimeout(90); // Cross a real refresh boundary while held.
@@ -101,6 +149,7 @@ async function mouseButton(page, name, { disabled = false, scroll = false } = {}
     }
     assert.ok(scroll && s?.height > 32, 'A real scroll area can reveal ' + name);
     await page.mouse.move(canvas.x + s.x + s.width / 2, canvas.y + s.y + s.height / 2);
+    markPhase(page, 'mouse-scroll-control', { name, attempt, scrollVertical: s.scrollVertical, targetY: y });
     await page.mouse.wheel(0, y > s.y + s.height / 2 ? 180 : -180);
     await page.waitForTimeout(250);
   }
@@ -165,7 +214,7 @@ async function installHarness(page, config = {}) {
       console.debug('WRITER_LIFECYCLE ' + JSON.stringify(item));
     });
     for (const type of ['mousedown', 'mouseup', 'keydown']) addEventListener(type, event => {
-      data.input.push({ type, trusted: event.isTrusted, key: event.key, x: event.clientX, y: event.clientY, at: stamp() });
+      data.input.push({ type, trusted: event.isTrusted, target: event.target?.id || event.target?.nodeName, focused: document.hasFocus(), visibility: document.visibilityState, key: event.key, x: event.clientX, y: event.clientY, at: stamp() });
       if (data.input.length > 300) data.input.shift();
     }, true);
     new MutationObserver(records => {
@@ -240,6 +289,7 @@ async function installHarness(page, config = {}) {
   }, config);
 }
 async function goto(page) {
+  markPhase(page, 'navigate-local-export');
   const response = await page.goto(target.href, { waitUntil: 'domcontentloaded', timeout: 60000 });
   assert.ok(response?.ok(), 'Local export HTTP response succeeds');
   assert.equal(new URL(page.url()).origin, target.origin, 'No redirect away from the disposable local export');
@@ -254,6 +304,7 @@ async function noBootNoWrites(page, baseline, expectedState) {
   if (expectedState) assert.equal(d.readiness.current.state, expectedState);
 }
 async function failureNotice(page, text, baseline, state) {
+  markPhase(page, 'wait-failure-notice', { text, state });
   await page.waitForFunction(text => {
     const e = document.querySelector('#status-notice');
     return e && getComputedStyle(e).display !== 'none' && e.innerText.includes(text);
@@ -276,6 +327,7 @@ async function releaseDelayed(page, name) {
   await page.evaluate(name => window.__writerHarness.release(name), name);
 }
 async function savedCheckpoint(page) {
+  markPhase(page, 'wait-real-save-commit');
   await page.waitForFunction(key => {
     const state = window.FlotraViewport?.uiMetrics;
     return state && !state.trialRunning && state.autosave?.last_saved_generation >= 0 && localStorage.getItem(key) !== null;
@@ -308,6 +360,7 @@ async function startAndSave(page) {
   return checkpoint;
 }
 async function reloadExact(page, expected) {
+  markPhase(page, 'reload-earned-checkpoint');
   await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
   await readyUI(page);
   assert.deepEqual(durable(await ui(page)), expected.state, 'All selected durable QA fields restore exactly');
@@ -351,7 +404,8 @@ async function protectedControls(page, baseline, test, reload = true) {
   }
 }
 async function scenario(name, options, action) {
-  const test = { name, dpr: options.dpr || 1, status: 'running' };
+  const test = { name, dpr: options.dpr || 1, status: 'running', phase: 'fixture-setup' };
+  console.log('BROWSER_WRITER_START ' + JSON.stringify({ case: name, at: new Date().toISOString() }));
   report.tests.push(test); saveReport();
   let context, page, helper;
   const messages = [], errors = [], pageErrors = [], failures = [];
@@ -359,6 +413,7 @@ async function scenario(name, options, action) {
   try {
     if (options.needsEarned) assert.ok(earned, 'Cold-start gate must earn and verify a v5 fixture first');
     context = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: test.dpr, isMobile: false, hasTouch: false, serviceWorkers: 'block' });
+    contextCases.set(context, test);
     context.setDefaultTimeout(UI_MS);
     context.setDefaultNavigationTimeout(60000);
     await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
@@ -397,6 +452,7 @@ async function scenario(name, options, action) {
       await context.close();
     }
     console.log('BROWSER_WRITER_READINESS ' + name + ': ' + test.status);
+    if (test.status !== 'passed') console.log('BROWSER_WRITER_DIAGNOSTIC ' + JSON.stringify(stdoutFailure(test)));
     saveReport();
   }
 }
@@ -514,9 +570,20 @@ async function scenario(name, options, action) {
     });
 
     await scenario('engine-load-rejection-releases-locks', { expectedEngineFailure: true }, async ({ page, helper, baseline, test }) => {
-      await page.route('**/index.wasm*', route => route.abort('failed'));
+      // Godot 4.7.2's WASM doInit wrapper does not forward fetch rejection
+      // into its outer Promise. Fault the real PCK preload, whose rejection
+      // propagates through startGame's Promise.all to the production loader.
+      // Keep native fetch/retry timing; no stub engine or forced rejection.
+      let rejectedPackRequests = 0;
+      await page.route('**/index.pck*', route => {
+        rejectedPackRequests++;
+        return route.fulfill({ status: 503, contentType: 'text/plain', body: 'Synthetic CI unavailable pack' });
+      });
       await goto(page);
+      markPhase(page, 'wait-real-pack-load-rejection');
       await page.waitForFunction(() => document.querySelector('#status-notice')?.innerText.includes('FLOTRAを起動できませんでした'), null, { timeout: BOOT_MS });
+      test.rejectedPackRequests = rejectedPackRequests;
+      assert.equal(rejectedPackRequests, 4, 'Real Godot PCK loader exhausted its four fetch attempts');
       const d = await diagnostics(page);
       assert.equal(d.harness.starts.length, 1);
       assert.equal(d.readiness.current.state, 'cancelled');

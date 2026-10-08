@@ -360,7 +360,16 @@ jobs:
           FLOTRA_GROWTH_FIXTURES="$PWD/build/writer-fixtures" godot --headless --path flotra-campaign --script res://tests/release/growth_browser_fixtures.gd
           bash flotra-campaign/export_web.sh build/writer-web
           printf '<!doctype html><title>Writer lifecycle fixture</title><p>Disposable CI navigation</p>\n' > build/writer-web/writer-away.html
-      - name: Verify exact source, engine and candidate export bytes
+      - name: Inspect only approved generated scene ID fields
+        shell: bash
+        run: |
+          profile="$RUNNER_TEMP/flotra-readiness-inspector"
+          mkdir -p "$profile"/{home,data,config,cache}
+          export HOME="$profile/home" XDG_DATA_HOME="$profile/data" XDG_CONFIG_HOME="$profile/config" XDG_CACHE_HOME="$profile/cache"
+          SCENE_ID_REPORT="$PWD/build/writer-readiness/candidate-scenes.json" godot --headless --main-pack "$PWD/docs/godot-jobs-preview/index.pck" --script "$PWD/scripts/flotra_inspect_scene_ids.gd"
+          SCENE_ID_REPORT="$PWD/build/writer-readiness/exported-scenes.json" godot --headless --main-pack "$PWD/build/writer-web/index.pck" --script "$PWD/scripts/flotra_inspect_scene_ids.gd"
+          python3 flotra-campaign/tests/release/diagnose_writer_pack.py docs/godot-jobs-preview/index.pck build/writer-web/index.pck build/writer-readiness/pack-resource-diagnostic.json
+      - name: Verify exact source, engine and bounded export coherence
         id: export-check
         continue-on-error: true
         run: python3 flotra-campaign/tests/release/verify_writer_export.py build/writer-web build/writer-readiness
@@ -372,14 +381,24 @@ jobs:
       - name: Actual desktop startup, ownership, mouse and lifecycle checks
         shell: bash
         run: |
-          python3 -m http.server 8860 --bind 127.0.0.1 --directory build/writer-web > build/writer-readiness/server.log 2>&1 &
+          cp -a docs/godot-jobs-preview build/writer-committed
+          printf '<!doctype html><title>Writer lifecycle fixture</title><p>Disposable CI navigation</p>\n' > build/writer-committed/writer-away.html
+          python3 - <<'PY_IDENTITY'
+          import hashlib, json
+          from pathlib import Path
+          manifest = json.loads(Path('FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json').read_text())
+          actual = {name: hashlib.sha256((Path('build/writer-committed') / name).read_bytes()).hexdigest() for name in manifest['candidateAssetsSHA256']}
+          assert actual == manifest['candidateAssetsSHA256'], 'Browser must serve exact committed qualified bytes'
+          print('DESKTOP_COMMITTED_WEB_IDENTITY ' + json.dumps(actual))
+          PY_IDENTITY
+          python3 -m http.server 8860 --bind 127.0.0.1 --directory build/writer-committed > build/writer-readiness/server.log 2>&1 &
           server=$!
           trap 'kill "$server" 2>/dev/null || true' EXIT
           NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" xvfb-run -a node flotra-campaign/tests/release/browser_writer_readiness.cjs http://127.0.0.1:8860/ build/writer-readiness build/writer-fixtures
       - name: Enforce full-export comparison
         if: always() && steps.export-check.outcome != 'success'
         run: |
-          echo 'Full export differs or source coherence failed; preserve generated assets and require review.'
+          echo 'Export coherence failed beyond the approved generated-ID boundary; preserve all evidence.'
           exit 1
       - uses: actions/upload-artifact@v4
         if: always()
