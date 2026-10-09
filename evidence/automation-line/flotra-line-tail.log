@@ -1,0 +1,208 @@
+{
+  "suite": "independent_storage_review",
+  "checks": 12,
+  "results": [
+    {
+      "name": "isolated keys never change legacy data",
+      "ok": true
+    },
+    {
+      "name": "quota error at backup preserves primary",
+      "ok": true
+    },
+    {
+      "name": "quota error at primary keeps valid recoverable state",
+      "ok": true
+    },
+    {
+      "name": "second tab cannot overwrite winner",
+      "ok": true
+    },
+    {
+      "name": "interleaved tabs cannot both accept conflicting writes",
+      "ok": true
+    },
+    {
+      "name": "foreign and future primary remain byte-for-byte unchanged",
+      "ok": true
+    },
+    {
+      "name": "foreign/future backup is preserved even with valid primary",
+      "ok": true
+    },
+    {
+      "name": "lock API absent fails closed",
+      "ok": true
+    },
+    {
+      "name": "lock API rejected fails closed",
+      "ok": true
+    },
+    {
+      "name": "before asynchronous lock admission fails closed",
+      "ok": true
+    },
+    {
+      "name": "pagehide releases ownership; second tab remains read-only until reload",
+      "ok": true
+    },
+    {
+      "name": "bfcache stale snapshot rejected after ownership reacquisition",
+      "ok": true
+    }
+  ]
+}
+{
+  "suite": "dispatch_storage_faults",
+  "checks": 14,
+  "results": [
+    {
+      "name": "migration writes only new primary; old primary/backup remain exact",
+      "ok": true
+    },
+    {
+      "name": "existing new generation takes precedence; no old reads",
+      "ok": true
+    },
+    {
+      "name": "first-write quota failure preserves old source and creates nothing",
+      "ok": true
+    },
+    {
+      "name": "backup quota failure preserves both valid new slots",
+      "ok": true
+    },
+    {
+      "name": "primary failure retains checkpoint and retry recognizes own rotation",
+      "ok": true
+    },
+    {
+      "name": "an old-version tab prevents migration until it is closed and new page reopened",
+      "ok": true
+    },
+    {
+      "name": "legacy mutation between read and first write refuses stale migration",
+      "ok": true
+    },
+    {
+      "name": "new backup external mutation refuses rotation",
+      "ok": true
+    },
+    {
+      "name": "second new tab cannot overwrite the writer",
+      "ok": true
+    },
+    {
+      "name": "empty, corrupt and future new envelopes are retained, not old fallback",
+      "ok": true
+    },
+    {
+      "name": "missing new primary with backup requires explicit recovery",
+      "ok": true
+    },
+    {
+      "name": "Web Lock absence/refusal fails closed",
+      "ok": true
+    },
+    {
+      "name": "bfcache snapshot cannot overwrite a newer checkpoint",
+      "ok": true
+    },
+    {
+      "name": "2 MB decoded ceiling applies before browser writes",
+      "ok": true
+    }
+  ]
+}
+{
+  "suite": "dispatch_writer_ready",
+  "results": [
+    {
+      "name": "fresh loader waits for both delayed grants before engine and exact save/readback",
+      "ok": true
+    },
+    {
+      "name": "existing v5 requires no legacy lock",
+      "ok": true
+    },
+    {
+      "name": "backup-only and malformed v5 never fall back to legacy lock",
+      "ok": true
+    },
+    {
+      "name": "occupied v5 stays blocked with no retry or write",
+      "ok": true
+    },
+    {
+      "name": "occupied legacy keeps existing bytes unchanged",
+      "ok": true
+    },
+    {
+      "name": "API absence and async rejection fail closed distinctly",
+      "ok": true
+    },
+    {
+      "name": "timeout cancels later grant; no engine or writes",
+      "ok": true
+    },
+    {
+      "name": "pagehide while pending cancels startup and late callback",
+      "ok": true
+    },
+    {
+      "name": "pagehide after grant but before continuation cannot start",
+      "ok": true
+    },
+    {
+      "name": "explicit reload obtains fresh locks; no stale takeover",
+      "ok": true
+    },
+    {
+      "name": "bfcache reacquisition never overwrites newer snapshot",
+      "ok": true
+    },
+    {
+      "name": "restore during engine download rejects read and notifies late Main",
+      "ok": true
+    }
+  ]
+}
+{"suite":"actual_loader_ready_gate","checks":3,"passed":true,"scope":"exact shell inline script + exact storage bridge in synthetic DOM, no browser"}
+✔ Exact loader contract: campaign-storage.js (5.476307ms)
+✔ Exact loader contract: dispatch-storage.js (0.240243ms)
+✔ Reject missing, duplicate and mixed storage bridges (1.093753ms)
+✔ Candidate keeps exact legacy bytes and admits only its own new keys (0.675041ms)
+✔ Public control still rejects new dispatch keys (0.27785ms)
+✔ Cross-schema comparison requires both complete native snapshots (5.653756ms)
+✔ Cross-schema comparison rejects every physical change and unknown fields (1.502321ms)
+✔ Same-schema comparisons retain the original complete equality check (0.257709ms)
+✔ Full project provenance verifies contents and exact keys, excluding only generated cache (6.29767ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 29.81737
+{
+  "suite": "qa_page_isolation",
+  "results": [
+    {
+      "file": "/workspace/Logistics-Boss/flotra-campaign/../docs/godot-jobs-preview/storage-check.html",
+      "ok": true,
+      "accessed_keys": [
+        "flotra.campaign.qa.20261003",
+        "flotra.campaign.qa.20261003.backup"
+      ],
+      "lock": "flotra.campaign.qa.20261003.writer"
+    }
+  ]
+}
+=== readability_input ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+READABILITY_INPUT 1038 checks, 0 failures
+REVIEW_WEB_LOADER_GEOMETRY 144 checks passed (mocked DOM, exact exported loader)
+REVIEW_VIEWPORT_BRIDGE 104 checks passed (explicit DOM mock)
+REVIEW_COPY_SHELL PASS (Japanese loading, network failure, unsupported browser; mocked DOM)

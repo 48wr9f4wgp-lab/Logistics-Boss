@@ -1,0 +1,42 @@
+{
+  "runs": [
+    "A1",
+    "B1",
+    "B2",
+    "A2"
+  ],
+  "timing": "unchanged: idle6s, UI-only6s, active12s, idleAfter6s plus existing setup waits",
+  "dimensions": [
+    390,
+    844,
+    3
+  ],
+  "variants": {
+    "A": "immutable PR160 existing export",
+    "B": "unchanged revision2 existing export"
+  },
+  "thresholds": "all existing assertions unchanged",
+  "instrumentation": "RAF raw samples plus existing read-only uiMetrics; no game export modifications; cgroup and proc snapshots each second",
+  "retry": "none; preserve every run including failure",
+  "production_source_sha256": {
+    "flotra-campaign/prototype/dispatch_hud.gd": "e12d7c5dd625efca36ca130f84e464e7289c2e3c27bdb37a76aae0601ccc3e7b",
+    "flotra-campaign/prototype/dispatch_save.gd": "97eaf5194a44d67d04222af7565871db214155c0638022602b46223647d2464a",
+    "flotra-campaign/prototype/dispatch_sim.gd": "7cdd3e75089e37a3ff3c63bb027982da35b30231423d789b0d0eae9f0b4e3b9d",
+    "flotra-campaign/prototype/dispatch_state_codec.gd": "25f6a5cccda0184d6b18ef24188f637ee56e17e94ce6987215a61839f1adad81",
+    "flotra-campaign/prototype/growth_hud.gd": "484355ef55341f42ab6cbfc80a61889e846efd7f090f0246a930b2018cb59f97",
+    "flotra-campaign/prototype/growth_main.gd": "ebccab104f7098738cdd310b19aa7cbeb787e72e3efec1c5524d4b2ef18c1014",
+    "flotra-campaign/prototype/growth_sim.gd": "6bb671059c3b597f43056f332fa4e33eee77a8a472819ce7faf0a45b0bf9d7a9",
+    "flotra-campaign/prototype/growth_v2_sim.gd": "fb888e047c279ee5a12b408f949b46e0662094ca89c589a4c2131dd256bd0bee",
+    "flotra-campaign/prototype/growth_view.gd": "3dbeb9f61d4a8a2806827a82db847981513f61dc9429946b83c05aa1b9e022f0",
+    "flotra-campaign/prototype/jobs_hud.gd": "11655fa895213f11f787f0a7c6dfe987cc98fb4b501cacb3679a6c912f4bd60c",
+    "flotra-campaign/prototype/jobs_sim.gd": "88e1c6ca1e851f5cc328cba1e644690be24c1a89421c80d388543a34b24324be",
+    "flotra-campaign/prototype/jobs_view.gd": "e455fa1a43c13374700fd78bf74ee0b5c6ecd393eb615dde92b11e0361fc5a9c",
+    "flotra-campaign/prototype/layout_hud.gd": "ba8a670a23b1ff19e5907c9358d3ee721717061371f787f5edcd5166682d24be",
+    "flotra-campaign/prototype/layout_view.gd": "e3f18ccae3ccfdcce659a3365a7d5b825b5df59a3889a0422778a405fa4ae625",
+    "flotra-campaign/prototype/release_hud.gd": "3eabbffdbdf5ccb055737a6593171a6dbdfefe823aca352b60eb9a14a4afb860",
+    "flotra-campaign/prototype/release_main.gd": "80d578e090188bd482d2788013b547d280e83e9be5d03e926df88bc39ad2445a",
+    "flotra-campaign/prototype/release_save.gd": "ea5ddcbb94016daef69bc0a56c3b5bf76784c27814de38dcb11401adfa380b7f",
+    "flotra-campaign/prototype/release_sim.gd": "7dcfef204d0e1a26f0a088bd6c0aeed764ca0ee46212761b3e7988985e2ad682",
+    "flotra-campaign/prototype/release_view.gd": "a8aeac2a0ca356928ba8f871cbb7ca2555d4588b273c3a7478b92af81a84d089"
+  }
+}

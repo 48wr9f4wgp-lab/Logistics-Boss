@@ -1,0 +1,262 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+[   0% ] [90m[1mfirst_scan_filesystem[22m | Started Project initialization (5 steps)[39m[0m
+[   0% ] [90m[1mfirst_scan_filesystem[22m | Scanning file structure...[39m[0m
+[  16% ] [90m[1mfirst_scan_filesystem[22m | Loading global class names...[39m[0m
+[  33% ] [90m[1mfirst_scan_filesystem[22m | Verifying GDExtensions...[39m[0m
+[  50% ] [90m[1mfirst_scan_filesystem[22m | Creating autoload scripts...[39m[0m
+[  66% ] [90m[1mfirst_scan_filesystem[22m | Initializing plugins...[39m[0m
+[  83% ] [90m[1mfirst_scan_filesystem[22m | Starting file scan...[39m[0m
+[92m[ DONE ][39m [1mfirst_scan_filesystem[22m
+[0m
+[   0% ] [90m[1mloading_editor_layout[22m | Started Loading editor (5 steps)[39m[0m
+[   0% ] [90m[1mloading_editor_layout[22m | Loading editor layout...[39m[0m
+[  16% ] [90m[1mloading_editor_layout[22m | Loading docks...[39m[0m
+[92m[ DONE ][39m [1mloading_editor_layout[22m
+[0m
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+=== domain_campaign ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":262,"failures":[],"measurements":[{"fleet":3,"layout":"compact","times":{"final_dispatch":637.449999999968,"first_shift":180.950000000007,"packing_rush":515.950000000078,"pallet_wave":239.70000000002,"small_orders":326.80000000004,"storage_peak":389.050000000054},"total_sim_seconds":2289.90000000017},{"fleet":3,"layout":"clear_aisle","times":{"final_dispatch":582.150000000018,"first_shift":137.099999999997,"packing_rush":435.900000000065,"pallet_wave":385.100000000053,"small_orders":298.050000000033,"storage_peak":768.599999999849},"total_sim_seconds":2606.90000000002},{"fleet":3,"layout":"pack_annex","times":{"final_dispatch":606.249999999996,"first_shift":136.999999999997,"packing_rush":446.200000000067,"pallet_wave":381.000000000052,"small_orders":292.500000000032,"storage_peak":807.649999999813},"total_sim_seconds":2670.59999999996},{"fleet":3,"layout":"split","times":{"final_dispatch":747.349999999868,"first_shift":189.400000000009,"packing_rush":643.849999999962,"pallet_wave":265.200000000026,"small_orders":435.350000000065,"storage_peak":441.950000000066},"total_sim_seconds":2723.1},{"fleet":"growing","total_sim_seconds":1715.30000000018,"upgrades":["worker_4","rack_24","packing_2","floor_2","worker_5"],"wallet":870},{"fully_upgraded_storage_peak":{"clear_aisle":390.400000000054,"compact":265.900000000026}}]}
+=== domain_effects ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":55,"effects":{"floor_2":{"bulk_capacity":2,"pack_seconds":2.0,"packing_busy_seconds":46.7999999999995,"peak_rack":18,"rack_capacity":24,"seconds":751.899999999864,"used_extra_bay":false,"workers":5},"full_bulk":{"bulk_capacity":4,"pack_seconds":2.0,"packing_busy_seconds":46.7999999999995,"peak_rack":18,"rack_capacity":24,"seconds":390.400000000054,"used_extra_bay":true,"workers":5},"none":{"bulk_capacity":4,"pack_seconds":2.0,"packing_busy_seconds":140.399999999998,"peak_rack":24,"rack_capacity":24,"seconds":293.150000000032,"used_extra_bay":false,"workers":5},"packing_2":{"bulk_capacity":4,"pack_seconds":3.0,"packing_busy_seconds":212.400000000014,"peak_rack":24,"rack_capacity":24,"seconds":288.350000000031,"used_extra_bay":true,"workers":5},"rack_24":{"bulk_capacity":4,"pack_seconds":2.0,"packing_busy_seconds":140.399999999998,"peak_rack":12,"rack_capacity":12,"seconds":284.85000000003,"used_extra_bay":true,"workers":5},"worker_5":{"bulk_capacity":4,"pack_seconds":2.0,"packing_busy_seconds":140.399999999998,"peak_rack":18,"rack_capacity":24,"seconds":367.950000000049,"used_extra_bay":false,"workers":4}},"failures":[]}
+=== save_store_test ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":18,"failures":[],"suite":"save_store"}
+=== save_size_preflight ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"boundaries":[{"envelope_chars":2666793,"raw_bytes":1999996,"result":{"ok":true,"reason":""},"status":"自動保存済み"},{"envelope_chars":2666797,"raw_bytes":2000000,"result":{"ok":true,"reason":""},"status":"自動保存済み"},{"envelope_chars":2666801,"raw_bytes":2000004,"result":{"ok":false,"reason":"too_large"},"status":"保存データが大きすぎるため保存できません。画面を閉じると未保存の進行が失われます"},{"envelope_chars":2680129,"raw_bytes":2010000,"result":{"ok":false,"reason":"too_large"},"status":"保存データが大きすぎるため保存できません。画面を閉じると未保存の進行が失われます"}],"checks":95,"failures":[],"platform":"native","suite":"save_size_preflight"}
+=== integration_save ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":8,"failures":[],"suite":"scene_save_integration"}
+=== release_hud_smoke ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+RELEASE_HUD_SMOKE 768 checks, 0 failures
+=== release_hud_input ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+RELEASE_HUD_INPUT 1317 checks, 0 failures
+=== review_save_safety ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "len < 4" is true. Returning: ERR_INVALID_DATA
+   at: decode_variant (core/io/marshalls.cpp:191)
+   GDScript backtrace (most recent call first):
+       [0] decode (res://prototype/release_save.gd:33)
+       [1] _init (res://tests/release/review_save_safety.gd:24)
+ERROR: Condition "!p_allow_objects" is true. Returning: ERR_UNAUTHORIZED
+   at: decode_variant (core/io/marshalls.cpp:718)
+   GDScript backtrace (most recent call first):
+       [0] decode (res://prototype/release_save.gd:33)
+       [1] _init (res://tests/release/review_save_safety.gd:29)
+ERROR: Error when trying to decode Variant.
+   at: decode_variant (core/io/marshalls.cpp:860)
+   GDScript backtrace (most recent call first):
+       [0] decode (res://prototype/release_save.gd:33)
+       [1] _init (res://tests/release/review_save_safety.gd:29)
+{"checks":22,"failures":[],"suite":"independent_save_safety"}
+=== review_domain_save ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":38,"failures":[],"suite":"independent_domain_save"}
+=== review_campaign_resume ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":11351,"failures":[],"suite":"independent_campaign_resume","timings":[{"contract":"first_shift","seconds":193.25000000001,"shipped":36,"wallet":280},{"contract":"small_orders","seconds":346.600000000045,"shipped":60,"wallet":540},{"contract":"pallet_wave","seconds":441.750000000066,"shipped":72,"wallet":840},{"contract":"packing_rush","seconds":658.299999999949,"shipped":96,"wallet":1220},{"contract":"storage_peak","seconds":413.90000000006,"shipped":120,"wallet":1670},{"contract":"final_dispatch","seconds":651.349999999955,"shipped":144,"wallet":2270}]}
+=== readability_world ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+READABILITY_WORLD 1359 checks, 0 failures
+=== finish_review_journey ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+AT entry status ready sheet entry running false elapsed 0.0
+AT first at2 status running sheet  running true elapsed 2.0
+AT first at50 status running sheet  running true elapsed 49.9999999999993
+AT before cancelled preview status running sheet editor running false elapsed 49.9999999999993
+AT paused preview cancelled status running sheet editor running false elapsed 49.9999999999993
+AT first result status contract_complete sheet records running true elapsed 180.950000000007
+AT branch choices after first status contract_complete sheet jobs running true elapsed 180.950000000007
+AT bought rack_24 status contract_complete sheet jobs running true elapsed 180.950000000007
+AT layout-preview annex status contract_complete sheet editor running true elapsed 180.950000000007
+AT accepted small_orders status running sheet  running true elapsed 0.0
+AT small orders midrun status running sheet  running true elapsed 134.999999999996
+AT small result status contract_complete sheet records running true elapsed 287.750000000031
+AT locked text after first branch status contract_complete sheet jobs running true elapsed 287.750000000031
+AT bought packing_2 status contract_complete sheet jobs running true elapsed 287.750000000031
+AT layout-preview core status contract_complete sheet editor running true elapsed 287.750000000031
+AT accepted pallet_wave status running sheet  running true elapsed 0.0
+AT bulk backlog status running sheet  running true elapsed 35.0000000000001
+AT pallet result status contract_complete sheet records running true elapsed 239.70000000002
+AT bought worker_4 status contract_complete sheet jobs running true elapsed 239.70000000002
+AT accepted storage_peak status running sheet  running true elapsed 0.0
+AT storage hold status running sheet  running true elapsed 49.9999999999993
+AT storage result status contract_complete sheet records running true elapsed 349.150000000045
+AT bought floor_2 status contract_complete sheet jobs running true elapsed 349.150000000045
+AT layout-preview annex status contract_complete sheet editor running true elapsed 349.150000000045
+AT accepted packing_rush status running sheet  running true elapsed 0.0
+AT packing backlog status running sheet  running true elapsed 79.9999999999976
+AT packing result status contract_complete sheet records running true elapsed 367.950000000049
+AT bought worker_5 status contract_complete sheet jobs running true elapsed 367.950000000049
+AT layout-preview core status contract_complete sheet editor running true elapsed 367.950000000049
+AT accepted final_dispatch status running sheet  running true elapsed 0.0
+AT ending main status campaign_complete sheet  running true elapsed 413.25000000006
+AT ending result status campaign_complete sheet records running true elapsed 413.25000000006
+AT layout-preview annex status campaign_complete sheet editor running true elapsed 413.25000000006
+AT accepted small_orders status running sheet  running true elapsed 0.0
+AT replay result status campaign_complete sheet records running true elapsed 184.450000000008
+FINISH_REVIEW_JOURNEY {"checks":266,"failures":[],"observed_holding_countdown":true,"results":{"final_dispatch":{"attempts":1,"best_medal":"silver","best_time":413.25000000006,"earned":600},"first_shift":{"attempts":1,"best_medal":"silver","best_time":180.950000000007,"earned":180},"packing_rush":{"attempts":1,"best_medal":"silver","best_time":367.950000000049,"earned":380},"pallet_wave":{"attempts":1,"best_medal":"silver","best_time":239.70000000002,"earned":300},"small_orders":{"attempts":2,"best_medal":"gold","best_time":184.450000000008,"earned":260},"storage_peak":{"attempts":1,"best_medal":"silver","best_time":349.150000000045,"earned":450}},"wallet":870}
+=== finish_review_scoring ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"boundaries":[{"actual_tick_sum":144.999999999999,"awarded":"gold","contract":"first_shift","display":"2:25.00","expected":"gold","target":145.0},{"actual_tick_sum":210.000000000014,"awarded":"silver","contract":"first_shift","display":"3:30.00","expected":"silver","target":210.0},{"actual_tick_sum":220.000000000016,"awarded":"gold","contract":"small_orders","display":"3:40.00","expected":"gold","target":220.0},{"actual_tick_sum":320.000000000038,"awarded":"silver","contract":"small_orders","display":"5:20.00","expected":"silver","target":320.0},{"actual_tick_sum":210.000000000014,"awarded":"gold","contract":"pallet_wave","display":"3:30.00","expected":"gold","target":210.0},{"actual_tick_sum":310.000000000036,"awarded":"silver","contract":"pallet_wave","display":"5:10.00","expected":"silver","target":310.0},{"actual_tick_sum":300.000000000034,"awarded":"gold","contract":"packing_rush","display":"5:00.00","expected":"gold","target":300.0},{"actual_tick_sum":430.000000000063,"awarded":"silver","contract":"packing_rush","display":"7:10.00","expected":"silver","target":430.0},{"actual_tick_sum":340.000000000043,"awarded":"gold","contract":"storage_peak","display":"5:40.00","expected":"gold","target":340.0},{"actual_tick_sum":480.000000000075,"awarded":"silver","contract":"storage_peak","display":"8:00.00","expected":"silver","target":480.0},{"actual_tick_sum":360.000000000048,"awarded":"gold","contract":"final_dispatch","display":"6:00.00","expected":"gold","target":360.0},{"actual_tick_sum":510.000000000082,"awarded":"silver","contract":"final_dispatch","display":"8:30.00","expected":"silver","target":510.0}],"checks":63,"failures":[]}
+=== review_phone_scale ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":972,"failures":[],"measurements":[{"css_height":567,"css_width":375,"dpr":1,"label":"375x567 DPR1","logical_height":567.0,"logical_width":375.0,"physical_height":567,"physical_width":375,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":447,"css_width":375,"dpr":1,"label":"375x567 DPR1 shorter height","logical_height":447.0,"logical_width":375.0,"physical_height":447,"physical_width":375,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":567,"css_width":375,"dpr":1,"label":"375x567 DPR1 restored height","logical_height":567.0,"logical_width":375.0,"physical_height":567,"physical_width":375,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":567,"css_width":375,"dpr":2,"label":"375x567 DPR2","logical_height":567.0,"logical_width":375.0,"physical_height":1134,"physical_width":750,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":447,"css_width":375,"dpr":2,"label":"375x567 DPR2 shorter height","logical_height":447.0,"logical_width":375.0,"physical_height":894,"physical_width":750,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":567,"css_width":375,"dpr":2,"label":"375x567 DPR2 restored height","logical_height":567.0,"logical_width":375.0,"physical_height":1134,"physical_width":750,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":567,"css_width":375,"dpr":3,"label":"375x567 DPR3","logical_height":567.0,"logical_width":375.0,"physical_height":1701,"physical_width":1125,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":447,"css_width":375,"dpr":3,"label":"375x567 DPR3 shorter height","logical_height":447.0,"logical_width":375.0,"physical_height":1341,"physical_width":1125,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":567,"css_width":375,"dpr":3,"label":"375x567 DPR3 restored height","logical_height":567.0,"logical_width":375.0,"physical_height":1701,"physical_width":1125,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":667,"css_width":375,"dpr":1,"label":"375x667 DPR1","logical_height":667.0,"logical_width":375.0,"physical_height":667,"physical_width":375,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":547,"css_width":375,"dpr":1,"label":"375x667 DPR1 shorter height","logical_height":547.0,"logical_width":375.0,"physical_height":547,"physical_width":375,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":667,"css_width":375,"dpr":1,"label":"375x667 DPR1 restored height","logical_height":667.0,"logical_width":375.0,"physical_height":667,"physical_width":375,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":667,"css_width":375,"dpr":2,"label":"375x667 DPR2","logical_height":667.0,"logical_width":375.0,"physical_height":1334,"physical_width":750,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":547,"css_width":375,"dpr":2,"label":"375x667 DPR2 shorter height","logical_height":547.0,"logical_width":375.0,"physical_height":1094,"physical_width":750,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":667,"css_width":375,"dpr":2,"label":"375x667 DPR2 restored height","logical_height":667.0,"logical_width":375.0,"physical_height":1334,"physical_width":750,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":667,"css_width":375,"dpr":3,"label":"375x667 DPR3","logical_height":667.0,"logical_width":375.0,"physical_height":2001,"physical_width":1125,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":547,"css_width":375,"dpr":3,"label":"375x667 DPR3 shorter height","logical_height":547.0,"logical_width":375.0,"physical_height":1641,"physical_width":1125,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":667,"css_width":375,"dpr":3,"label":"375x667 DPR3 restored height","logical_height":667.0,"logical_width":375.0,"physical_height":2001,"physical_width":1125,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":844,"css_width":390,"dpr":1,"label":"390x844 DPR1","logical_height":844.0,"logical_width":390.0,"physical_height":844,"physical_width":390,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":724,"css_width":390,"dpr":1,"label":"390x844 DPR1 shorter height","logical_height":724.0,"logical_width":390.0,"physical_height":724,"physical_width":390,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":844,"css_width":390,"dpr":1,"label":"390x844 DPR1 restored height","logical_height":844.0,"logical_width":390.0,"physical_height":844,"physical_width":390,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":844,"css_width":390,"dpr":2,"label":"390x844 DPR2","logical_height":844.0,"logical_width":390.0,"physical_height":1688,"physical_width":780,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":724,"css_width":390,"dpr":2,"label":"390x844 DPR2 shorter height","logical_height":724.0,"logical_width":390.0,"physical_height":1448,"physical_width":780,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":844,"css_width":390,"dpr":2,"label":"390x844 DPR2 restored height","logical_height":844.0,"logical_width":390.0,"physical_height":1688,"physical_width":780,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":844,"css_width":390,"dpr":3,"label":"390x844 DPR3","logical_height":844.0,"logical_width":390.0,"physical_height":2532,"physical_width":1170,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":724,"css_width":390,"dpr":3,"label":"390x844 DPR3 shorter height","logical_height":724.0,"logical_width":390.0,"physical_height":2172,"physical_width":1170,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":844,"css_width":390,"dpr":3,"label":"390x844 DPR3 restored height","logical_height":844.0,"logical_width":390.0,"physical_height":2532,"physical_width":1170,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":932,"css_width":430,"dpr":1,"label":"430x932 DPR1","logical_height":932.0,"logical_width":430.0,"physical_height":932,"physical_width":430,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":812,"css_width":430,"dpr":1,"label":"430x932 DPR1 shorter height","logical_height":812.0,"logical_width":430.0,"physical_height":812,"physical_width":430,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":932,"css_width":430,"dpr":1,"label":"430x932 DPR1 restored height","logical_height":932.0,"logical_width":430.0,"physical_height":932,"physical_width":430,"primary_css_font":18,"primary_css_height":56.0,"scale_x":1.0,"scale_y":1.0},{"css_height":932,"css_width":430,"dpr":2,"label":"430x932 DPR2","logical_height":932.0,"logical_width":430.0,"physical_height":1864,"physical_width":860,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":812,"css_width":430,"dpr":2,"label":"430x932 DPR2 shorter height","logical_height":812.0,"logical_width":430.0,"physical_height":1624,"physical_width":860,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":932,"css_width":430,"dpr":2,"label":"430x932 DPR2 restored height","logical_height":932.0,"logical_width":430.0,"physical_height":1864,"physical_width":860,"primary_css_font":18,"primary_css_height":56.0,"scale_x":2.0,"scale_y":2.0},{"css_height":932,"css_width":430,"dpr":3,"label":"430x932 DPR3","logical_height":932.0,"logical_width":430.0,"physical_height":2796,"physical_width":1290,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":812,"css_width":430,"dpr":3,"label":"430x932 DPR3 shorter height","logical_height":812.0,"logical_width":430.0,"physical_height":2436,"physical_width":1290,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0},{"css_height":932,"css_width":430,"dpr":3,"label":"430x932 DPR3 restored height","logical_height":932.0,"logical_width":430.0,"physical_height":2796,"physical_width":1290,"primary_css_font":18,"primary_css_height":56.0,"scale_x":3.0,"scale_y":3.0}],"scope":"Godot headless DPR-equivalent window geometry and touch, not browser rendering","suite":"review_phone_scale"}
+=== phone_hud_readability ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PHONE_HUD_READABILITY 6021 checks, 0 failures
+=== hold_across_refresh ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+HOLD_ACROSS_REFRESH 115 checks, 0 failures
+=== growth_balance ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":513,"failures":[],"measurements":[{"layout":"compact","starter_milestones":[{"first_ship":14.0000000000001,"peak_bays":1,"robot_work":false,"seconds":39.95,"units":12,"wings_used":[]},{"first_ship":14.0000000000001,"peak_bays":1,"robot_work":false,"seconds":78.0,"units":24,"wings_used":[]},{"first_ship":23.0000000000002,"peak_bays":2,"robot_work":false,"seconds":87.8,"units":36,"wings_used":[]},{"first_ship":13.5000000000001,"peak_bays":3,"robot_work":false,"seconds":130.05,"units":48,"wings_used":[]},{"first_ship":20.0000000000001,"peak_bays":2,"robot_work":false,"seconds":156.6,"units":60,"wings_used":[]},{"first_ship":20.0000000000001,"peak_bays":2,"robot_work":false,"seconds":168.45,"units":72,"wings_used":[]}],"total_sim_seconds":660.85},{"layout":"clear_aisle","starter_milestones":[{"first_ship":17.0000000000001,"peak_bays":1,"robot_work":false,"seconds":34.2,"units":12,"wings_used":[]},{"first_ship":15.5000000000001,"peak_bays":1,"robot_work":false,"seconds":72.55,"units":24,"wings_used":[]},{"first_ship":16.5000000000001,"peak_bays":2,"robot_work":false,"seconds":81.55,"units":36,"wings_used":[]},{"first_ship":15.0000000000001,"peak_bays":2,"robot_work":false,"seconds":116.0,"units":48,"wings_used":[]},{"first_ship":16.0000000000001,"peak_bays":2,"robot_work":false,"seconds":137.2,"units":60,"wings_used":[]},{"first_ship":16.0000000000001,"peak_bays":2,"robot_work":false,"seconds":177.55,"units":72,"wings_used":[]}],"total_sim_seconds":619.05},{"layout":"pack_annex","starter_milestones":[{"first_ship":17.0000000000001,"peak_bays":1,"robot_work":false,"seconds":32.25,"units":12,"wings_used":[]},{"first_ship":15.5000000000001,"peak_bays":1,"robot_work":false,"seconds":74.3,"units":24,"wings_used":[]},{"first_ship":16.5000000000001,"peak_bays":2,"robot_work":false,"seconds":77.95,"units":36,"wings_used":[]},{"first_ship":15.0000000000001,"peak_bays":2,"robot_work":false,"seconds":116.25,"units":48,"wings_used":[]},{"first_ship":16.0000000000001,"peak_bays":2,"robot_work":false,"seconds":148.35,"units":60,"wings_used":[]},{"first_ship":16.0000000000001,"peak_bays":2,"robot_work":false,"seconds":183.15,"units":72,"wings_used":[]}],"total_sim_seconds":632.25},{"layout":"split","starter_milestones":[{"first_ship":16.5000000000001,"peak_bays":1,"robot_work":false,"seconds":47.85,"units":12,"wings_used":[]},{"first_ship":16.5000000000001,"peak_bays":1,"robot_work":false,"seconds":94.05,"units":24,"wings_used":[]},{"first_ship":25.5000000000002,"peak_bays":2,"robot_work":false,"seconds":111.0,"units":36,"wings_used":[]},{"first_ship":16.0000000000001,"peak_bays":4,"robot_work":false,"seconds":132.2,"units":48,"wings_used":[]},{"first_ship":23.5000000000002,"peak_bays":3,"robot_work":false,"seconds":162.75,"units":60,"wings_used":[]},{"first_ship":23.5000000000002,"peak_bays":2,"robot_work":false,"seconds":217.35,"units":72,"wings_used":[]}],"total_sim_seconds":765.2},{"minimum_hub_layout":"compact","stats":{"first_ship":16.5000000000001,"peak_bays":23,"robot_work":true,"seconds":412.15,"units":288,"wings_used":["W1","W2","W3"]}},{"minimum_hub_layout":"clear_aisle","stats":{"first_ship":15.5000000000001,"peak_bays":26,"robot_work":true,"seconds":404.95,"units":288,"wings_used":["W1","W2","W3"]}},{"minimum_hub_layout":"pack_annex","stats":{"first_ship":17.0000000000001,"peak_bays":26,"robot_work":true,"seconds":404.8,"units":288,"wings_used":["W1","W2","W3"]}},{"minimum_hub_layout":"split","stats":{"first_ship":16.0000000000001,"peak_bays":22,"robot_work":true,"seconds":431.4,"units":288,"wings_used":["W1","W2"]}},{"mature_hub":{"first_ship":17.5000000000001,"peak_bays":38,"robot_work":true,"seconds":279.05,"units":288,"wings_used":["W1","W2","W3","W4"]}},{"four_robot_parcels":{"first_ship":12.0,"peak_bays":1,"robot_work":true,"seconds":58.5,"units":36,"wings_used":[]},"three_wing_hub":{"first_ship":17.5000000000001,"peak_bays":30,"robot_work":true,"seconds":297.75,"units":288,"wings_used":["W1","W2","W3"]},"two_robot_parcels":{"first_ship":14.5000000000001,"peak_bays":1,"robot_work":true,"seconds":64.65,"units":36,"wings_used":[]},"zero_robot_parcels":{"first_ship":15.0000000000001,"peak_bays":1,"robot_work":false,"seconds":86.15,"units":36,"wings_used":[]}},{"hub":{"first_ship":15.5000000000001,"peak_bays":34,"robot_work":true,"seconds":287.75,"units":288,"wings_used":["W1","W2","W3","W4"]},"mature_layout":"clear_aisle"},{"hub":{"first_ship":15.5000000000001,"peak_bays":34,"robot_work":true,"seconds":287.15,"units":288,"wings_used":["W1","W2","W3","W4"]},"mature_layout":"pack_annex"},{"hub":{"first_ship":17.5000000000001,"peak_bays":38,"robot_work":true,"seconds":276.4,"units":288,"wings_used":["W1","W2","W3","W4"]},"mature_layout":"split"}],"suite":"growth_balance"}
+=== growth_operations ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":1076,"failures":[],"measurements":[{"layout":"compact","mode":"balanced","pallets":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":6,"seconds":142.7},"parcels":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":12,"seconds":140.35}},{"layout":"clear_aisle","mode":"balanced","pallets":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":6,"seconds":191.3},"parcels":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":12,"seconds":118.6}},{"layout":"pack_annex","mode":"balanced","pallets":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":6,"seconds":192.1},"parcels":{"exclusive_cart":false,"max_load":1,"peak_pack":2,"peak_rack":12,"seconds":124.5}},{"layout":"split","mode":"balanced","pallets":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":6,"seconds":149.1},"parcels":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":12,"seconds":181.4}},{"layout":"compact","mode":"parcel","pallets":{"exclusive_cart":true,"max_load":3,"peak_pack":2,"peak_rack":9,"seconds":113.55},"parcels":{"exclusive_cart":true,"max_load":3,"peak_pack":4,"peak_rack":12,"seconds":99.55}},{"layout":"clear_aisle","mode":"parcel","pallets":{"exclusive_cart":true,"max_load":3,"peak_pack":3,"peak_rack":9,"seconds":181.2},"parcels":{"exclusive_cart":true,"max_load":3,"peak_pack":4,"peak_rack":12,"seconds":86.55}},{"layout":"pack_annex","mode":"parcel","pallets":{"exclusive_cart":true,"max_load":3,"peak_pack":3,"peak_rack":9,"seconds":180.8},"parcels":{"exclusive_cart":true,"max_load":3,"peak_pack":4,"peak_rack":12,"seconds":98.05}},{"layout":"split","mode":"parcel","pallets":{"exclusive_cart":true,"max_load":3,"peak_pack":2,"peak_rack":9,"seconds":120.7},"parcels":{"exclusive_cart":true,"max_load":3,"peak_pack":4,"peak_rack":12,"seconds":106.8}},{"layout":"compact","mode":"pallet","pallets":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":6,"seconds":134.35},"parcels":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":12,"seconds":137.45}},{"layout":"clear_aisle","mode":"pallet","pallets":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":6,"seconds":183.8},"parcels":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":12,"seconds":118.6}},{"layout":"pack_annex","mode":"pallet","pallets":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":6,"seconds":183.1},"parcels":{"exclusive_cart":false,"max_load":1,"peak_pack":2,"peak_rack":12,"seconds":124.5}},{"layout":"split","mode":"pallet","pallets":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":7,"seconds":146.75},"parcels":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":12,"seconds":177.15}},{"expanded_storage":{"balanced":{"exclusive_cart":false,"max_load":1,"peak_pack":2,"peak_rack":12,"seconds":83.75},"pallet":{"exclusive_cart":false,"max_load":1,"peak_pack":2,"peak_rack":6,"seconds":67.9},"parcel":{"exclusive_cart":true,"max_load":3,"peak_pack":3,"peak_rack":12,"seconds":76.5}},"synergy":{"auto_pack_cart":{"exclusive_cart":true,"max_load":3,"peak_pack":3,"peak_rack":12,"seconds":82.2},"balanced":{"exclusive_cart":false,"max_load":1,"peak_pack":1,"peak_rack":12,"seconds":140.35},"cart":{"exclusive_cart":true,"max_load":3,"peak_pack":4,"peak_rack":12,"seconds":99.55},"rack_cart":{"exclusive_cart":true,"max_load":3,"peak_pack":4,"peak_rack":24,"seconds":91.95}}}],"suite":"growth_operations"}
+=== growth_operations_endurance ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":4967,"failures":[],"final_cargo":72,"final_manifests":12,"measurements":[{"contract":"route_pick","cpu_ms":133.398,"layout":"compact","max_cart":1,"mode":"balanced","peak_pack":2,"peak_rack":30,"seconds":58.5},{"contract":"route_pick","cpu_ms":122.423,"layout":"compact","max_cart":3,"mode":"parcel","peak_pack":2,"peak_rack":30,"seconds":57.45},{"contract":"route_pick","cpu_ms":141.016,"layout":"compact","max_cart":1,"mode":"pallet","peak_pack":2,"peak_rack":30,"seconds":58.5},{"contract":"route_pick","cpu_ms":146.277,"layout":"clear_aisle","max_cart":1,"mode":"balanced","peak_pack":2,"peak_rack":30,"seconds":51.2},{"contract":"route_pick","cpu_ms":204.046,"layout":"clear_aisle","max_cart":3,"mode":"parcel","peak_pack":2,"peak_rack":30,"seconds":51.55},{"contract":"route_pick","cpu_ms":116.759,"layout":"clear_aisle","max_cart":1,"mode":"pallet","peak_pack":2,"peak_rack":30,"seconds":51.2},{"contract":"route_pick","cpu_ms":107.469,"layout":"pack_annex","max_cart":1,"mode":"balanced","peak_pack":1,"peak_rack":30,"seconds":49.65},{"contract":"route_pick","cpu_ms":139.345,"layout":"pack_annex","max_cart":3,"mode":"parcel","peak_pack":2,"peak_rack":30,"seconds":50.25},{"contract":"route_pick","cpu_ms":152.963,"layout":"pack_annex","max_cart":1,"mode":"pallet","peak_pack":1,"peak_rack":30,"seconds":49.65},{"contract":"route_pick","cpu_ms":203.253,"layout":"split","max_cart":1,"mode":"balanced","peak_pack":1,"peak_rack":30,"seconds":64.65},{"contract":"route_pick","cpu_ms":177.214,"layout":"split","max_cart":3,"mode":"parcel","peak_pack":2,"peak_rack":30,"seconds":68.0},{"contract":"route_pick","cpu_ms":192.972,"layout":"split","max_cart":1,"mode":"pallet","peak_pack":1,"peak_rack":30,"seconds":64.65},{"contract":"route_hub","cpu_ms":993.564,"layout":"compact","max_cart":1,"mode":"balanced","peak_pack":1,"peak_rack":13,"seconds":279.05},{"contract":"route_hub","cpu_ms":1102.387,"layout":"compact","max_cart":3,"mode":"parcel","peak_pack":2,"peak_rack":33,"seconds":271.9},{"contract":"route_hub","cpu_ms":1090.421,"layout":"compact","max_cart":1,"mode":"pallet","peak_pack":1,"peak_rack":34,"seconds":279.3},{"contract":"route_pick","cpu_ms":126.503,"layout":"compact","max_cart":1,"mode":"balanced","peak_pack":2,"peak_rack":30,"seconds":58.5},{"contract":"route_bulk","cpu_ms":172.888,"layout":"split","max_cart":1,"mode":"pallet","peak_pack":1,"peak_rack":12,"seconds":51.5}],"results":9,"rounds_after_maturity":51,"suite":"growth_operations_endurance"}
+=== growth_save_regression ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":173,"failures":[],"suite":"growth_save_regression"}
+=== growth_hud_smoke ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+VIEWPORT_OK (390, 844)
+VIEWPORT_OK (360, 740)
+VIEWPORT_OK (320, 568)
+VIEWPORT_OK (844, 390)
+VIEWPORT_OK (568, 320)
+GROWTH_HUD_SMOKE PASS errors=[]
+=== upgrade_visibility ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+UPGRADE_VISIBILITY {"checks":274,"failures":[]}
+=== visual_quality ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":2700,"failures":[],"msaa_3d":1,"reloaded":{"loaded_pallets":28,"represented_units":168},"samples":[{"loaded_pallets":28,"represented_units":168},{"loaded_pallets":28,"represented_units":168},{"loaded_pallets":29,"represented_units":174},{"loaded_pallets":30,"represented_units":180},{"loaded_pallets":37,"represented_units":222},{"loaded_pallets":25,"represented_units":150},{"loaded_pallets":0,"represented_units":0},{"loaded_pallets":0,"represented_units":0},{"loaded_pallets":0,"represented_units":0}],"suite":"visual_quality"}
+=== visual_material_roles ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":8436,"failures":[],"states_exercised":{"active":true,"empty":true,"idle":true,"occupied":true,"waiting":true},"suite":"visual_material_roles"}
+=== growth_view_smoke ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"batch_gpu_readback":false,"checks":395697,"failures":[],"max_native_rendered_primitives":0,"max_submitted_triangles":11040,"scope":"Geometry/cache, triangle budget and batch parity; actual GPU buffer readback only when a native rendering display is used","suite":"growth_view_smoke"}
+=== growth_main_smoke ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+GROWTH_MAIN_SMOKE passed default speed, 4x, imported-domain Resume pause preservation and covered-world rendering
+=== growth_controls_comfort ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+GROWTH_CONTROLS_COMFORT PASS []
+=== navigation_space_input ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+NAVIGATION_SPACE_INPUT {"checks":7931,"failures":[],"geometry":[{"bottom_height":72.0,"header_height":60.0,"phase":"initial","viewport":"[P: (0.0, 104.0), S: (1000.0, 532.0)]","window":"(1000, 720)","world_fraction":0.738888888888889},{"bottom_height":72.0,"header_height":60.0,"phase":"after_modals","viewport":"[P: (0.0, 104.0), S: (1000.0, 532.0)]","window":"(1000, 720)","world_fraction":0.738888888888889},{"bottom_height":72.0,"header_height":60.0,"phase":"initial","viewport":"[P: (0.0, 104.0), S: (1280.0, 532.0)]","window":"(1280, 720)","world_fraction":0.738888888888889},{"bottom_height":72.0,"header_height":60.0,"phase":"after_modals","viewport":"[P: (0.0, 104.0), S: (1280.0, 532.0)]","window":"(1280, 720)","world_fraction":0.738888888888889},{"bottom_height":72.0,"header_height":60.0,"phase":"initial","viewport":"[P: (0.0, 104.0), S: (1920.0, 892.0)]","window":"(1920, 1080)","world_fraction":0.825925925925926},{"bottom_height":72.0,"header_height":60.0,"phase":"after_modals","viewport":"[P: (0.0, 104.0), S: (1920.0, 892.0)]","window":"(1920, 1080)","world_fraction":0.825925925925926},{"bottom_height":136.0,"header_height":76.0,"phase":"initial","viewport":"[P: (0.0, 140.0), S: (375.0, 307.0)]","window":"(375, 667)","world_fraction":0.460269865067466},{"bottom_height":136.0,"header_height":76.0,"phase":"after_modals","viewport":"[P: (0.0, 140.0), S: (375.0, 307.0)]","window":"(375, 667)","world_fraction":0.460269865067466},{"bottom_height":136.0,"header_height":76.0,"phase":"initial","viewport":"[P: (0.0, 140.0), S: (390.0, 484.0)]","window":"(390, 844)","world_fraction":0.57345971563981},{"bottom_height":136.0,"header_height":76.0,"phase":"after_modals","viewport":"[P: (0.0, 140.0), S: (390.0, 484.0)]","window":"(390, 844)","world_fraction":0.57345971563981},{"bottom_height":72.0,"header_height":60.0,"phase":"completed","viewport":"[P: (0.0, 104.0), S: (1000.0, 532.0)]","window":"(1000, 720)","world_fraction":0.738888888888889},{"bottom_height":72.0,"header_height":60.0,"phase":"completed","viewport":"[P: (0.0, 104.0), S: (1280.0, 532.0)]","window":"(1280, 720)","world_fraction":0.738888888888889},{"bottom_height":72.0,"header_height":60.0,"phase":"completed","viewport":"[P: (0.0, 104.0), S: (1920.0, 892.0)]","window":"(1920, 1080)","world_fraction":0.825925925925926},{"bottom_height":136.0,"header_height":76.0,"phase":"completed","viewport":"[P: (0.0, 140.0), S: (375.0, 307.0)]","window":"(375, 667)","world_fraction":0.460269865067466},{"bottom_height":136.0,"header_height":76.0,"phase":"completed","viewport":"[P: (0.0, 140.0), S: (390.0, 484.0)]","window":"(390, 844)","world_fraction":0.57345971563981},{"bottom_height":72.0,"header_height":60.0,"phase":"running","viewport":"[P: (0.0, 104.0), S: (1000.0, 532.0)]","window":"(1000, 720)","world_fraction":0.738888888888889},{"bottom_height":72.0,"header_height":60.0,"phase":"running","viewport":"[P: (0.0, 104.0), S: (1280.0, 532.0)]","window":"(1280, 720)","world_fraction":0.738888888888889},{"bottom_height":72.0,"header_height":60.0,"phase":"running","viewport":"[P: (0.0, 104.0), S: (1920.0, 892.0)]","window":"(1920, 1080)","world_fraction":0.825925925925926},{"bottom_height":136.0,"header_height":76.0,"phase":"running","viewport":"[P: (0.0, 140.0), S: (375.0, 307.0)]","window":"(375, 667)","world_fraction":0.460269865067466},{"bottom_height":136.0,"header_height":76.0,"phase":"running","viewport":"[P: (0.0, 140.0), S: (390.0, 484.0)]","window":"(390, 844)","world_fraction":0.57345971563981},{"bottom_height":72.0,"header_height":60.0,"phase":"paused","viewport":"[P: (0.0, 104.0), S: (1000.0, 532.0)]","window":"(1000, 720)","world_fraction":0.738888888888889},{"bottom_height":72.0,"header_height":60.0,"phase":"paused","viewport":"[P: (0.0, 104.0), S: (1280.0, 532.0)]","window":"(1280, 720)","world_fraction":0.738888888888889},{"bottom_height":72.0,"header_height":60.0,"phase":"paused","viewport":"[P: (0.0, 104.0), S: (1920.0, 892.0)]","window":"(1920, 1080)","world_fraction":0.825925925925926},{"bottom_height":136.0,"header_height":76.0,"phase":"paused","viewport":"[P: (0.0, 140.0), S: (375.0, 307.0)]","window":"(375, 667)","world_fraction":0.460269865067466},{"bottom_height":136.0,"header_height":76.0,"phase":"paused","viewport":"[P: (0.0, 140.0), S: (390.0, 484.0)]","window":"(390, 844)","world_fraction":0.57345971563981}],"scope":"Focused native/headless UI geometry and real engine input; no browser, rendered appearance, performance or physical-device claim."}
+=== growth_copy_regression ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+GROWTH_COPY_REGRESSION 27197 checks, 0 failures
+=== experience_scene_regression ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":18,"failures":[],"suite":"experience_scene_regression"}
+=== experience_player_input_journey ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+JOURNEY_PASS First-open, scroll cancellation and held work acceptance
+JOURNEY_PASS Actual speed, auto-pause, reduced-motion, pause and resume controls
+JOURNEY_PASS Focus interruption, free layout queue and safe cancellation
+JOURNEY_PASS Paid completion, earned expansion, next milestone and paid replay
+JOURNEY_PASS All free work modes selected through visible real controls
+JOURNEY_PASS 18px text, 56px actions, full reachable sheets at 375/390/430 and 568x320
+JOURNEY_PASS Exact isolated native reload, explicit resume and reachable save warning
+JOURNEY_PASS Terminal save protection shows the full reason and blocks player actions
+{"checks":2839,"failures":[],"milestones":["First-open, scroll cancellation and held work acceptance","Actual speed, auto-pause, reduced-motion, pause and resume controls","Focus interruption, free layout queue and safe cancellation","Paid completion, earned expansion, next milestone and paid replay","All free work modes selected through visible real controls","18px text, 56px actions, full reachable sheets at 375/390/430 and 568x320","Exact isolated native reload, explicit resume and reachable save warning","Terminal save protection shows the full reason and blocks player actions"],"scope":"Native Godot 4.7.2 GUI touch/mouse dispatch and geometry; accelerated domain time; not physical iPhone/Safari or rendered pixels","suite":"experience_player_input_journey"}
+=== experience_interruption_probe ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"failures":[],"suite":"experience_interruption_probe"}
+=== experience_slow_frame_guard ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":14,"failures":[],"suite":"experience_slow_frame_guard"}
+=== experience_foreground_clock ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"actual_engine_probe":{"credited_wall_seconds":0.822653,"samples":[{"delta":0.133333333333333,"wall":0.205306},{"delta":0.133333333333333,"wall":0.205643},{"delta":0.133333333333333,"wall":0.204991},{"delta":0.137248,"wall":0.206713}],"simulation_seconds":1.65,"wall_seconds":0.822653},"checks":120,"failures":[],"suite":"experience_foreground_clock"}
+=== camera_interaction_review ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":5175,"failures":[],"minimumVisibleFloorFraction":0.0952877985884908,"scope":"Native root input dispatch and geometry; no physical-device or browser screenshot claim","suite":"camera_interaction_review"}
+=== visual_growth_only ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+VISUAL_GROWTH_ONLY {"checks":356,"failures":[],"routeEvidence":{"actualLoadedWorkerSample":{"cargoCount":6,"position":[3.59999990463257,0.0,-6.09999990463257],"radius":0.25,"renderedPosition":[3.59999990463257,0.0,-6.09999990463257],"task":"bulk_store","time":8.19999999999998,"worker":1},"correctedBaseIntersections":0,"oldBaseIntersections":3105,"sampledWorkers":11805}}
+=== canceled_touch_input ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":48,"failures":[],"suite":"canceled_touch_input"}
+=== preparation_player_flow ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":766,"failures":[],"scope":"Godot native GUI input and geometry; real cargo with accelerated time; no browser or physical iPhone claim","suite":"preparation_player_flow"}
+=== dispatch_domain ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+DISPATCH_DOMAIN {"covered":["Existing contract/equipment definitions unchanged; initial and locked states retain six","Real deliveries earn growth4, prerequisite equipment and purchase funds","Single purchase debit, duplicate/missing prerequisite rejection and reversible free selection","One new120-parcel run: real WIP>6, one reward, running lock, completed-state return to six"],"engine":"4.7.2-stable (official)","failures":[],"peak_wip":12}
+=== dispatch_scene_safety ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+DISPATCH_SCENE_SAFETY {"failures":[],"scope":"Blocked-load mutation/clock boundary plus no-save action binding"}
+=== dispatch_autosave_clock ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":250,"failures":[],"scope":"Real main/scene; deterministic foreground clock; real codec with memory writes; no wall-clock durability claim","suite":"dispatch_autosave_clock"}
+=== dispatch_save_migration ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":216,"failures":[],"profile":"explicit_disposable_only","suite":"dispatch_save_migration"}
+=== dispatch_save_phases ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+{"checks":105,"failures":[],"suite":"dispatch_save_phases"}
+=== dispatch_hud_flow ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+DISPATCH_HUD_FLOW {"checks":471,"failures":[],"scope":"Actual scene purchase/free6-12/paused lock, inherited touch guards and native375/390 readability. No completion/performance/device claims."}
+=== dispatch_comparison_copy ===
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+DISPATCH_COMPARISON_COPY {"checks":10,"failures":[]}
+flotra-campaign/test.sh: line 35: unexpected EOF while looking for matching `"'

@@ -1,0 +1,200 @@
+A1 0 passed {
+  uiOnly: {
+    rafMedianMs: 166.70000000000073,
+    rafP95Ms: 216.59999999999854,
+    processMedianMs: 12.4,
+    processP95Ms: 20.7,
+    nodesMin: 1280,
+    nodesMax: 1280,
+    drawCallsMax: 78,
+    rafSamples: 33,
+    telemetrySamples: 33,
+    distinctMetricValues: 6
+  },
+  idle: {
+    rafMedianMs: 216.59999999999854,
+    rafP95Ms: 250,
+    processMedianMs: 15.8,
+    processP95Ms: 22,
+    nodesMin: 1272,
+    nodesMax: 1272,
+    drawCallsMax: 74,
+    rafSamples: 25,
+    telemetrySamples: 25,
+    distinctMetricValues: 6
+  },
+  active: {
+    rafMedianMs: 233.3000000000029,
+    rafP95Ms: 250.10000000000582,
+    processMedianMs: 36.2,
+    processP95Ms: 48.6,
+    nodesMin: 1272,
+    nodesMax: 1364,
+    drawCallsMax: 88,
+    rafSamples: 48,
+    telemetrySamples: 48,
+    distinctMetricValues: 24
+  },
+  idleAfter: {
+    rafMedianMs: 166.59999999999854,
+    rafP95Ms: 183.29999999999563,
+    processMedianMs: 14.3,
+    processP95Ms: 23.1,
+    nodesMin: 1380,
+    nodesMax: 1380,
+    drawCallsMax: 77,
+    rafSamples: 34,
+    telemetrySamples: 34,
+    distinctMetricValues: 6
+  }
+}
+B1 0 passed {
+  uiOnly: {
+    rafMedianMs: 150,
+    rafP95Ms: 183.40000000000146,
+    processMedianMs: 11.3,
+    processP95Ms: 20.4,
+    nodesMin: 1295,
+    nodesMax: 1295,
+    drawCallsMax: 78,
+    rafSamples: 38,
+    telemetrySamples: 38,
+    distinctMetricValues: 6
+  },
+  idle: {
+    rafMedianMs: 200.09999999999854,
+    rafP95Ms: 233.3000000000011,
+    processMedianMs: 11.8,
+    processP95Ms: 14.4,
+    nodesMin: 1287,
+    nodesMax: 1287,
+    drawCallsMax: 74,
+    rafSamples: 25,
+    telemetrySamples: 25,
+    distinctMetricValues: 5
+  },
+  active: {
+    rafMedianMs: 250,
+    rafP95Ms: 283.3000000000029,
+    processMedianMs: 35.7,
+    processP95Ms: 74.2,
+    nodesMin: 1299,
+    nodesMax: 1379,
+    drawCallsMax: 86,
+    rafSamples: 46,
+    telemetrySamples: 46,
+    distinctMetricValues: 23
+  },
+  idleAfter: {
+    rafMedianMs: 166.59999999999854,
+    rafP95Ms: 183.3000000000029,
+    processMedianMs: 11.6,
+    processP95Ms: 15,
+    nodesMin: 1395,
+    nodesMax: 1395,
+    drawCallsMax: 77,
+    rafSamples: 34,
+    telemetrySamples: 34,
+    distinctMetricValues: 6
+  }
+}
+B2 0 passed {
+  uiOnly: {
+    rafMedianMs: 149.90000000000146,
+    rafP95Ms: 166.79999999999927,
+    processMedianMs: 12.3,
+    processP95Ms: 17.6,
+    nodesMin: 1295,
+    nodesMax: 1295,
+    drawCallsMax: 78,
+    rafSamples: 38,
+    telemetrySamples: 38,
+    distinctMetricValues: 6
+  },
+  idle: {
+    rafMedianMs: 233.40000000000146,
+    rafP95Ms: 283.39999999999964,
+    processMedianMs: 12.6,
+    processP95Ms: 14.9,
+    nodesMin: 1287,
+    nodesMax: 1287,
+    drawCallsMax: 74,
+    rafSamples: 21,
+    telemetrySamples: 21,
+    distinctMetricValues: 5
+  },
+  active: {
+    rafMedianMs: 233.40000000000146,
+    rafP95Ms: 266.70000000000437,
+    processMedianMs: 39.2,
+    processP95Ms: 50.3,
+    nodesMin: 1287,
+    nodesMax: 1379,
+    drawCallsMax: 86,
+    rafSamples: 47,
+    telemetrySamples: 47,
+    distinctMetricValues: 23
+  },
+  idleAfter: {
+    rafMedianMs: 166.59999999999854,
+    rafP95Ms: 183.40000000000146,
+    processMedianMs: 11.7,
+    processP95Ms: 13.6,
+    nodesMin: 1395,
+    nodesMax: 1395,
+    drawCallsMax: 77,
+    rafSamples: 34,
+    telemetrySamples: 34,
+    distinctMetricValues: 6
+  }
+}
+A2 0 passed {
+  uiOnly: {
+    rafMedianMs: 166.60000000000218,
+    rafP95Ms: 183.40000000000146,
+    processMedianMs: 14.4,
+    processP95Ms: 17.6,
+    nodesMin: 1280,
+    nodesMax: 1280,
+    drawCallsMax: 78,
+    rafSamples: 34,
+    telemetrySamples: 34,
+    distinctMetricValues: 6
+  },
+  idle: {
+    rafMedianMs: 200.10000000000036,
+    rafP95Ms: 233.39999999999964,
+    processMedianMs: 12.5,
+    processP95Ms: 18.8,
+    nodesMin: 1272,
+    nodesMax: 1272,
+    drawCallsMax: 74,
+    rafSamples: 25,
+    telemetrySamples: 25,
+    distinctMetricValues: 6
+  },
+  active: {
+    rafMedianMs: 233.3000000000029,
+    rafP95Ms: 266.6999999999971,
+    processMedianMs: 33.5,
+    processP95Ms: 46.2,
+    nodesMin: 1272,
+    nodesMax: 1364,
+    drawCallsMax: 86,
+    rafSamples: 48,
+    telemetrySamples: 48,
+    distinctMetricValues: 24
+  },
+  idleAfter: {
+    rafMedianMs: 166.60000000000582,
+    rafP95Ms: 183.40000000000146,
+    processMedianMs: 11,
+    processP95Ms: 12.3,
+    nodesMin: 1380,
+    nodesMax: 1380,
+    drawCallsMax: 77,
+    rafSamples: 34,
+    telemetrySamples: 34,
+    distinctMetricValues: 6
+  }
+}

@@ -9,6 +9,7 @@ const HUMAN_CAPSULE_RINGS := 2
 const HUMAN_HEAD_RINGS := 3 # Include the equator, retaining the full head diameter.
 const CoreGeometry = preload("res://prototype/jobs_sim.gd")
 const HIDDEN_BOX_TRANSFORM := Transform3D(Basis(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO), Vector3.ZERO)
+var _line_parcels: Array[Dictionary] = []
 var _box_sources: Array[MeshInstance3D] = []
 var _box_batches: Array[MultiMeshInstance3D] = []
 var _box_batch_states: Array = []
@@ -624,6 +625,7 @@ func _refresh_workers(workers: Array) -> void:
 
 func _refresh_cargo(items: Array) -> void:
     super._refresh_cargo(items)
+    _line_parcels.clear()
     # A stationary six-unit bulk manifest is a real pallet load, not one tiny
     # decorative cube. Each visible carton below corresponds to one actual unit.
     # Carrying/inbound parcels keep their original reserved transport envelope.
@@ -638,6 +640,8 @@ func _refresh_cargo(items: Array) -> void:
         if not _cargo.has(id):
             continue
         var node: Node3D = _cargo[id]
+        if str(item.get("stage", "")) in ["packing_queue", "packing", "packed", "reserved_ship"]:
+            _line_parcels.append({"node": node, "id": int(item.id), "stage": str(item.stage)})
         var bulk := str(item.get("job_kind", item.get("kind", ""))) == "bulk"
         var on_bay := bulk and not str(item.get("bay_id", "")).is_empty() and str(item.get("stage", "")) in ["bulk_storage", "reserved_bulk_ship"]
         var load := node.get_node_or_null("BulkPallet") as Node3D
@@ -711,41 +715,116 @@ func _refresh_visual_auto_pack() -> void:
         slot.add_child(machine)
         # Open central bay preserves sight of the authoritative packing parcels.
         _box(machine,"Plinth",Vector3(2.48,.16,1.96),Vector3(0,.16,0),Color("172f3d"))
-        _box(machine,"WorkDeck",Vector3(2.12,.12,1.30),Vector3(0,.53,0),Color("627b85"))
         for side in [-1,1]:
             _box(machine,"Foot",Vector3(.36,.36,1.8),Vector3(side*1.04,.34,0),Color("e5ece5"))
             _box(machine,"GantryPillar",Vector3(.30,1.66,.42),Vector3(side*.98,1.17,-.56),Color("f2b345"))
-            _box(machine,"DarkInset",Vector3(.32,.87,.05),Vector3(side*.98,1.12,-.40),Color("344853"))
-            _box(machine,"SafetyCap",Vector3(.38,.12,.50),Vector3(side*.98,2.01,-.51),Color("fff1c6"))
         _box(machine,"GantryBridge",Vector3(2.42,.40,.60),Vector3(0,1.95,-.51),Color("f2b345"))
-        _box(machine,"TopCover",Vector3(2.46,.10,.66),Vector3(0,2.20,-.51),Color("e9efe6"))
-        _box(machine,"ControlCabinet",Vector3(.16,.91,1.02),Vector3(1.155,1.06,.22),Color("e5ece5"))
-        _box(machine,"ControlScreen",Vector3(.16,.25,.04),Vector3(1.155,1.30,.75),Color("1e5658"))
+        _box(machine,"ControlCabinet",Vector3(.16,.40,1.02),Vector3(1.155,.34,.22),Color("e5ece5"))
         _box(machine,"StatusStrip",Vector3(1.66,.13,.055),Vector3(0,1.97,-.18),Color("668079"))
-        _box(machine,"PressRail",Vector3(.15,.40,.18),Vector3(0,1.60,-.50),Color("a4b9bd"))
         _box(machine,"SealingHead",Vector3(.78,.25,.53),Vector3(0,1.33,-.26),Color("e9efe6"))
-        for x in [-.62,0,.62]:
-            _box(machine,"FrontTrim",Vector3(.28,.09,.03),Vector3(x,.20,.99),Color("f2b345"))
     (slot.get_node("PackingEquipment") as Node3D).visible = not owned
     var old_tool := slot.get_node_or_null("PackingUpgrade") as Node3D
     if old_tool != null and owned: old_tool.visible = false
     if machine == null: return
     machine.visible = owned
     if not owned: return
+    _refresh_automation_line(machine)
+
+func _refresh_automation_line(machine: Node3D) -> void:
+    # Three connected modules share the purchased packing cell and its existing
+    # footprint. Coordinates below are in the unscaled packing-slot space.
+    var line := machine.get_node_or_null("ConnectedLine") as Node3D
+    if line == null:
+        line = Node3D.new()
+        line.name = "ConnectedLine"
+        line.scale = Vector3(1.0 / .64, 1, 1.0 / .49)
+        machine.add_child(line)
+        _box(line, "Conveyor", Vector3(1.42, .08, .42), Vector3(0, .60, .18), Color("203842"))
+        for i in 3:
+            _box(line, "BeltSlat%d" % i, Vector3(.10, .025, .36), Vector3(-.55 + i * .44, .65, .18), Color("93aaa9"))
+        # A cyan measuring gate, amber sealing bridge and coral articulated
+        # transfer arm remain distinct even without small text or live effects.
+        _box(line, "MeasurePost", Vector3(.07, .55, .08), Vector3(-.66, .92, -.06), TEAL)
+        _box(line, "MeasureBar", Vector3(.34, .07, .08), Vector3(-.53, 1.20, -.06), TEAL)
+        _box(line, "ArmBase", Vector3(.22, .95, .20), Vector3(.61, 1.105, -.24), Color("ed7956"))
+        _box(line, "ArmLink", Vector3(.22, .18, .16), Vector3(.61, 1.65, -.06), Color("ed7956"))
+        _box(line, "ArmWrist", Vector3(.08, .16, .08), Vector3(.5, 1.15, .18), AMBER)
+        _box(line, "Gripper", Vector3(.28, .05, .24), Vector3(.5, 1.055, .18), ROBOT_BODY)
+        _box(line, "ShippingLabel", Vector3(.15, .014, .13), Vector3.ZERO, Color("f4f6ee"))
+        var parts := {}
+        for part in line.get_children(): parts[str(part.name)] = part
+        parts.head = machine.get_node("SealingHead")
+        parts.strip = machine.get_node("StatusStrip")
+        line.set_meta("parts", parts)
+    var parts: Dictionary = line.get_meta("parts")
     var working: bool = not sim.pack_jobs.is_empty()
     var fraction := 0.0
+    var cargo_id := -1
     if working:
-        fraction = clampf(1.0-float(sim.pack_jobs[0].remaining)/sim.pack_seconds,0.0,1.0)
-    # No wall-clock animation: pausing or an empty station leaves this exactly still.
-    var head := machine.get_node("SealingHead") as Node3D
-    head.position = Vector3(0,1.33,-.26)
-    if working and _cargo.has(str(sim.pack_jobs[0].cargo_id)):
-        var parcel: Node3D = _cargo[str(sim.pack_jobs[0].cargo_id)]
-        var actual_position := machine.to_local(parcel.global_position)
-        head.position.x = actual_position.x
-        head.position.z = actual_position.z
-    head.position.y = 1.33 - .31*sin(fraction*PI)
-    machine.set_meta("actual_pack_cargo_id", int(sim.pack_jobs[0].cargo_id) if working else -1)
-    machine.set_meta("actual_pack_fraction",fraction)
-    var strip := machine.get_node("StatusStrip") as MeshInstance3D
+        cargo_id = int(sim.pack_jobs[0].cargo_id)
+        fraction = clampf(1.0 - float(sim.pack_jobs[0].remaining) / sim.pack_seconds, 0.0, 1.0)
+    var transfer := clampf((fraction - .70) / .30, 0.0, 1.0)
+    var point := Vector3(lerpf(-.50, 0, minf(fraction / .35, 1.0)), .82, .18)
+    if fraction >= .70:
+        point.x = lerpf(0, .50, transfer)
+        point.y += .12 * sin(transfer * PI)
+    # Reposition the SAME rendered ledger parcel within its station, never a
+    # decorative duplicate. Queue and ready piles stay on opposite belt ends.
+    var queued := 0
+    var packed := 0
+    for item in _line_parcels:
+        var parcel: Node3D = item.node
+        var stage: String = item.stage
+        if stage == "packing_queue":
+            parcel.global_position = line.to_global(Vector3(-.5, 1.15 + queued * .32, .18))
+            queued += 1
+        elif stage in ["packed", "reserved_ship"]:
+            parcel.global_position = line.to_global(Vector3(.5, .82 + packed * .32, .18))
+            packed += 1
+        if item.id == cargo_id:
+            parcel.global_position = line.to_global(point)
+            (parcel.get_node("Tape") as Node3D).visible = fraction >= .55
+        elif stage == "packing_queue":
+            (parcel.get_node("Tape") as Node3D).visible = false
+    # Cargo was placed again by the inherited view, but unchanged mechanisms
+    # need no node lookup, transform write, material swap or metadata update.
+    var motion_key := Vector2(cargo_id, fraction)
+    if line.get_meta("motion_key", Vector2(-2, -1)) == motion_key: return
+    line.set_meta("motion_key", motion_key)
+    line.set_meta("motion_updates", int(line.get_meta("motion_updates", 0)) + 1)
+    for i in 3:
+        var slat: Node3D = parts["BeltSlat%d" % i]
+        slat.position.x = -.55 + fposmod(i * .44 + fraction * .44, 1.32)
+    # All moving parts derive solely from remaining work; frames, pause and
+    # reduced-motion toggles cannot advance a cargo or extend the .7-second job.
+    var head: Node3D = parts.head
+    head.position = Vector3(0, 1.33, -.26)
+    if working and _cargo.has(str(cargo_id)):
+        head.position = machine.to_local(line.to_global(point))
+        var sealing := clampf((fraction - .35) / .35, 0.0, 1.0)
+        head.position.y = 1.43 - .33 * sin(sealing * PI)
+    var arm_target := Vector3(.50, .82, .18)
+    if working:
+        # Reach inward during sealing, then carry outward; no discontinuous
+        # jump from the parked arm to the newly sealed carton.
+        arm_target.x = lerpf(.5, 0, clampf((fraction - .35) / .35, 0, 1))
+        if fraction >= .70: arm_target = point
+    var wrist: Node3D = parts.ArmWrist
+    wrist.position = Vector3(arm_target.x, (1.65 + arm_target.y + .26) * .5, arm_target.z)
+    wrist.scale.y = (1.65 - arm_target.y - .26) / .16
+    var gripper: Node3D = parts.Gripper
+    gripper.position = Vector3(arm_target.x, arm_target.y + .235, arm_target.z)
+    var link: Node3D = parts.ArmLink
+    var pivot := Vector3(.61, 1.65, -.24)
+    var end := Vector3(wrist.position.x, 1.65, wrist.position.z)
+    link.position = (pivot + end) * .5
+    link.scale = Vector3(1, 1, pivot.distance_to(end) / .16)
+    link.rotation.y = atan2(end.x - pivot.x, end.z - pivot.z)
+    var label: Node3D = parts.ShippingLabel
+    label.visible = working and fraction >= .65
+    label.position = point + Vector3(.09, .155, 0)
+    machine.set_meta("actual_pack_cargo_id", cargo_id)
+    machine.set_meta("actual_pack_fraction", fraction)
+    machine.set_meta("line_phase", "idle" if not working else ("conveyor" if fraction < .35 else ("sealing" if fraction < .70 else "transfer")))
+    var strip: MeshInstance3D = parts.strip
     strip.material_override = _material(Color("65f4b1") if working else Color("668079"))

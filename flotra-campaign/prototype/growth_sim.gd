@@ -55,7 +55,7 @@ const GROWTH_UPGRADES := [
     {"id":"wing_1","label":"第1棟の増築","description":"倉庫を北へ広げ、保管スペースを8枠増やします。","cost":150,"unlock_after":1},
     {"id":"crew_4","label":"スタッフを4人に","description":"スタッフが3人から4人に増えます。","cost":90,"unlock_after":1},
     {"id":"robot_2","label":"運搬ロボット2台","description":"荷物を運ぶロボットを2台追加。移動速度はスタッフの約1.3倍です。","cost":260,"unlock_after":2},
-    {"id":"auto_pack","label":"自動梱包機","description":"荷物1個の梱包が0.7秒に短縮されます。","cost":240,"unlock_after":2},
+    {"id":"auto_pack","label":"自動梱包機","description":"コンベア・梱包機・搬送アームを自動接続。荷物1個の梱包が0.7秒に。","cost":240,"unlock_after":2},
     {"id":"wing_2","label":"第2棟の増築","description":"さらに北へ広げ、保管スペース8枠と接続通路を増やします。","cost":350,"unlock_after":2},
     {"id":"rack_48","label":"棚の容量を48個に","description":"棚に置ける荷物が48個になります。","cost":180,"unlock_after":2},
     {"id":"crew_6","label":"スタッフを6人に","description":"スタッフが合計6人になります。","cost":280,"unlock_after":3},
