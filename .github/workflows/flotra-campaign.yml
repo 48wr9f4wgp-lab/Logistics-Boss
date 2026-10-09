@@ -357,7 +357,9 @@ jobs:
           retention-days: 7
 
   desktop-save-readiness:
+    name: desktop-public-pr160-readiness
     env:
+      FLOTRA_DESKTOP_PUBLIC_SHA: 027cb20d0bcd34fde6f944f4b3e7e63e21dc9b09
       FLOTRA_EXPORT_PROVENANCE: FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -373,7 +375,14 @@ jobs:
           version: 4.7.2
           use-dotnet: false
           include-templates: true
-      - name: Full official Web export and synthetic legacy fixtures
+      - name: Archive the immutable public PR160 source
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=1 origin "$FLOTRA_DESKTOP_PUBLIC_SHA"
+          mkdir -p build/writer-public-source
+          git archive "$FLOTRA_DESKTOP_PUBLIC_SHA" flotra-campaign docs/godot-jobs-preview scripts FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json | tar -x -C build/writer-public-source
+          cmp "$FLOTRA_EXPORT_PROVENANCE" "build/writer-public-source/$FLOTRA_EXPORT_PROVENANCE"
+      - name: Full public PR160 Web export and synthetic legacy fixtures
         shell: bash
         run: |
           test "$(godot --version)" = '4.7.2.stable.official.ed1daf0bf'
@@ -384,33 +393,33 @@ jobs:
           mkdir -p "$profile/data/godot"
           ln -s "$templates" "$profile/data/godot/export_templates"
           export HOME="$profile/home" XDG_DATA_HOME="$profile/data" XDG_CONFIG_HOME="$profile/config" XDG_CACHE_HOME="$profile/cache"
-          godot --headless --editor --path flotra-campaign --import
-          FLOTRA_GROWTH_FIXTURES="$PWD/build/writer-fixtures" godot --headless --path flotra-campaign --script res://tests/release/growth_browser_fixtures.gd
-          bash flotra-campaign/export_web.sh build/writer-web
-          printf '<!doctype html><title>Writer lifecycle fixture</title><p>Disposable CI navigation</p>\n' > build/writer-web/writer-away.html
+          godot --headless --editor --path build/writer-public-source/flotra-campaign --import
+          FLOTRA_GROWTH_FIXTURES="$PWD/build/writer-fixtures" godot --headless --path build/writer-public-source/flotra-campaign --script res://tests/release/growth_browser_fixtures.gd
+          bash build/writer-public-source/flotra-campaign/export_web.sh "$PWD/build/writer-web"
+          printf '<!doctype html><title>Writer lifecycle fixture</title><link rel="icon" href="index.icon.png"><p>Disposable CI navigation</p>\n' > build/writer-web/writer-away.html
       - name: Inspect only approved generated scene ID fields
         shell: bash
         run: |
           profile="$RUNNER_TEMP/flotra-readiness-inspector"
           mkdir -p "$profile"/{home,data,config,cache}
           export HOME="$profile/home" XDG_DATA_HOME="$profile/data" XDG_CONFIG_HOME="$profile/config" XDG_CACHE_HOME="$profile/cache"
-          SCENE_ID_REPORT="$PWD/build/writer-readiness/candidate-scenes.json" godot --headless --main-pack "$PWD/docs/godot-jobs-preview/index.pck" --script "$PWD/scripts/flotra_inspect_scene_ids.gd"
-          SCENE_ID_REPORT="$PWD/build/writer-readiness/exported-scenes.json" godot --headless --main-pack "$PWD/build/writer-web/index.pck" --script "$PWD/scripts/flotra_inspect_scene_ids.gd"
+          SCENE_ID_REPORT="$PWD/build/writer-readiness/candidate-scenes.json" godot --headless --main-pack "$PWD/docs/godot-jobs-preview/index.pck" --script "$PWD/build/writer-public-source/scripts/flotra_inspect_scene_ids.gd"
+          SCENE_ID_REPORT="$PWD/build/writer-readiness/exported-scenes.json" godot --headless --main-pack "$PWD/build/writer-web/index.pck" --script "$PWD/build/writer-public-source/scripts/flotra_inspect_scene_ids.gd"
           python3 flotra-campaign/tests/release/diagnose_writer_pack.py docs/godot-jobs-preview/index.pck build/writer-web/index.pck build/writer-readiness/pack-resource-diagnostic.json
       - name: Verify exact source, engine and bounded export coherence
         id: export-check
         continue-on-error: true
-        run: python3 flotra-campaign/tests/release/verify_writer_export.py build/writer-web build/writer-readiness
+        run: python3 build/writer-public-source/flotra-campaign/tests/release/verify_writer_export.py build/writer-web build/writer-readiness
       - name: Install isolated desktop browser
         run: |
           npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
           "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
           sudo apt-get install -y xvfb
-      - name: Actual desktop startup, ownership, mouse and lifecycle checks
+      - name: Public PR160 desktop startup, ownership, mouse and lifecycle checks
         shell: bash
         run: |
           cp -a docs/godot-jobs-preview build/writer-committed
-          printf '<!doctype html><title>Writer lifecycle fixture</title><p>Disposable CI navigation</p>\n' > build/writer-committed/writer-away.html
+          printf '<!doctype html><title>Writer lifecycle fixture</title><link rel="icon" href="index.icon.png"><p>Disposable CI navigation</p>\n' > build/writer-committed/writer-away.html
           python3 - <<'PY_IDENTITY'
           import hashlib, json, os
           from pathlib import Path
@@ -431,10 +440,81 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: flotra-desktop-save-readiness
+          name: flotra-desktop-public-pr160-readiness
           path: |
             build/writer-readiness
             build/writer-web
+          retention-days: 7
+
+  desktop-candidate-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CONTROL_SHA: a7c60e8c86785137a90b517227b5def8b329c1bc
+      FLOTRA_SOURCE_EXPORT_PROVENANCE: build/desktop-source-comparison/prospective-manifest.json
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Source-export contract negative tests
+        run: node --test flotra-campaign/tests/release/source_export_contract_test.cjs flotra-campaign/tests/release/desktop_export_subject_test.cjs flotra-campaign/tests/release/desktop_history_return_test.cjs
+      - name: Export immutable source pair and qualify pinned control
+        id: source_pair
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=1 origin "$CONTROL_SHA"
+          python3 flotra-campaign/tests/release/prepare_source_comparison.py \
+            --control "$CONTROL_SHA" --candidate "$(git rev-parse HEAD)" \
+            --writer-lifecycle-fixture --output build/desktop-source-comparison --godot "$(command -v godot)" \
+            --templates "${XDG_DATA_HOME:-$HOME/.local/share}/godot/export_templates"
+          read -r manifest_sha256 _ < <(sha256sum build/desktop-source-comparison/prospective-manifest.json)
+          printf 'manifest_sha256=%s\n' "$manifest_sha256" >> "$GITHUB_OUTPUT"
+      - name: Generate shared fixture after manifest digest is pinned
+        shell: bash
+        run: |
+          mkdir -p build/desktop-fixtures build/desktop-candidate-readiness
+          XDG_DATA_HOME="$PWD/build/desktop-source-comparison/B/profile/data" \
+            XDG_CONFIG_HOME="$PWD/build/desktop-source-comparison/B/profile/config" \
+            XDG_CACHE_HOME="$PWD/build/desktop-source-comparison/B/profile/cache" \
+            FLOTRA_GROWTH_FIXTURES="$PWD/build/desktop-fixtures" \
+            godot --headless --path build/desktop-source-comparison/B/source/flotra-campaign \
+            --script res://tests/release/growth_browser_fixtures.gd
+      - name: Install isolated desktop browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+          sudo apt-get install -y xvfb
+      - name: Candidate head desktop checks against attested source export
+        env:
+          FLOTRA_SOURCE_EXPORT_MANIFEST_SHA256: ${{ steps.source_pair.outputs.manifest_sha256 }}
+        shell: bash
+        run: |
+          export FLOTRA_CANDIDATE_SHA="$(git rev-parse HEAD)"
+          export FLOTRA_DESKTOP_EXPORT_DIRECTORY="$PWD/build/desktop-source-comparison/B/web"
+          python3 -m http.server 8861 --bind 127.0.0.1 --directory "$FLOTRA_DESKTOP_EXPORT_DIRECTORY" > build/desktop-candidate-readiness/server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" xvfb-run -a node flotra-campaign/tests/release/browser_writer_readiness.cjs http://127.0.0.1:8861/ build/desktop-candidate-readiness build/desktop-fixtures
+      - name: Preserve candidate desktop results and source provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flotra-desktop-candidate-readiness
+          path: |
+            build/desktop-candidate-readiness
+            build/desktop-source-comparison/prospective-manifest.json
+            build/desktop-source-comparison/*/web
+            build/desktop-source-comparison/*/*.log
+            build/desktop-source-comparison/*/source-*.json
+            build/desktop-source-comparison/A/public-control-verification
           retention-days: 7
 
   navigation-browser-input:

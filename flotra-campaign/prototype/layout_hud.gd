@@ -58,6 +58,7 @@ var _slot_index := 0
 var _choice_id := ""
 var _slot_options: Array = []
 var _choice_buttons: Array[Button] = []
+var _focus_ring: Array[Button] = []
 var _choice_title: Label
 var _benefit: Label
 var _tradeoff: Label
@@ -300,6 +301,8 @@ func _workload_label() -> String:
     return "入荷が多い日" if current == "inbound" else "注文が多い日"
 
 func _open_sheet(kind: String, title: String, height: float) -> void:
+    # Retire explicit paths before their body nodes are detached or freed.
+    _clear_focus_ring()
     _sheet_kind = kind
     if kind != "editor":
         selected_slot_changed.emit("")
@@ -679,28 +682,40 @@ func _layout_body() -> void:
 func _focus_buttons(node: Node) -> Array[Button]:
     var found: Array[Button] = []
     for child in node.get_children():
-        if child is Button and child.is_visible_in_tree() and not child.disabled:
+        if child is Button and child.is_visible_in_tree() and not child.disabled and child.focus_mode == Control.FOCUS_ALL:
             found.append(child)
         found.append_array(_focus_buttons(child))
     return found
 
+func _clear_focus_ring() -> void:
+    for button in _focus_ring:
+        if is_instance_valid(button):
+            button.focus_next = NodePath()
+            button.focus_previous = NodePath()
+    _focus_ring.clear()
+
 func _sync_focus() -> void:
     if not _built:
         return
+    # Include the old ring's hidden/disabled survivors, not just current buttons.
+    _clear_focus_ring()
     var modal := not _sheet_kind.is_empty()
     for button in [_back, _conditions, _primary, _compare]:
         button.focus_mode = Control.FOCUS_NONE if modal else Control.FOCUS_ALL
     if not modal:
         return
     var buttons := _focus_buttons(_sheet)
+    var owner := _root.get_viewport().gui_get_focus_owner()
     if buttons.is_empty():
+        if owner != null and _sheet.is_ancestor_of(owner):
+            owner.release_focus()
         return
+    _focus_ring = buttons
     for i in buttons.size():
         buttons[i].focus_next = buttons[i].get_path_to(buttons[(i + 1) % buttons.size()])
         buttons[i].focus_previous = buttons[i].get_path_to(buttons[posmod(i - 1, buttons.size())])
-    var owner := _root.get_viewport().gui_get_focus_owner()
-    if owner == null or not _sheet.is_ancestor_of(owner):
-        _close.grab_focus()
+    if not owner is Button or owner not in buttons:
+        buttons[0].grab_focus()
 
 func _place(node_name: String, x: float, y: float, width: float, height: float) -> void:
     var node := _body.get_node_or_null(node_name) as Control

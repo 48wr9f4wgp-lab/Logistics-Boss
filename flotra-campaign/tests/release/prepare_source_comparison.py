@@ -55,7 +55,10 @@ def prepare(args):
                     'flotra-campaign/tests/release/browser_growth_journey.cjs',
                     'flotra-campaign/tests/release/verify_writer_export.py',
                     'flotra-campaign/tests/release/diagnose_writer_pack.py',
-                    'scripts/flotra_inspect_scene_ids.gd']}, 'variants': {}}
+                    'scripts/flotra_inspect_scene_ids.gd'] + ([
+                    'flotra-campaign/tests/release/browser_writer_readiness.cjs',
+                    'flotra-campaign/tests/release/desktop_export_subject.cjs',
+                    'flotra-campaign/tests/release/desktop_history_return.cjs'] if args.writer_lifecycle_fixture else [])}, 'variants': {}}
     for label, ref in [('A', args.control), ('B', args.candidate)]:
         base = out / label
         source = base / 'source'
@@ -102,6 +105,8 @@ def prepare(args):
                 run([godot, '--headless', '--main-pack', str(pack), '--script', str(inspector)], verification / (prefix + '-inspect.log'), inspect_env)
             run([sys.executable, str(ROOT / 'flotra-campaign/tests/release/verify_writer_export.py'), str(export), str(verification), str(source)],
                 verification / 'verification.log', {**env, 'FLOTRA_EXPORT_PROVENANCE': str(manifest_path)})
+        if args.writer_lifecycle_fixture:
+            (export / 'writer-away.html').write_text('<!doctype html><title>Writer lifecycle fixture</title><link rel="icon" href="index.icon.png"><p>Disposable CI navigation</p>\n')
         manifest['variants'][label] = {'commit': ref, 'sourceDirectory': str(source), 'exportDirectory': str(export),
                                        'sourceSHA256': before, 'assetsSHA256': {name: digest(export / name) for name in ASSETS},
                                        'allExportAssetsSHA256': {p.name: digest(p) for p in sorted(export.iterdir()) if p.is_file()}}
@@ -117,4 +122,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ['control', 'candidate', 'output', 'godot', 'templates']:
         parser.add_argument('--' + option, required=True)
+    parser.add_argument('--writer-lifecycle-fixture', action='store_true', help='Attest an inert, normally served desktop navigation document')
     prepare(parser.parse_args())
