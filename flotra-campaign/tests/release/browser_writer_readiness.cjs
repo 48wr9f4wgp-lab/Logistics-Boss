@@ -56,6 +56,8 @@ function stdoutFailure(test) {
   return {
     case: test.name, status: test.status, phase: test.phase, elapsedSeconds: test.elapsedSeconds,
     error: logSafeText(test.error || test.traceError || test.reason),
+    browser: report.browserSelection, navigation: test.lifecycle?.navigation || d.navigation,
+    realms: test.lifecycle ? { before: test.lifecycle.beforeRealm, returned: test.lifecycle.returnedRealm } : null,
     readiness: d.readiness, notice: logSafeText(d.notice), label: logSafeText(d.label),
     engineInstances: h.engineInstances, starts: h.starts?.map(item => ({ ...item, error: logSafeText(item.error) })),
     locks: h.locks, writes: h.writes, input: h.input?.slice(-16), lifecycle: h.lifecycle,
@@ -489,6 +491,9 @@ async function scenario(name, options, action) {
     const { chromium } = require('playwright');
     browser = await chromium.launch({
       executablePath: process.env.CHROMIUM_EXECUTABLE || undefined,
+      // Use full Chromium's normal headless implementation. The default shell
+      // has a separate BFCache opt-in and is not the local system-browser subject.
+      channel: 'chromium',
       headless: process.env.FLOTRA_BROWSER_HEADED !== '1',
       // Playwright normally disables BFCache. Restore the browser's ordinary
       // feature, without forcing eligibility or fabricating lifecycle events.
@@ -496,6 +501,12 @@ async function scenario(name, options, action) {
     });
     report.chromiumVersion = browser.version();
     report.headed = process.env.FLOTRA_BROWSER_HEADED === '1';
+    report.browserSelection = {
+      version: report.chromiumVersion, playwright: require('playwright/package.json').version,
+      channel: 'chromium', executable: process.env.CHROMIUM_EXECUTABLE || chromium.executablePath(),
+      headed: report.headed, ignoredDefaultArgs: ['--disable-back-forward-cache'],
+    };
+    console.log('BROWSER_WRITER_ENVIRONMENT ' + JSON.stringify(report.browserSelection));
 
     for (const dpr of [1, 1.5]) await scenario('cold-start-dpr-' + dpr, { dpr }, async ({ page, test }) => {
       await goto(page); await readyUI(page);
