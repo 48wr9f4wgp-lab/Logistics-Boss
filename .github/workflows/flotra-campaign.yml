@@ -291,7 +291,7 @@ jobs:
     timeout-minutes: 20
     env:
       CONTROL_SHA: a7c60e8c86785137a90b517227b5def8b329c1bc
-      FLOTRA_COMBINED_PROVENANCE: FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json
+      FLOTRA_SOURCE_EXPORT_PROVENANCE: build/source-comparison/prospective-manifest.json
     steps:
       - uses: actions/checkout@v5
         with:
@@ -303,33 +303,57 @@ jobs:
         with:
           version: 4.7.2
           use-dotnet: false
-          include-templates: false
-      - name: Prepare immutable public control and identical earned fixture
+          include-templates: true
+      - name: Source-export contract negative tests
+        run: node --test flotra-campaign/tests/release/source_export_contract_test.cjs
+      - name: Export immutable source pair and qualify pinned control
+        id: source_pair
+        shell: bash
         run: |
           git fetch --no-tags --depth=1 origin "$CONTROL_SHA"
-          mkdir -p build/pr154-control build/combined-fixtures build/combined-renderer
-          git archive "$CONTROL_SHA" docs/godot-jobs-preview | tar -x -C build/pr154-control
-          godot --headless --editor --path flotra-campaign --import
-          FLOTRA_GROWTH_FIXTURES="$PWD/build/combined-fixtures" godot --headless --path flotra-campaign --script res://tests/release/growth_browser_fixtures.gd
+          python3 flotra-campaign/tests/release/prepare_source_comparison.py \
+            --control "$CONTROL_SHA" --candidate "$(git rev-parse HEAD)" \
+            --output build/source-comparison --godot "$(command -v godot)" \
+            --templates "${XDG_DATA_HOME:-$HOME/.local/share}/godot/export_templates"
+          read -r manifest_sha256 _ < <(sha256sum build/source-comparison/prospective-manifest.json)
+          printf 'manifest_sha256=%s\n' "$manifest_sha256" >> "$GITHUB_OUTPUT"
+      - name: Generate shared fixture after manifest digest is pinned
+        shell: bash
+        run: |
+          mkdir -p build/combined-fixtures build/combined-renderer
+          XDG_DATA_HOME="$PWD/build/source-comparison/B/profile/data" \
+            XDG_CONFIG_HOME="$PWD/build/source-comparison/B/profile/config" \
+            XDG_CACHE_HOME="$PWD/build/source-comparison/B/profile/cache" \
+            FLOTRA_GROWTH_FIXTURES="$PWD/build/combined-fixtures" \
+            godot --headless --path build/source-comparison/B/source/flotra-campaign \
+            --script res://tests/release/growth_browser_fixtures.gd
       - name: Install one pinned browser for the fixed comparison
         run: |
           npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
           "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
-      - name: Compare public and exact-head builds once in A-B-B-A order
+      - name: Compare attested control and candidate source exports once in A-B-B-A order
+        env:
+          FLOTRA_SOURCE_EXPORT_MANIFEST_SHA256: ${{ steps.source_pair.outputs.manifest_sha256 }}
         shell: bash
         run: |
-          python3 -m http.server 8850 --bind 127.0.0.1 --directory build/pr154-control/docs/godot-jobs-preview > build/combined-renderer/control-server.log 2>&1 &
+          python3 -m http.server 8850 --bind 127.0.0.1 --directory build/source-comparison/A/web > build/combined-renderer/control-server.log 2>&1 &
           control=$!
-          python3 -m http.server 8851 --bind 127.0.0.1 --directory docs/godot-jobs-preview > build/combined-renderer/candidate-server.log 2>&1 &
+          python3 -m http.server 8851 --bind 127.0.0.1 --directory build/source-comparison/B/web > build/combined-renderer/candidate-server.log 2>&1 &
           candidate=$!
           trap 'kill "$control" "$candidate" 2>/dev/null || true' EXIT
-          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" node flotra-campaign/tests/release/browser_combined_performance.cjs http://127.0.0.1:8850/ http://127.0.0.1:8851/ build/combined-renderer build/combined-fixtures build/pr154-control/docs/godot-jobs-preview docs/godot-jobs-preview "$CONTROL_SHA" "$(git rev-parse HEAD)"
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" node flotra-campaign/tests/release/browser_combined_performance.cjs http://127.0.0.1:8850/ http://127.0.0.1:8851/ build/combined-renderer build/combined-fixtures build/source-comparison/A/web build/source-comparison/B/web "$CONTROL_SHA" "$(git rev-parse HEAD)"
       - name: Preserve every control and candidate result
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: flotra-combined-renderer-control
-          path: build/combined-renderer
+          path: |
+            build/combined-renderer
+            build/source-comparison/prospective-manifest.json
+            build/source-comparison/*/web
+            build/source-comparison/*/*.log
+            build/source-comparison/*/source-*.json
+            build/source-comparison/A/public-control-verification
           retention-days: 7
 
   desktop-save-readiness:
