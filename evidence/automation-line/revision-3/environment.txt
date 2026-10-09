@@ -1,0 +1,4 @@
+cpu.max: 400000 100000
+cpuset.cpus.effective: 0-4
+GPU timer extension unavailable in all four Chromium contexts.
+CPU pressure files absent.

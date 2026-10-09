@@ -1,0 +1,81 @@
+{
+  "scope": "Chromium emulation; synthetic earned saves; no real user storage",
+  "dpr": 1,
+  "cases": [
+    {
+      "name": "before",
+      "simTime": 77.9999999999977,
+      "progress": {
+        "fraction": 1,
+        "manifest_quota": 4,
+        "manifests_offered": 4,
+        "offered": 24,
+        "remaining": 0,
+        "shipped": 24,
+        "total": 24
+      },
+      "wallet": 440,
+      "passed": true
+    },
+    {
+      "name": "owned",
+      "simTime": 77.9999999999977,
+      "progress": {
+        "fraction": 1,
+        "manifest_quota": 4,
+        "manifests_offered": 4,
+        "offered": 24,
+        "remaining": 0,
+        "shipped": 24,
+        "total": 24
+      },
+      "wallet": 200,
+      "passed": true
+    },
+    {
+      "name": "conveyor",
+      "simTime": 9.15,
+      "progress": {
+        "fraction": 0,
+        "manifest_quota": 4,
+        "manifests_offered": 4,
+        "offered": 24,
+        "remaining": 24,
+        "shipped": 0,
+        "total": 24
+      },
+      "wallet": 200,
+      "passed": true
+    },
+    {
+      "name": "sealing",
+      "simTime": 9.35,
+      "progress": {
+        "fraction": 0,
+        "manifest_quota": 4,
+        "manifests_offered": 4,
+        "offered": 24,
+        "remaining": 24,
+        "shipped": 0,
+        "total": 24
+      },
+      "wallet": 200,
+      "passed": true
+    },
+    {
+      "name": "transfer",
+      "simTime": 9.6,
+      "progress": {
+        "fraction": 0,
+        "manifest_quota": 4,
+        "manifests_offered": 4,
+        "offered": 24,
+        "remaining": 24,
+        "shipped": 0,
+        "total": 24
+      },
+      "wallet": 200,
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "kind": "Isolated actual Chromium WebGL growth journey, old-save migration and late-state performance; not physical Safari",
+  "tests": [
+    {
+      "name": "mature-performance",
+      "presentation": "headless renderer baseline",
+      "storageContract": {
+        "bridge": "FlotraDispatchStore",
+        "saveKey": "flotra.campaign.dispatch.v5",
+        "version": 5,
+        "asset": "dispatch-storage.js",
+        "legacyKey": "flotra.campaign.release.v1",
+        "assets": [
+          "index.html",
+          "index.pck",
+          "index.js",
+          "index.wasm",
+          "campaign-viewport.js",
+          "dispatch-storage.js"
+        ]
+      },
+      "loadedAssets": {
+        "index.html": "edd867e8a5b66cd591b19e33769b7835100f8eba59535c69ef2eff4943b42f7f",
+        "campaign-viewport.js": "9eed4614bd5e6f0b96ea5c347ce1ae7a5b018e3860aa48a39909abe8d7e72bea",
+        "dispatch-storage.js": "9571c549793bfc08e45372e73072729c6a76521120531392fb57072757d253f5",
+        "index.js": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba",
+        "index.pck": "1aa2f8bc71e1a1f99cf8a910bd498981dd3eebbd153397e105c25a2317c2313a",
+        "index.wasm": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0"
+      },
+      "chromiumVersion": "151.0.7922.173",
+      "environment": {
+        "gpuTimerAvailable": false,
+        "visibility": "visible",
+        "dpr": 3,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)"
+      },
+      "initialState": {
+        "simTime": 84.9999999999973,
+        "wallet": 70,
+        "growth": {
+          "area": 572.84,
+          "catalog_complete": false,
+          "completed_milestones": 6,
+          "human_count": 6,
+          "legacy_profile": false,
+          "lifetime_units": 427,
+          "next_goal": "集品指示盤まで資金あと230。定期便でためよう",
+          "robot_count": 4,
+          "wing_count": 4
+        },
+        "progress": {
+          "fraction": 0.107638888888889,
+          "manifest_quota": 48,
+          "manifests_offered": 48,
+          "offered": 288,
+          "remaining": 257,
+          "shipped": 31,
+          "total": 288
+        },
+        "camera": {
+          "callouts": [
+            {
+              "anchorX": 87.1175003051758,
+              "anchorY": 258.305450439453,
+              "fontSize": 18,
+              "height": 36,
+              "text": "入荷",
+              "visible": true,
+              "width": 54,
+              "x": 19,
+              "y": 217
+            },
+            {
+              "anchorX": 307.613464355469,
+              "anchorY": 208.483963012695,
+              "fontSize": 18,
+              "height": 36,
+              "text": "保管床 38枠",
+              "visible": true,
+              "width": 118,
+              "x": 264,
+              "y": 167
+            },
+            {
+              "anchorX": 143.464111328125,
+              "anchorY": 367.819061279297,
+              "fontSize": 18,
+              "height": 36,
+              "text": "出荷",
+              "visible": true,
+              "width": 54,
+              "x": 116,
+              "y": 388
+            }
+          ],
+          "fitSize": 57.9014015197754,
+          "floorPoints": [
+            {
+              "name": "GrowthFoundation",
+              "x": 197.843887329102,
+              "y": 413.941833496094
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 230.588729858398,
+              "y": 395.168304443359
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 263.333557128906,
+              "y": 376.394775390625
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 296.078369140625,
+              "y": 357.621246337891
+            },
+            {
+              "name": "ServiceConnectorFoundation",
+              "x": 109.443511962891,
+              "y": 389.970672607422
+            },
+            {
+              "name": "@MeshInstance3D@8",
+              "x": 190.242431640625,
+              "y": 492.953582763672
+            }
+          ],
+          "mouseDown": false,
+          "panX": 0,
+          "panY": 0,
+          "size": 57.9014015197754,
+          "touches": 0,
+          "turn": 0,
+          "zoom": 1
+        }
+      },
+      "performance": {
+        "uiOnly": {
+          "rafMedianMs": 150,
+          "rafP95Ms": 183.39999999999782,
+          "processMedianMs": 11.4,
+          "processP95Ms": 14.7,
+          "nodesMin": 1281,
+          "nodesMax": 1281,
+          "drawCallsMax": 78,
+          "rafSamples": 37,
+          "telemetrySamples": 37,
+          "distinctMetricValues": 6
+        },
+        "idle": {
+          "rafMedianMs": 200.10000000000036,
+          "rafP95Ms": 233.29999999999927,
+          "processMedianMs": 11.7,
+          "processP95Ms": 15.7,
+          "nodesMin": 1273,
+          "nodesMax": 1273,
+          "drawCallsMax": 74,
+          "rafSamples": 25,
+          "telemetrySamples": 25,
+          "distinctMetricValues": 6
+        },
+        "active": {
+          "rafMedianMs": 233.3000000000029,
+          "rafP95Ms": 266.70000000000437,
+          "processMedianMs": 36,
+          "processP95Ms": 56.3,
+          "nodesMin": 1273,
+          "nodesMax": 1365,
+          "drawCallsMax": 86,
+          "rafSamples": 48,
+          "telemetrySamples": 48,
+          "distinctMetricValues": 25
+        },
+        "idleAfter": {
+          "rafMedianMs": 166.6999999999971,
+          "rafP95Ms": 183.40000000000146,
+          "processMedianMs": 11.7,
+          "processP95Ms": 17.9,
+          "nodesMin": 1381,
+          "nodesMax": 1381,
+          "drawCallsMax": 77,
+          "rafSamples": 33,
+          "telemetrySamples": 33,
+          "distinctMetricValues": 6
+        }
+      },
+      "progress": {
+        "before": 31,
+        "after": 45,
+        "time": 116.699999999996
+      },
+      "status": "passed",
+      "errors": []
+    }
+  ]
+}
