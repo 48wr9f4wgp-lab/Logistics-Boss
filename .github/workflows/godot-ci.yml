@@ -12,12 +12,18 @@ on:
       - 'godot/**'
       - '.github/workflows/godot-ci.yml'
   workflow_dispatch:
+    inputs:
+      candidate_desktop_only:
+        description: 'Run only pinned beaf397 candidate desktop and source attestation; not full CI'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
   godot-smoke:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.candidate_desktop_only != true }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -439,4 +445,114 @@ jobs:
           name: flotra-godot-web-preview
           path: godot-web
           if-no-files-found: error
+          retention-days: 7
+
+  candidate-desktop-diagnostic:
+    name: Candidate desktop only (not full CI)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.candidate_desktop_only == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      FLOTRA_CANDIDATE_SHA: beaf397f156fb87ca3fe3f006c7ae620d016be9d
+      CONTROL_SHA: a7c60e8c86785137a90b517227b5def8b329c1bc
+      FLOTRA_SOURCE_EXPORT_PROVENANCE: build/desktop-source-comparison/prospective-manifest.json
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.FLOTRA_CANDIDATE_SHA }}
+      - name: Verify immutable diagnostic target
+        run: test "$(git rev-parse HEAD)" = "$FLOTRA_CANDIDATE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Source-export contract negative tests
+        run: node --test flotra-campaign/tests/release/source_export_contract_test.cjs flotra-campaign/tests/release/desktop_export_subject_test.cjs flotra-campaign/tests/release/desktop_history_return_test.cjs
+      - name: Export immutable source pair and qualify pinned control
+        id: source_pair
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=1 origin "$CONTROL_SHA"
+          python3 flotra-campaign/tests/release/prepare_source_comparison.py \
+            --control "$CONTROL_SHA" --candidate "$(git rev-parse HEAD)" \
+            --writer-lifecycle-fixture --output build/desktop-source-comparison --godot "$(command -v godot)" \
+            --templates "${XDG_DATA_HOME:-$HOME/.local/share}/godot/export_templates"
+          read -r manifest_sha256 _ < <(sha256sum build/desktop-source-comparison/prospective-manifest.json)
+          printf 'manifest_sha256=%s\n' "$manifest_sha256" >> "$GITHUB_OUTPUT"
+      - name: Generate shared fixture after manifest digest is pinned
+        shell: bash
+        run: |
+          mkdir -p build/desktop-fixtures build/desktop-candidate-readiness
+          XDG_DATA_HOME="$PWD/build/desktop-source-comparison/B/profile/data" \
+            XDG_CONFIG_HOME="$PWD/build/desktop-source-comparison/B/profile/config" \
+            XDG_CACHE_HOME="$PWD/build/desktop-source-comparison/B/profile/cache" \
+            FLOTRA_GROWTH_FIXTURES="$PWD/build/desktop-fixtures" \
+            godot --headless --path build/desktop-source-comparison/B/source/flotra-campaign \
+            --script res://tests/release/growth_browser_fixtures.gd
+      - name: Install isolated desktop browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+          sudo apt-get install -y xvfb
+      - name: Candidate head desktop checks against attested source export
+        env:
+          FLOTRA_SOURCE_EXPORT_MANIFEST_SHA256: ${{ steps.source_pair.outputs.manifest_sha256 }}
+        shell: bash
+        run: |
+          export FLOTRA_CANDIDATE_SHA="$(git rev-parse HEAD)"
+          export FLOTRA_DESKTOP_EXPORT_DIRECTORY="$PWD/build/desktop-source-comparison/B/web"
+          python3 -m http.server 8861 --bind 127.0.0.1 --directory "$FLOTRA_DESKTOP_EXPORT_DIRECTORY" > build/desktop-candidate-readiness/server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" xvfb-run -a node flotra-campaign/tests/release/browser_writer_readiness.cjs http://127.0.0.1:8861/ build/desktop-candidate-readiness build/desktop-fixtures
+      - name: Emit compact BFCache check diagnostic
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY_DIAGNOSTIC'
+          import json, os
+          from pathlib import Path
+          p = Path('build/desktop-candidate-readiness/writer-readiness.json')
+          result = {'scope':'candidate-desktop-only; not full CI', 'expectedCandidate':os.environ['FLOTRA_CANDIDATE_SHA']}
+          if p.exists():
+              r = json.loads(p.read_text())
+              b = next((t for t in r.get('tests', []) if t['name'] == 'real-bfcache-restoration'), {})
+              life = b.get('lifecycle', {})
+              result.update({
+                  'subject':r.get('subject', {}).get('commit'), 'manifestSHA256':r.get('subject', {}).get('manifestSHA256'),
+                  'browser':r.get('browserSelection'), 'status':r.get('status'), 'summary':r.get('summary'),
+                  'subjectVerifiedAfter':r.get('subjectVerifiedAfter', False),
+                  'bfcache':{'status':b.get('status'), 'reason':b.get('reason'),
+                      'sameRealm':bool(life.get('beforeRealm')) and life.get('beforeRealm') == life.get('returnedRealm'),
+                      'events':[{k:e.get(k) for k in ['type','persisted','trusted','writes','lockRequests','starts']} for e in life.get('events', [])],
+                      'navigation':life.get('navigation', b.get('final', {}).get('navigation')),
+                      'protectedControls':b.get('protectedControls'), 'latestCheckpointLoaded':b.get('latestCheckpointLoaded', False),
+                      'consoleErrorCount':len(b.get('errors', [])), 'pageErrorCount':len(b.get('pageErrors', [])),
+                      'requestFailureCount':len(b.get('requestFailures', []))}})
+          else:
+              result['status'] = 'report_missing; earlier step did not finish'
+          dest = Path('build/desktop-candidate-readiness/compact-diagnostic.json')
+          dest.parent.mkdir(parents=True, exist_ok=True)
+          dest.write_text(json.dumps(result, indent=2) + '\n')
+          payload = json.dumps(result, separators=(',', ':'))
+          print('::notice title=FLOTRA candidate desktop diagnostic::' + payload.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('Candidate desktop-only diagnostic; not full CI\n\n```json\n' + json.dumps(result, indent=2) + '\n```\n')
+          PY_DIAGNOSTIC
+      - name: Preserve candidate desktop results and source provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flotra-candidate-desktop-diagnostic-beaf397
+          path: |
+            build/desktop-candidate-readiness
+            build/desktop-source-comparison/prospective-manifest.json
+            build/desktop-source-comparison/*/web
+            build/desktop-source-comparison/*/*.log
+            build/desktop-source-comparison/*/source-*.json
+            build/desktop-source-comparison/A/public-control-verification
           retention-days: 7
