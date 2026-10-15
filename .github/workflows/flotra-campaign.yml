@@ -12,7 +12,7 @@ on:
       - 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json'
   push:
-    branches: [main]
+    branches: [main, audit/flotra-pr160-cost-20261016]
     paths:
       - 'flotra-campaign/**'
       - 'docs/godot-jobs-preview/**'
@@ -354,6 +354,77 @@ jobs:
             build/source-comparison/*/*.log
             build/source-comparison/*/source-*.json
             build/source-comparison/A/public-control-verification
+          retention-days: 7
+
+  immediate-pr160-renderer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CONTROL_SHA: 027cb20d0bcd34fde6f944f4b3e7e63e21dc9b09
+      FLOTRA_SOURCE_EXPORT_PROVENANCE: build/pr160-source-comparison/prospective-manifest.json
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Source-export contract negative tests
+        run: node --test flotra-campaign/tests/release/source_export_contract_test.cjs
+      - name: Export immutable source pair and qualify pinned control
+        id: source_pair
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=1 origin "$CONTROL_SHA"
+          python3 flotra-campaign/tests/release/prepare_source_comparison.py \
+            --control "$CONTROL_SHA" --candidate "$(git rev-parse HEAD)" \
+            --control-asset-role published-pr160 \
+            --output build/pr160-source-comparison --godot "$(command -v godot)" \
+            --templates "${XDG_DATA_HOME:-$HOME/.local/share}/godot/export_templates"
+          read -r manifest_sha256 _ < <(sha256sum build/pr160-source-comparison/prospective-manifest.json)
+          printf 'manifest_sha256=%s\n' "$manifest_sha256" >> "$GITHUB_OUTPUT"
+      - name: Generate shared fixture after manifest digest is pinned
+        shell: bash
+        run: |
+          mkdir -p build/pr160-fixtures build/pr160-renderer
+          XDG_DATA_HOME="$PWD/build/pr160-source-comparison/B/profile/data" \
+            XDG_CONFIG_HOME="$PWD/build/pr160-source-comparison/B/profile/config" \
+            XDG_CACHE_HOME="$PWD/build/pr160-source-comparison/B/profile/cache" \
+            FLOTRA_GROWTH_FIXTURES="$PWD/build/pr160-fixtures" \
+            godot --headless --path build/pr160-source-comparison/B/source/flotra-campaign \
+            --script res://tests/release/growth_browser_fixtures.gd
+      - name: Install one pinned browser for the fixed comparison
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flotra-browser" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/flotra-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Compare actual PR160 public source with candidate once in A-B-B-A order
+        env:
+          FLOTRA_SOURCE_EXPORT_MANIFEST_SHA256: ${{ steps.source_pair.outputs.manifest_sha256 }}
+        shell: bash
+        run: |
+          python3 -m http.server 8850 --bind 127.0.0.1 --directory build/pr160-source-comparison/A/web > build/pr160-renderer/control-server.log 2>&1 &
+          control=$!
+          python3 -m http.server 8851 --bind 127.0.0.1 --directory build/pr160-source-comparison/B/web > build/pr160-renderer/candidate-server.log 2>&1 &
+          candidate=$!
+          trap 'kill "$control" "$candidate" 2>/dev/null || true' EXIT
+          NODE_PATH="$RUNNER_TEMP/flotra-browser/node_modules" node flotra-campaign/tests/release/browser_combined_performance.cjs http://127.0.0.1:8850/ http://127.0.0.1:8851/ build/pr160-renderer build/pr160-fixtures build/pr160-source-comparison/A/web build/pr160-source-comparison/B/web "$CONTROL_SHA" "$(git rev-parse HEAD)"
+      - name: Preserve every control and candidate result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flotra-immediate-pr160-renderer
+          path: |
+            build/pr160-renderer
+            build/pr160-source-comparison/prospective-manifest.json
+            build/pr160-source-comparison/*/web
+            build/pr160-source-comparison/*/*.log
+            build/pr160-source-comparison/*/source-*.json
+            build/pr160-source-comparison/A/public-control-verification
           retention-days: 7
 
   desktop-save-readiness:
