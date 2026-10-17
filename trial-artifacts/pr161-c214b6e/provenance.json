@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "c214b6e2b6919d7525642874e40c2c0d9eaf2d18",
+  "artifactId": 11746587343,
+  "artifactSHA256": "32ea525a605f0c2d18a8110bf6a10c794c672a8fbdbd313b888fd184a3ad39cc",
+  "assets": {
+    "campaign-viewport.js": "9eed4614bd5e6f0b96ea5c347ce1ae7a5b018e3860aa48a39909abe8d7e72bea",
+    "dispatch-storage.js": "9571c549793bfc08e45372e73072729c6a76521120531392fb57072757d253f5",
+    "index.apple-touch-icon.png": "426314ebb020cf556f9c5871f01f4ae17537fe1151ced9ab1074ac8554b81163",
+    "index.audio.position.worklet.js": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+    "index.audio.worklet.js": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+    "index.html": "208cba30013a1538d3479cdcac845e0a0c1d9abff799357ffc8a8d012e3d1edb",
+    "index.icon.png": "2b8b41370118cff6798ab75a1058a613fa07b9c1e1c28a74b1046992efef6e7e",
+    "index.js": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba",
+    "index.pck": "124061cb09f221c8ea889df4c09c106215bc24bcd68d036cfd56fbdd3bc19836",
+    "index.png": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+    "index.wasm": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0",
+    "writer-away.html": "ca1dc85fd03f04d338677973987cb94dab669b02a0abf77af205b6ec9c0d6b92"
+  }
+}
