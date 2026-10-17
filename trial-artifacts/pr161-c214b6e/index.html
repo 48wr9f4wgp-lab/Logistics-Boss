@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+		<title>FLOTRA</title>
+		<style>
+html, body, #canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+body {
+	color: white;
+	background-color: black;
+	font: 18px/1.5 sans-serif;
+	overflow: hidden;
+	touch-action: none;
+}
+
+#canvas {
+	display: block;
+	position: fixed;
+	left: env(safe-area-inset-left, 0px);
+	top: env(safe-area-inset-top, 0px);
+	width: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+	height: calc(var(--flotra-visible-height, 100dvh) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+	touch-action: none;
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#status, #status-splash, #status-progress {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+
+#status, #status-splash {
+	top: 0;
+	bottom: 0;
+}
+
+#status {
+	background-color: #242424;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	visibility: hidden;
+}
+
+#status-splash {
+	max-height: 100%;
+	max-width: 100%;
+	margin: auto;
+}
+
+#status-splash.show-image--false {
+	display: none;
+}
+
+#status-splash.fullsize--true {
+	height: 100%;
+	width: 100%;
+	object-fit: contain;
+}
+
+#status-splash.use-filter--false {
+	image-rendering: pixelated;
+}
+
+#status-progress, #status-notice {
+	display: none;
+}
+
+#status-progress {
+	bottom: 10%;
+	width: 50%;
+	margin: 0 auto;
+}
+
+#status-notice {
+	background-color: #5b3943;
+	border-radius: 0.5rem;
+	border: 1px solid #9b3943;
+	color: #e0e0e0;
+	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
+	font-size: 18px;
+	line-height: 1.3;
+	margin: 0 2rem;
+	overflow: hidden;
+	padding: 1rem;
+	text-align: center;
+	z-index: 1;
+}
+
+#status-label {
+	position: absolute;
+	bottom: 15%;
+	margin: 0 1.5rem;
+	font: 18px/1.6 sans-serif;
+	text-align: center;
+}
+		</style>
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
+	</head>
+	<body>
+		<canvas id="canvas">
+			このブラウザーではFLOTRAを表示できません。別のブラウザーで開いてください。
+		</canvas>
+
+		<noscript>
+			FLOTRAを遊ぶにはJavaScriptを有効にしてください。
+		</noscript>
+
+		<div id="status">
+			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+			<p id="status-label" role="status">倉庫を読み込んでいます…</p>
+			<progress id="status-progress"></progress>
+			<div id="status-notice"></div>
+		</div>
+
+		<script src="campaign-viewport.js"></script>
+		<script src="dispatch-storage.js"></script>
+		<script src="index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":2170784,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"persistentPaths":[]};
+// Never mount the legacy Godot /userfs database. Canvas backing is owned by
+// campaign-viewport.js; letting Godot resize it would ignore the safe-area CSS.
+GODOT_CONFIG.persistentPaths = [];
+GODOT_CONFIG.canvasResizePolicy = 0;
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const statusProgress = document.getElementById('status-progress');
+	const statusNotice = document.getElementById('status-notice');
+	const statusLabel = document.getElementById('status-label');
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			statusOverlay.remove();
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusLabel.style.display = mode === 'progress' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStatusNotice(text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const lines = text.split('\n');
+		lines.forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+        if (typeof window.FlotraDispatchStore?.cancelStartup === 'function') window.FlotraDispatchStore.cancelStartup();
+		setStatusNotice('FLOTRAを起動できませんでした。\n通信状態を確認して、ページを読み込み直してください。\n解決しない場合は、最新版の別のブラウザーでお試しください。');
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+        if (typeof window.FlotraDispatchStore?.cancelStartup === 'function') window.FlotraDispatchStore.cancelStartup();
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			// Display the message as usual
+			console.error('Missing browser features:', missing);
+			setStatusNotice('このブラウザーではFLOTRAを動かせません。\nブラウザーを最新版にするか、別のブラウザーで開いてください。');
+			setStatusMode('notice');
+			initializing = false;
+		}
+	} else {
+		setStatusMode('progress');
+		statusLabel.textContent = '保存データの安全を確認しています…';
+        const store = window.FlotraDispatchStore;
+        const ready = store && typeof store.ready === 'function'
+            ? store.ready() : Promise.resolve({ok:false, state:'unavailable'});
+        ready.then(result => {
+            if (!result.ok) {
+                const messages = {
+                    occupied: '別のFLOTRA画面が保存機能を使用しています。旧版を含む他のゲーム画面を確認してから、このページを再読み込みしてください。',
+                    timeout: '保存機能の確認に時間がかかっています。データは変更していません。このページを再読み込みしてお試しください。',
+                    cancelled: '起動を中断しました。このページを再読み込みしてください。',
+                    storage_unavailable: '保存データを読み取れないため起動を止めました。保存データは変更していません。',
+                    unavailable: 'このブラウザーで安全な保存機能を利用できないため起動を止めました。保存データは変更していません。'
+                };
+                setStatusNotice(messages[result.state] || messages.unavailable);
+                setStatusMode('notice');
+                initializing = false;
+                return;
+            }
+            statusLabel.textContent = '倉庫を読み込んでいます…';
+            return engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+				} else {
+					statusProgress.removeAttribute('value');
+					statusProgress.removeAttribute('max');
+				}
+			},
+		}).then(() => {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
+        }).catch(displayFailureNotice);
+	}
+}());
+		</script>
+	</body>
+</html>
+
