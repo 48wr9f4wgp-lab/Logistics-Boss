@@ -1,0 +1,75 @@
+{
+  "url": "https://flotra-equipment-trial-20261006-4ka86z73y.vercel.app/",
+  "sourceCommit": "c214b6e2b6919d7525642874e40c2c0d9eaf2d18",
+  "artifactCommit": "2ed28d7b316d271b6dfc99e660cca66c7399fd17",
+  "verifiedAssets": [
+    {
+      "file": "campaign-viewport.js",
+      "bytes": 3540,
+      "sha256": "9eed4614bd5e6f0b96ea5c347ce1ae7a5b018e3860aa48a39909abe8d7e72bea"
+    },
+    {
+      "file": "dispatch-storage.js",
+      "bytes": 9044,
+      "sha256": "9571c549793bfc08e45372e73072729c6a76521120531392fb57072757d253f5"
+    },
+    {
+      "file": "index.apple-touch-icon.png",
+      "bytes": 25004,
+      "sha256": "426314ebb020cf556f9c5871f01f4ae17537fe1151ced9ab1074ac8554b81163"
+    },
+    {
+      "file": "index.audio.position.worklet.js",
+      "bytes": 2973,
+      "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8"
+    },
+    {
+      "file": "index.audio.worklet.js",
+      "bytes": 7298,
+      "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3"
+    },
+    {
+      "file": "index.html",
+      "bytes": 8550,
+      "sha256": "208cba30013a1538d3479cdcac845e0a0c1d9abff799357ffc8a8d012e3d1edb"
+    },
+    {
+      "file": "index.icon.png",
+      "bytes": 108405,
+      "sha256": "2b8b41370118cff6798ab75a1058a613fa07b9c1e1c28a74b1046992efef6e7e"
+    },
+    {
+      "file": "index.js",
+      "bytes": 279815,
+      "sha256": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba"
+    },
+    {
+      "file": "index.pck",
+      "bytes": 2170784,
+      "sha256": "124061cb09f221c8ea889df4c09c106215bc24bcd68d036cfd56fbdd3bc19836"
+    },
+    {
+      "file": "index.png",
+      "bytes": 21443,
+      "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e"
+    },
+    {
+      "file": "index.wasm",
+      "bytes": 39514754,
+      "sha256": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0"
+    },
+    {
+      "file": "writer-away.html",
+      "bytes": 125,
+      "sha256": "ca1dc85fd03f04d338677973987cb94dab669b02a0abf77af205b6ec9c0d6b92"
+    }
+  ],
+  "deploymentId": "dpl_8Tj9WGRaZAi8Xht5tYKjsYV7kTWf",
+  "state": "READY",
+  "scope": "All 12 deployed asset bytes downloaded and SHA-256 matched to CI artifact; not physical iPhone runtime qualification",
+  "pending": [
+    "Physical iPhone startup/touch/performance/save",
+    "Restore automatically moved auxiliary alias after explicit approval"
+  ],
+  "prepareScript": "\"use strict\";\nconst fs=require(\"node:fs\"),path=require(\"node:path\"),crypto=require(\"node:crypto\"),assert=require(\"node:assert/strict\");\nconst assets=[{\"file\": \"campaign-viewport.js\", \"size\": 3540, \"sha256\": \"9eed4614bd5e6f0b96ea5c347ce1ae7a5b018e3860aa48a39909abe8d7e72bea\"}, {\"file\": \"dispatch-storage.js\", \"size\": 9044, \"sha256\": \"9571c549793bfc08e45372e73072729c6a76521120531392fb57072757d253f5\"}, {\"file\": \"index.apple-touch-icon.png\", \"size\": 25004, \"sha256\": \"426314ebb020cf556f9c5871f01f4ae17537fe1151ced9ab1074ac8554b81163\"}, {\"file\": \"index.audio.position.worklet.js\", \"size\": 2973, \"sha256\": \"be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8\"}, {\"file\": \"index.audio.worklet.js\", \"size\": 7298, \"sha256\": \"5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3\"}, {\"file\": \"index.html\", \"size\": 8550, \"sha256\": \"208cba30013a1538d3479cdcac845e0a0c1d9abff799357ffc8a8d012e3d1edb\"}, {\"file\": \"index.icon.png\", \"size\": 108405, \"sha256\": \"2b8b41370118cff6798ab75a1058a613fa07b9c1e1c28a74b1046992efef6e7e\"}, {\"file\": \"index.js\", \"size\": 279815, \"sha256\": \"33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba\"}, {\"file\": \"index.pck\", \"size\": 2170784, \"sha256\": \"124061cb09f221c8ea889df4c09c106215bc24bcd68d036cfd56fbdd3bc19836\"}, {\"file\": \"index.png\", \"size\": 21443, \"sha256\": \"3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e\"}, {\"file\": \"index.wasm\", \"size\": 39514754, \"sha256\": \"fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0\"}, {\"file\": \"writer-away.html\", \"size\": 125, \"sha256\": \"ca1dc85fd03f04d338677973987cb94dab669b02a0abf77af205b6ec9c0d6b92\"}];\nconst prefix=\"https://raw.githubusercontent.com/48wr9f4wgp-lab/Logistics-Boss/2ed28d7b316d271b6dfc99e660cca66c7399fd17/trial-artifacts/pr161-c214b6e/\";\nasync function main(){\n const ready=[];\n for(const item of assets){\n  assert.ok(!item.file.includes(\"/\")&&!item.file.includes(\"..\"));\n  let b;\n  if(item.file===\"index.pck\"){\n   const parts=[];for(let i=0;i<9;i++){\n    const r=await fetch(prefix+\"index.pck.part-\"+String(i).padStart(2,\"0\"),{signal:AbortSignal.timeout(60000)});\n    assert.equal(r.status,200,\"PCK part \"+i+\" HTTP\");parts.push(Buffer.from(await r.arrayBuffer()));\n   }b=Buffer.concat(parts);\n  }else{\n   const r=await fetch(prefix+item.file,{signal:AbortSignal.timeout(60000)});assert.equal(r.status,200,item.file+\" HTTP\");b=Buffer.from(await r.arrayBuffer());\n  }\n  assert.equal(b.length,item.size,item.file+\" size\");\n  assert.equal(crypto.createHash(\"sha256\").update(b).digest(\"hex\"),item.sha256,item.file+\" SHA256\");\n  ready.push([item.file,b]);console.log(\"Verified\",item.file,item.sha256);\n }\n assert.equal(ready.length,12);fs.mkdirSync(\"dist\",{recursive:true});\n for(const [name,b] of ready)fs.writeFileSync(path.join(\"dist\",name),b);\n fs.writeFileSync(\"dist/trial-build.json\",JSON.stringify({sourceCommit:\"c214b6e2b6919d7525642874e40c2c0d9eaf2d18\",artifactCommit:\"2ed28d7b316d271b6dfc99e660cca66c7399fd17\",artifactId:11746587343,assets}));\n}\nmain().catch(e=>{console.error(e.message);process.exitCode=1});\n\n"
+}
