@@ -15,6 +15,10 @@ func _expect(ok: bool, message: String) -> void:
         push_error(message)
 
 func _run() -> void:
+    if OS.get_environment("FLOTRA_POLISH_ISOLATED") != "1":
+        push_error("ai_truck_asset_smoke requires the isolated-profile runner")
+        quit(1)
+        return
     if OS.get_cmdline_user_args().has("--corrupt-truck-fixture"):
         _test_corrupt_fixture()
         quit(0 if failures == 0 else 1)
