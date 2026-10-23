@@ -1,7 +1,10 @@
 # FLOTRA 3D asset export pilot (2026-10-23)
 
-Status: **separate Draft trial only**. Do not merge to main, alter the existing
-PR161 automation trial, publish Web, or call it iPhone-qualified before checks.
+Status: **PR165 integrated into the canonical Godot source**, merge
+`84512f038158f9a79b922efcddcde04d232f2936` (2026-10-23).
+The existing engineering preview is updated by the normal Pages workflow.
+This is not iPhone/device acceptance, production GO, or an App Store release.
+Keep PR161 separate.
 
 ## What's real
 - `godot/assets/models/flotra_delivery_truck_demo.glb`: **original hand-built** (not Meshy-generated) static truck body/cab visualization.
@@ -27,7 +30,7 @@ PR161 automation trial, publish Web, or call it iPhone-qualified before checks.
    local origin `(6,0,4.25)` external dock anchor, cab faces **-X**; model
    local bounds roughly X -2.08..1.35, Y 0.03..1.83, Z -0.81..0.81.
    Confirm scale/axis in Godot; most AI exports need preparation.
-4. Replace the GLB on this **trial branch**, then run Godot 4.7.2 import,
+4. Replace the GLB on a **separate reviewed branch**, then run Godot 4.7.2 import,
    targeted smoke, full existing regressions and real iPhone GPU/touch test.
    Relax exact geometry assertions only after documenting the new measured
    budget; never bypass functional gates.
@@ -40,7 +43,8 @@ PR161 automation trial, publish Web, or call it iPhone-qualified before checks.
 ## Safety/quality boundaries
 This visual prototype does not add operational machinery, vehicle motion,
 additional deliveries, earned funds, analytics or monetization. It leaves
-PR161, Pages, deployment aliases, and the public save origin untouched.
+PR161 and the save schema untouched. The existing development Pages workflow
+publishes the merged source separately; no new distribution origin is created.
 A CI-green run only establishes desktop/engine behavior, not whether the
 image is readable or the framerate acceptable on a physical iPhone.
 
@@ -58,11 +62,26 @@ Local Godot 4.7.2 checks passed for the asset/fallback, workbench, save preserva
 and review, mobile input, world/window input, packing, presentation cache, routes,
 warehouse/HUD cohesion, player journey, zone feedback, save status, simulation,
 growth-first/UI and capacity growth. `staffing_return_journey_smoke` produced
-save-byte assertions locally on both unchanged PR165 `64816a8` and the candidate;
-this remains an unresolved environment/baseline discrepancy pending fresh CI.
-Do not report all local regressions green or bypass this gate.
+save-byte assertions locally on both unchanged PR165 `64816a8` and the candidate.
+The instrumented diagnostic and then the unmodified test passed all 819 checks
+on standalone reruns. The root cause of the initial transient failures is not
+established. All six PR workflows passed at the exact merged source head
+`b302a67e84b286a5362b7250e30d6a6b8844d8ef`; no gate was bypassed.
 
 The repository PNG `docs/visual/logistics_boss_visual_north_star_2026-09-16.png`
 has a readable PNG header but fails full Pillow decoding (broken data stream).
 No target-image acceptance or art redesign is claimed. Physical iPhone validation,
 fixed-condition rendered A/B comparison and visual acceptance remain pending.
+
+## Integration evidence
+
+- PR: https://github.com/48wr9f4wgp-lab/Logistics-Boss/pull/165
+- Verified source head: `b302a67e84b286a5362b7250e30d6a6b8844d8ef`.
+- Godot CI: run `39945746825`; growth: `39945746830`; mobile clarity: `39945746821`;
+  rendered capture: `39945746863`; Android export: `39945746854`; iOS export: `39945746811`.
+- The handoff ZIP passed CRC and all five SHA-256 entries; its four CURRENT images
+  were inspected. They belong to earlier head `64816a8`, not the revised source.
+- Existing preview: https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-preview/
+- Physical iPhone gameplay/save continuity and rendering A/B remain pending.
+- A source-level revert of PR165 restores the previous truck; no save migration
+  or user-data reset is needed by this change. Preserve newer unrelated work.
