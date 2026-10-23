@@ -51,6 +51,7 @@ jobs:
             window_focus_input_smoke \
             packing_presentation_smoke \
             blender_workbench_smoke \
+            ai_truck_asset_smoke \
             presentation_cache_smoke \
             selected_routes_visibility_smoke \
             warehouse_cohesion_smoke \
