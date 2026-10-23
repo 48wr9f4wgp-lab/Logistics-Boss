@@ -260,20 +260,38 @@ func _build_outbound_dock() -> void:
 # Visual-only 3D asset slot. Godot's normal glTF importer owns mesh/materials.
 # Keep existing truck meshes as fallback if the exported model is absent/invalid.
 # All wheels, stripes and markers stay under VisualPass2, not the asset.
-func _try_install_truck_glb(legacy_body: MeshInstance3D, legacy_cab: MeshInstance3D) -> void:
-    if not ResourceLoader.exists(TRUCK_TRIAL_GLB_PATH):
+func _try_install_truck_glb(legacy_body: MeshInstance3D, legacy_cab: MeshInstance3D, asset_path: String = TRUCK_TRIAL_GLB_PATH) -> void:
+    if not ResourceLoader.exists(asset_path):
         return
-    var packed := load(TRUCK_TRIAL_GLB_PATH) as PackedScene
+    var packed := load(asset_path) as PackedScene
     if packed == null:
         return
-    var shell := packed.instantiate() as Node3D
-    if shell == null:
+    var instance := packed.instantiate()
+    var shell := instance as Node3D
+    if shell == null or not _truck_has_geometry(shell):
+        # A valid PackedScene can still be empty or have the wrong root type.
+        # Keep the old truck visible and release the rejected scene in all cases.
+        if instance != null:
+            instance.free()
         return
     shell.name = "DeliveryTruckVisual"
     shell.position = Vector3(6.0, 0.0, 4.25)
     add_child(shell)
     legacy_body.visible = false
     legacy_cab.visible = false
+
+
+func _truck_has_geometry(root: Node3D) -> bool:
+    if not root.visible:
+        return false
+    if root is MeshInstance3D:
+        var geometry := root as MeshInstance3D
+        if geometry.visible and geometry.mesh != null and geometry.mesh.get_surface_count() > 0:
+            return true
+    for child in root.get_children():
+        if child is Node3D and child.visible and _truck_has_geometry(child):
+            return true
+    return false
 
 
 func _dock_frame(center: Vector3, accent: Color) -> void:
