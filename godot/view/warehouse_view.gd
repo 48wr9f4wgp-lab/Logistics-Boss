@@ -2,6 +2,7 @@ extends Node3D
 class_name WarehouseView
 
 const PackingWorkbenchScene = preload("res://assets/models/packing_workbench.glb")
+const TRUCK_TRIAL_GLB_PATH = "res://assets/models/flotra_delivery_truck_demo.glb"
 
 const STATION_POSITIONS := {
     "conveyor": Vector3(-0.35, 0.35, 1.85),
@@ -251,8 +252,28 @@ func _build_outbound_dock() -> void:
     _box("OutboundPad", Vector3(2.8, 0.10, 2.55), Vector3(5.15, 0.02, 2.35), Color(0.08, 0.38, 0.31))
     _dock_frame(Vector3(5.2, 1.25, -4.45), MINT)
     _conveyor(Vector3(5.15, 0.68, 1.45), Vector3(2.15, 0.26, 0.78))
-    _box("TruckBody", Vector3(2.1, 1.75, 1.55), Vector3(6.15, 0.92, 4.25), Color(0.72, 0.76, 0.79))
-    _box("TruckCab", Vector3(1.0, 1.35, 1.5), Vector3(4.55, 0.70, 4.25), Color(0.12, 0.27, 0.42))
+    var legacy_truck_body := _box("TruckBody", Vector3(2.1, 1.75, 1.55), Vector3(6.15, 0.92, 4.25), Color(0.72, 0.76, 0.79))
+    var legacy_truck_cab := _box("TruckCab", Vector3(1.0, 1.35, 1.5), Vector3(4.55, 0.70, 4.25), Color(0.12, 0.27, 0.42))
+    _try_install_truck_glb(legacy_truck_body, legacy_truck_cab)
+
+
+# Visual-only 3D asset slot. Godot's normal glTF importer owns mesh/materials.
+# Keep existing truck meshes as fallback if the exported model is absent/invalid.
+# All wheels, stripes and markers stay under VisualPass2, not the asset.
+func _try_install_truck_glb(legacy_body: MeshInstance3D, legacy_cab: MeshInstance3D) -> void:
+    if not ResourceLoader.exists(TRUCK_TRIAL_GLB_PATH):
+        return
+    var packed := load(TRUCK_TRIAL_GLB_PATH) as PackedScene
+    if packed == null:
+        return
+    var shell := packed.instantiate() as Node3D
+    if shell == null:
+        return
+    shell.name = "DeliveryTruckVisual"
+    shell.position = Vector3(6.0, 0.0, 4.25)
+    add_child(shell)
+    legacy_body.visible = false
+    legacy_cab.visible = false
 
 
 func _dock_frame(center: Vector3, accent: Color) -> void:
