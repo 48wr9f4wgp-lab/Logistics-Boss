@@ -1,26 +1,24 @@
-# FLOTRA
+# FLOTRA（フロトラ）
 
-**FLOTRA** は、プレイヤーが自分で荷物を運ぶのではなく、物流拠点へ指示を出し、NPC・設備・物流フローが自律的に動く様子を観察しながら改善していく3D物流管理シミュレーターです。
+iPhone / iOS向けの3D物流・倉庫成長ゲーム。Godot 4.7.2 / GDScript。
 
-## Current Core Loop
+## 開発の入口（2026-10-24）
 
-観察 → ボトルネック発見 → 方針・優先度・設備へ指示 → NPCと物流の流れが変化 → 出荷・報酬 → 研究・設備強化 → 施設拡張
+開発中心は **`flotra-campaign/`**。
+仕事を受ける → 実貨物を出荷して稼ぐ → 設備・人員・棟へ投資 → 自動化と倉庫の成長を見る。
 
-## Product Direction
+- 状態と機能対応表: [FLOTRA_ACTIVE_DEVELOPMENT.md](FLOTRA_ACTIVE_DEVELOPMENT.md)
+- 再開地点: [HANDOFF.md](HANDOFF.md)
+- 実装・保存契約: [flotra-campaign/README.md](flotra-campaign/README.md)
+- 開発確認先: https://48wr9f4wgp-lab.github.io/Logistics-Boss/godot-jobs-preview/
 
-- 3D世界を主役にし、UIは必要時だけ展開する
-- 直接操作の忙しさより、指示・判断・観察の快感を優先する
-- 手作業から自動化、大規模物流センターへ成長する景色を報酬にする
-- iPhone Safariを主要な実機検証環境として扱う
-- GitHub `main` をCanonical baselineとする
+`godot/` は従来版の保全・比較・素材移植元。既存保存と `/godot-preview/` を保持する。
+PR165のトラックは従来版への導入であり、後発版への表示を意味しない。
+PR161は後発版の追加改良候補で、Draft・未合流・性能未認定。
+旧Three.jsは履歴参照であり、製品開発の中心に戻さない。
 
-## Technology
+LITE / VERTICAL_SLICE / iPhone・iOS / 縦画面・タッチ優先。
+PRODUCTION_DECISION=UNDECIDED / RELEASE_APPROVAL=NOT_REQUESTED。
+Webは開発確認用。App Store公開やネイティブiOS実機検証は未完了。
 
-- Three.js 0.186.0
-- Rapier 3D compat 0.20.0
-- Static HTML / CSS / JavaScript
-- GitHub Pages想定: `main/docs`
-
-## Status
-
-Vertical Slice / Functional Build段階。一般公開品質の完成版ではありません。
+旧README・旧HANDOFFは `docs/history/*before_unification_2026-10-24.md` に保全。
