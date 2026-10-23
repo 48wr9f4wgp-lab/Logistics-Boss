@@ -1,0 +1,1292 @@
+{
+  "normal_abba": [
+    {
+      "label": "A1",
+      "status": "passed",
+      "error": null,
+      "cpu_p50_ms": 37.7,
+      "cpu_p95_ms": 55.6,
+      "raf_p50_ms": 233.3000000000029,
+      "raf_p95_ms": 283.3000000000029,
+      "draw_max": 86,
+      "initial": {
+        "simTime": 84.9999999999973,
+        "wallet": 70,
+        "growth": {
+          "area": 572.84,
+          "catalog_complete": false,
+          "completed_milestones": 6,
+          "human_count": 6,
+          "legacy_profile": false,
+          "lifetime_units": 427,
+          "next_goal": "\u96c6\u54c1\u6307\u793a\u76e4\u307e\u3067\u8cc7\u91d1\u3042\u3068230\u3002\u5b9a\u671f\u4fbf\u3067\u305f\u3081\u3088\u3046",
+          "robot_count": 4,
+          "wing_count": 4
+        },
+        "progress": {
+          "fraction": 0.107638888888889,
+          "manifest_quota": 48,
+          "manifests_offered": 48,
+          "offered": 288,
+          "remaining": 257,
+          "shipped": 31,
+          "total": 288
+        },
+        "camera": {
+          "callouts": [
+            {
+              "anchorX": 87.1175003051758,
+              "anchorY": 258.305450439453,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u5165\u8377",
+              "visible": true,
+              "width": 54,
+              "x": 19,
+              "y": 217
+            },
+            {
+              "anchorX": 307.613464355469,
+              "anchorY": 208.483963012695,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u4fdd\u7ba1\u5e8a 38\u67a0",
+              "visible": true,
+              "width": 118,
+              "x": 264,
+              "y": 167
+            },
+            {
+              "anchorX": 143.464111328125,
+              "anchorY": 367.819061279297,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u51fa\u8377",
+              "visible": true,
+              "width": 54,
+              "x": 116,
+              "y": 388
+            }
+          ],
+          "fitSize": 57.9014015197754,
+          "floorPoints": [
+            {
+              "name": "GrowthFoundation",
+              "x": 197.843887329102,
+              "y": 413.941833496094
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 230.588729858398,
+              "y": 395.168304443359
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 263.333557128906,
+              "y": 376.394775390625
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 296.078369140625,
+              "y": 357.621246337891
+            },
+            {
+              "name": "ServiceConnectorFoundation",
+              "x": 109.443511962891,
+              "y": 389.970672607422
+            },
+            {
+              "name": "@MeshInstance3D@8",
+              "x": 190.242431640625,
+              "y": 492.953582763672
+            }
+          ],
+          "mouseDown": false,
+          "panX": 0,
+          "panY": 0,
+          "size": 57.9014015197754,
+          "touches": 0,
+          "turn": 0,
+          "zoom": 1
+        }
+      },
+      "final_progress": {
+        "before": 31,
+        "after": 45,
+        "time": 117.149999999995
+      },
+      "failure_final_time": null
+    },
+    {
+      "label": "B1",
+      "status": "failed",
+      "error": "Mature 3D overhead stays within the same-renderer baseline budget",
+      "cpu_p50_ms": 39.7,
+      "cpu_p95_ms": 54.2,
+      "raf_p50_ms": 283.3000000000029,
+      "raf_p95_ms": 316.6999999999971,
+      "draw_max": 88,
+      "initial": {
+        "simTime": 84.9999999999973,
+        "wallet": 70,
+        "growth": {
+          "area": 572.84,
+          "catalog_complete": false,
+          "completed_milestones": 6,
+          "human_count": 6,
+          "legacy_profile": false,
+          "lifetime_units": 427,
+          "next_goal": "\u96c6\u54c1\u6307\u793a\u76e4\u307e\u3067\u8cc7\u91d1\u3042\u3068230\u3002\u5b9a\u671f\u4fbf\u3067\u305f\u3081\u3088\u3046",
+          "robot_count": 4,
+          "wing_count": 4
+        },
+        "progress": {
+          "fraction": 0.107638888888889,
+          "manifest_quota": 48,
+          "manifests_offered": 48,
+          "offered": 288,
+          "remaining": 257,
+          "shipped": 31,
+          "total": 288
+        },
+        "camera": {
+          "callouts": [
+            {
+              "anchorX": 87.1175003051758,
+              "anchorY": 258.305450439453,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u5165\u8377",
+              "visible": true,
+              "width": 54,
+              "x": 19,
+              "y": 217
+            },
+            {
+              "anchorX": 307.613464355469,
+              "anchorY": 208.483963012695,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u4fdd\u7ba1\u5e8a 38\u67a0",
+              "visible": true,
+              "width": 118,
+              "x": 264,
+              "y": 167
+            },
+            {
+              "anchorX": 143.464111328125,
+              "anchorY": 367.819061279297,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u51fa\u8377",
+              "visible": true,
+              "width": 54,
+              "x": 116,
+              "y": 388
+            }
+          ],
+          "fitSize": 57.9014015197754,
+          "floorPoints": [
+            {
+              "name": "GrowthFoundation",
+              "x": 197.843887329102,
+              "y": 413.941833496094
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 230.588729858398,
+              "y": 395.168304443359
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 263.333557128906,
+              "y": 376.394775390625
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 296.078369140625,
+              "y": 357.621246337891
+            },
+            {
+              "name": "ServiceConnectorFoundation",
+              "x": 109.443511962891,
+              "y": 389.970672607422
+            },
+            {
+              "name": "@MeshInstance3D@8",
+              "x": 190.242431640625,
+              "y": 492.953582763672
+            }
+          ],
+          "mouseDown": false,
+          "panX": 0,
+          "panY": 0,
+          "size": 57.9014015197754,
+          "touches": 0,
+          "turn": 0,
+          "zoom": 1
+        }
+      },
+      "final_progress": null,
+      "failure_final_time": 115.249999999996
+    },
+    {
+      "label": "B2",
+      "status": "passed",
+      "error": null,
+      "cpu_p50_ms": 35.4,
+      "cpu_p95_ms": 77,
+      "raf_p50_ms": 233.3000000000029,
+      "raf_p95_ms": 283.20000000000437,
+      "draw_max": 86,
+      "initial": {
+        "simTime": 84.9999999999973,
+        "wallet": 70,
+        "growth": {
+          "area": 572.84,
+          "catalog_complete": false,
+          "completed_milestones": 6,
+          "human_count": 6,
+          "legacy_profile": false,
+          "lifetime_units": 427,
+          "next_goal": "\u96c6\u54c1\u6307\u793a\u76e4\u307e\u3067\u8cc7\u91d1\u3042\u3068230\u3002\u5b9a\u671f\u4fbf\u3067\u305f\u3081\u3088\u3046",
+          "robot_count": 4,
+          "wing_count": 4
+        },
+        "progress": {
+          "fraction": 0.107638888888889,
+          "manifest_quota": 48,
+          "manifests_offered": 48,
+          "offered": 288,
+          "remaining": 257,
+          "shipped": 31,
+          "total": 288
+        },
+        "camera": {
+          "callouts": [
+            {
+              "anchorX": 87.1175003051758,
+              "anchorY": 258.305450439453,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u5165\u8377",
+              "visible": true,
+              "width": 54,
+              "x": 19,
+              "y": 217
+            },
+            {
+              "anchorX": 307.613464355469,
+              "anchorY": 208.483963012695,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u4fdd\u7ba1\u5e8a 38\u67a0",
+              "visible": true,
+              "width": 118,
+              "x": 264,
+              "y": 167
+            },
+            {
+              "anchorX": 143.464111328125,
+              "anchorY": 367.819061279297,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u51fa\u8377",
+              "visible": true,
+              "width": 54,
+              "x": 116,
+              "y": 388
+            }
+          ],
+          "fitSize": 57.9014015197754,
+          "floorPoints": [
+            {
+              "name": "GrowthFoundation",
+              "x": 197.843887329102,
+              "y": 413.941833496094
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 230.588729858398,
+              "y": 395.168304443359
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 263.333557128906,
+              "y": 376.394775390625
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 296.078369140625,
+              "y": 357.621246337891
+            },
+            {
+              "name": "ServiceConnectorFoundation",
+              "x": 109.443511962891,
+              "y": 389.970672607422
+            },
+            {
+              "name": "@MeshInstance3D@8",
+              "x": 190.242431640625,
+              "y": 492.953582763672
+            }
+          ],
+          "mouseDown": false,
+          "panX": 0,
+          "panY": 0,
+          "size": 57.9014015197754,
+          "touches": 0,
+          "turn": 0,
+          "zoom": 1
+        }
+      },
+      "final_progress": {
+        "before": 31,
+        "after": 45,
+        "time": 116.999999999995
+      },
+      "failure_final_time": null
+    },
+    {
+      "label": "A2",
+      "status": "passed",
+      "error": null,
+      "cpu_p50_ms": 38.8,
+      "cpu_p95_ms": 51.1,
+      "raf_p50_ms": 233.29999999999563,
+      "raf_p95_ms": 266.59999999999854,
+      "draw_max": 88,
+      "initial": {
+        "simTime": 84.9999999999973,
+        "wallet": 70,
+        "growth": {
+          "area": 572.84,
+          "catalog_complete": false,
+          "completed_milestones": 6,
+          "human_count": 6,
+          "legacy_profile": false,
+          "lifetime_units": 427,
+          "next_goal": "\u96c6\u54c1\u6307\u793a\u76e4\u307e\u3067\u8cc7\u91d1\u3042\u3068230\u3002\u5b9a\u671f\u4fbf\u3067\u305f\u3081\u3088\u3046",
+          "robot_count": 4,
+          "wing_count": 4
+        },
+        "progress": {
+          "fraction": 0.107638888888889,
+          "manifest_quota": 48,
+          "manifests_offered": 48,
+          "offered": 288,
+          "remaining": 257,
+          "shipped": 31,
+          "total": 288
+        },
+        "camera": {
+          "callouts": [
+            {
+              "anchorX": 87.1175003051758,
+              "anchorY": 258.305450439453,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u5165\u8377",
+              "visible": true,
+              "width": 54,
+              "x": 19,
+              "y": 217
+            },
+            {
+              "anchorX": 307.613464355469,
+              "anchorY": 208.483963012695,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u4fdd\u7ba1\u5e8a 38\u67a0",
+              "visible": true,
+              "width": 118,
+              "x": 264,
+              "y": 167
+            },
+            {
+              "anchorX": 143.464111328125,
+              "anchorY": 367.819061279297,
+              "fontSize": 18,
+              "height": 36,
+              "text": "\u51fa\u8377",
+              "visible": true,
+              "width": 54,
+              "x": 116,
+              "y": 388
+            }
+          ],
+          "fitSize": 57.9014015197754,
+          "floorPoints": [
+            {
+              "name": "GrowthFoundation",
+              "x": 197.843887329102,
+              "y": 413.941833496094
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 230.588729858398,
+              "y": 395.168304443359
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 263.333557128906,
+              "y": 376.394775390625
+            },
+            {
+              "name": "GrowthFoundation",
+              "x": 296.078369140625,
+              "y": 357.621246337891
+            },
+            {
+              "name": "ServiceConnectorFoundation",
+              "x": 109.443511962891,
+              "y": 389.970672607422
+            },
+            {
+              "name": "@MeshInstance3D@8",
+              "x": 190.242431640625,
+              "y": 492.953582763672
+            }
+          ],
+          "mouseDown": false,
+          "panX": 0,
+          "panY": 0,
+          "size": 57.9014015197754,
+          "touches": 0,
+          "turn": 0,
+          "zoom": 1
+        }
+      },
+      "final_progress": {
+        "before": 31,
+        "after": 45,
+        "time": 117.149999999995
+      },
+      "failure_final_time": null
+    }
+  ],
+  "same_state_view": {
+    "scope": "Sequential ABBA, identical full cargo state hash at every measured row",
+    "exactLedgerMatches": true,
+    "runs": [
+      {
+        "label": "A1",
+        "environment": {
+          "dpr": 3,
+          "css": [
+            390,
+            844
+          ],
+          "backing": [
+            1170,
+            2532
+          ],
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+        },
+        "summary": {
+          "view_usec": {
+            "p50": 17000,
+            "p95": 20500,
+            "max": 26400
+          },
+          "sim_usec": {
+            "p50": 800,
+            "p95": 1900,
+            "max": 2700
+          },
+          "hud_usec": {
+            "p50": 3000,
+            "p95": 3600,
+            "max": 12300
+          },
+          "draw_calls": {
+            "p50": 74,
+            "p95": 76,
+            "max": 78
+          },
+          "unchanged_view_usec": {
+            "p50": 700,
+            "p95": 1000
+          }
+        },
+        "ledger_unchanged_by_view": true,
+        "scope": "Same actual cargo ledger per row; renderer microbenchmark, excludes live autosave scheduling",
+        "measuredRows": 96,
+        "busyPackingRows": 31
+      },
+      {
+        "label": "B1",
+        "environment": {
+          "dpr": 3,
+          "css": [
+            390,
+            844
+          ],
+          "backing": [
+            1170,
+            2532
+          ],
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+        },
+        "summary": {
+          "view_usec": {
+            "p50": 16900,
+            "p95": 20100,
+            "max": 23100
+          },
+          "sim_usec": {
+            "p50": 800,
+            "p95": 2000,
+            "max": 4100
+          },
+          "hud_usec": {
+            "p50": 3100,
+            "p95": 3600,
+            "max": 5800
+          },
+          "draw_calls": {
+            "p50": 74,
+            "p95": 76,
+            "max": 78
+          },
+          "unchanged_view_usec": {
+            "p50": 600,
+            "p95": 900
+          }
+        },
+        "ledger_unchanged_by_view": true,
+        "scope": "Same actual cargo ledger per row; renderer microbenchmark, excludes live autosave scheduling",
+        "measuredRows": 96,
+        "busyPackingRows": 31
+      },
+      {
+        "label": "B2",
+        "environment": {
+          "dpr": 3,
+          "css": [
+            390,
+            844
+          ],
+          "backing": [
+            1170,
+            2532
+          ],
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+        },
+        "summary": {
+          "view_usec": {
+            "p50": 16700,
+            "p95": 20000,
+            "max": 27000
+          },
+          "sim_usec": {
+            "p50": 900,
+            "p95": 2000,
+            "max": 7400
+          },
+          "hud_usec": {
+            "p50": 2900,
+            "p95": 3300,
+            "max": 3600
+          },
+          "draw_calls": {
+            "p50": 74,
+            "p95": 76,
+            "max": 78
+          },
+          "unchanged_view_usec": {
+            "p50": 600,
+            "p95": 900
+          }
+        },
+        "ledger_unchanged_by_view": true,
+        "scope": "Same actual cargo ledger per row; renderer microbenchmark, excludes live autosave scheduling",
+        "measuredRows": 96,
+        "busyPackingRows": 31
+      },
+      {
+        "label": "A2",
+        "environment": {
+          "dpr": 3,
+          "css": [
+            390,
+            844
+          ],
+          "backing": [
+            1170,
+            2532
+          ],
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+        },
+        "summary": {
+          "view_usec": {
+            "p50": 17000,
+            "p95": 21100,
+            "max": 28800
+          },
+          "sim_usec": {
+            "p50": 800,
+            "p95": 1900,
+            "max": 2400
+          },
+          "hud_usec": {
+            "p50": 2900,
+            "p95": 3400,
+            "max": 7100
+          },
+          "draw_calls": {
+            "p50": 74,
+            "p95": 76,
+            "max": 78
+          },
+          "unchanged_view_usec": {
+            "p50": 700,
+            "p95": 900
+          }
+        },
+        "ledger_unchanged_by_view": true,
+        "scope": "Same actual cargo ledger per row; renderer microbenchmark, excludes live autosave scheduling",
+        "measuredRows": 96,
+        "busyPackingRows": 31
+      }
+    ]
+  },
+  "same_state_main": {
+    "scope": "Sequential ABBA, identical full cargo state hash at every measured row",
+    "exactLedgerMatches": true,
+    "runs": [
+      {
+        "label": "A1",
+        "environment": {
+          "dpr": 3,
+          "css": [
+            390,
+            844
+          ],
+          "backing": [
+            1170,
+            2532
+          ],
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+        },
+        "summary": {
+          "main_usec": {
+            "p50": 26500,
+            "p95": 45100,
+            "max": 53200
+          },
+          "draw_calls": {
+            "p50": 76,
+            "p95": 80,
+            "max": 82
+          },
+          "raf_ms": {
+            "p50": 249.90000000000146,
+            "p95": 299.8999999999978,
+            "max": 316.6000000000022
+          },
+          "unchanged_view_usec": {
+            "p50": 5900,
+            "p95": 6700
+          }
+        },
+        "ledger_unchanged_by_view": true,
+        "scope": "Full production Main including autosave; deterministic .25s foreground steps via existing test clock seam, isolated fresh browser storage",
+        "raf_frames": [
+          283.3000000000011,
+          283.2999999999993,
+          283.2999999999993,
+          233.3000000000011,
+          216.6999999999989,
+          283.3000000000011,
+          250,
+          266.6999999999989,
+          250,
+          233.3000000000011,
+          266.60000000000036,
+          233.39999999999964,
+          250,
+          249.89999999999964,
+          300,
+          233.40000000000146,
+          283.2999999999993,
+          283.2999999999993,
+          266.7000000000007,
+          300,
+          299.8999999999978,
+          266.6000000000022,
+          233.39999999999782,
+          200,
+          266.6000000000022,
+          266.7000000000007,
+          216.59999999999854,
+          233.29999999999927,
+          216.70000000000073,
+          233.29999999999927,
+          300.1000000000022,
+          249.89999999999782,
+          233.29999999999927,
+          233.40000000000146,
+          250,
+          216.70000000000073,
+          266.59999999999854,
+          266.7000000000007,
+          233.29999999999927,
+          250,
+          316.6000000000022,
+          233.29999999999927,
+          216.70000000000073,
+          200,
+          200,
+          250,
+          250,
+          249.89999999999782,
+          250,
+          233.40000000000146,
+          233.29999999999927,
+          266.7000000000007,
+          266.59999999999854,
+          233.40000000000146,
+          266.59999999999854,
+          233.29999999999927,
+          266.6000000000022,
+          250.09999999999854,
+          233.20000000000073,
+          266.7999999999993,
+          249.90000000000146,
+          266.7000000000007,
+          283.3999999999978,
+          249.90000000000146,
+          250,
+          249.89999999999782,
+          233.40000000000146,
+          250,
+          250,
+          233.29999999999927,
+          266.7000000000007,
+          266.59999999999854,
+          250,
+          233.40000000000146,
+          249.90000000000146,
+          233.39999999999782,
+          216.60000000000218,
+          266.6999999999971,
+          250,
+          233.20000000000437,
+          233.39999999999418,
+          233.3000000000029,
+          250,
+          216.6999999999971,
+          233.3000000000029,
+          216.59999999999854,
+          216.70000000000437,
+          233.39999999999418,
+          216.5,
+          233.40000000000146,
+          233.3000000000029,
+          216.6999999999971,
+          233.3000000000029,
+          233.29999999999563,
+          216.70000000000437,
+          266.6999999999971
+        ],
+        "measuredRows": 96,
+        "busyPackingRows": 12
+      },
+      {
+        "label": "B1",
+        "environment": {
+          "dpr": 3,
+          "css": [
+            390,
+            844
+          ],
+          "backing": [
+            1170,
+            2532
+          ],
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+        },
+        "summary": {
+          "main_usec": {
+            "p50": 26500,
+            "p95": 45200,
+            "max": 48200
+          },
+          "draw_calls": {
+            "p50": 76,
+            "p95": 80,
+            "max": 82
+          },
+          "raf_ms": {
+            "p50": 233.40000000000146,
+            "p95": 283.2999999999993,
+            "max": 333.2999999999993
+          },
+          "unchanged_view_usec": {
+            "p50": 5800,
+            "p95": 7500
+          }
+        },
+        "ledger_unchanged_by_view": true,
+        "scope": "Full production Main including autosave; deterministic .25s foreground steps via existing test clock seam, isolated fresh browser storage",
+        "raf_frames": [
+          250,
+          250,
+          250,
+          333.2999999999993,
+          216.70000000000073,
+          233.29999999999927,
+          233.39999999999964,
+          216.5,
+          266.7000000000007,
+          216.70000000000073,
+          249.89999999999964,
+          200.10000000000036,
+          200,
+          199.89999999999964,
+          250.10000000000036,
+          233.20000000000073,
+          216.6999999999971,
+          250.10000000000218,
+          233.20000000000073,
+          233.39999999999782,
+          216.60000000000218,
+          250,
+          216.6999999999971,
+          216.60000000000218,
+          250,
+          233.29999999999927,
+          200,
+          233.40000000000146,
+          250,
+          216.59999999999854,
+          216.70000000000073,
+          249.89999999999782,
+          283.40000000000146,
+          250,
+          266.59999999999854,
+          216.60000000000218,
+          250.09999999999854,
+          249.90000000000146,
+          266.7000000000007,
+          250,
+          233.29999999999927,
+          266.7000000000007,
+          250,
+          233.29999999999927,
+          233.29999999999927,
+          233.40000000000146,
+          233.1999999999971,
+          250,
+          233.3000000000029,
+          266.6999999999971,
+          233.40000000000146,
+          299.90000000000146,
+          250.09999999999854,
+          233.29999999999927,
+          266.6000000000022,
+          233.39999999999782,
+          283.2999999999993,
+          250,
+          249.90000000000146,
+          250.09999999999854,
+          216.60000000000218,
+          233.39999999999782,
+          233.3000000000029,
+          233.29999999999927,
+          249.89999999999782,
+          250,
+          266.7000000000007,
+          266.7000000000007,
+          250,
+          250,
+          249.90000000000146,
+          300,
+          233.39999999999782,
+          233.20000000000073,
+          233.40000000000146,
+          216.6999999999971,
+          216.60000000000218,
+          233.29999999999927,
+          233.40000000000146,
+          233.29999999999927,
+          233.29999999999927,
+          266.7000000000007,
+          233.29999999999927,
+          216.59999999999854,
+          250,
+          233.40000000000146,
+          233.3000000000029,
+          233.29999999999563,
+          233.3000000000029,
+          200,
+          216.59999999999854,
+          216.6999999999971,
+          250,
+          233.3000000000029,
+          216.6999999999971,
+          233.40000000000146
+        ],
+        "measuredRows": 96,
+        "busyPackingRows": 12
+      },
+      {
+        "label": "B2",
+        "environment": {
+          "dpr": 3,
+          "css": [
+            390,
+            844
+          ],
+          "backing": [
+            1170,
+            2532
+          ],
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+        },
+        "summary": {
+          "main_usec": {
+            "p50": 26200,
+            "p95": 43800,
+            "max": 56300
+          },
+          "draw_calls": {
+            "p50": 76,
+            "p95": 80,
+            "max": 82
+          },
+          "raf_ms": {
+            "p50": 233.40000000000146,
+            "p95": 266.6999999999989,
+            "max": 283.40000000000146
+          },
+          "unchanged_view_usec": {
+            "p50": 5800,
+            "p95": 7100
+          }
+        },
+        "ledger_unchanged_by_view": true,
+        "scope": "Full production Main including autosave; deterministic .25s foreground steps via existing test clock seam, isolated fresh browser storage",
+        "raf_frames": [
+          283.40000000000146,
+          266.6999999999989,
+          249.89999999999964,
+          216.70000000000073,
+          250,
+          233.29999999999927,
+          233.3000000000011,
+          200,
+          233.29999999999927,
+          233.3000000000011,
+          250,
+          250,
+          200,
+          216.6999999999989,
+          233.3000000000011,
+          250,
+          250,
+          266.59999999999854,
+          216.70000000000073,
+          250,
+          249.90000000000146,
+          216.6999999999971,
+          233.40000000000146,
+          233.29999999999927,
+          250,
+          216.70000000000073,
+          233.20000000000073,
+          250,
+          250.09999999999854,
+          266.6000000000022,
+          266.59999999999854,
+          250,
+          233.29999999999927,
+          233.40000000000146,
+          250,
+          266.59999999999854,
+          283.40000000000146,
+          250,
+          266.59999999999854,
+          233.29999999999927,
+          266.7000000000007,
+          266.6000000000022,
+          250,
+          216.6999999999971,
+          216.60000000000218,
+          200,
+          233.39999999999782,
+          233.3000000000029,
+          233.39999999999782,
+          249.90000000000146,
+          216.70000000000073,
+          249.89999999999782,
+          250,
+          233.40000000000146,
+          233.29999999999927,
+          250,
+          216.59999999999854,
+          250,
+          250.10000000000218,
+          283.2000000000007,
+          233.39999999999782,
+          233.29999999999927,
+          233.3000000000029,
+          216.6999999999971,
+          249.90000000000146,
+          233.40000000000146,
+          200,
+          249.89999999999782,
+          233.40000000000146,
+          233.39999999999782,
+          266.5,
+          216.70000000000073,
+          233.29999999999927,
+          233.40000000000146,
+          233.29999999999927,
+          216.70000000000073,
+          250,
+          249.90000000000146,
+          250,
+          233.39999999999782,
+          249.90000000000146,
+          233.29999999999927,
+          216.70000000000073,
+          200,
+          199.99999999999636,
+          216.70000000000437,
+          216.6999999999971,
+          249.90000000000146,
+          266.6999999999971,
+          199.90000000000146,
+          233.40000000000146,
+          249.90000000000146,
+          250.09999999999854,
+          249.90000000000146,
+          233.40000000000146,
+          216.59999999999854
+        ],
+        "measuredRows": 96,
+        "busyPackingRows": 12
+      },
+      {
+        "label": "A2",
+        "environment": {
+          "dpr": 3,
+          "css": [
+            390,
+            844
+          ],
+          "backing": [
+            1170,
+            2532
+          ],
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+        },
+        "summary": {
+          "main_usec": {
+            "p50": 25900,
+            "p95": 43300,
+            "max": 49000
+          },
+          "draw_calls": {
+            "p50": 76,
+            "p95": 80,
+            "max": 82
+          },
+          "raf_ms": {
+            "p50": 233.39999999999964,
+            "p95": 283.40000000000146,
+            "max": 300.09999999999854
+          },
+          "unchanged_view_usec": {
+            "p50": 5900,
+            "p95": 6400
+          }
+        },
+        "ledger_unchanged_by_view": true,
+        "scope": "Full production Main including autosave; deterministic .25s foreground steps via existing test clock seam, isolated fresh browser storage",
+        "raf_frames": [
+          233.1999999999989,
+          250,
+          266.60000000000036,
+          233.39999999999964,
+          216.70000000000073,
+          216.60000000000036,
+          250,
+          216.6999999999989,
+          250,
+          249.89999999999964,
+          250.10000000000036,
+          249.89999999999964,
+          250,
+          216.70000000000073,
+          233.39999999999964,
+          216.60000000000036,
+          216.70000000000073,
+          233.20000000000073,
+          300.09999999999854,
+          299.90000000000146,
+          233.29999999999927,
+          250,
+          266.7000000000007,
+          216.6999999999971,
+          216.60000000000218,
+          233.39999999999782,
+          233.20000000000073,
+          233.40000000000146,
+          233.29999999999927,
+          216.70000000000073,
+          250,
+          233.29999999999927,
+          233.40000000000146,
+          216.59999999999854,
+          233.29999999999927,
+          249.90000000000146,
+          233.39999999999782,
+          250,
+          250,
+          249.90000000000146,
+          283.40000000000146,
+          233.39999999999782,
+          216.60000000000218,
+          249.89999999999782,
+          216.70000000000073,
+          233.29999999999927,
+          233.29999999999927,
+          233.40000000000146,
+          266.59999999999854,
+          233.3000000000029,
+          233.39999999999782,
+          233.29999999999927,
+          233.40000000000146,
+          216.59999999999854,
+          233.3000000000029,
+          266.6999999999971,
+          283.3000000000029,
+          266.6999999999971,
+          250,
+          249.90000000000146,
+          250,
+          200.09999999999854,
+          233.3000000000029,
+          249.89999999999782,
+          266.7000000000007,
+          233.29999999999927,
+          216.70000000000073,
+          233.29999999999927,
+          233.29999999999927,
+          250,
+          216.70000000000073,
+          233.29999999999927,
+          283.3000000000029,
+          233.39999999999782,
+          266.6000000000022,
+          233.39999999999782,
+          266.5,
+          250,
+          250,
+          266.7999999999993,
+          233.20000000000073,
+          233.40000000000146,
+          266.59999999999854,
+          250,
+          216.70000000000073,
+          233.3000000000029,
+          233.29999999999563,
+          216.70000000000437,
+          216.59999999999854,
+          216.6999999999971,
+          266.70000000000437,
+          250,
+          299.8999999999942,
+          250,
+          300,
+          233.3000000000029
+        ],
+        "measuredRows": 96,
+        "busyPackingRows": 12
+      }
+    ]
+  },
+  "paired_state_deltas": {
+    "view": [
+      {
+        "pair": [
+          "A1",
+          "B1"
+        ],
+        "rows": 96,
+        "mean_delta_ms": -0.3052083333333333,
+        "median_delta_ms": -0.1,
+        "min_delta_ms": -10.4,
+        "max_delta_ms": 6.3,
+        "node_deltas": [
+          1
+        ]
+      },
+      {
+        "pair": [
+          "A2",
+          "B2"
+        ],
+        "rows": 96,
+        "mean_delta_ms": -0.16979166666666665,
+        "median_delta_ms": -0.1,
+        "min_delta_ms": -11.0,
+        "max_delta_ms": 10.3,
+        "node_deltas": [
+          1
+        ]
+      }
+    ],
+    "main": [
+      {
+        "pair": [
+          "A1",
+          "B1"
+        ],
+        "rows": 96,
+        "mean_delta_ms": -0.0052083333333333495,
+        "median_delta_ms": 0.25,
+        "min_delta_ms": -28.1,
+        "max_delta_ms": 18.9,
+        "node_deltas": [
+          1
+        ]
+      },
+      {
+        "pair": [
+          "A2",
+          "B2"
+        ],
+        "rows": 96,
+        "mean_delta_ms": 0.38958333333333334,
+        "median_delta_ms": -0.05,
+        "min_delta_ms": -11.3,
+        "max_delta_ms": 31.0,
+        "node_deltas": [
+          1
+        ]
+      }
+    ]
+  },
+  "normal_p95_spread_ms": {
+    "control": {
+      "values": [
+        55.6,
+        51.1
+      ],
+      "mean": 53.35,
+      "sample_sd": 3.181980515339464
+    },
+    "candidate": {
+      "values": [
+        54.2,
+        77
+      ],
+      "mean": 65.6,
+      "sample_sd": 16.12203461105328
+    }
+  }
+}

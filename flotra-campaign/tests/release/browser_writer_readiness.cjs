@@ -19,6 +19,8 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const assert = require('node:assert/strict');
 const exportContract = require('./browser_export_contract.cjs');
+const desktopSubject = require('./desktop_export_subject.cjs');
+const { historyReturnObserved } = require('./desktop_history_return.cjs');
 const P = 'flotra.campaign.dispatch.v5';
 const O = 'flotra.campaign.release.v1';
 const LOCK = P + '.writer';
@@ -33,7 +35,8 @@ const report = {
   startedAt: new Date().toISOString(), tests: [],
 };
 const digest = value => crypto.createHash('sha256').update(value).digest('hex');
-let browser, target, legacy, earned;
+let browser, target, legacy, earned, subject;
+const assetObservers = new WeakMap();
 const contextCases = new WeakMap();
 function markPhase(page, phase, details) {
   const test = contextCases.get(page.context());
@@ -53,6 +56,8 @@ function stdoutFailure(test) {
   return {
     case: test.name, status: test.status, phase: test.phase, elapsedSeconds: test.elapsedSeconds,
     error: logSafeText(test.error || test.traceError || test.reason),
+    browser: report.browserSelection, navigation: test.lifecycle?.navigation || d.navigation,
+    realms: test.lifecycle ? { before: test.lifecycle.beforeRealm, returned: test.lifecycle.returnedRealm } : null,
     readiness: d.readiness, notice: logSafeText(d.notice), label: logSafeText(d.label),
     engineInstances: h.engineInstances, starts: h.starts?.map(item => ({ ...item, error: logSafeText(item.error) })),
     locks: h.locks, writes: h.writes, input: h.input?.slice(-16), lifecycle: h.lifecycle,
@@ -113,6 +118,7 @@ async function readyUI(page, sheet = 'entry') {
   markPhase(page, 'check-real-loader-contract');
   const contract = await exportContract.fromPage(page);
   assert.equal(contract.version, 5, 'Candidate is actually the schema-5 export');
+  if (subject) await (await assetObservers.get(page))(subject.required);
   const d = await diagnostics(page);
   assert.equal(d.harness.starts.length, 1, 'Exactly one real engine.startGame call in this document');
   assert.equal(d.harness.engineInstances, 1, 'Exactly one actual engine instance');
@@ -290,6 +296,7 @@ async function installHarness(page, config = {}) {
 }
 async function goto(page) {
   markPhase(page, 'navigate-local-export');
+  if (subject) await assetObservers.get(page);
   const response = await page.goto(target.href, { waitUntil: 'domcontentloaded', timeout: 60000 });
   assert.ok(response?.ok(), 'Local export HTTP response succeeds');
   assert.equal(new URL(page.url()).origin, target.origin, 'No redirect away from the disposable local export');
@@ -414,6 +421,10 @@ async function scenario(name, options, action) {
     if (options.needsEarned) assert.ok(earned, 'Cold-start gate must earn and verify a v5 fixture first');
     context = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: test.dpr, isMobile: false, hasTouch: false, serviceWorkers: 'block' });
     contextCases.set(context, test);
+    if (subject) {
+      if (options.expectedEngineFailure) assert.equal(name, 'engine-load-rejection-releases-locks');
+      context.on('page', page => assetObservers.set(page, desktopSubject.observeAssets(page, target, subject.assets, !!options.expectedEngineFailure)));
+    }
     context.setDefaultTimeout(UI_MS);
     context.setDefaultNavigationTimeout(60000);
     await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
@@ -435,6 +446,10 @@ async function scenario(name, options, action) {
     assert.deepEqual(pageErrors, [], 'No uncaught browser exceptions, including negative cases');
     if (!options.expectedEngineFailure) assert.deepEqual(errors, [], 'No console or page errors');
     else assert.ok((await diagnostics(page)).harness.starts.some(call => call.state === 'rejected'), 'Real engine load actually rejected');
+    if (subject) {
+      test.loadedAssets = await (await assetObservers.get(page))();
+      subject.verify();
+    }
     test.status = test.status === 'blocked' ? 'blocked' : 'passed';
   } catch (error) {
     test.status = 'failed'; test.error = error.stack || String(error);
@@ -464,12 +479,21 @@ async function scenario(name, options, action) {
     assert.ok(!target.username && !target.password, 'No credentials in test URLs');
     target.searchParams.set('phone_qa', '1');
     report.url = target.href;
+    if (process.env.FLOTRA_SOURCE_EXPORT_PROVENANCE) {
+      subject = desktopSubject.candidateSubject(process.env);
+      report.subject = subject.report;
+    } else {
+      report.subject = { kind: 'committed-public-export', commit: process.env.FLOTRA_DESKTOP_PUBLIC_SHA || null };
+    }
     legacy = JSON.parse(fs.readFileSync(path.join(process.argv[4], 'legacy.json'), 'utf8'));
     assert.ok(typeof legacy.encoded === 'string' && legacy.encoded.length > 0 && Number.isFinite(legacy.time), 'Domain-earned legacy.json is required');
     report.legacyFixture = { sha256: digest(legacy.encoded), simTime: legacy.time, wallet: legacy.wallet };
     const { chromium } = require('playwright');
     browser = await chromium.launch({
       executablePath: process.env.CHROMIUM_EXECUTABLE || undefined,
+      // Use full Chromium's normal headless implementation. The default shell
+      // has a separate BFCache opt-in and is not the local system-browser subject.
+      channel: 'chromium',
       headless: process.env.FLOTRA_BROWSER_HEADED !== '1',
       // Playwright normally disables BFCache. Restore the browser's ordinary
       // feature, without forcing eligibility or fabricating lifecycle events.
@@ -477,6 +501,12 @@ async function scenario(name, options, action) {
     });
     report.chromiumVersion = browser.version();
     report.headed = process.env.FLOTRA_BROWSER_HEADED === '1';
+    report.browserSelection = {
+      version: report.chromiumVersion, playwright: require('playwright/package.json').version,
+      channel: 'chromium', executable: process.env.CHROMIUM_EXECUTABLE || chromium.executablePath(),
+      headed: report.headed, ignoredDefaultArgs: ['--disable-back-forward-cache'],
+    };
+    console.log('BROWSER_WRITER_ENVIRONMENT ' + JSON.stringify(report.browserSelection));
 
     for (const dpr of [1, 1.5]) await scenario('cold-start-dpr-' + dpr, { dpr }, async ({ page, test }) => {
       await goto(page); await readyUI(page);
@@ -621,8 +651,16 @@ async function scenario(name, options, action) {
       assert.deepEqual(latestErrors, []);
       await latestPage.close(); // Release native locks before restoring old heap.
       const newestStorage = await storage(helper);
-      await page.goBack({ waitUntil: 'domcontentloaded', timeout: 60000 });
-      await page.waitForFunction(() => !!window.__writerHarness, null, { timeout: UI_MS });
+      // BFCache restores do not repeat document loading. Playwright goBack
+      // relies on navigation lifecycle events and does not support this case.
+      // Traverse real browser history, then observe a NEW trusted pageshow.
+      markPhase(page, 'real-history-back');
+      await page.evaluate(() => history.back());
+      await page.waitForFunction(historyReturnObserved, {
+        expectedURL: target.href, beforeRealm: before.harness.realm,
+        beforePageShows: before.harness.lifecycle.filter(event => event.type === 'pageshow' && event.trusted).length,
+      }, { timeout: 60000 });
+      markPhase(page, 'observed-real-history-return');
       const returned = await diagnostics(page);
       const persisted = returned.harness.lifecycle.find(event => event.type === 'pageshow' && event.persisted && event.trusted);
       test.lifecycle = { beforeRealm: before.harness.realm, returnedRealm: returned.harness.realm, events: returned.harness.lifecycle, navigation: returned.navigation };
@@ -657,6 +695,10 @@ async function scenario(name, options, action) {
     report.fatal = error.stack || String(error);
   } finally {
     await browser?.close();
+    if (subject) {
+      try { subject.verify(); report.subjectVerifiedAfter = true; }
+      catch (error) { report.subjectVerificationError = error.stack || String(error); report.fatal ||= report.subjectVerificationError; }
+    }
     report.finishedAt = new Date().toISOString();
     report.summary = {
       passed: report.tests.filter(test => test.status === 'passed').length,

@@ -1,0 +1,1450 @@
+{
+  "label": "B1",
+  "environment": {
+    "dpr": 3,
+    "css": [
+      390,
+      844
+    ],
+    "backing": [
+      1170,
+      2532
+    ],
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "summary": {
+    "view_usec": {
+      "p50": 16900,
+      "p95": 20100,
+      "max": 23100
+    },
+    "sim_usec": {
+      "p50": 800,
+      "p95": 2000,
+      "max": 4100
+    },
+    "hud_usec": {
+      "p50": 3100,
+      "p95": 3600,
+      "max": 5800
+    },
+    "draw_calls": {
+      "p50": 74,
+      "p95": 76,
+      "max": 78
+    },
+    "unchanged_view_usec": {
+      "p50": 600,
+      "p95": 900
+    }
+  },
+  "ledger_unchanged_by_view": true,
+  "rows": [
+    {
+      "draw_calls": 74,
+      "hud_usec": 2900,
+      "index": 24,
+      "ledger": "29a945359e65582afb3e12498a6c9dc9138f6381ea9706b56dc0f502ad2d304a",
+      "nodes": 1269,
+      "packing": [
+        {
+          "cargo_id": 186,
+          "remaining": 0.55
+        }
+      ],
+      "shipped": 33,
+      "sim_usec": 1400,
+      "time": 88.0999999999971,
+      "view_usec": 17400
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3100,
+      "index": 25,
+      "ledger": "024448e8ac218428ba408700c2072b148260b2a4aff0f18cb76cdfa3594a9ea8",
+      "nodes": 1269,
+      "packing": [
+        {
+          "cargo_id": 186,
+          "remaining": 0.4
+        }
+      ],
+      "shipped": 33,
+      "sim_usec": 1000,
+      "time": 88.2499999999971,
+      "view_usec": 16900
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 2900,
+      "index": 26,
+      "ledger": "18de36ebaa34e53d1b62e029f0e2ad3c45ca219120671e0009d3763489f4373d",
+      "nodes": 1269,
+      "packing": [
+        {
+          "cargo_id": 186,
+          "remaining": 0.3
+        }
+      ],
+      "shipped": 33,
+      "sim_usec": 700,
+      "time": 88.3499999999971,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 5800,
+      "index": 27,
+      "ledger": "7a5238c5d9e4160c57896ecdcade05861cacffe8c998c65ba0529eb478726502",
+      "nodes": 1269,
+      "packing": [
+        {
+          "cargo_id": 186,
+          "remaining": 0.15
+        }
+      ],
+      "shipped": 33,
+      "sim_usec": 900,
+      "time": 88.4999999999971,
+      "view_usec": 17000
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 28,
+      "ledger": "e006e293ce1bd193fb6639627b4ca818371d5287ca9557186a497eb66ceb729e",
+      "nodes": 1269,
+      "packing": [
+        {
+          "cargo_id": 186,
+          "remaining": 0.0499999999999999
+        }
+      ],
+      "shipped": 34,
+      "sim_usec": 1400,
+      "time": 88.5999999999971,
+      "view_usec": 21100
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3100,
+      "index": 29,
+      "ledger": "b326ccd8cbb839193c8c1725cd4741caab5f7635131690af2e415d837d428519",
+      "nodes": 1269,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 800,
+      "time": 88.7499999999971,
+      "view_usec": 16700
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3300,
+      "index": 30,
+      "ledger": "451d764918c6005b45341518841ad34ee0e65eb71db90bb898b150eb20beb04a",
+      "nodes": 1269,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 600,
+      "time": 88.8499999999971,
+      "view_usec": 17800
+    },
+    {
+      "draw_calls": 73,
+      "hud_usec": 3100,
+      "index": 31,
+      "ledger": "632dbad822174166be0bf7e86b53aecbdd42b3da764de355c0822b0165a6381c",
+      "nodes": 1269,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 1100,
+      "time": 88.9999999999971,
+      "view_usec": 16800
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3200,
+      "index": 32,
+      "ledger": "4d88fc0e8fee8a74aa13285f643f969d271bc370f400000a11fba7409a22dc41",
+      "nodes": 1269,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 700,
+      "time": 89.0999999999971,
+      "view_usec": 16500
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 33,
+      "ledger": "82f888f2457b37a937655a5abba0ffb0faa0657b9d64a57312c988e5ff1fe061",
+      "nodes": 1269,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 900,
+      "time": 89.2499999999971,
+      "view_usec": 17000
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3200,
+      "index": 34,
+      "ledger": "71274c96425d6657c84445c6ba4e8839fc96ad6b030ba6effe74f5ecce3219a6",
+      "nodes": 1273,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 900,
+      "time": 89.3499999999971,
+      "view_usec": 17000
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 35,
+      "ledger": "9549b69d22135979b27bc9e201e17b92291ae9c2304147dc6dc025abe3f97e3e",
+      "nodes": 1265,
+      "packing": [
+        {
+          "cargo_id": 217,
+          "remaining": 0.55
+        }
+      ],
+      "shipped": 34,
+      "sim_usec": 800,
+      "time": 89.4999999999971,
+      "view_usec": 17200
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 36,
+      "ledger": "f1c68057a6d67940dcb093e65f92cdc82877f3431f89696b884d33d205d3831c",
+      "nodes": 1265,
+      "packing": [
+        {
+          "cargo_id": 217,
+          "remaining": 0.45
+        }
+      ],
+      "shipped": 34,
+      "sim_usec": 600,
+      "time": 89.5999999999971,
+      "view_usec": 16400
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 2900,
+      "index": 37,
+      "ledger": "507c7380c821311b2ef06af098cd043de6bc35a28286b677f431f2b2ae6aba83",
+      "nodes": 1265,
+      "packing": [
+        {
+          "cargo_id": 217,
+          "remaining": 0.3
+        }
+      ],
+      "shipped": 34,
+      "sim_usec": 700,
+      "time": 89.749999999997,
+      "view_usec": 17200
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 38,
+      "ledger": "23f97cb99f926b44cb7473a5079b13dce9117429c04c89c6c14baf2103887ae6",
+      "nodes": 1265,
+      "packing": [
+        {
+          "cargo_id": 217,
+          "remaining": 0.2
+        }
+      ],
+      "shipped": 34,
+      "sim_usec": 600,
+      "time": 89.849999999997,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 39,
+      "ledger": "56f41b7a10c652a85e184a15084e98e1a7d1b4a97fe2c2d3f8c277f6fc0bf925",
+      "nodes": 1265,
+      "packing": [
+        {
+          "cargo_id": 217,
+          "remaining": 0.0499999999999999
+        }
+      ],
+      "shipped": 34,
+      "sim_usec": 1200,
+      "time": 89.999999999997,
+      "view_usec": 16800
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 2900,
+      "index": 40,
+      "ledger": "6d73306d3b947d199fdfab6f03b07e7628bf567cbbcd6a3fffa26b12caf735ee",
+      "nodes": 1265,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 600,
+      "time": 90.099999999997,
+      "view_usec": 16200
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3200,
+      "index": 41,
+      "ledger": "4b5002bee20c3d9e5393f8cc0b95b295bf48b7448cd55a84d0ce0e89f52fde4e",
+      "nodes": 1265,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 900,
+      "time": 90.249999999997,
+      "view_usec": 16200
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 42,
+      "ledger": "7ed50873ec94b18b2316908292d669cf198fee5f20993ddfdf140d5757aec540",
+      "nodes": 1265,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 600,
+      "time": 90.349999999997,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3800,
+      "index": 43,
+      "ledger": "4d1168caac08702138a52bf12992d43411d710057f76991a039d08009c3da090",
+      "nodes": 1265,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 800,
+      "time": 90.499999999997,
+      "view_usec": 20500
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 44,
+      "ledger": "f0ceeaef9dc8e0f7a6f669cdf24bf026802716f0b10fd2b8263807fa1e803e1a",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 34,
+      "sim_usec": 2000,
+      "time": 90.599999999997,
+      "view_usec": 17400
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 4000,
+      "index": 45,
+      "ledger": "eab56a59cb0e82ca5d5d421a205c41b271622756b6f4bcee0f0c51afe7575b1a",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1600,
+      "time": 90.749999999997,
+      "view_usec": 18900
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3400,
+      "index": 46,
+      "ledger": "af0904767590e8d8c457de198654ce3644d0aac023a589fe5a11903549c31b3d",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1100,
+      "time": 90.849999999997,
+      "view_usec": 22000
+    },
+    {
+      "draw_calls": 71,
+      "hud_usec": 3000,
+      "index": 47,
+      "ledger": "2747df9f65a8cef1ac5333b3cf00a132ca3a22778bc7608ae27d7ebf2246c5bd",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 900,
+      "time": 90.999999999997,
+      "view_usec": 16000
+    },
+    {
+      "draw_calls": 70,
+      "hud_usec": 3200,
+      "index": 48,
+      "ledger": "475df4040650261227bee4f6f72b9708aa70ff990a6c289ae7188b231993027e",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1000,
+      "time": 91.099999999997,
+      "view_usec": 18300
+    },
+    {
+      "draw_calls": 70,
+      "hud_usec": 3100,
+      "index": 49,
+      "ledger": "6b5ecb170946b4714ad8ec2cc54067bb0b33dc1f6d71e01fa3561d30d4b7d118",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1200,
+      "time": 91.249999999997,
+      "view_usec": 16200
+    },
+    {
+      "draw_calls": 70,
+      "hud_usec": 3300,
+      "index": 50,
+      "ledger": "a7f7acd285b24ff9cdfe8a0302a4d04c57b844faa1fe8426e806f72f685f73a5",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1000,
+      "time": 91.349999999997,
+      "view_usec": 17300
+    },
+    {
+      "draw_calls": 71,
+      "hud_usec": 3100,
+      "index": 51,
+      "ledger": "73e729dafd281aa2f91e23b8354dea8ea96569e7a6d77a3c81948856f8dc31d3",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 900,
+      "time": 91.4999999999969,
+      "view_usec": 18000
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3400,
+      "index": 52,
+      "ledger": "29dd8a99d76fdd107e3dfe4eedc7a6efb931aa03468e77dc9c6ed53016e5ddad",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 800,
+      "time": 91.5999999999969,
+      "view_usec": 18700
+    },
+    {
+      "draw_calls": 73,
+      "hud_usec": 3300,
+      "index": 53,
+      "ledger": "215acd1bbc8493a2e309a8b14817bc239e01d59f6d97afb6e0cfbf2e05dde3dd",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 900,
+      "time": 91.7499999999969,
+      "view_usec": 17000
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3100,
+      "index": 54,
+      "ledger": "b2ed4859dda2457a29b3bfc80a9acb58916e1bf904441af25888b3e6a87d3f0d",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 700,
+      "time": 91.8499999999969,
+      "view_usec": 16700
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3300,
+      "index": 55,
+      "ledger": "491e0015b81ed0c8f49efd46eccfa79bce32374b892eeab14b99f34c407147d9",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1000,
+      "time": 91.9999999999969,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 56,
+      "ledger": "1460311dec640e6b5e233699223dd3a6dffc406cd079bbb52046cf10e6e4c382",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 700,
+      "time": 92.0999999999969,
+      "view_usec": 16800
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 2900,
+      "index": 57,
+      "ledger": "e44ae3f4572bf888b8df99647fb13a96b067d688968b203f4a9ba80fcfe75de5",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1000,
+      "time": 92.2499999999969,
+      "view_usec": 16000
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3200,
+      "index": 58,
+      "ledger": "9f5b45615fe20910de72fc296dc2de842a1679015b62c1e48444ac71cc2e4636",
+      "nodes": 1277,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1400,
+      "time": 92.3499999999969,
+      "view_usec": 16400
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 59,
+      "ledger": "4c0a2efbb0bc824bacc154616bb2a12c365c6ba0061d98d47d194db1031ba3a0",
+      "nodes": 1277,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 800,
+      "time": 92.4999999999969,
+      "view_usec": 16700
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 2900,
+      "index": 60,
+      "ledger": "d30a5227839e78d2fa046a4865cd292bdb8f41befd377b979b5d7f0fda93ef1c",
+      "nodes": 1277,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 500,
+      "time": 92.5999999999969,
+      "view_usec": 16300
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 61,
+      "ledger": "1a123b4a8b6cc72423b01fb9ff15c450060da29ebb3d2a35a4259ce9b8a204ab",
+      "nodes": 1277,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1200,
+      "time": 92.7499999999969,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 2900,
+      "index": 62,
+      "ledger": "5c0104d92eb6d4b47cbd9ced25e518adf663f525d6fe61a6f64cdd7d5c3b26e6",
+      "nodes": 1281,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 4100,
+      "time": 92.8499999999969,
+      "view_usec": 16700
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 63,
+      "ledger": "20ceea9439a565455e1e1276a31e19c85cdb50e49f9aa761785c3d56ed946230",
+      "nodes": 1281,
+      "packing": [
+        {
+          "cargo_id": 218,
+          "remaining": 0.55
+        }
+      ],
+      "shipped": 35,
+      "sim_usec": 700,
+      "time": 92.9999999999969,
+      "view_usec": 15900
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3100,
+      "index": 64,
+      "ledger": "6f6d4445d85bae4b3f4a6eca78d0731f617a7cc9f0c110522f8c1c02e0f16f56",
+      "nodes": 1281,
+      "packing": [
+        {
+          "cargo_id": 218,
+          "remaining": 0.45
+        }
+      ],
+      "shipped": 35,
+      "sim_usec": 700,
+      "time": 93.0999999999969,
+      "view_usec": 16500
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 65,
+      "ledger": "fe57a39cb4f2724c648a9b14fed7484a2d5cf370656f6491c7ff07758ee140dc",
+      "nodes": 1281,
+      "packing": [
+        {
+          "cargo_id": 218,
+          "remaining": 0.3
+        }
+      ],
+      "shipped": 35,
+      "sim_usec": 1700,
+      "time": 93.2499999999968,
+      "view_usec": 17400
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 66,
+      "ledger": "c5051e9ea93f574fe985c5c86f69b7ef7d308095a5ed62c6197ddcd45997c28e",
+      "nodes": 1281,
+      "packing": [
+        {
+          "cargo_id": 218,
+          "remaining": 0.2
+        }
+      ],
+      "shipped": 35,
+      "sim_usec": 600,
+      "time": 93.3499999999968,
+      "view_usec": 16300
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 67,
+      "ledger": "6f959fced1f5de5e00c9625730ceea95eb53f3b02149748d6ee7d5b7bc98713f",
+      "nodes": 1281,
+      "packing": [
+        {
+          "cargo_id": 218,
+          "remaining": 0.0499999999999999
+        }
+      ],
+      "shipped": 35,
+      "sim_usec": 800,
+      "time": 93.4999999999968,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3300,
+      "index": 68,
+      "ledger": "9b9f1705a2e64d02867b1e3f767d0c09529af368404e06f5c0fcd8634de626f7",
+      "nodes": 1281,
+      "packing": [
+        {
+          "cargo_id": 219,
+          "remaining": 0.65
+        }
+      ],
+      "shipped": 35,
+      "sim_usec": 700,
+      "time": 93.5999999999968,
+      "view_usec": 17000
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 2900,
+      "index": 69,
+      "ledger": "6f0e2117c9d08e11bc6277e51f059b57ae8eb76ed1a27c0ba8e9f41d29542b5c",
+      "nodes": 1277,
+      "packing": [
+        {
+          "cargo_id": 219,
+          "remaining": 0.5
+        }
+      ],
+      "shipped": 35,
+      "sim_usec": 800,
+      "time": 93.7499999999968,
+      "view_usec": 16800
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3500,
+      "index": 70,
+      "ledger": "62c59f73ee1f82afce95c4febe09c1bd4890390e9c235d1fda999fe34b4f5425",
+      "nodes": 1277,
+      "packing": [
+        {
+          "cargo_id": 219,
+          "remaining": 0.4
+        }
+      ],
+      "shipped": 35,
+      "sim_usec": 600,
+      "time": 93.8499999999968,
+      "view_usec": 18900
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3600,
+      "index": 71,
+      "ledger": "bf4946e274c08bf4f77a0dd106c2169f3584fc8377f2838bc8e268b19e737117",
+      "nodes": 1277,
+      "packing": [
+        {
+          "cargo_id": 219,
+          "remaining": 0.25
+        }
+      ],
+      "shipped": 35,
+      "sim_usec": 1000,
+      "time": 93.9999999999968,
+      "view_usec": 17300
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 72,
+      "ledger": "8b2a7e53d6b909649c4606c5558679811a618ba9540f4fc7d1910ea728705a2e",
+      "nodes": 1273,
+      "packing": [
+        {
+          "cargo_id": 219,
+          "remaining": 0.15
+        }
+      ],
+      "shipped": 35,
+      "sim_usec": 700,
+      "time": 94.0999999999968,
+      "view_usec": 16000
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3300,
+      "index": 73,
+      "ledger": "6e218597581ed27e0276234ea80f3f297e2e613cb49d4a14cc4e6905e0404694",
+      "nodes": 1289,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 2300,
+      "time": 94.2499999999968,
+      "view_usec": 19000
+    },
+    {
+      "draw_calls": 73,
+      "hud_usec": 3600,
+      "index": 74,
+      "ledger": "6561efc62d5ec05d41936e457ba16d487a8f64c73e03b2c0ddd13edcd9eb2877",
+      "nodes": 1289,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 800,
+      "time": 94.3499999999968,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3200,
+      "index": 75,
+      "ledger": "e9e4cc0bd7290bac1f3ce72d6dec0ea6fbb1feb948f95f67b2dc4022d68a7147",
+      "nodes": 1289,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1000,
+      "time": 94.4999999999968,
+      "view_usec": 16700
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3200,
+      "index": 76,
+      "ledger": "f7f5660e7b1d0b5fbbbf70162de47c6b4ab6ac17aa1ca5878876af06c0da9fcd",
+      "nodes": 1289,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 900,
+      "time": 94.5999999999968,
+      "view_usec": 17900
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 2900,
+      "index": 77,
+      "ledger": "ea2f8634a089433728868301b85c576c6fd1a568c7c3fb2bd223cec38e7c3cd2",
+      "nodes": 1289,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 1000,
+      "time": 94.7499999999968,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3200,
+      "index": 78,
+      "ledger": "3e89279a7bafd8e0d64ae5eaeda73099addde12831e8be90866e3a8dc8093fc1",
+      "nodes": 1289,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 600,
+      "time": 94.8499999999968,
+      "view_usec": 16000
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3200,
+      "index": 79,
+      "ledger": "4426a221533dd2053c7d3575850acf5090f5b5d790b5f7ddc8d971e878531253",
+      "nodes": 1289,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 700,
+      "time": 94.9999999999967,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3100,
+      "index": 80,
+      "ledger": "fef20ea05959e71c9921390afdec649d73537d90c23b467562dbbb01c38c25ca",
+      "nodes": 1289,
+      "packing": [],
+      "shipped": 35,
+      "sim_usec": 700,
+      "time": 95.0999999999967,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 81,
+      "ledger": "0af71f231a56e56018def94bade0b36408251d36750dfc6357a4b44c4c8fd2cd",
+      "nodes": 1289,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 1200,
+      "time": 95.2499999999967,
+      "view_usec": 17800
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 82,
+      "ledger": "42442546105cf76df3d602b589cb24046314734172f620a6d3f0a368abed4ea6",
+      "nodes": 1289,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 900,
+      "time": 95.3499999999967,
+      "view_usec": 19000
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3400,
+      "index": 83,
+      "ledger": "6744358a572dc6f7b9b0667aef2e331d57b49c8df61f63898e83d37dc85c6026",
+      "nodes": 1305,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 1800,
+      "time": 95.4999999999967,
+      "view_usec": 18000
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 84,
+      "ledger": "e5df82b798fea1c6211dc7d7e7aad5ac7b6312bb3562fcadbfea7fefba5fa2a2",
+      "nodes": 1321,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 1800,
+      "time": 95.5999999999967,
+      "view_usec": 18000
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 85,
+      "ledger": "985d524f2ef3ad768e4904f6772ed65b28832182d950309d3c5fed29e0001413",
+      "nodes": 1321,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 900,
+      "time": 95.7499999999967,
+      "view_usec": 16800
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3000,
+      "index": 86,
+      "ledger": "bece91fba79c4e13847e522eed61d5bb86a5daaa12d57fc66540cb3de3be9447",
+      "nodes": 1321,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 700,
+      "time": 95.8499999999967,
+      "view_usec": 16500
+    },
+    {
+      "draw_calls": 72,
+      "hud_usec": 3100,
+      "index": 87,
+      "ledger": "7d2435cf6ce9a59e02a755d540ec407fc8a2f2cd76abefb59c08f8dbb0014d1d",
+      "nodes": 1321,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 800,
+      "time": 95.9999999999967,
+      "view_usec": 23100
+    },
+    {
+      "draw_calls": 73,
+      "hud_usec": 3000,
+      "index": 88,
+      "ledger": "3fc2f223323346e9d38bd7c102a56d6a9b0e7da10c44a29bae2688483813b5c3",
+      "nodes": 1321,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 700,
+      "time": 96.0999999999967,
+      "view_usec": 16500
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 89,
+      "ledger": "942af1dd9bba236e26b12c3fff7985171ef45a31b99070e97b08665cf07dcbe0",
+      "nodes": 1321,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 1000,
+      "time": 96.2499999999967,
+      "view_usec": 17700
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 90,
+      "ledger": "7e0ba96dbb0eeb96e0b443065e47a7ee6ed2d97c10ec5e9f43d1d9a1a933ce14",
+      "nodes": 1321,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 700,
+      "time": 96.3499999999967,
+      "view_usec": 16300
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3300,
+      "index": 91,
+      "ledger": "d33c9ad6fae37ee6ef0d222f6cab8ca8c6c120282b11e377e027a6cc908fb0c6",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 900,
+      "time": 96.4999999999967,
+      "view_usec": 16900
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3200,
+      "index": 92,
+      "ledger": "d37e3d8cd74e87cc54b85f17b70f6c8c8d4c873b1cb9a21125d5bf9230f44e5c",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 600,
+      "time": 96.5999999999967,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3400,
+      "index": 93,
+      "ledger": "6dc1f47ab90743d7e298d2875e62c4a3ed41fc382c9c138e563f4b90418b3989",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 800,
+      "time": 96.7499999999966,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 74,
+      "hud_usec": 3000,
+      "index": 94,
+      "ledger": "d7abdad2597e2c05fc75ddd28d7f7f2fc08d127bafc0a632334cbd7ba39d13ea",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 500,
+      "time": 96.8499999999966,
+      "view_usec": 16400
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3400,
+      "index": 95,
+      "ledger": "64a020756316a7d3acee447e87f0cabe91a3c72d28e79386a74fb4fced13842a",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 800,
+      "time": 96.9999999999966,
+      "view_usec": 16700
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3100,
+      "index": 96,
+      "ledger": "71f8dafd4a85bddba8a1fc0d03fc373d3359d9f7e933f64d58a2744819100f33",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 500,
+      "time": 97.0999999999966,
+      "view_usec": 16900
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3500,
+      "index": 97,
+      "ledger": "db49f47c77cc296a2be10350d52b33bdb20e55a269d4964dd1a1fe4d13f6b43b",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 3000,
+      "time": 97.2499999999966,
+      "view_usec": 17000
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3100,
+      "index": 98,
+      "ledger": "437b5ade58f54327e87223467f08f53648c6336e85b8bafa3599cfae5c19660c",
+      "nodes": 1317,
+      "packing": [
+        {
+          "cargo_id": 220,
+          "remaining": 0.65
+        }
+      ],
+      "shipped": 36,
+      "sim_usec": 1300,
+      "time": 97.3499999999966,
+      "view_usec": 17300
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3100,
+      "index": 99,
+      "ledger": "13b7aa3996c0fa0cf54ece8a9f7516f0a2ef0e0fd7b887fa4dcab3bc7bb787d4",
+      "nodes": 1321,
+      "packing": [
+        {
+          "cargo_id": 220,
+          "remaining": 0.5
+        }
+      ],
+      "shipped": 36,
+      "sim_usec": 1500,
+      "time": 97.4999999999966,
+      "view_usec": 17300
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3200,
+      "index": 100,
+      "ledger": "20526a3f2010d03b4f4cf27491c9fd1b25ed9c7a0206347250fb52549bb5c61d",
+      "nodes": 1321,
+      "packing": [
+        {
+          "cargo_id": 220,
+          "remaining": 0.4
+        }
+      ],
+      "shipped": 36,
+      "sim_usec": 900,
+      "time": 97.5999999999966,
+      "view_usec": 17200
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 2900,
+      "index": 101,
+      "ledger": "34984a2bb333a0a99fc16d0822ec1cd1d4863348e9146d47292a70c346699112",
+      "nodes": 1321,
+      "packing": [
+        {
+          "cargo_id": 220,
+          "remaining": 0.25
+        }
+      ],
+      "shipped": 36,
+      "sim_usec": 1100,
+      "time": 97.7499999999966,
+      "view_usec": 16400
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3100,
+      "index": 102,
+      "ledger": "cf2d9cdb42f752a43827bc1b0825d5cf423ae67c06b45f55087310a57c85b4ce",
+      "nodes": 1321,
+      "packing": [
+        {
+          "cargo_id": 220,
+          "remaining": 0.15
+        }
+      ],
+      "shipped": 36,
+      "sim_usec": 700,
+      "time": 97.8499999999966,
+      "view_usec": 17200
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3500,
+      "index": 103,
+      "ledger": "f12750e6093f92973ce695ac96cc9528636c42d0d44302fb62af1fe57e7e52df",
+      "nodes": 1321,
+      "packing": [],
+      "shipped": 36,
+      "sim_usec": 1100,
+      "time": 97.9999999999966,
+      "view_usec": 17900
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 2600,
+      "index": 104,
+      "ledger": "0fced15ea46282e5e42d39d3c8c3b8b13338f3241f4960d860d4ba5a810b8758",
+      "nodes": 1317,
+      "packing": [
+        {
+          "cargo_id": 222,
+          "remaining": 0.6
+        }
+      ],
+      "shipped": 36,
+      "sim_usec": 700,
+      "time": 98.0999999999966,
+      "view_usec": 16500
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 2800,
+      "index": 105,
+      "ledger": "eb8bea1f8b477885c7f099ab8403b5a3caaf0ae520a5e2634739dfc069444501",
+      "nodes": 1317,
+      "packing": [
+        {
+          "cargo_id": 222,
+          "remaining": 0.45
+        }
+      ],
+      "shipped": 36,
+      "sim_usec": 800,
+      "time": 98.2499999999966,
+      "view_usec": 16200
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3000,
+      "index": 106,
+      "ledger": "c6e321789ffe391f9fe1ac96b76af714bd8d49a4edbe01768b4e2a5e70fcb8bc",
+      "nodes": 1313,
+      "packing": [
+        {
+          "cargo_id": 222,
+          "remaining": 0.35
+        }
+      ],
+      "shipped": 36,
+      "sim_usec": 800,
+      "time": 98.3499999999966,
+      "view_usec": 16600
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3100,
+      "index": 107,
+      "ledger": "28441f5a48d3ca3597dc75213b10edb289af3801e8b86bf6121c61e01b3dec3f",
+      "nodes": 1313,
+      "packing": [
+        {
+          "cargo_id": 222,
+          "remaining": 0.2
+        }
+      ],
+      "shipped": 37,
+      "sim_usec": 1000,
+      "time": 98.4999999999965,
+      "view_usec": 18100
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 2900,
+      "index": 108,
+      "ledger": "fe961b26fd1a3251436d7ad3e2c314c648c2fd0eb052dd59a38daf9aa4015ec3",
+      "nodes": 1313,
+      "packing": [
+        {
+          "cargo_id": 222,
+          "remaining": 0.0999999999999999
+        }
+      ],
+      "shipped": 37,
+      "sim_usec": 500,
+      "time": 98.5999999999965,
+      "view_usec": 17100
+    },
+    {
+      "draw_calls": 78,
+      "hud_usec": 3000,
+      "index": 109,
+      "ledger": "ac2fa8342b0b11742154d72454b4e638a5d3adcfa9d3e7e882df5d137f0bc63a",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 37,
+      "sim_usec": 800,
+      "time": 98.7499999999965,
+      "view_usec": 17300
+    },
+    {
+      "draw_calls": 78,
+      "hud_usec": 3100,
+      "index": 110,
+      "ledger": "5dffde172a895ad96f35000757b89b0bff34865c917d3c916612a3e86d1819ec",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 37,
+      "sim_usec": 700,
+      "time": 98.8499999999965,
+      "view_usec": 17900
+    },
+    {
+      "draw_calls": 78,
+      "hud_usec": 3200,
+      "index": 111,
+      "ledger": "9857016f1896a0743b8d2619f8887e742b01578b2bfaa6b01b5e18f41e9d61ce",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 37,
+      "sim_usec": 800,
+      "time": 98.9999999999965,
+      "view_usec": 17800
+    },
+    {
+      "draw_calls": 77,
+      "hud_usec": 2900,
+      "index": 112,
+      "ledger": "7311960818c4146f9dba2fa135dba0f79c49da9e78a834071763ee5f5795936b",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 37,
+      "sim_usec": 600,
+      "time": 99.0999999999965,
+      "view_usec": 17600
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3100,
+      "index": 113,
+      "ledger": "dc4717a58614f9fb6717c93d1bb1441498d92c8df0752d45eb5327ef1a9e626b",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 37,
+      "sim_usec": 1000,
+      "time": 99.2499999999965,
+      "view_usec": 17900
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3100,
+      "index": 114,
+      "ledger": "a38c31373b1f14958f375d419646a45c0aea1578aa101f30eb3b3ea5d9ee5f17",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 37,
+      "sim_usec": 700,
+      "time": 99.3499999999965,
+      "view_usec": 20100
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3000,
+      "index": 115,
+      "ledger": "0071f68d7a7c8dc243c8214f85dce99586d06d3805f3cb7fec0e7aeaf6361c74",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 37,
+      "sim_usec": 2100,
+      "time": 99.4999999999965,
+      "view_usec": 17000
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3100,
+      "index": 116,
+      "ledger": "4ff38f4d8f39777b75b9d31ac546023de1be57b4e7064544254bfbda06a640f8",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 37,
+      "sim_usec": 700,
+      "time": 99.5999999999965,
+      "view_usec": 17300
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3200,
+      "index": 117,
+      "ledger": "2dc988d317cc482145103468eafa3fc19a4760299dc69c9cfe82a5b08061a915",
+      "nodes": 1309,
+      "packing": [],
+      "shipped": 37,
+      "sim_usec": 900,
+      "time": 99.7499999999965,
+      "view_usec": 16300
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 3000,
+      "index": 118,
+      "ledger": "73ca834a83636c440f85065a79747bd8be1b55ac1ab02d1a3ee79f463323f0d3",
+      "nodes": 1313,
+      "packing": [],
+      "shipped": 37,
+      "sim_usec": 700,
+      "time": 99.8499999999965,
+      "view_usec": 16900
+    },
+    {
+      "draw_calls": 76,
+      "hud_usec": 2800,
+      "index": 119,
+      "ledger": "984110adf1f19f45c0d65ed80a1a6dc70a4b8a8c674fbbf10e73ee3b69d53c65",
+      "nodes": 1305,
+      "packing": [
+        {
+          "cargo_id": 221,
+          "remaining": 0.55
+        }
+      ],
+      "shipped": 37,
+      "sim_usec": 800,
+      "time": 99.9999999999965,
+      "view_usec": 16400
+    }
+  ],
+  "scope": "Same actual cargo ledger per row; renderer microbenchmark, excludes live autosave scheduling",
+  "unchanged_view_usec": [
+    600,
+    500,
+    600,
+    900,
+    600,
+    700,
+    500,
+    700,
+    600,
+    800,
+    700,
+    700,
+    600,
+    600,
+    700,
+    600,
+    700,
+    600,
+    600,
+    900,
+    800,
+    500,
+    700,
+    600,
+    600,
+    500,
+    600,
+    600,
+    600,
+    600,
+    600,
+    500,
+    700,
+    500,
+    500,
+    800,
+    600,
+    700,
+    500,
+    700,
+    700,
+    800,
+    800,
+    600,
+    600,
+    700,
+    700,
+    700,
+    600,
+    900,
+    1000,
+    700,
+    600,
+    800,
+    700,
+    11200,
+    800,
+    700,
+    700,
+    600,
+    700,
+    600,
+    600,
+    800,
+    800,
+    600,
+    600,
+    600,
+    600,
+    700,
+    600,
+    700,
+    700,
+    600,
+    700,
+    600,
+    600,
+    600,
+    800,
+    800,
+    600,
+    700,
+    600,
+    700,
+    600,
+    600,
+    800,
+    600,
+    500,
+    600,
+    700,
+    600,
+    600,
+    900,
+    600,
+    600
+  ]
+}

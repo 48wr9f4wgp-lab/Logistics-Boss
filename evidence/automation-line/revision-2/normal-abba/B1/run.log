@@ -1,0 +1,23 @@
+TOUCH CloseSheet
+POINT CloseSheet: 322,118; CSS 390x844; DPR 3
+TOUCH Back
+POINT Back: 52,38; CSS 390x844; DPR 3
+TOUCH OpenRecords
+POINT OpenRecords: 191,431; CSS 390x844; DPR 3
+TOUCH CloseSheet
+POINT CloseSheet: 322,118; CSS 390x844; DPR 3
+TOUCH PauseResume
+POINT PauseResume: 344,38; CSS 390x844; DPR 3
+TOUCH PauseResume
+POINT PauseResume: 344,38; CSS 390x844; DPR 3
+AssertionError [ERR_ASSERTION]: Mature 3D overhead stays within the same-renderer baseline budget
+    at /workspace/Logistics-Boss/flotra-campaign/tests/release/browser_growth_journey.cjs:439:11
+    at async scenario (/workspace/Logistics-Boss/flotra-campaign/tests/release/browser_growth_journey.cjs:332:7)
+    at async /workspace/Logistics-Boss/flotra-campaign/tests/release/browser_growth_journey.cjs:413:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

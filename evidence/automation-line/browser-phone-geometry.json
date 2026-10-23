@@ -1,0 +1,2011 @@
+{
+  "kind": "Chromium CSS viewport/DPR/WebGL emulation; not physical device verification",
+  "url": "http://127.0.0.1:8765/candidate/?phone_qa=1",
+  "configuration": {
+    "tapHoldMilliseconds": 90,
+    "freshContextOnly": false
+  },
+  "results": [
+    {
+      "label": "375x567-dpr1",
+      "errors": [],
+      "consoleMessages": [
+        {
+          "level": "log",
+          "text": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org"
+        },
+        {
+          "level": "log",
+          "text": "OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL"
+        },
+        {
+          "level": "log",
+          "text": "Build configuration: Emscripten 4.0.20, single-threaded, no GDExtension support."
+        }
+      ],
+      "snapshots": [
+        {
+          "viewport": {
+            "width": 375,
+            "height": 567,
+            "dpr": 1,
+            "visualHeight": 567,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 375,
+            "height": 567,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 567,
+              "top": 0,
+              "right": 375,
+              "bottom": 567,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 375,
+            "height": 567,
+            "x": 0,
+            "y": 0,
+            "dpr": 1,
+            "backingWidth": 375,
+            "backingHeight": 567
+          },
+          "engine": {
+            "hudHeight": 567,
+            "hudWidth": 375,
+            "logicalHeight": 567,
+            "logicalWidth": 375,
+            "rootHeight": 567,
+            "rootWidth": 375,
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 375,
+            "height": 447,
+            "dpr": 1,
+            "visualHeight": 447,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 375,
+            "height": 447,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 447,
+              "top": 0,
+              "right": 375,
+              "bottom": 447,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 375,
+            "height": 447,
+            "x": 0,
+            "y": 0,
+            "dpr": 1,
+            "backingWidth": 375,
+            "backingHeight": 447
+          },
+          "engine": {
+            "hudHeight": 447,
+            "hudWidth": 375,
+            "logicalHeight": 447,
+            "logicalWidth": 375,
+            "rootHeight": 447,
+            "rootWidth": 375,
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 567,
+            "height": 375,
+            "dpr": 1,
+            "visualHeight": 375,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 567,
+            "height": 375,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 567,
+              "height": 375,
+              "top": 0,
+              "right": 567,
+              "bottom": 375,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 567,
+            "height": 375,
+            "x": 0,
+            "y": 0,
+            "dpr": 1,
+            "backingWidth": 567,
+            "backingHeight": 375
+          },
+          "engine": {
+            "hudHeight": 375,
+            "hudWidth": 567,
+            "logicalHeight": 375,
+            "logicalWidth": 567,
+            "rootHeight": 375,
+            "rootWidth": 567,
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 375,
+            "height": 567,
+            "dpr": 3,
+            "visualHeight": 567,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 1125,
+            "height": 1701,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 567,
+              "top": 0,
+              "right": 375,
+              "bottom": 567,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 375,
+            "height": 567,
+            "x": 0,
+            "y": 0,
+            "dpr": 3,
+            "backingWidth": 1125,
+            "backingHeight": 1701
+          },
+          "engine": {
+            "hudHeight": 567,
+            "hudWidth": 375,
+            "logicalHeight": 567,
+            "logicalWidth": 375,
+            "rootHeight": 1701,
+            "rootWidth": 1125,
+            "scaleX": 3,
+            "scaleY": 3
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 375,
+            "height": 567,
+            "dpr": 1,
+            "visualHeight": 567,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 351,
+            "height": 486,
+            "rect": {
+              "x": 12,
+              "y": 47,
+              "width": 351,
+              "height": 486,
+              "top": 47,
+              "right": 363,
+              "bottom": 533,
+              "left": 12
+            }
+          },
+          "bridge": {
+            "width": 351,
+            "height": 486,
+            "x": 12,
+            "y": 47,
+            "dpr": 1,
+            "backingWidth": 351,
+            "backingHeight": 486
+          },
+          "engine": {
+            "hudHeight": 486,
+            "hudWidth": 351,
+            "logicalHeight": 486,
+            "logicalWidth": 351,
+            "rootHeight": 486,
+            "rootWidth": 351,
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          "status": ""
+        }
+      ],
+      "minimumVisibleFontCSS": 18,
+      "safeAreaTouch": "Real touch closes intro and contracts with the canvas origin offset",
+      "touch": {
+        "introClose": true,
+        "introScrollAndStart": true,
+        "contractAcceptance": true,
+        "pause": true,
+        "worldShelfPick": true,
+        "equipmentTabs": true,
+        "candidateSelection": true,
+        "pinnedApply": true,
+        "results": true,
+        "finalState": {
+          "autosave": {
+            "generation": 8,
+            "last_saved_generation": 8,
+            "last_superseded_generation": -1,
+            "pending": false,
+            "phase": 0
+          },
+          "batchWorkers": 0,
+          "buttons": [
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraReset",
+              "text": "全体",
+              "visible": true,
+              "width": 72,
+              "x": 287.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraIn",
+              "text": "＋",
+              "visible": true,
+              "width": 56,
+              "x": 223.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraOut",
+              "text": "−",
+              "visible": true,
+              "width": 56,
+              "x": 159.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraRight",
+              "text": "右90°",
+              "visible": true,
+              "width": 64,
+              "x": 87.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraLeft",
+              "text": "左90°",
+              "visible": true,
+              "width": 64,
+              "x": 15.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "ToggleGrowthHistory",
+              "text": "出荷記録を見る",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 1074
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "OpenControls",
+              "text": "操作・速度を変える",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 910
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "GrowWarehouse",
+              "text": "増築・スタッフ・設備を見る",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 606
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "NextContract",
+              "text": "仕事一覧を見る",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 538
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CloseSheet",
+              "text": "閉じる",
+              "visible": false,
+              "width": 88,
+              "x": 263,
+              "y": 90
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "EquipmentChoice",
+              "text": "設備・増築",
+              "visible": true,
+              "width": 103.666664123535,
+              "x": 135.666656494141,
+              "y": 491
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "SessionRecord",
+              "text": "成果",
+              "visible": false,
+              "width": 103.66667175293,
+              "x": 247.33332824707,
+              "y": 491
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "WorkChoice",
+              "text": "仕事",
+              "visible": true,
+              "width": 103.666664123535,
+              "x": 24,
+              "y": 491
+            },
+            {
+              "disabled": true,
+              "fontSize": 18,
+              "height": 56,
+              "name": "ChangeLayout",
+              "text": "配置",
+              "visible": true,
+              "width": 103.66667175293,
+              "x": 247.33332824707,
+              "y": 491
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "PauseResume",
+              "text": "再開",
+              "visible": true,
+              "width": 72,
+              "x": 293,
+              "y": 10
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "Back",
+              "text": "操作",
+              "visible": true,
+              "width": 84,
+              "x": 10,
+              "y": 10
+            }
+          ],
+          "camera": {
+            "callouts": [
+              {
+                "anchorX": 151.307952880859,
+                "anchorY": 42.2378692626953,
+                "fontSize": 18,
+                "height": 36,
+                "text": "入荷",
+                "visible": true,
+                "width": 54,
+                "x": 83,
+                "y": 8
+              },
+              {
+                "anchorX": 255.795852661133,
+                "anchorY": 80.9918746948242,
+                "fontSize": 18,
+                "height": 36,
+                "text": "保管床 6枠",
+                "visible": true,
+                "width": 107,
+                "x": 202,
+                "y": 21
+              },
+              {
+                "anchorX": 210.346969604492,
+                "anchorY": 156.984359741211,
+                "fontSize": 18,
+                "height": 36,
+                "text": "出荷",
+                "visible": true,
+                "width": 54,
+                "x": 183,
+                "y": 163
+              },
+              {
+                "anchorX": 152.336227416992,
+                "anchorY": 68.4067459106445,
+                "fontSize": 18,
+                "height": 36,
+                "text": "棚の容量 12個",
+                "visible": false,
+                "width": 136,
+                "x": 84,
+                "y": 8
+              },
+              {
+                "anchorX": 222.663772583008,
+                "anchorY": 87.1477508544922,
+                "fontSize": 18,
+                "height": 36,
+                "text": "変更先",
+                "visible": false,
+                "width": 72,
+                "x": 237,
+                "y": 46
+              }
+            ],
+            "fitSize": 20.8740901947021,
+            "floorPoints": [],
+            "mouseDown": false,
+            "panX": 0,
+            "panY": 0,
+            "size": 20.8740901947021,
+            "touches": 0,
+            "turn": 0,
+            "zoom": 1
+          },
+          "currentBest": 0,
+          "currentContract": "growth_1",
+          "growth": {
+            "area": 223.886,
+            "catalog_complete": false,
+            "completed_milestones": 0,
+            "human_count": 3,
+            "legacy_profile": false,
+            "lifetime_units": 0,
+            "next_goal": "12個を届けて第1棟を増築しよう",
+            "robot_count": 0,
+            "wing_count": 0
+          },
+          "jobComparison": {},
+          "labels": [
+            {
+              "fontSize": 18,
+              "height": 28,
+              "name": "@Label@71",
+              "text": "4倍 · 増築 0/4",
+              "width": 161.5,
+              "x": 185.5,
+              "y": 456
+            },
+            {
+              "fontSize": 18,
+              "height": 28,
+              "name": "@Label@70",
+              "text": "出荷 0.0個/分",
+              "width": 161.5,
+              "x": 24,
+              "y": 456
+            },
+            {
+              "fontSize": 20,
+              "height": 32,
+              "name": "@Label@69",
+              "text": "出荷 0/12個  資金 100",
+              "width": 327,
+              "x": 24,
+              "y": 423
+            },
+            {
+              "fontSize": 20,
+              "height": 40,
+              "name": "@Label@66",
+              "text": "再開すると設備を移動します",
+              "width": 327,
+              "x": 24,
+              "y": 86
+            },
+            {
+              "fontSize": 18,
+              "height": 28,
+              "name": "@Label@64",
+              "text": "自動保存済み",
+              "width": 179,
+              "x": 104,
+              "y": 40
+            },
+            {
+              "fontSize": 24,
+              "height": 35,
+              "name": "@Label@63",
+              "text": "FLOTRA",
+              "width": 179,
+              "x": 104,
+              "y": 5
+            }
+          ],
+          "layout": {
+            "current": "compact",
+            "moving": false,
+            "pending": "clear_aisle"
+          },
+          "menuPaused": false,
+          "operation": {
+            "available": false,
+            "label": "バランス重視",
+            "mode_id": "balanced",
+            "preview": {
+              "human_count": 3,
+              "packing_seconds": 1.5,
+              "pallet_capacity": 6,
+              "parcel_load_limit": 1,
+              "priority": "出荷 → 集品 → 入荷",
+              "rack_capacity": 12,
+              "robot_count": 0
+            },
+            "summary": "出荷・棚からの運搬・入荷を順番に進めます。"
+          },
+          "performance": {
+            "drawCalls": 70,
+            "nodes": 292,
+            "objects": 2054,
+            "processMs": 29.5
+          },
+          "preferences": {
+            "pause_on_menus": false,
+            "preferred_speed": 4,
+            "reduced_motion": false
+          },
+          "progress": {
+            "fraction": 0,
+            "manifest_quota": 2,
+            "manifests_offered": 2,
+            "offered": 12,
+            "remaining": 12,
+            "shipped": 0,
+            "total": 12
+          },
+          "results": {},
+          "scroll": {
+            "height": 391,
+            "max": 1012,
+            "page": 391,
+            "scrollVertical": 0,
+            "width": 327,
+            "x": 24,
+            "y": 156
+          },
+          "selectedSlot": "",
+          "sheet": "",
+          "simTime": 7.84999999999998,
+          "slots": {
+            "packing": {
+              "x": 234.686614990234,
+              "y": 263.801483154297
+            },
+            "shelf": {
+              "x": 177.457794189453,
+              "y": 205.968353271484
+            }
+          },
+          "speed": 4,
+          "status": "running",
+          "trialRunning": false,
+          "upgrades": [],
+          "wallet": 100,
+          "worldRect": {
+            "height": 207,
+            "width": 375,
+            "x": 0,
+            "y": 140
+          },
+          "worldVisible": true
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "label": "375x567-dpr2",
+      "errors": [],
+      "consoleMessages": [
+        {
+          "level": "log",
+          "text": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org"
+        },
+        {
+          "level": "log",
+          "text": "OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL"
+        },
+        {
+          "level": "log",
+          "text": "Build configuration: Emscripten 4.0.20, single-threaded, no GDExtension support."
+        }
+      ],
+      "snapshots": [
+        {
+          "viewport": {
+            "width": 375,
+            "height": 567,
+            "dpr": 2,
+            "visualHeight": 567,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 750,
+            "height": 1134,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 567,
+              "top": 0,
+              "right": 375,
+              "bottom": 567,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 375,
+            "height": 567,
+            "x": 0,
+            "y": 0,
+            "dpr": 2,
+            "backingWidth": 750,
+            "backingHeight": 1134
+          },
+          "engine": {
+            "hudHeight": 567,
+            "hudWidth": 375,
+            "logicalHeight": 567,
+            "logicalWidth": 375,
+            "rootHeight": 1134,
+            "rootWidth": 750,
+            "scaleX": 2,
+            "scaleY": 2
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 375,
+            "height": 447,
+            "dpr": 2,
+            "visualHeight": 447,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 750,
+            "height": 894,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 447,
+              "top": 0,
+              "right": 375,
+              "bottom": 447,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 375,
+            "height": 447,
+            "x": 0,
+            "y": 0,
+            "dpr": 2,
+            "backingWidth": 750,
+            "backingHeight": 894
+          },
+          "engine": {
+            "hudHeight": 447,
+            "hudWidth": 375,
+            "logicalHeight": 447,
+            "logicalWidth": 375,
+            "rootHeight": 894,
+            "rootWidth": 750,
+            "scaleX": 2,
+            "scaleY": 2
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 567,
+            "height": 375,
+            "dpr": 2,
+            "visualHeight": 375,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 1134,
+            "height": 750,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 567,
+              "height": 375,
+              "top": 0,
+              "right": 567,
+              "bottom": 375,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 567,
+            "height": 375,
+            "x": 0,
+            "y": 0,
+            "dpr": 2,
+            "backingWidth": 1134,
+            "backingHeight": 750
+          },
+          "engine": {
+            "hudHeight": 375,
+            "hudWidth": 567,
+            "logicalHeight": 375,
+            "logicalWidth": 567,
+            "rootHeight": 750,
+            "rootWidth": 1134,
+            "scaleX": 2,
+            "scaleY": 2
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 375,
+            "height": 567,
+            "dpr": 3,
+            "visualHeight": 567,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 1125,
+            "height": 1701,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 567,
+              "top": 0,
+              "right": 375,
+              "bottom": 567,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 375,
+            "height": 567,
+            "x": 0,
+            "y": 0,
+            "dpr": 3,
+            "backingWidth": 1125,
+            "backingHeight": 1701
+          },
+          "engine": {
+            "hudHeight": 567,
+            "hudWidth": 375,
+            "logicalHeight": 567,
+            "logicalWidth": 375,
+            "rootHeight": 1701,
+            "rootWidth": 1125,
+            "scaleX": 3,
+            "scaleY": 3
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 375,
+            "height": 567,
+            "dpr": 2,
+            "visualHeight": 567,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 702,
+            "height": 972,
+            "rect": {
+              "x": 12,
+              "y": 47,
+              "width": 351,
+              "height": 486,
+              "top": 47,
+              "right": 363,
+              "bottom": 533,
+              "left": 12
+            }
+          },
+          "bridge": {
+            "width": 351,
+            "height": 486,
+            "x": 12,
+            "y": 47,
+            "dpr": 2,
+            "backingWidth": 702,
+            "backingHeight": 972
+          },
+          "engine": {
+            "hudHeight": 486,
+            "hudWidth": 351,
+            "logicalHeight": 486,
+            "logicalWidth": 351,
+            "rootHeight": 972,
+            "rootWidth": 702,
+            "scaleX": 2,
+            "scaleY": 2
+          },
+          "status": ""
+        }
+      ],
+      "minimumVisibleFontCSS": 18,
+      "safeAreaTouch": "Real touch closes intro and contracts with the canvas origin offset",
+      "touch": {
+        "introClose": true,
+        "introScrollAndStart": true,
+        "contractAcceptance": true,
+        "pause": true,
+        "worldShelfPick": true,
+        "equipmentTabs": true,
+        "candidateSelection": true,
+        "pinnedApply": true,
+        "results": true,
+        "finalState": {
+          "autosave": {
+            "generation": 8,
+            "last_saved_generation": 8,
+            "last_superseded_generation": -1,
+            "pending": false,
+            "phase": 0
+          },
+          "batchWorkers": 0,
+          "buttons": [
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraReset",
+              "text": "全体",
+              "visible": true,
+              "width": 72,
+              "x": 287.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraIn",
+              "text": "＋",
+              "visible": true,
+              "width": 56,
+              "x": 223.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraOut",
+              "text": "−",
+              "visible": true,
+              "width": 56,
+              "x": 159.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraRight",
+              "text": "右90°",
+              "visible": true,
+              "width": 64,
+              "x": 87.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraLeft",
+              "text": "左90°",
+              "visible": true,
+              "width": 64,
+              "x": 15.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "ToggleGrowthHistory",
+              "text": "出荷記録を見る",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 1074
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "OpenControls",
+              "text": "操作・速度を変える",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 910
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "GrowWarehouse",
+              "text": "増築・スタッフ・設備を見る",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 606
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "NextContract",
+              "text": "仕事一覧を見る",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 538
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CloseSheet",
+              "text": "閉じる",
+              "visible": false,
+              "width": 88,
+              "x": 263,
+              "y": 90
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "EquipmentChoice",
+              "text": "設備・増築",
+              "visible": true,
+              "width": 103.666664123535,
+              "x": 135.666656494141,
+              "y": 491
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "SessionRecord",
+              "text": "成果",
+              "visible": false,
+              "width": 103.66667175293,
+              "x": 247.33332824707,
+              "y": 491
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "WorkChoice",
+              "text": "仕事",
+              "visible": true,
+              "width": 103.666664123535,
+              "x": 24,
+              "y": 491
+            },
+            {
+              "disabled": true,
+              "fontSize": 18,
+              "height": 56,
+              "name": "ChangeLayout",
+              "text": "配置",
+              "visible": true,
+              "width": 103.66667175293,
+              "x": 247.33332824707,
+              "y": 491
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "PauseResume",
+              "text": "再開",
+              "visible": true,
+              "width": 72,
+              "x": 293,
+              "y": 10
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "Back",
+              "text": "操作",
+              "visible": true,
+              "width": 84,
+              "x": 10,
+              "y": 10
+            }
+          ],
+          "camera": {
+            "callouts": [
+              {
+                "anchorX": 151.307952880859,
+                "anchorY": 42.2378692626953,
+                "fontSize": 18,
+                "height": 36,
+                "text": "入荷",
+                "visible": true,
+                "width": 54,
+                "x": 83,
+                "y": 8
+              },
+              {
+                "anchorX": 255.795852661133,
+                "anchorY": 80.9918746948242,
+                "fontSize": 18,
+                "height": 36,
+                "text": "保管床 6枠",
+                "visible": true,
+                "width": 107,
+                "x": 202,
+                "y": 21
+              },
+              {
+                "anchorX": 210.346969604492,
+                "anchorY": 156.984359741211,
+                "fontSize": 18,
+                "height": 36,
+                "text": "出荷",
+                "visible": true,
+                "width": 54,
+                "x": 183,
+                "y": 163
+              },
+              {
+                "anchorX": 152.336227416992,
+                "anchorY": 68.4067459106445,
+                "fontSize": 18,
+                "height": 36,
+                "text": "棚の容量 12個",
+                "visible": false,
+                "width": 136,
+                "x": 84,
+                "y": 8
+              },
+              {
+                "anchorX": 222.663772583008,
+                "anchorY": 87.1477508544922,
+                "fontSize": 18,
+                "height": 36,
+                "text": "変更先",
+                "visible": false,
+                "width": 72,
+                "x": 237,
+                "y": 46
+              }
+            ],
+            "fitSize": 20.8740901947021,
+            "floorPoints": [],
+            "mouseDown": false,
+            "panX": 0,
+            "panY": 0,
+            "size": 20.8740901947021,
+            "touches": 0,
+            "turn": 0,
+            "zoom": 1
+          },
+          "currentBest": 0,
+          "currentContract": "growth_1",
+          "growth": {
+            "area": 223.886,
+            "catalog_complete": false,
+            "completed_milestones": 0,
+            "human_count": 3,
+            "legacy_profile": false,
+            "lifetime_units": 0,
+            "next_goal": "12個を届けて第1棟を増築しよう",
+            "robot_count": 0,
+            "wing_count": 0
+          },
+          "jobComparison": {},
+          "labels": [
+            {
+              "fontSize": 18,
+              "height": 28,
+              "name": "@Label@71",
+              "text": "4倍 · 増築 0/4",
+              "width": 161.5,
+              "x": 185.5,
+              "y": 456
+            },
+            {
+              "fontSize": 18,
+              "height": 28,
+              "name": "@Label@70",
+              "text": "出荷 0.0個/分",
+              "width": 161.5,
+              "x": 24,
+              "y": 456
+            },
+            {
+              "fontSize": 20,
+              "height": 32,
+              "name": "@Label@69",
+              "text": "出荷 0/12個  資金 100",
+              "width": 327,
+              "x": 24,
+              "y": 423
+            },
+            {
+              "fontSize": 20,
+              "height": 40,
+              "name": "@Label@66",
+              "text": "再開すると設備を移動します",
+              "width": 327,
+              "x": 24,
+              "y": 86
+            },
+            {
+              "fontSize": 18,
+              "height": 28,
+              "name": "@Label@64",
+              "text": "自動保存済み",
+              "width": 179,
+              "x": 104,
+              "y": 40
+            },
+            {
+              "fontSize": 24,
+              "height": 35,
+              "name": "@Label@63",
+              "text": "FLOTRA",
+              "width": 179,
+              "x": 104,
+              "y": 5
+            }
+          ],
+          "layout": {
+            "current": "compact",
+            "moving": false,
+            "pending": "clear_aisle"
+          },
+          "menuPaused": false,
+          "operation": {
+            "available": false,
+            "label": "バランス重視",
+            "mode_id": "balanced",
+            "preview": {
+              "human_count": 3,
+              "packing_seconds": 1.5,
+              "pallet_capacity": 6,
+              "parcel_load_limit": 1,
+              "priority": "出荷 → 集品 → 入荷",
+              "rack_capacity": 12,
+              "robot_count": 0
+            },
+            "summary": "出荷・棚からの運搬・入荷を順番に進めます。"
+          },
+          "performance": {
+            "drawCalls": 67,
+            "nodes": 312,
+            "objects": 2100,
+            "processMs": 7.8
+          },
+          "preferences": {
+            "pause_on_menus": false,
+            "preferred_speed": 4,
+            "reduced_motion": false
+          },
+          "progress": {
+            "fraction": 0,
+            "manifest_quota": 2,
+            "manifests_offered": 2,
+            "offered": 12,
+            "remaining": 12,
+            "shipped": 0,
+            "total": 12
+          },
+          "results": {},
+          "scroll": {
+            "height": 391,
+            "max": 1012,
+            "page": 391,
+            "scrollVertical": 0,
+            "width": 327,
+            "x": 24,
+            "y": 156
+          },
+          "selectedSlot": "",
+          "sheet": "",
+          "simTime": 12.7,
+          "slots": {
+            "packing": {
+              "x": 234.686614990234,
+              "y": 263.801483154297
+            },
+            "shelf": {
+              "x": 177.457794189453,
+              "y": 205.968353271484
+            }
+          },
+          "speed": 4,
+          "status": "running",
+          "trialRunning": false,
+          "upgrades": [],
+          "wallet": 100,
+          "worldRect": {
+            "height": 207,
+            "width": 375,
+            "x": 0,
+            "y": 140
+          },
+          "worldVisible": true
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "label": "375x567-dpr3",
+      "errors": [],
+      "consoleMessages": [
+        {
+          "level": "log",
+          "text": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org"
+        },
+        {
+          "level": "log",
+          "text": "OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL"
+        },
+        {
+          "level": "log",
+          "text": "Build configuration: Emscripten 4.0.20, single-threaded, no GDExtension support."
+        }
+      ],
+      "snapshots": [
+        {
+          "viewport": {
+            "width": 375,
+            "height": 567,
+            "dpr": 3,
+            "visualHeight": 567,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 1125,
+            "height": 1701,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 567,
+              "top": 0,
+              "right": 375,
+              "bottom": 567,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 375,
+            "height": 567,
+            "x": 0,
+            "y": 0,
+            "dpr": 3,
+            "backingWidth": 1125,
+            "backingHeight": 1701
+          },
+          "engine": {
+            "hudHeight": 567,
+            "hudWidth": 375,
+            "logicalHeight": 567,
+            "logicalWidth": 375,
+            "rootHeight": 1701,
+            "rootWidth": 1125,
+            "scaleX": 3,
+            "scaleY": 3
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 375,
+            "height": 447,
+            "dpr": 3,
+            "visualHeight": 447,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 1125,
+            "height": 1341,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 447,
+              "top": 0,
+              "right": 375,
+              "bottom": 447,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 375,
+            "height": 447,
+            "x": 0,
+            "y": 0,
+            "dpr": 3,
+            "backingWidth": 1125,
+            "backingHeight": 1341
+          },
+          "engine": {
+            "hudHeight": 447,
+            "hudWidth": 375,
+            "logicalHeight": 447,
+            "logicalWidth": 375,
+            "rootHeight": 1341,
+            "rootWidth": 1125,
+            "scaleX": 3,
+            "scaleY": 3
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 567,
+            "height": 375,
+            "dpr": 3,
+            "visualHeight": 375,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 1701,
+            "height": 1125,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 567,
+              "height": 375,
+              "top": 0,
+              "right": 567,
+              "bottom": 375,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 567,
+            "height": 375,
+            "x": 0,
+            "y": 0,
+            "dpr": 3,
+            "backingWidth": 1701,
+            "backingHeight": 1125
+          },
+          "engine": {
+            "hudHeight": 375,
+            "hudWidth": 567,
+            "logicalHeight": 375,
+            "logicalWidth": 567,
+            "rootHeight": 1125,
+            "rootWidth": 1701,
+            "scaleX": 3,
+            "scaleY": 3
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 375,
+            "height": 567,
+            "dpr": 2,
+            "visualHeight": 567,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 750,
+            "height": 1134,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 567,
+              "top": 0,
+              "right": 375,
+              "bottom": 567,
+              "left": 0
+            }
+          },
+          "bridge": {
+            "width": 375,
+            "height": 567,
+            "x": 0,
+            "y": 0,
+            "dpr": 2,
+            "backingWidth": 750,
+            "backingHeight": 1134
+          },
+          "engine": {
+            "hudHeight": 567,
+            "hudWidth": 375,
+            "logicalHeight": 567,
+            "logicalWidth": 375,
+            "rootHeight": 1134,
+            "rootWidth": 750,
+            "scaleX": 2,
+            "scaleY": 2
+          },
+          "status": ""
+        },
+        {
+          "viewport": {
+            "width": 375,
+            "height": 567,
+            "dpr": 3,
+            "visualHeight": 567,
+            "visualScale": 1
+          },
+          "canvas": {
+            "width": 1053,
+            "height": 1458,
+            "rect": {
+              "x": 12,
+              "y": 47,
+              "width": 351,
+              "height": 486,
+              "top": 47,
+              "right": 363,
+              "bottom": 533,
+              "left": 12
+            }
+          },
+          "bridge": {
+            "width": 351,
+            "height": 486,
+            "x": 12,
+            "y": 47,
+            "dpr": 3,
+            "backingWidth": 1053,
+            "backingHeight": 1458
+          },
+          "engine": {
+            "hudHeight": 486,
+            "hudWidth": 351,
+            "logicalHeight": 486,
+            "logicalWidth": 351,
+            "rootHeight": 1458,
+            "rootWidth": 1053,
+            "scaleX": 3,
+            "scaleY": 3
+          },
+          "status": ""
+        }
+      ],
+      "minimumVisibleFontCSS": 18,
+      "safeAreaTouch": "Real touch closes intro and contracts with the canvas origin offset",
+      "touch": {
+        "introClose": true,
+        "introScrollAndStart": true,
+        "contractAcceptance": true,
+        "pause": true,
+        "worldShelfPick": true,
+        "equipmentTabs": true,
+        "candidateSelection": true,
+        "pinnedApply": true,
+        "results": true,
+        "finalState": {
+          "autosave": {
+            "generation": 8,
+            "last_saved_generation": 8,
+            "last_superseded_generation": -1,
+            "pending": false,
+            "phase": 0
+          },
+          "batchWorkers": 0,
+          "buttons": [
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraReset",
+              "text": "全体",
+              "visible": true,
+              "width": 72,
+              "x": 287.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraIn",
+              "text": "＋",
+              "visible": true,
+              "width": 56,
+              "x": 223.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraOut",
+              "text": "−",
+              "visible": true,
+              "width": 56,
+              "x": 159.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraRight",
+              "text": "右90°",
+              "visible": true,
+              "width": 64,
+              "x": 87.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CameraLeft",
+              "text": "左90°",
+              "visible": true,
+              "width": 64,
+              "x": 15.5,
+              "y": 351
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "ToggleGrowthHistory",
+              "text": "出荷記録を見る",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 1074
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "OpenControls",
+              "text": "操作・速度を変える",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 910
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "GrowWarehouse",
+              "text": "増築・スタッフ・設備を見る",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 606
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "NextContract",
+              "text": "仕事一覧を見る",
+              "visible": false,
+              "width": 319,
+              "x": 24,
+              "y": 538
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "CloseSheet",
+              "text": "閉じる",
+              "visible": false,
+              "width": 88,
+              "x": 263,
+              "y": 90
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "EquipmentChoice",
+              "text": "設備・増築",
+              "visible": true,
+              "width": 103.666664123535,
+              "x": 135.666656494141,
+              "y": 491
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "SessionRecord",
+              "text": "成果",
+              "visible": false,
+              "width": 103.66667175293,
+              "x": 247.33332824707,
+              "y": 491
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "WorkChoice",
+              "text": "仕事",
+              "visible": true,
+              "width": 103.666664123535,
+              "x": 24,
+              "y": 491
+            },
+            {
+              "disabled": true,
+              "fontSize": 18,
+              "height": 56,
+              "name": "ChangeLayout",
+              "text": "配置",
+              "visible": true,
+              "width": 103.66667175293,
+              "x": 247.33332824707,
+              "y": 491
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "PauseResume",
+              "text": "再開",
+              "visible": true,
+              "width": 72,
+              "x": 293,
+              "y": 10
+            },
+            {
+              "disabled": false,
+              "fontSize": 18,
+              "height": 56,
+              "name": "Back",
+              "text": "操作",
+              "visible": true,
+              "width": 84,
+              "x": 10,
+              "y": 10
+            }
+          ],
+          "camera": {
+            "callouts": [
+              {
+                "anchorX": 151.307952880859,
+                "anchorY": 42.2378692626953,
+                "fontSize": 18,
+                "height": 36,
+                "text": "入荷",
+                "visible": true,
+                "width": 54,
+                "x": 83,
+                "y": 8
+              },
+              {
+                "anchorX": 255.795852661133,
+                "anchorY": 80.9918746948242,
+                "fontSize": 18,
+                "height": 36,
+                "text": "保管床 6枠",
+                "visible": true,
+                "width": 107,
+                "x": 202,
+                "y": 21
+              },
+              {
+                "anchorX": 210.346969604492,
+                "anchorY": 156.984359741211,
+                "fontSize": 18,
+                "height": 36,
+                "text": "出荷",
+                "visible": true,
+                "width": 54,
+                "x": 183,
+                "y": 163
+              },
+              {
+                "anchorX": 152.336227416992,
+                "anchorY": 68.4067459106445,
+                "fontSize": 18,
+                "height": 36,
+                "text": "棚の容量 12個",
+                "visible": false,
+                "width": 136,
+                "x": 84,
+                "y": 8
+              },
+              {
+                "anchorX": 222.663772583008,
+                "anchorY": 87.1477508544922,
+                "fontSize": 18,
+                "height": 36,
+                "text": "変更先",
+                "visible": false,
+                "width": 72,
+                "x": 237,
+                "y": 46
+              }
+            ],
+            "fitSize": 20.8740901947021,
+            "floorPoints": [],
+            "mouseDown": false,
+            "panX": 0,
+            "panY": 0,
+            "size": 20.8740901947021,
+            "touches": 0,
+            "turn": 0,
+            "zoom": 1
+          },
+          "currentBest": 0,
+          "currentContract": "growth_1",
+          "growth": {
+            "area": 223.886,
+            "catalog_complete": false,
+            "completed_milestones": 0,
+            "human_count": 3,
+            "legacy_profile": false,
+            "lifetime_units": 0,
+            "next_goal": "12個を届けて第1棟を増築しよう",
+            "robot_count": 0,
+            "wing_count": 0
+          },
+          "jobComparison": {},
+          "labels": [
+            {
+              "fontSize": 18,
+              "height": 28,
+              "name": "@Label@71",
+              "text": "4倍 · 増築 0/4",
+              "width": 161.5,
+              "x": 185.5,
+              "y": 456
+            },
+            {
+              "fontSize": 18,
+              "height": 28,
+              "name": "@Label@70",
+              "text": "出荷 0.0個/分",
+              "width": 161.5,
+              "x": 24,
+              "y": 456
+            },
+            {
+              "fontSize": 20,
+              "height": 32,
+              "name": "@Label@69",
+              "text": "出荷 0/12個  資金 100",
+              "width": 327,
+              "x": 24,
+              "y": 423
+            },
+            {
+              "fontSize": 20,
+              "height": 40,
+              "name": "@Label@66",
+              "text": "倉庫を一時停止中",
+              "width": 327,
+              "x": 24,
+              "y": 86
+            },
+            {
+              "fontSize": 18,
+              "height": 28,
+              "name": "@Label@64",
+              "text": "自動保存済み",
+              "width": 179,
+              "x": 104,
+              "y": 40
+            },
+            {
+              "fontSize": 24,
+              "height": 35,
+              "name": "@Label@63",
+              "text": "FLOTRA",
+              "width": 179,
+              "x": 104,
+              "y": 5
+            }
+          ],
+          "layout": {
+            "current": "compact",
+            "moving": false,
+            "pending": "clear_aisle"
+          },
+          "menuPaused": false,
+          "operation": {
+            "available": false,
+            "label": "バランス重視",
+            "mode_id": "balanced",
+            "preview": {
+              "human_count": 3,
+              "packing_seconds": 1.5,
+              "pallet_capacity": 6,
+              "parcel_load_limit": 1,
+              "priority": "出荷 → 集品 → 入荷",
+              "rack_capacity": 12,
+              "robot_count": 0
+            },
+            "summary": "出荷・棚からの運搬・入荷を順番に進めます。"
+          },
+          "performance": {
+            "drawCalls": 70,
+            "nodes": 296,
+            "objects": 2071,
+            "processMs": 7.3
+          },
+          "preferences": {
+            "pause_on_menus": false,
+            "preferred_speed": 4,
+            "reduced_motion": false
+          },
+          "progress": {
+            "fraction": 0,
+            "manifest_quota": 2,
+            "manifests_offered": 2,
+            "offered": 12,
+            "remaining": 12,
+            "shipped": 0,
+            "total": 12
+          },
+          "results": {},
+          "scroll": {
+            "height": 391,
+            "max": 1012,
+            "page": 391,
+            "scrollVertical": 0,
+            "width": 327,
+            "x": 24,
+            "y": 156
+          },
+          "selectedSlot": "",
+          "sheet": "",
+          "simTime": 9.90000000000001,
+          "slots": {
+            "packing": {
+              "x": 234.686614990234,
+              "y": 263.801483154297
+            },
+            "shelf": {
+              "x": 177.457794189453,
+              "y": 205.968353271484
+            }
+          },
+          "speed": 4,
+          "status": "running",
+          "trialRunning": false,
+          "upgrades": [],
+          "wallet": 100,
+          "worldRect": {
+            "height": 207,
+            "width": 375,
+            "x": 0,
+            "y": 140
+          },
+          "worldVisible": true
+        }
+      },
+      "status": "passed"
+    }
+  ],
+  "production": {
+    "url": "http://127.0.0.1:8765/candidate/",
+    "status": "passed",
+    "measurements": {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "dpr": 3,
+        "visualHeight": 844,
+        "visualScale": 1
+      },
+      "canvas": {
+        "width": 1170,
+        "height": 2532,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      "bridge": {
+        "width": 390,
+        "height": 844,
+        "x": 0,
+        "y": 0,
+        "dpr": 3,
+        "backingWidth": 1170,
+        "backingHeight": 2532
+      },
+      "engine": {
+        "hudHeight": 844,
+        "hudWidth": 390,
+        "logicalHeight": 844,
+        "logicalWidth": 390,
+        "rootHeight": 2532,
+        "rootWidth": 1170,
+        "scaleX": 3,
+        "scaleY": 3
+      },
+      "status": ""
+    },
+    "errors": []
+  }
+}

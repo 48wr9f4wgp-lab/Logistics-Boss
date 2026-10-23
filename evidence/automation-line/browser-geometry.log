@@ -1,0 +1,121 @@
+TOUCH CloseSheet
+POINT CloseSheet: 295,165; CSS 351x486; DPR 1
+TOUCH CloseSheet
+POINT CloseSheet: 295,165; CSS 351x486; DPR 1
+TOUCH Back
+POINT Back: 52,38; CSS 375x567; DPR 1
+TOUCH Speed4x
+POINT Speed4x: 292.5,296; CSS 375x567; DPR 1
+TOUCH Speed1x
+POINT Speed1x: 74.5,296; CSS 375x567; DPR 1
+TOUCH Speed4x
+POINT Speed4x: 292.5,296; CSS 375x567; DPR 1
+TOUCH OpenHelp
+SCROLL OpenHelp: 0 -> 381
+SCROLL OpenHelp: 381 -> 568
+POINT OpenHelp: 183.5,481; CSS 375x567; DPR 1
+TOUCH StartTrial
+POINT StartTrial: 183.5,267; CSS 375x567; DPR 1
+TOUCH WorkChoice
+POINT WorkChoice: 75.83333206176749,519; CSS 375x567; DPR 1
+TOUCH AcceptContract_growth_1
+POINT AcceptContract_growth_1: 183.5,423; CSS 375x567; DPR 1
+TOUCH PauseResume
+POINT PauseResume: 329,38; CSS 375x567; DPR 1
+TOUCH NextSlot
+POINT NextSlot: 271,340; CSS 375x567; DPR 1
+TOUCH PreviousSlot
+POINT PreviousSlot: 103.5,340; CSS 375x567; DPR 1
+TOUCH Candidate_annex
+SCROLL Candidate_annex: 0 -> 64
+SCROLL Candidate_annex: 64 -> 40
+POINT Candidate_annex: 183.5,432; CSS 375x567; DPR 1
+TOUCH ApplyChoice
+POINT ApplyChoice: 187.5,519; CSS 375x567; DPR 1
+TOUCH Back
+POINT Back: 52,38; CSS 375x567; DPR 1
+TOUCH OpenRecords
+POINT OpenRecords: 183.5,431; CSS 375x567; DPR 1
+TOUCH CloseSheet
+POINT CloseSheet: 307,118; CSS 375x567; DPR 1
+TOUCH CloseSheet
+POINT CloseSheet: 295,165; CSS 351x486; DPR 2
+TOUCH CloseSheet
+POINT CloseSheet: 295,165; CSS 351x486; DPR 2
+TOUCH Back
+POINT Back: 52,38; CSS 375x567; DPR 2
+TOUCH Speed4x
+POINT Speed4x: 292.5,296; CSS 375x567; DPR 2
+TOUCH Speed1x
+POINT Speed1x: 74.5,296; CSS 375x567; DPR 2
+TOUCH Speed4x
+POINT Speed4x: 292.5,296; CSS 375x567; DPR 2
+TOUCH OpenHelp
+SCROLL OpenHelp: 0 -> 381
+SCROLL OpenHelp: 381 -> 568
+POINT OpenHelp: 183.5,481; CSS 375x567; DPR 2
+TOUCH StartTrial
+POINT StartTrial: 183.5,267; CSS 375x567; DPR 2
+TOUCH WorkChoice
+POINT WorkChoice: 75.83333206176749,519; CSS 375x567; DPR 2
+TOUCH AcceptContract_growth_1
+POINT AcceptContract_growth_1: 183.5,423; CSS 375x567; DPR 2
+TOUCH PauseResume
+POINT PauseResume: 329,38; CSS 375x567; DPR 2
+TOUCH NextSlot
+POINT NextSlot: 271,340; CSS 375x567; DPR 2
+TOUCH PreviousSlot
+POINT PreviousSlot: 103.5,340; CSS 375x567; DPR 2
+TOUCH Candidate_annex
+SCROLL Candidate_annex: 0 -> 64
+SCROLL Candidate_annex: 64 -> 40
+POINT Candidate_annex: 183.5,432; CSS 375x567; DPR 2
+TOUCH ApplyChoice
+POINT ApplyChoice: 187.5,519; CSS 375x567; DPR 2
+TOUCH Back
+POINT Back: 52,38; CSS 375x567; DPR 2
+TOUCH OpenRecords
+POINT OpenRecords: 183.5,431; CSS 375x567; DPR 2
+TOUCH CloseSheet
+POINT CloseSheet: 307,118; CSS 375x567; DPR 2
+TOUCH CloseSheet
+POINT CloseSheet: 295,165; CSS 351x486; DPR 3
+TOUCH CloseSheet
+POINT CloseSheet: 295,165; CSS 351x486; DPR 3
+TOUCH Back
+POINT Back: 52,38; CSS 375x567; DPR 3
+TOUCH Speed4x
+POINT Speed4x: 292.5,296; CSS 375x567; DPR 3
+TOUCH Speed1x
+POINT Speed1x: 74.5,296; CSS 375x567; DPR 3
+TOUCH Speed4x
+POINT Speed4x: 292.5,296; CSS 375x567; DPR 3
+TOUCH OpenHelp
+SCROLL OpenHelp: 0 -> 381
+SCROLL OpenHelp: 381 -> 568
+POINT OpenHelp: 183.5,481; CSS 375x567; DPR 3
+TOUCH StartTrial
+POINT StartTrial: 183.5,267; CSS 375x567; DPR 3
+TOUCH WorkChoice
+POINT WorkChoice: 75.83333206176749,519; CSS 375x567; DPR 3
+TOUCH AcceptContract_growth_1
+POINT AcceptContract_growth_1: 183.5,423; CSS 375x567; DPR 3
+TOUCH PauseResume
+POINT PauseResume: 329,38; CSS 375x567; DPR 3
+TOUCH NextSlot
+POINT NextSlot: 271,340; CSS 375x567; DPR 3
+TOUCH PreviousSlot
+POINT PreviousSlot: 103.5,340; CSS 375x567; DPR 3
+TOUCH Candidate_annex
+SCROLL Candidate_annex: 0 -> 64
+SCROLL Candidate_annex: 64 -> 40
+POINT Candidate_annex: 183.5,432; CSS 375x567; DPR 3
+TOUCH ApplyChoice
+POINT ApplyChoice: 187.5,519; CSS 375x567; DPR 3
+TOUCH Back
+POINT Back: 52,38; CSS 375x567; DPR 3
+TOUCH OpenRecords
+POINT OpenRecords: 183.5,431; CSS 375x567; DPR 3
+TOUCH CloseSheet
+POINT CloseSheet: 307,118; CSS 375x567; DPR 3
+BROWSER_PHONE_GEOMETRY 3 cases passed

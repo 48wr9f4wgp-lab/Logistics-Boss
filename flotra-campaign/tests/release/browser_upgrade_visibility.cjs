@@ -251,7 +251,7 @@ function assertCatalog(state,wallet) {
   }
   for(const id of [...futureUpgrades,'wing_1','crew_4'])assert.ok(!state.buttons.some(b=>b.name==='BuyUpgrade_'+id&&b.visible),`${id} stays in its folded group`);
   assert.ok(state.buttons.find(b=>b.name==='ToggleFutureUpgrades'&&b.visible).text.includes(futureUpgrades.length+'件'),'Exact build-specific truly locked upgrade count');
-  if(wallet===200)for(const shortfall of [40,60,150])assert.ok(state.labels.some(l=>l.text==='資金があと'+shortfall+'必要です'&&l.fontSize>=18),`Exact readable shortfall ${shortfall}`);
+  if(wallet===200)for(const shortfall of [40,60,150])assert.ok(state.labels.some(l=>l.text.split('\n')[0]==='資金があと'+shortfall+'必要です'&&l.fontSize>=18),`Exact readable shortfall ${shortfall}`);
   const heading=state.labels.find(l=>l.name==='UnlockedUpgradesHeading');
   assert.equal(heading?.text,'資金をためて導入');
   assert.ok(heading.y>cards.filter(b=>!b.disabled).at(-1).y,'Saving section follows every affordable card');
@@ -260,7 +260,7 @@ function assertCatalog(state,wallet) {
 async function exposeReason(page,context,amount) {
   const text='資金があと'+amount+'必要です';
   for(let attempt=0;attempt<18;attempt++) {
-    const state=await ui(page),label=state.labels.find(l=>l.text===text),scroll=state.scroll;
+    const state=await ui(page),label=state.labels.find(l=>l.text.split('\n')[0]===text),scroll=state.scroll;
     assert.ok(label,'Exact shortfall label exists');
     if(label.y>=scroll.y+4&&label.y+label.height<=scroll.y+scroll.height-4)return;
     await swipe(page,context,scroll,label.y>scroll.y,Math.abs(label.y-scroll.y)+100);
