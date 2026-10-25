@@ -50,7 +50,7 @@ jobs:
           set -euo pipefail
           bash flotra-campaign/export_web.sh build/truck-web
           mkdir -p build/truck-template
-          cp "${XDG_DATA_HOME:-$HOME/.local/share}/godot/export_templates/4.7.2.stable/web_release.zip" build/truck-template/
+          cp "${XDG_DATA_HOME:-$HOME/.local/share}/godot/export_templates/4.7.2.stable/"web*.zip build/truck-template/
           git rev-parse HEAD > build/truck-candidate/source-commit.txt
           sha256sum build/truck-web/* > build/truck-candidate/export-sha256.txt
       - uses: actions/upload-artifact@v4

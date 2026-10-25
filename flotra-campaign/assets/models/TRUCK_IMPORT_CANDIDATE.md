@@ -10,8 +10,10 @@ Date: 2026-10-24 / scope: FLOTRA title-local / status: stationary-display candid
 - Four shared low-poly wheels are supplied by `outbound_truck_display.gd`.
 - The original GLB remains body/cab only; no legacy placement coordinates are copied.
 - TARGET and pre-change campaign CURRENT were actually viewed before placement.
-- Candidate rendering, cargo clearance, all camera turns and phone/performance gates
-  still need verification before merge.
+- Actual candidate normal-phone native captures were viewed at `a8e776c`;
+  caption occlusion was corrected after the first capture.
+- 1,069 route/camera/caption/save assertions pass. Browser qualification and
+  physical iPhone/performance gates remain separate and pending.
 - Prices, domain, schema5 storage keys, public export and PR161 remain unchanged at this candidate stage.
 - `truck_body_import.gd` must run under a disposable XDG profile whose absolute prefix
   is passed as `FLOTRA_REVIEW_USER_ROOT`; it never writes the owner's saves.

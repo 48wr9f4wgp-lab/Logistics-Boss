@@ -46,6 +46,16 @@ allowed_scenes = {
     '.godot/exported/133200997/export-c0b1cce5d9f1449052f4a6622f9dad6e-save_size_web.scn': [('DisposableSizeTest', 'Node', '.')],
     '.godot/imported/packing_workbench.glb-5346c9a59928ee467deb20c316f6591b.scn': [('packing_workbench', 'Node3D', '.'), ('PackingWorkbenchGeometry', 'MeshInstance3D', './PackingWorkbenchGeometry')],
 }
+if manifest.get('truckSourceProfile') == 'stationary-outbound-truck-v1':
+    # New prospective candidate only; historical four-scene boundaries remain.
+    # Compare all other serialized bytes exactly, including truck meshes.
+    allowed_scenes['.godot/imported/flotra_delivery_truck_demo.glb-cb156f1add61b7705613436c390e5c71.scn'] = [
+        ('flotra_delivery_truck_demo', 'Node3D', '.'),
+        ('FLOTRA_Demo_Truck', 'Node3D', './FLOTRA_Demo_Truck'),
+        *[(name, 'MeshInstance3D', './FLOTRA_Demo_Truck/' + name) for name in
+          ['Truck_aluminum', 'Truck_steel', 'Truck_navy', 'Truck_glass', 'Truck_orange', 'Truck_mint']],
+    ]
+    checks['originalTruckBodyBytes'] = sha(root / 'flotra-campaign/assets/models/flotra_delivery_truck_demo.glb') == '4758262bb44f7d7cc97c608ae4891d632d769820a223c94c1183e3751b446533'
 resource_report = compare(root / 'docs/godot-jobs-preview/index.pck', exported / 'index.pck')
 candidate_scenes = {item['path']: item for item in json.loads((evidence / 'candidate-scenes.json').read_text())}
 exported_scenes = {item['path']: item for item in json.loads((evidence / 'exported-scenes.json').read_text())}

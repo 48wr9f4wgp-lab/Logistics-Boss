@@ -11,6 +11,7 @@ on:
       - 'FLOTRA_VISUAL_ONLY_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json'
+      - 'FLOTRA_TRUCK_ARTIFACTS_2026-10-25.json'
   push:
     branches: [main]
     paths:
@@ -22,6 +23,7 @@ on:
       - 'FLOTRA_VISUAL_ONLY_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json'
+      - 'FLOTRA_TRUCK_ARTIFACTS_2026-10-25.json'
 permissions:
   contents: read
 jobs:
@@ -291,7 +293,7 @@ jobs:
     timeout-minutes: 20
     env:
       CONTROL_SHA: a7c60e8c86785137a90b517227b5def8b329c1bc
-      FLOTRA_COMBINED_PROVENANCE: FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json
+      FLOTRA_COMBINED_PROVENANCE: FLOTRA_TRUCK_ARTIFACTS_2026-10-25.json
     steps:
       - uses: actions/checkout@v5
         with:
@@ -334,7 +336,7 @@ jobs:
 
   desktop-save-readiness:
     env:
-      FLOTRA_EXPORT_PROVENANCE: FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json
+      FLOTRA_EXPORT_PROVENANCE: FLOTRA_TRUCK_ARTIFACTS_2026-10-25.json
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -370,8 +372,8 @@ jobs:
           profile="$RUNNER_TEMP/flotra-readiness-inspector"
           mkdir -p "$profile"/{home,data,config,cache}
           export HOME="$profile/home" XDG_DATA_HOME="$profile/data" XDG_CONFIG_HOME="$profile/config" XDG_CACHE_HOME="$profile/cache"
-          SCENE_ID_REPORT="$PWD/build/writer-readiness/candidate-scenes.json" godot --headless --main-pack "$PWD/docs/godot-jobs-preview/index.pck" --script "$PWD/scripts/flotra_inspect_scene_ids.gd"
-          SCENE_ID_REPORT="$PWD/build/writer-readiness/exported-scenes.json" godot --headless --main-pack "$PWD/build/writer-web/index.pck" --script "$PWD/scripts/flotra_inspect_scene_ids.gd"
+          SCENE_ID_REPORT="$PWD/build/writer-readiness/candidate-scenes.json" godot --headless --main-pack "$PWD/docs/godot-jobs-preview/index.pck" --script "$PWD/scripts/flotra_inspect_truck_scene_ids.gd"
+          SCENE_ID_REPORT="$PWD/build/writer-readiness/exported-scenes.json" godot --headless --main-pack "$PWD/build/writer-web/index.pck" --script "$PWD/scripts/flotra_inspect_truck_scene_ids.gd"
           python3 flotra-campaign/tests/release/diagnose_writer_pack.py docs/godot-jobs-preview/index.pck build/writer-web/index.pck build/writer-readiness/pack-resource-diagnostic.json
       - name: Verify exact source, engine and bounded export coherence
         id: export-check
