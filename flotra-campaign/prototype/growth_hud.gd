@@ -898,6 +898,30 @@ func _toggle_upgrades_group(kind: String) -> void:
         _content.get_node("ToggleOwnedUpgrades").text = "導入済みの設備を閉じる" if group.visible else "導入済みの設備を見る"
     _sync_focus.call_deferred()
 
+func _upgrade_funding_copy(option: Dictionary) -> String:
+    var reason := _locked_text(str(option.get("locked_reason", "")))
+    if bool(option.get("owned", false)) or not bool(option.get("unlocked", false)) or str(_release.get("status", "")) == "running":
+        return reason
+    var shortfall := maxi(0, int(option.get("cost", 0)) - int(_release.get("wallet", 0)))
+    if shortfall == 0: return reason
+    # A familiar-job funding example, not a speed promise or automatic choice.
+    var example: Dictionary = {}
+    var least_units := 2147483647
+    for job in _contracts:
+        var reward := int(job.get("reward", 0))
+        if not bool(job.get("available", false)) or not bool(job.get("completed", false)) or not bool(job.get("repeatable", false)) or reward <= 0:
+            continue
+        var count := ceili(float(shortfall) / reward)
+        var units := count * int(job.get("total_units", 0))
+        if units <= 0 or units >= least_units: continue
+        least_units = units
+        example = {"label":str(job.get("label", "")), "count":count, "reward":reward}
+    if example.is_empty(): return reason
+    var job_label := str(example.label)
+    var number := job_label.get_slice(" ", 0)
+    if number.is_valid_int(): job_label = "仕事" + number
+    return "%s\n例：%sをあと%d回\n報酬%d/回（他の購入なし）" % [reason, job_label, example.count, example.reward]
+
 func _build_upgrade_card(option: Dictionary, parent: Node = null) -> void:
     var id := str(option.get("id", ""))
     var box := _card(parent if parent != null else _content)
@@ -912,7 +936,7 @@ func _build_upgrade_card(option: Dictionary, parent: Node = null) -> void:
     button.disabled = owned or not bool(option.get("available", false))
     _upgrade_buttons[id] = button
     if button.disabled and not owned:
-        _text(box, _locked_text(str(option.get("locked_reason", ""))), BODY_FONT_SIZE, Color("476266"))
+        _text(box, _upgrade_funding_copy(option), BODY_FONT_SIZE, Color("476266")).name = "UpgradeFunding_" + id
 
 func _open_upgrades() -> void:
     _show_choice_section("upgrades")

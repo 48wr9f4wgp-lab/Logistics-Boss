@@ -1,0 +1,38 @@
+{
+  "baseline": "027cb20d0bcd34fde6f944f4b3e7e63e21dc9b09",
+  "runtime_and_test_sources": {
+    "flotra-campaign/prototype/growth_view.gd": "e8e215cc73d38a03315bfcb7151a92429eb8cfcae82fe102fdb30905e033136b",
+    "flotra-campaign/prototype/growth_sim.gd": "6bb671059c3b597f43056f332fa4e33eee77a8a472819ce7faf0a45b0bf9d7a9",
+    "flotra-campaign/test.sh": "2fa1e7890c0ebe2c55e2d5c882f9620c47819c57c130451e901959499ed6510f",
+    "flotra-campaign/tests/release/automation_line.gd": "e262a5f419920c8dd3b73837037e5d5bf5983df377f9d07196863303302208c7",
+    "flotra-campaign/tests/release/automation_line.gd.uid": "76969c29e1e47e5ec5500ac87bb8990e7cd0e809f7ad2266c276f4e246bbc41c",
+    "flotra-campaign/tests/release/browser_automation_line.cjs": "b74343477cda145a7a8a58f8573866cdb5d9016e722550e4cd4c98772d538c6a"
+  },
+  "candidate_export": {
+    "index.apple-touch-icon.png": "426314ebb020cf556f9c5871f01f4ae17537fe1151ced9ab1074ac8554b81163",
+    "index.icon.png": "2b8b41370118cff6798ab75a1058a613fa07b9c1e1c28a74b1046992efef6e7e",
+    "index.png": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+    "index.html": "2738f5f87dede78579b966a2265bf049d763ea998166d189bbad3a0b7f61290b",
+    "index.audio.position.worklet.js": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+    "index.audio.worklet.js": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+    "index.wasm": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0",
+    "index.js": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba",
+    "index.pck": "f9e2f3014c6290676d6233e7631dfc585c5e888c3560a33bbb1938e7b8045ae9",
+    "campaign-viewport.js": "9eed4614bd5e6f0b96ea5c347ce1ae7a5b018e3860aa48a39909abe8d7e72bea",
+    "dispatch-storage.js": "9571c549793bfc08e45372e73072729c6a76521120531392fb57072757d253f5"
+  },
+  "control_export": {
+    "campaign-viewport.js": "9eed4614bd5e6f0b96ea5c347ce1ae7a5b018e3860aa48a39909abe8d7e72bea",
+    "dispatch-storage.js": "9571c549793bfc08e45372e73072729c6a76521120531392fb57072757d253f5",
+    "index.wasm": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0",
+    "index.png": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+    "index.pck": "6bbff94778f97f7935f4c4b132159a5f39554aa85bbcae2cdf0f3ef162c46e76",
+    "index.js": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba",
+    "index.icon.png": "2b8b41370118cff6798ab75a1058a613fa07b9c1e1c28a74b1046992efef6e7e",
+    "index.html": "fc776700e96f6ba2a6e02e4efaeb6873d9a8228c1e4a979b537309182f77967e",
+    "index.audio.worklet.js": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+    "index.audio.position.worklet.js": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+    "index.apple-touch-icon.png": "426314ebb020cf556f9c5871f01f4ae17537fe1151ced9ab1074ac8554b81163"
+  },
+  "note": "Local measurement exports, not publish-qualified artifacts. Runtime hashes match measurement manifest; final new-test source includes additional carton clearance assertions after the measured export."
+}

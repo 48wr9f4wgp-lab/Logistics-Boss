@@ -9,7 +9,9 @@ import sys
 sys.dont_write_bytecode = True
 from diagnose_writer_pack import compare
 
-root = Path(__file__).resolve().parents[3]
+# Explicit immutable source archive for prospective control qualification.
+# Default public-artifact verification and its narrow scene-ID rule are unchanged.
+root = Path(sys.argv[3]).resolve() if len(sys.argv) == 4 else Path(__file__).resolve().parents[3]
 exported = Path(sys.argv[1])
 evidence = Path(sys.argv[2])
 evidence.mkdir(parents=True, exist_ok=True)

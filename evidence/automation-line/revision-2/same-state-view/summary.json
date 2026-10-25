@@ -1,0 +1,186 @@
+{
+  "scope": "Sequential ABBA, identical full cargo state hash at every measured row",
+  "exactLedgerMatches": true,
+  "runs": [
+    {
+      "label": "A1",
+      "environment": {
+        "dpr": 3,
+        "css": [
+          390,
+          844
+        ],
+        "backing": [
+          1170,
+          2532
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+      },
+      "summary": {
+        "view_usec": {
+          "p50": 17000,
+          "p95": 20500,
+          "max": 26400
+        },
+        "sim_usec": {
+          "p50": 800,
+          "p95": 1900,
+          "max": 2700
+        },
+        "hud_usec": {
+          "p50": 3000,
+          "p95": 3600,
+          "max": 12300
+        },
+        "draw_calls": {
+          "p50": 74,
+          "p95": 76,
+          "max": 78
+        },
+        "unchanged_view_usec": {
+          "p50": 700,
+          "p95": 1000
+        }
+      },
+      "ledger_unchanged_by_view": true,
+      "scope": "Same actual cargo ledger per row; renderer microbenchmark, excludes live autosave scheduling",
+      "measuredRows": 96,
+      "busyPackingRows": 31
+    },
+    {
+      "label": "B1",
+      "environment": {
+        "dpr": 3,
+        "css": [
+          390,
+          844
+        ],
+        "backing": [
+          1170,
+          2532
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+      },
+      "summary": {
+        "view_usec": {
+          "p50": 16900,
+          "p95": 20100,
+          "max": 23100
+        },
+        "sim_usec": {
+          "p50": 800,
+          "p95": 2000,
+          "max": 4100
+        },
+        "hud_usec": {
+          "p50": 3100,
+          "p95": 3600,
+          "max": 5800
+        },
+        "draw_calls": {
+          "p50": 74,
+          "p95": 76,
+          "max": 78
+        },
+        "unchanged_view_usec": {
+          "p50": 600,
+          "p95": 900
+        }
+      },
+      "ledger_unchanged_by_view": true,
+      "scope": "Same actual cargo ledger per row; renderer microbenchmark, excludes live autosave scheduling",
+      "measuredRows": 96,
+      "busyPackingRows": 31
+    },
+    {
+      "label": "B2",
+      "environment": {
+        "dpr": 3,
+        "css": [
+          390,
+          844
+        ],
+        "backing": [
+          1170,
+          2532
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+      },
+      "summary": {
+        "view_usec": {
+          "p50": 16700,
+          "p95": 20000,
+          "max": 27000
+        },
+        "sim_usec": {
+          "p50": 900,
+          "p95": 2000,
+          "max": 7400
+        },
+        "hud_usec": {
+          "p50": 2900,
+          "p95": 3300,
+          "max": 3600
+        },
+        "draw_calls": {
+          "p50": 74,
+          "p95": 76,
+          "max": 78
+        },
+        "unchanged_view_usec": {
+          "p50": 600,
+          "p95": 900
+        }
+      },
+      "ledger_unchanged_by_view": true,
+      "scope": "Same actual cargo ledger per row; renderer microbenchmark, excludes live autosave scheduling",
+      "measuredRows": 96,
+      "busyPackingRows": 31
+    },
+    {
+      "label": "A2",
+      "environment": {
+        "dpr": 3,
+        "css": [
+          390,
+          844
+        ],
+        "backing": [
+          1170,
+          2532
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+      },
+      "summary": {
+        "view_usec": {
+          "p50": 17000,
+          "p95": 21100,
+          "max": 28800
+        },
+        "sim_usec": {
+          "p50": 800,
+          "p95": 1900,
+          "max": 2400
+        },
+        "hud_usec": {
+          "p50": 2900,
+          "p95": 3400,
+          "max": 7100
+        },
+        "draw_calls": {
+          "p50": 74,
+          "p95": 76,
+          "max": 78
+        },
+        "unchanged_view_usec": {
+          "p50": 700,
+          "p95": 900
+        }
+      },
+      "ledger_unchanged_by_view": true,
+      "scope": "Same actual cargo ledger per row; renderer microbenchmark, excludes live autosave scheduling",
+      "measuredRows": 96,
+      "busyPackingRows": 31
+    }
+  ]
+}
