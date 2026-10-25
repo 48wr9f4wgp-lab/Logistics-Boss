@@ -1,11 +1,16 @@
 # FLOTRA — Canonical Visual Reference
 
-Last synchronized: 2026-09-16 JST
+Last synchronized: 2026-10-24 JST
 Scope: FLOTRA only
 
 ## Canonical North Star image
 
-`docs/visual/logistics_boss_visual_north_star_2026-09-16.png`
+`docs/visual/logistics_boss_target_recovered_2026-10-24.png`
+
+Recovered from the owner-designated Space material and visually inspected. See
+`TARGET_RECOVERY_2026-10-24.md` for exact provenance and SHA256.
+The older `logistics_boss_visual_north_star_2026-09-16.png` is truncated and
+retained for history; it is not a usable visual reference.
 
 This image is the approved visual North Star for mood, camera family, palette roles, premium industrial tone, readable logistics zoning, density aspiration and visible facility growth.
 

@@ -1,0 +1,71 @@
+name: FLOTRA Truck Candidate
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'flotra-campaign/**'
+      - '.github/workflows/flotra-truck-candidate.yml'
+permissions:
+  contents: read
+jobs:
+  truck-native-and-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+      - name: Import and verify candidate geometry without player storage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(godot --version)" = '4.7.2.stable.official.ed1daf0bf'
+          profile="$RUNNER_TEMP/flotra-truck"
+          mkdir -p "$profile"/{data,config,cache} build/truck-candidate build/truck-fixtures
+          export XDG_DATA_HOME="$profile/data" XDG_CONFIG_HOME="$profile/config" XDG_CACHE_HOME="$profile/cache" FLOTRA_REVIEW_USER_ROOT="$profile/"
+          godot --headless --editor --path flotra-campaign --import
+          godot --headless --path flotra-campaign --script res://tests/release/truck_body_import.gd
+          godot --headless --path flotra-campaign --script res://tests/release/truck_static_display.gd
+          FLOTRA_GROWTH_FIXTURES="$PWD/build/truck-fixtures" godot --headless --path flotra-campaign --script res://tests/release/growth_browser_fixtures.gd
+      - name: Render normal phone views of the actual candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y xvfb
+          profile="$RUNNER_TEMP/flotra-truck-render"
+          mkdir -p "$profile"/{data,config,cache}
+          export XDG_DATA_HOME="$profile/data" XDG_CONFIG_HOME="$profile/config" XDG_CACHE_HOME="$profile/cache"
+          FLOTRA_GROWTH_FIXTURES="$PWD/build/truck-fixtures" FLOTRA_VISUAL_OUTPUT="$PWD/build/truck-candidate" LIBGL_ALWAYS_SOFTWARE=1 \
+            timeout 180 xvfb-run -a -s "-screen 0 1280x1024x24" godot --path flotra-campaign --rendering-method gl_compatibility --script res://tests/release/visual_growth_capture.gd \
+            2>&1 | tee build/truck-candidate/engine.log
+      - name: Export exact candidate and retain official Web template
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash flotra-campaign/export_web.sh build/truck-web
+          mkdir -p build/truck-template
+          cp "${XDG_DATA_HOME:-$HOME/.local/share}/godot/export_templates/4.7.2.stable/web_release.zip" build/truck-template/
+          git rev-parse HEAD > build/truck-candidate/source-commit.txt
+          sha256sum build/truck-web/* > build/truck-candidate/export-sha256.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flotra-truck-candidate-native
+          path: build/truck-candidate
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flotra-truck-candidate-web
+          path: build/truck-web
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flotra-truck-official-template
+          path: build/truck-template
+          retention-days: 7

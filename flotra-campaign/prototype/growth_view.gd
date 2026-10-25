@@ -8,6 +8,7 @@ const HUMAN_RADIAL_SEGMENTS := 8
 const HUMAN_CAPSULE_RINGS := 2
 const HUMAN_HEAD_RINGS := 3 # Include the equator, retaining the full head diameter.
 const CoreGeometry = preload("res://prototype/jobs_sim.gd")
+const TruckDisplay = preload("res://assets/models/outbound_truck_display.gd")
 const HIDDEN_BOX_TRANSFORM := Transform3D(Basis(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO), Vector3.ZERO)
 var _box_sources: Array[MeshInstance3D] = []
 var _box_batches: Array[MultiMeshInstance3D] = []
@@ -213,6 +214,14 @@ func _build_shell(state: Dictionary) -> void:
             core_edges.append(edge)
     core_state["edges"] = core_edges
     super._build_shell(core_state)
+    # Park beside the real outbound endpoint, beyond its approach lane. The
+    # display never boards cargo, creates capacity or changes dispatch timing.
+    var outbound := _position(state.get("world", {}).get("outbound", Vector3(8, 0, 3)))
+    var truck := TruckDisplay.create()
+    if truck != null:
+        truck.position = outbound + Vector3(2.1, 0, 0)
+        add_child(truck)
+        _box(self, "OutboundTruckApron", Vector3(3.7, .08, 2.1), outbound + Vector3(2.3, -.055, 0), Color("354b52"))
 
 func refresh() -> void:
     if sim == null or not is_node_ready():
@@ -373,10 +382,13 @@ func fit_camera(view_size: Vector2) -> void:
         if is_instance_valid(_ghost):
             _append_corners(points, AABB(_ghost.position - Vector3(2.0, .15, 2.0), Vector3(4.0, 3.0, 4.0)))
     else:
-        for title in ["MainFoundation", "AnnexFoundation"]:
+        for title in ["MainFoundation", "AnnexFoundation", "OutboundTruckApron"]:
             var floor_mesh := get_node_or_null(title) as MeshInstance3D
             if floor_mesh != null:
                 _append_corners(points, floor_mesh.global_transform * floor_mesh.get_aabb())
+        var truck := get_node_or_null("OutboundTruckDisplay") as Node3D
+        if truck != null:
+            _append_corners(points, truck.global_transform * AABB(Vector3(-2.1, 0, -.9), Vector3(3.5, 1.9, 1.8)))
         for floor_mesh in _growth_floors + _connector_floors:
             if is_instance_valid(floor_mesh):
                 _append_corners(points, floor_mesh.global_transform * floor_mesh.get_aabb())

@@ -1,7 +1,7 @@
 extends RefCounted
 ## Original demonstration body/cab only. This loader owns no placement, wheels,
-## routes, cargo, income or saved state. Keep it out of automatic scene setup
-## until the campaign-specific placement and visual gates are verified.
+## routes, cargo, income or saved state. The separate outbound display owns
+## stationary campaign placement; this loader remains usable in isolation.
 
 const MODEL_PATH := "res://assets/models/flotra_delivery_truck_demo.glb"
 

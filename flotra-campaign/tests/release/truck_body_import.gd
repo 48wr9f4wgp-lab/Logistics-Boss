@@ -81,7 +81,7 @@ func run() -> void:
     root.add_child(app)
     app.set_process(false)
     var before := var_to_bytes(app.sim.export_release_state())
-    check(app.world.get_node_or_null("DeliveryTruckBodyCandidate") == null, "Campaign does not auto-install an unreviewed body")
+    check(app.world.get_node_or_null("DeliveryTruckBodyCandidate") == null, "The standalone import is not installed as a second campaign truck")
     # Temporary test attachment proves composition compatibility, not placement.
     app.world.add_child(body)
     var identity := body.get_instance_id()
