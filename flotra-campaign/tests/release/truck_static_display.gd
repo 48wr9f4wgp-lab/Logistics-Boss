@@ -46,6 +46,9 @@ func run() -> void:
         for turn in 4:
             app.world._camera_turn = turn
             app.world.fit_camera(app.viewport_container.size)
+            for item in app.world._callouts.values():
+                if item.label.visible:
+                    check(not item.rect.intersects(app.world._truck_screen_rect()), "Location labels do not cover the truck")
             var screen := Rect2(Vector2.ZERO, app.viewport_container.size)
             for mesh: MeshInstance3D in meshes:
                 for corner in 8:

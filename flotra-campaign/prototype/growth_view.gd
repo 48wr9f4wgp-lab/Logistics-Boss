@@ -261,6 +261,22 @@ func refresh() -> void:
         fit_camera(Vector2(get_viewport().size))
     _refresh_box_batches()
 
+func _truck_screen_rect() -> Rect2:
+    var truck := get_node_or_null("OutboundTruckDisplay") as Node3D
+    if truck == null or camera == null:
+        return Rect2()
+    var rect := Rect2(camera.unproject_position(truck.global_position), Vector2.ZERO)
+    var bounds := AABB(Vector3(-2.1, 0, -.9), Vector3(3.5, 1.9, 1.8))
+    for corner in 8:
+        rect = rect.expand(camera.unproject_position(truck.global_transform * bounds.get_endpoint(corner)))
+    return rect.grow(3)
+
+func _callout_rect(anchor: Vector2, dimensions: Vector2, side: int, screen: Vector2, occupied: Array[Rect2], protected: Array[Rect2]) -> Rect2:
+    var guarded := protected.duplicate()
+    if get_node_or_null("OutboundTruckDisplay") != null:
+        guarded.append(_truck_screen_rect())
+    return super._callout_rect(anchor, dimensions, side, screen, occupied, guarded)
+
 func _sync_growth_geometry(state: Dictionary) -> bool:
     if _growth_root == null:
         return false
