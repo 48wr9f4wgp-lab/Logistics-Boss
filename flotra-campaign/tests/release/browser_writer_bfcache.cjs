@@ -19,7 +19,9 @@ module.exports = async function verifyNativeBFCache({ url, output, encoded, exec
   target.searchParams.set('phone_qa', '1');
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'flotra-native-bfcache-'));
   const report = { name: 'real-bfcache-restoration', status: 'running', driver: 'Native Chromium CDP pipe, real history navigation', events: [], errors: [] };
-  let sequence = 0, buffer = '', context;
+  let sequence = 0, buffer = '', context, oldTab, helperTab;
+  const destroyedTargets = new Set();
+  const fingerprints = values => Object.fromEntries(Object.entries(values).map(([key, value]) => [key, { bytes: Buffer.byteLength(value), sha256: createHash('sha256').update(value).digest('hex') }]));
   const decoder = new StringDecoder('utf8');
   const pending = new Map(), sessions = new Map();
   const process = spawn(executable, ['--headless=new', '--no-sandbox', '--remote-debugging-pipe', '--disable-dev-shm-usage', '--no-first-run', '--no-default-browser-check', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--user-data-dir=' + profile], { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
@@ -46,6 +48,8 @@ module.exports = async function verifyNativeBFCache({ url, output, encoded, exec
         if (!item) continue;
         pending.delete(message.id); clearTimeout(item.timer);
         if (message.error) item.reject(new Error(message.error.message)); else item.resolve(message.result);
+      } else if (message.method === 'Target.targetDestroyed') {
+        destroyedTargets.add(message.params.targetId);
       } else if (message.sessionId && sessions.has(message.sessionId)) {
         const events = sessions.get(message.sessionId);
         if (message.method === 'Page.backForwardCacheNotUsed') report.events.push({ session: message.sessionId, ...message.params });
@@ -122,13 +126,14 @@ module.exports = async function verifyNativeBFCache({ url, output, encoded, exec
   }
   try {
     report.browser = await call('Browser.getVersion');
+    await call('Target.setDiscoverTargets', { discover: true });
     ({ browserContextId: context } = await call('Target.createBrowserContext'));
-    const helper = await tab();
+    const helper = helperTab = await tab();
     const away = new URL('writer-away.html', target).href;
     await navigate(helper, away);
     assert.deepEqual(await store(helper), {});
     await evaluate(helper, 'localStorage.setItem(' + JSON.stringify(P) + ',' + JSON.stringify(encoded) + ')');
-    const old = await tab();
+    const old = oldTab = await tab();
     await navigate(old, target.href); await ready(old); await click(old, 'CloseSheet');
     await until(old, 'window.FlotraViewport.uiMetrics.sheet === ""', 'intro closes');
     const before = await data(old), oldState = durable(await ui(old));
@@ -141,8 +146,16 @@ module.exports = async function verifyNativeBFCache({ url, output, encoded, exec
     const latestState = durable(await ui(latest));
     const inputs = (await data(latest)).input;
     assert.ok(inputs.some(e => e.type === 'mousedown' && e.trusted) && inputs.some(e => e.type === 'mouseup' && e.trusted), 'Native UI mouse events are trusted');
+    report.beforeClose = fingerprints(await store(latest));
     await call('Target.closeTarget', { targetId: latest.targetId });
+    // closeTarget only acknowledges a request. Wait for actual destruction and
+    // the real writer lock's release before taking the post-close baseline.
+    const closedDeadline = Date.now() + 15000;
+    while (!destroyedTargets.has(latest.targetId) && Date.now() < closedDeadline) await sleep(50);
+    assert.ok(destroyedTargets.has(latest.targetId), 'Latest document was actually destroyed');
+    await until(helper, 'navigator.locks.request(' + JSON.stringify(P + '.writer') + ', {mode: "exclusive", ifAvailable: true}, lock => !!lock)', 'latest real writer lock released');
     const newest = await store(helper);
+    report.afterClose = fingerprints(newest);
     const envelope = JSON.parse(newest[P]);
     assert.equal(envelope.version, 5); assert.equal(envelope.format, 'flotra-campaign');
     assert.equal(createHash('sha256').update(Buffer.from(envelope.payload, 'base64').toString('hex')).digest('hex'), envelope.sha256);
@@ -171,7 +184,9 @@ module.exports = async function verifyNativeBFCache({ url, output, encoded, exec
     async function protectedState() {
       const state = await ui(old);
       assert.equal(state.sheet, 'save_protection'); assert.equal(state.trialRunning, false);
-      assert.deepEqual(durable(state), oldState); assert.deepEqual(await store(helper), newest);
+      const storageNow = await store(helper);
+      (report.protectionSnapshots ||= []).push({ writes: (await data(old)).writes.length, storage: fingerprints(storageNow) });
+      assert.deepEqual(durable(state), oldState); assert.deepEqual(storageNow, newest);
       assert.equal((await data(old)).writes.length, persisted.writes);
       for (const [name, text] of [['Back', '保護中'], ['PauseResume', '停止中'], ['CloseSheet', '停止中']]) {
         const b = state.buttons.find(b => b.name === name && b.visible);
@@ -201,6 +216,8 @@ module.exports = async function verifyNativeBFCache({ url, output, encoded, exec
     report.status = 'passed';
   } catch (error) { report.status = 'failed'; report.error = (error.stack || String(error)).replace(/[A-Za-z0-9+/]{80,}={0,2}/g, '[encoded data redacted]').slice(0, 6000); }
   finally {
+    if (oldTab) report.finalObserver = await data(oldTab).then(d => ({ realm: d.realm, writes: d.writes, locks: d.locks, starts: d.starts })).catch(error => ({ error: error.message }));
+    if (helperTab) report.finalStorage = await store(helperTab).then(fingerprints).catch(error => ({ error: error.message }));
     fs.writeFileSync(path.join(output, 'native-bfcache.json'), JSON.stringify(report, null, 2));
     if (process.pid && process.exitCode === null) await call('Browser.close').catch(() => {});
     if (process.exitCode === null) process.kill('SIGTERM');

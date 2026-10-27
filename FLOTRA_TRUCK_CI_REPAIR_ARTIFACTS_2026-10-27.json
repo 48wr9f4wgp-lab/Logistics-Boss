@@ -166,7 +166,7 @@
     "flotra-campaign/tests/release/browser_preparation_journey.cjs": "63e9012cadb6398d76a3b2a16b967f87d7bd3f07f8b9b520f3a74e1efabed402",
     "flotra-campaign/tests/release/browser_save_size.cjs": "4b4dcc26976d4936eea002581ee1eff3c9791a9dc7611fb2e7770e63139fa975",
     "flotra-campaign/tests/release/browser_upgrade_visibility.cjs": "e741887262b668ce042b00db534ed507bec7a4a24ff92065efc53fa0e5cc899d",
-    "flotra-campaign/tests/release/browser_writer_bfcache.cjs": "99a7169db1317ee8d634f4e4d7db0ed796398104f1989dd0226a072ac57fe6d2",
+    "flotra-campaign/tests/release/browser_writer_bfcache.cjs": "5f405f55352d2ec16c73f808a33d7165e6d7dee5529af420df79c1f8b0a50d45",
     "flotra-campaign/tests/release/browser_writer_observer.cjs": "0b8c2e21300ec15562cab4efe4268f86c4774d4adec03912450cabcb91014047",
     "flotra-campaign/tests/release/browser_writer_readiness.cjs": "4aee7a5aaf8b5425deac1fec8a1df5b1ed33c5edd08d4e9450129f5b6e413201",
     "flotra-campaign/tests/release/camera_interaction_review.gd": "5b813b8a1d752466f00d495a8c4cd4cde81e96b2654cb91d835aa2be9fab0313",
@@ -331,7 +331,7 @@
     "flotra-campaign/tests/release/browser_export_contract_test.cjs": "a39d2618f7b9b145af63e03e73459d77e76e3a9915bc3c0bead93fb221daa0e6",
     "flotra-campaign/tests/release/browser_writer_readiness.cjs": "4aee7a5aaf8b5425deac1fec8a1df5b1ed33c5edd08d4e9450129f5b6e413201",
     "flotra-campaign/tests/release/browser_writer_observer.cjs": "0b8c2e21300ec15562cab4efe4268f86c4774d4adec03912450cabcb91014047",
-    "flotra-campaign/tests/release/browser_writer_bfcache.cjs": "99a7169db1317ee8d634f4e4d7db0ed796398104f1989dd0226a072ac57fe6d2",
+    "flotra-campaign/tests/release/browser_writer_bfcache.cjs": "5f405f55352d2ec16c73f808a33d7165e6d7dee5529af420df79c1f8b0a50d45",
     "FLOTRA_TRUCK_CAMERA_CONTRACT_2026-10-27.json": "2869d62e0f55f76661c0153d4bd30a9ca019a3b8c30761eb1f7714aa5e17a923"
   },
   "historicalEvidenceFile": "FLOTRA_TRUCK_ARTIFACTS_2026-10-25.json",
@@ -341,7 +341,8 @@
     "Native rendering is not WebGL timing, physical iPhone/Safari or production release qualification.",
     "PR161 remains separate and unmerged.",
     "Run 40146228501: old strict visual equality produced invalid_comparison; 14 writer cases passed and real BFCache remained blocked under Playwright. Historical run is not reclassified.",
-    "Playwright explicitly does not support BFCache lifecycle restoration: https://playwright.dev/docs/api/class-page. Native CDP driver now tests that case directly; pending actual CI."
+    "Playwright explicitly does not support BFCache lifecycle restoration: https://playwright.dev/docs/api/class-page. Native CDP driver now tests that case directly; pending actual CI.",
+    "Run 40442353921: ABBA passed unchanged gates; native BFCache genuinely restored but post-close backup equality failed. Wait for actual target destruction and writer-lock release, retain fingerprints and restored-heap write evidence; strict storage equality unchanged."
   ],
   "visualEvidence": {
     "beforeRun": 40030535576,
