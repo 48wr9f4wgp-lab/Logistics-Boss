@@ -1,10 +1,7 @@
 {
-  "scope": "Prospective CI harness repair; unchanged campaign/runtime/export bytes. No deployment or performance pass claimed.",
+  "scope": "Prospective stationary-truck qualification plus stale modal-focus fix; no production deployment or physical-device claim.",
   "godot": "4.7.2.stable.official.ed1daf0bf",
   "implementationBaseCommit": "6ad3f72585c6db66dcd2aa8cd2524d4a4d4b3470",
-  "exportSourceCommit": "a8e776cde49d16cb58e761495afa9a59315f230f",
-  "exportRun": 40146000560,
-  "exportArtifact": 12580162620,
   "truckSourceProfile": "stationary-outbound-truck-v1",
   "controlCommit": "a7c60e8c86785137a90b517227b5def8b329c1bc",
   "controlNote": "Unchanged historical ABBA control bytes; never rebuilt. All original gates and order retained.",
@@ -23,7 +20,7 @@
     "flotra-campaign/prototype/dispatch_sim.gd.uid": "1712deaf2d2cc712a07330ab1361eb2052efb2549649e986328ec9354b41f278",
     "flotra-campaign/prototype/dispatch_hud.gd": "e12d7c5dd625efca36ca130f84e464e7289c2e3c27bdb37a76aae0601ccc3e7b",
     "flotra-campaign/prototype/layout_hud.gd.uid": "39ea84efb140b8140e08325ac2ea2971747efbb908461bd81e2554d9e922253d",
-    "flotra-campaign/prototype/layout_hud.gd": "ba8a670a23b1ff19e5907c9358d3ee721717061371f787f5edcd5166682d24be",
+    "flotra-campaign/prototype/layout_hud.gd": "12b9c83d8e7d4423ad2474fffadd521c4d94253bb4da8b704bfb053ec5c3405d",
     "flotra-campaign/prototype/layout_view.gd.uid": "283ee6b81463eb73a2d219f1fa59ed299fc9bcd1ecd09851d9196fff0a5e584e",
     "flotra-campaign/prototype/dispatch_hud.gd.uid": "5f9429546d64f17988e686d18cb8aefa08c977e07165f88c66c0f8db10f48234",
     "flotra-campaign/prototype/growth_main.gd": "ebccab104f7098738cdd310b19aa7cbeb787e72e3efec1c5524d4b2ef18c1014",
@@ -130,7 +127,7 @@
     "flotra-campaign/prototype/jobs_sim.gd.uid": "9abe97a2a56df8bfd2ce1a6fa0fde016bff121a35246270a36363801fd131069",
     "flotra-campaign/prototype/jobs_view.gd": "e455fa1a43c13374700fd78bf74ee0b5c6ecd393eb615dde92b11e0361fc5a9c",
     "flotra-campaign/prototype/jobs_view.gd.uid": "c192433cff22c6a736683ff13bf48e871e0901bfb9f54fdce48d8dd9d9a42011",
-    "flotra-campaign/prototype/layout_hud.gd": "ba8a670a23b1ff19e5907c9358d3ee721717061371f787f5edcd5166682d24be",
+    "flotra-campaign/prototype/layout_hud.gd": "12b9c83d8e7d4423ad2474fffadd521c4d94253bb4da8b704bfb053ec5c3405d",
     "flotra-campaign/prototype/layout_hud.gd.uid": "39ea84efb140b8140e08325ac2ea2971747efbb908461bd81e2554d9e922253d",
     "flotra-campaign/prototype/layout_view.gd": "e3f18ccae3ccfdcce659a3365a7d5b825b5df59a3889a0422778a405fa4ae625",
     "flotra-campaign/prototype/layout_view.gd.uid": "283ee6b81463eb73a2d219f1fa59ed299fc9bcd1ecd09851d9196fff0a5e584e",
@@ -154,7 +151,7 @@
     "flotra-campaign/prototype/release_sim.gd.uid": "dc26ad80071e75756881ebb63064f905cbc527d66e5e55f62f331ebc7179331d",
     "flotra-campaign/prototype/release_view.gd": "a8aeac2a0ca356928ba8f871cbb7ca2555d4588b273c3a7478b92af81a84d089",
     "flotra-campaign/prototype/release_view.gd.uid": "a88d5612891e114681b66a074bd79f82c721cf79e522adbff4daab53ca38a1b9",
-    "flotra-campaign/test.sh": "badf31683484465a40abac748bec140d7a5875a8f2d0e1c76604e6b762fb280d",
+    "flotra-campaign/test.sh": "60e32b69a271c6cd2cb7c1e0fe7c93a96110ddf121bfc8d2a62fb4b3675a4d74",
     "flotra-campaign/tests/release/browser_camera_controls.cjs": "747b6f44ee5aa224407476c3884fc3ab23b5e69f60939f5452621bdb103858a4",
     "flotra-campaign/tests/release/browser_combined_performance.cjs": "2085f6cce99bf6d41a8d472eabc700119538a8ccb96cef9ca64b683bd2d14dc1",
     "flotra-campaign/tests/release/browser_export_contract.cjs": "f4b48d584bccd1df366fb35422496b1f02f7f9ea76f9c240feb24285205ba61b",
@@ -215,6 +212,8 @@
     "flotra-campaign/tests/release/finish_review_journey.gd.uid": "1220acd0a59afbd0efa5ad65d5f35cefe176be6bee8b84224f788c49da948df7",
     "flotra-campaign/tests/release/finish_review_scoring.gd": "1f04f4b58545459611f0776f27341ee89ee931740724132f10b22ca9757c09d3",
     "flotra-campaign/tests/release/finish_review_scoring.gd.uid": "69bbe14ff1f7d553f36954eec4cfe3d99529d99828896810577b4e524418f69d",
+    "flotra-campaign/tests/release/focus_ring_lifecycle.gd": "7c90749ccd7faf572e8b1cc2be04659e1b85039b87f7883c9515a63d28a80d40",
+    "flotra-campaign/tests/release/focus_ring_lifecycle.gd.uid": "b6ea08919ad73ef75cf930612144037723dec50358305f1b09ddc4f9f08f044e",
     "flotra-campaign/tests/release/growth_balance.gd": "98d3b8696e9cd3df8d6301b46ef279453d46a993a4e320c1c72987fc3405006d",
     "flotra-campaign/tests/release/growth_balance.gd.uid": "4300806584b2c19eb034950ea734c4aa8482eceb4008b675cdf09deca734c165",
     "flotra-campaign/tests/release/growth_browser_fixtures.gd": "c12c0fdce6994b0af489e2e0010654a8f42428b1586140acf053ddfe2abce843",
@@ -304,8 +303,8 @@
     "flotra-campaign/web-shell.html": "073fe5d651b05dcfc784381c7956e5590b258acf3d407a761b665680894e38f3"
   },
   "candidateAssetsSHA256": {
-    "index.html": "c0c4a0f4e4dc859838f3dd0cae66753b7c8341870ea15c854e890613286e5a56",
-    "index.pck": "f4af705e35744e8aa57b6f59a299231d955f0ca3bde475f472de70e75b58aaa3",
+    "index.html": "98b3c640f24eb0e04c214ef3f2b2223860e7cbb262818d993f340fcfc7e4cbc7",
+    "index.pck": "9b4b77be0378cdaaabb7aa9209aa2a136f3747015b57632358384e9e54762235",
     "index.js": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba",
     "index.wasm": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0",
     "campaign-viewport.js": "9eed4614bd5e6f0b96ea5c347ce1ae7a5b018e3860aa48a39909abe8d7e72bea",
@@ -332,7 +331,7 @@
     "flotra-campaign/tests/release/browser_writer_readiness.cjs": "4aee7a5aaf8b5425deac1fec8a1df5b1ed33c5edd08d4e9450129f5b6e413201",
     "flotra-campaign/tests/release/browser_writer_observer.cjs": "0b8c2e21300ec15562cab4efe4268f86c4774d4adec03912450cabcb91014047",
     "flotra-campaign/tests/release/browser_writer_bfcache.cjs": "5f405f55352d2ec16c73f808a33d7165e6d7dee5529af420df79c1f8b0a50d45",
-    "FLOTRA_TRUCK_CAMERA_CONTRACT_2026-10-27.json": "2869d62e0f55f76661c0153d4bd30a9ca019a3b8c30761eb1f7714aa5e17a923"
+    "FLOTRA_TRUCK_CAMERA_CONTRACT_2026-10-27.json": "44a1d1f9d9c730035359438633c1688d5a945ea28be69edae56f2ae8349c5815"
   },
   "historicalEvidenceFile": "FLOTRA_TRUCK_ARTIFACTS_2026-10-25.json",
   "qualification": "Pending fresh CI. All timing/draw/node thresholds and ABBA order unchanged. Exact pack-specific camera/caption contracts check the deliberate presentation changes; camera scale/control and every domain field remain equal. Native CDP must observe a trusted persisted pageshow and unchanged heap; no synthetic event or cache forcing flag.",
@@ -342,7 +341,8 @@
     "PR161 remains separate and unmerged.",
     "Run 40146228501: old strict visual equality produced invalid_comparison; 14 writer cases passed and real BFCache remained blocked under Playwright. Historical run is not reclassified.",
     "Playwright explicitly does not support BFCache lifecycle restoration: https://playwright.dev/docs/api/class-page. Native CDP driver now tests that case directly; pending actual CI.",
-    "Run 40442353921: ABBA passed unchanged gates; native BFCache genuinely restored but post-close backup equality failed. Wait for actual target destruction and writer-lock release, retain fingerprints and restored-heap write evidence; strict storage equality unchanged."
+    "Run 40442353921: ABBA passed unchanged gates; native BFCache genuinely restored but post-close backup equality failed. Wait for actual target destruction and writer-lock release, retain fingerprints and restored-heap write evidence; strict storage equality unchanged.",
+    "Run 40443750171: real restoration, save equality, protected input/resize and newest explicit reload reached; stale StartTrial focus-path console errors failed the strict zero-error gate. Adopt isolated PR161 focus-ring retirement fix and add keyboard lifecycle regression; historical failures retained."
   ],
   "visualEvidence": {
     "beforeRun": 40030535576,
@@ -356,5 +356,8 @@
     ],
     "geometryAssertions": 1069
   },
-  "cameraContractFile": "FLOTRA_TRUCK_CAMERA_CONTRACT_2026-10-27.json"
+  "cameraContractFile": "FLOTRA_TRUCK_CAMERA_CONTRACT_2026-10-27.json",
+  "exportBaseCommit": "27bd7860f5b265452203d8909f644aa67231e4bc",
+  "exportOrigin": "Official local Godot 4.7.2 and official non-threaded Web templates from CI artifact 12706733200; independent exact-head CI rebuild required.",
+  "focusFixSource": "PR161 c214b6e2b6919d7525642874e40c2c0d9eaf2d18: layout_hud.gd only, byte-identical. Other PR161 source files remain unmerged."
 }

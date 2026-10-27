@@ -161,6 +161,84 @@
       "touches": 0,
       "turn": 0,
       "zoom": 1
+    },
+    "9b4b77be0378cdaaabb7aa9209aa2a136f3747015b57632358384e9e54762235": {
+      "callouts": [
+        {
+          "anchorX": 87.1175231933594,
+          "anchorY": 256.257507324219,
+          "fontSize": 18,
+          "height": 36,
+          "text": "入荷",
+          "visible": true,
+          "width": 54,
+          "x": 19,
+          "y": 215
+        },
+        {
+          "anchorX": 307.613464355469,
+          "anchorY": 206.435989379883,
+          "fontSize": 18,
+          "height": 36,
+          "text": "保管床 38枠",
+          "visible": true,
+          "width": 118,
+          "x": 264,
+          "y": 165
+        },
+        {
+          "anchorX": 143.464126586914,
+          "anchorY": 365.771118164062,
+          "fontSize": 18,
+          "height": 36,
+          "text": "出荷",
+          "visible": true,
+          "width": 54,
+          "x": 75,
+          "y": 325
+        }
+      ],
+      "fitSize": 57.9014015197754,
+      "floorPoints": [
+        {
+          "name": "GrowthFoundation",
+          "x": 197.843902587891,
+          "y": 411.893859863281
+        },
+        {
+          "name": "GrowthFoundation",
+          "x": 230.58869934082,
+          "y": 393.120361328125
+        },
+        {
+          "name": "GrowthFoundation",
+          "x": 263.333557128906,
+          "y": 374.346801757812
+        },
+        {
+          "name": "GrowthFoundation",
+          "x": 296.078369140625,
+          "y": 355.573272705078
+        },
+        {
+          "name": "ServiceConnectorFoundation",
+          "x": 109.443534851074,
+          "y": 387.922729492188
+        },
+        {
+          "name": "@MeshInstance3D@8",
+          "x": 190.242431640625,
+          "y": 490.905609130859
+        }
+      ],
+      "mouseDown": false,
+      "panX": 0,
+      "panY": 0,
+      "size": 57.9014015197754,
+      "touches": 0,
+      "turn": 0,
+      "zoom": 1
     }
-  }
+  },
+  "focusFixNote": "The new pack changes only modal focus handling and adds its regression script. Exact existing camera/caption expectations remain required; fresh CI must verify them."
 }
