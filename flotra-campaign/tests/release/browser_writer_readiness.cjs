@@ -200,93 +200,7 @@ async function probe(helper, name) {
   return helper.evaluate(name => navigator.locks.request(name, { mode: 'exclusive', ifAvailable: true }, lock => !!lock), name);
 }
 async function installHarness(page, config = {}) {
-  await page.addInitScript(config => {
-    const data = { realm: crypto.randomUUID(), engineInstances: 0, starts: [], locks: [], writes: [], statuses: [], lifecycle: [], input: [] };
-    const stamp = () => Math.round(performance.now());
-    const controls = new Map();
-    window.__writerHarness = { data, release: name => {
-      if (!controls.has(name)) throw new Error('No held native callback for ' + name);
-      controls.get(name)(); controls.delete(name);
-    } };
-    for (const type of ['pageshow', 'pagehide']) addEventListener(type, event => {
-      const item = { type, persisted: event.persisted, trusted: event.isTrusted, at: stamp(), realm: data.realm, writes: data.writes.length, lockRequests: data.locks.length, starts: data.starts.length };
-      data.lifecycle.push(item);
-      console.debug('WRITER_LIFECYCLE ' + JSON.stringify(item));
-    });
-    for (const type of ['mousedown', 'mouseup', 'keydown']) addEventListener(type, event => {
-      data.input.push({ type, trusted: event.isTrusted, target: event.target?.id || event.target?.nodeName, focused: document.hasFocus(), visibility: document.visibilityState, key: event.key, x: event.clientX, y: event.clientY, at: stamp() });
-      if (data.input.length > 300) data.input.shift();
-    }, true);
-    new MutationObserver(records => {
-      for (const record of records) {
-        if (record.target.id === 'status-label' || record.target.id === 'status-notice') {
-          const text = Array.from(record.addedNodes, node => node.textContent).join('') || record.target.textContent;
-          data.statuses.push({ text, at: stamp() });
-        }
-      }
-    }).observe(document, { subtree: true, childList: true, characterData: true });
-    for (const method of ['setItem', 'removeItem', 'clear']) {
-      const native = Storage.prototype[method];
-      Storage.prototype[method] = function (...args) {
-        if (this === localStorage) data.writes.push({ method, key: args[0] ?? null, length: String(args[1] ?? '').length, at: stamp() });
-        return Reflect.apply(native, this, args);
-      };
-    }
-    // index.js declares a global lexical `const Engine`, so replacing only
-    // window.Engine would miss the loader's real constructor. Its exported
-    // feature check runs after `const engine` is constructed and before ready().
-    // Observe that actual instance then forward startGame and the check intact.
-    // No game/QA method is called or exposed by this instrumentation.
-    let EngineValue;
-    const observed = new WeakSet();
-    Object.defineProperty(window, 'Engine', {
-      configurable: true, get: () => EngineValue,
-      set(value) {
-        EngineValue = value;
-        if (typeof value?.getMissingFeatures !== 'function') return;
-        const check = value.getMissingFeatures;
-        value.getMissingFeatures = function (...args) {
-          const instance = (0, eval)('engine'); // Read the real loader lexical.
-          if (!observed.has(instance)) {
-            observed.add(instance); data.engineInstances++;
-            const start = instance.startGame;
-            instance.startGame = function (...args) {
-              const item = { at: stamp(), state: 'pending' }; data.starts.push(item);
-              const result = Reflect.apply(start, this, args);
-              result.then(() => { item.state = 'fulfilled'; }, error => { item.state = 'rejected'; item.error = String(error); });
-              return result;
-            };
-          }
-          return Reflect.apply(check, this, args);
-        };
-      },
-    });
-    const manager = navigator.locks;
-    if (config.api === 'absent') {
-      Object.defineProperty(navigator, 'locks', { configurable: true, value: undefined });
-    } else if (config.api === 'reject') {
-      Object.defineProperty(navigator, 'locks', { configurable: true, value: {
-        request(name, options) { data.locks.push({ name, options, refused: true, at: stamp() }); return Promise.reject(new DOMException('Synthetic CI API refusal', 'SecurityError')); },
-      } });
-    } else {
-      if (!manager) throw new Error('Actual Web Locks unavailable in the CI browser');
-      const nativeRequest = manager.request.bind(manager);
-      Object.defineProperty(manager, 'request', { configurable: true, value(name, options, callback) {
-        const item = { name, options, requestedAt: stamp() }; data.locks.push(item);
-        return nativeRequest(name, options, async lock => {
-          item.nativeGrant = lock ? { name: lock.name, mode: lock.mode, type: Object.prototype.toString.call(lock) } : null;
-          item.grantedAt = stamp();
-          if (lock && config.delayLock === name) {
-            item.delayed = true;
-            await new Promise(resolve => controls.set(name, resolve));
-          }
-          item.deliveredAt = stamp();
-          try { return await callback(lock); }
-          finally { item.callbackCompletedAt = stamp(); }
-        });
-      } });
-    }
-  }, config);
+  await page.addInitScript(require('./browser_writer_observer.cjs'), config);
 }
 async function goto(page) {
   markPhase(page, 'navigate-local-export');
@@ -596,63 +510,16 @@ async function scenario(name, options, action) {
       await shot(page, test.name + '-notice');
     });
 
-    await scenario('real-bfcache-restoration', { needsEarned: true, seed: () => ({ [P]: earned.encoded }) }, async ({ page, helper, context, baseline, test }) => {
-      await goto(page); await readyUI(page); await closeIntro(page);
-      const before = await diagnostics(page);
-      const oldState = durable(await ui(page));
-      // No routing or fake events on this tested page. CI serves a static inert
-      // HTML file with a different document and an actual history entry.
-      const away = new URL('writer-away.html', target); away.searchParams.set('writer_navigation', '1');
-      const response = await page.goto(away.href, { waitUntil: 'load' });
-      assert.ok(response?.ok(), 'Real navigation destination is served');
-      assert.equal(page.url(), away.href);
-      assert.match(response.headers()['content-type'] || '', /text\/html/, 'Navigation fixture is an actual served HTML document');
-      const latestPage = await context.newPage();
-      const latestErrors = [];
-      latestPage.on('pageerror', error => latestErrors.push(error.message));
-      latestPage.on('console', message => { if (message.type() === 'error') latestErrors.push(message.text()); });
-      await installHarness(latestPage);
-      await goto(latestPage); await readyUI(latestPage); await closeIntro(latestPage);
-      await mouseButton(latestPage, 'Back'); await expectUI(latestPage, { sheet: 'controls' });
-      await mouseButton(latestPage, 'Speed4x', { scroll: true });
-      await latestPage.waitForFunction(() => window.FlotraViewport.uiMetrics.speed === 4);
-      const latest = await savedCheckpoint(latestPage);
-      assert.notEqual(latest.encoded, earned.encoded, 'A different real UI-earned checkpoint exists while old page is away');
-      assert.deepEqual(latestErrors, []);
-      await latestPage.close(); // Release native locks before restoring old heap.
-      const newestStorage = await storage(helper);
-      await page.goBack({ waitUntil: 'domcontentloaded', timeout: 60000 });
-      await page.waitForFunction(() => !!window.__writerHarness, null, { timeout: UI_MS });
-      const returned = await diagnostics(page);
-      const persisted = returned.harness.lifecycle.find(event => event.type === 'pageshow' && event.persisted && event.trusted);
-      test.lifecycle = { beforeRealm: before.harness.realm, returnedRealm: returned.harness.realm, events: returned.harness.lifecycle, navigation: returned.navigation };
-      if (!persisted) {
-        // A cache miss is not proof of restoration safety and cannot pass this
-        // qualification. Still check the actual fallback reload outcome.
-        await readyUI(page);
-        assert.deepEqual(durable(await ui(page)), latest.state, 'Ordinary history reload reads latest synthetic checkpoint');
-        test.status = 'blocked';
-        test.reason = 'UNVERIFIED: actual Back navigation did not emit trusted pageshow.persisted=true; no event was synthesized.';
-        await shot(page, test.name + '-not-restored');
-        return;
-      }
-      assert.equal(returned.harness.realm, before.harness.realm, 'The real previous JS heap was restored');
-      assert.equal(returned.harness.starts.length, before.harness.starts.length, 'Restoration does not start another engine');
-      assert.equal(returned.harness.locks.length, before.harness.locks.length, 'Restoration never reacquires ownership');
-      assert.equal(returned.readiness.current.state, 'reload_required');
-      await expectUI(page, { sheet: 'save_protection', trialRunning: false });
-      assert.deepEqual(durable(await ui(page)), oldState, 'Protected restored heap remains its original state');
-      const writeCount = persisted.writes;
-      assert.equal((await diagnostics(page)).harness.writes.length, writeCount, 'Trusted pageshow restoration itself makes no storage writes');
-      await protectedControls(page, newestStorage, test, false);
-      assert.equal((await diagnostics(page)).harness.writes.length, writeCount, 'Restored protection makes no new save attempts');
-      assert.ok((await ui(page)).labels.some(label => label.text.includes('再読み込み')), 'Actual protection screen gives reload guidance');
-      await reloadExact(page, latest);
-      assert.equal((await storage(page))[P], newestStorage[P]);
-      await shot(page, test.name + '-latest-reload');
-      test.latestCheckpointLoaded = true;
-      test.initialCheckpointSHA256 = digest(baseline[P]);
+    // Playwright does not support BFCache lifecycle restoration. Preserve the
+    // genuine persisted-event gate through a separate native CDP browser.
+    const nativeResult = await require('./browser_writer_bfcache.cjs')({
+      url: target.href, output, encoded: earned.encoded,
+      executable: process.env.CHROMIUM_EXECUTABLE || chromium.executablePath(),
     });
+    report.tests.push(nativeResult);
+    console.log('BROWSER_WRITER_NATIVE_BFCACHE ' + JSON.stringify({ status: nativeResult.status, reason: nativeResult.reason, error: nativeResult.error, events: nativeResult.events }));
+    saveReport();
+
   } catch (error) {
     report.fatal = error.stack || String(error);
   } finally {

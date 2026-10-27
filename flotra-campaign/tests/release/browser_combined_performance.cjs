@@ -25,6 +25,7 @@ if (Object.hasOwn(provenance, 'fullProjectSourceSHA256')) exportContract.assertF
 assert.deepEqual(hashes(controlDirectory), provenance.controlAssetsSHA256, 'Pinned public export');
 assert.deepEqual(hashes(candidateDirectory), provenance.candidateAssetsSHA256, 'Fresh combined export');
 fs.mkdirSync(output, { recursive: true });
+const visualQualification = provenance.cameraContractFile ? JSON.parse(fs.readFileSync(path.join(repositoryRoot, provenance.cameraContractFile), 'utf8')) : null;
 const lateFixture = JSON.parse(fs.readFileSync(path.join(fixtures, 'late.json'), 'utf8'));
 const report = {
   scope: 'Same-runner sequential Chromium/SwiftShader WebGL comparison; not physical iPhone/Safari',
@@ -83,10 +84,13 @@ try {
     try {
       assert.deepEqual(row.test.environment, reference.environment);
       assert.equal(row.test.chromiumVersion, reference.chromiumVersion);
-      exportContract.assertComparableInitialState(row.test.initialState, reference.initialState, row.test.storageContract, reference.storageContract, lateFixture);
+      if (visualQualification) {
+        assert.deepEqual(visualQualification.viewport, report.viewport, 'Exact qualified camera viewport and DPR');
+        exportContract.assertQualifiedVisualInitialState(row.test.initialState, reference.initialState, row.test.storageContract, reference.storageContract, lateFixture, visualQualification, report.exports[row.label[0]]['index.pck'], report.exports.A['index.pck']);
+      } else exportContract.assertComparableInitialState(row.test.initialState, reference.initialState, row.test.storageContract, reference.storageContract, lateFixture);
       assert.deepEqual(row.test.loadedAssets, report.exports[row.label[0]]);
       return true;
-    } catch { return false; }
+    } catch (error) { row.conditionMismatch = error.message; return false; }
   });
   report.relativeDiagnostics = [['A1', 'B1'], ['A2', 'B2']].map(([a, b]) => {
     const control = report.results.find(row => row.label === a).test?.performance?.active;

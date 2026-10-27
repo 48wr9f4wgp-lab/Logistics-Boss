@@ -12,6 +12,8 @@ on:
       - 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_TRUCK_ARTIFACTS_2026-10-25.json'
+      - 'FLOTRA_TRUCK_CI_REPAIR_ARTIFACTS_2026-10-27.json'
+      - 'FLOTRA_TRUCK_CAMERA_CONTRACT_2026-10-27.json'
   push:
     branches: [main]
     paths:
@@ -24,6 +26,8 @@ on:
       - 'FLOTRA_SAVE_READINESS_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_NAVIGATION_ARTIFACTS_2026-10-08.json'
       - 'FLOTRA_TRUCK_ARTIFACTS_2026-10-25.json'
+      - 'FLOTRA_TRUCK_CI_REPAIR_ARTIFACTS_2026-10-27.json'
+      - 'FLOTRA_TRUCK_CAMERA_CONTRACT_2026-10-27.json'
 permissions:
   contents: read
 jobs:
@@ -293,7 +297,7 @@ jobs:
     timeout-minutes: 20
     env:
       CONTROL_SHA: a7c60e8c86785137a90b517227b5def8b329c1bc
-      FLOTRA_COMBINED_PROVENANCE: FLOTRA_TRUCK_ARTIFACTS_2026-10-25.json
+      FLOTRA_COMBINED_PROVENANCE: FLOTRA_TRUCK_CI_REPAIR_ARTIFACTS_2026-10-27.json
     steps:
       - uses: actions/checkout@v5
         with:
@@ -336,7 +340,7 @@ jobs:
 
   desktop-save-readiness:
     env:
-      FLOTRA_EXPORT_PROVENANCE: FLOTRA_TRUCK_ARTIFACTS_2026-10-25.json
+      FLOTRA_EXPORT_PROVENANCE: FLOTRA_TRUCK_CI_REPAIR_ARTIFACTS_2026-10-27.json
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
