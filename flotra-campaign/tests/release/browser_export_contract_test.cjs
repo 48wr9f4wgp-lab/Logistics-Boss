@@ -83,3 +83,16 @@ test('Full project provenance verifies contents and exact keys, excluding only g
     assert.throws(() => contract.assertFullProjectSources(root, hashes));
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
+
+test('Prospective visual contracts retain exact presentation and physical checks', () => {
+  const control = { ...initial, growth: dispatchGrowth, camera: { turn: 0, zoom: 1, size: 58, fitSize: 58, touches: 0, mouseDown: false, panX: 0, panY: 0, callouts: [{ x: 10 }] } };
+  const current = { ...control, camera: { ...control.camera, callouts: [{ x: 20 }] } };
+  const q = { cameraByPackSHA256: { A: control.camera, B: current.camera } };
+  const compare = (actual, ref = control, actualPack = 'B', referencePack = 'A') => contract.assertQualifiedVisualInitialState(actual, ref, newContract, newContract, fixture, q, actualPack, referencePack);
+  compare(current);
+  for (const changed of [{ ...current, wallet: 69 }, { ...current, simTime: 86 }, { ...current, newField: true }, { ...current, camera: { ...current.camera, zoom: 2 } }, { ...current, camera: { ...current.camera, callouts: [{ x: 21 }] } }, { ...current, camera: { ...current.camera, unknown: true } }]) assert.throws(() => compare(changed));
+  assert.throws(() => compare(current, control, 'unqualified'));
+  assert.throws(() => compare(current, control, 'A', 'B'));
+  const zoomed = { ...current, camera: { ...current.camera, zoom: 2 } };
+  assert.throws(() => contract.assertQualifiedVisualInitialState(zoomed, control, newContract, newContract, fixture, { cameraByPackSHA256: { A: control.camera, B: zoomed.camera } }, 'B', 'A'));
+});

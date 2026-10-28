@@ -58,6 +58,19 @@ function assertComparableInitialState(actual, reference, contract, referenceCont
   const comparable = state => ({ ...state, growth: { ...state.growth, catalog_complete: null, next_goal: null } });
   assert.deepEqual(comparable(actual), comparable(reference), 'All unchanged physical initial conditions match exactly');
 }
+function assertQualifiedVisualInitialState(actual, reference, contract, referenceContract, fixture, qualification, actualPack, referencePack) {
+  assert.ok(qualification?.cameraByPackSHA256, 'Explicit visual qualification is required');
+  const expected = qualification.cameraByPackSHA256[actualPack];
+  const expectedReference = qualification.cameraByPackSHA256[referencePack];
+  assert.ok(expected && expectedReference, 'Both immutable pack hashes have complete camera contracts');
+  assert.deepEqual(actual.camera, expected, 'Complete candidate camera and caption contract');
+  assert.deepEqual(reference.camera, expectedReference, 'Complete reference camera and caption contract');
+  const physical = camera => Object.fromEntries(['size', 'fitSize', 'touches', 'mouseDown', 'panX', 'panY', 'turn', 'zoom'].map(key => [key, camera[key]]));
+  assert.deepEqual(physical(actual.camera), physical(reference.camera), 'Physical camera scale and interaction state still match');
+  // Only the already fully checked presentation projection is substituted.
+  // Original strict comparison still checks every domain/unknown field.
+  assertComparableInitialState({ ...actual, camera: physical(actual.camera) }, { ...reference, camera: physical(reference.camera) }, contract, referenceContract, fixture);
+}
 function assertFullProjectSources(repositoryRoot, expected) {
   assert.ok(expected && typeof expected === 'object' && !Array.isArray(expected), 'Complete project source map is an object');
   const names = [];
@@ -74,4 +87,4 @@ function assertFullProjectSources(repositoryRoot, expected) {
   assert.deepEqual(names.sort(), Object.keys(expected).sort(), 'Complete project source key set is unchanged, excluding only .godot');
   for (const name of names) assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(repositoryRoot, name))).digest('hex'), expected[name], 'Exact project source: ' + name);
 }
-module.exports = { fromScripts, fromLoader, fromDirectory, fromPage, assertStorage, assertComparableInitialState, assertFullProjectSources, legacyKey };
+module.exports = { fromScripts, fromLoader, fromDirectory, fromPage, assertStorage, assertComparableInitialState, assertFullProjectSources, assertQualifiedVisualInitialState, legacyKey };
