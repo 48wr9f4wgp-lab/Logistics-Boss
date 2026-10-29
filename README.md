@@ -1,3 +1,16 @@
+# Current development: 町工場 / FORGE
+
+2026-10-29: the user retired the FLOTRA concept and approved a new metalworking factory-management prototype.
+
+- [Play the new engineering preview](https://48wr9f4wgp-lab.github.io/Logistics-Boss/forge-preview/)
+- [Scope, controls, verification and limitations](factory-prototype/README.md)
+- Source: `docs/forge-preview/`; checks: `factory-prototype/tests/`.
+- iPhone/iOS remains the intended production target; the Web build is an early gameplay experiment.
+
+The following FLOTRA routing is historical for this new task. Its source, evidence and saved games are preserved.
+
+---
+
 # FLOTRA（フロトラ）
 
 iPhone / iOS向けの3D物流・倉庫成長ゲーム。Godot 4.7.2 / GDScript。
