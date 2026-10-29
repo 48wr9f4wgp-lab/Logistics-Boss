@@ -1,0 +1,20 @@
+name: Factory prototype checks
+on:
+  pull_request:
+    paths: ['docs/forge-preview/**', 'factory-prototype/**', '.github/workflows/forge-prototype.yml']
+  push:
+    branches: [main]
+    paths: ['docs/forge-preview/**', 'factory-prototype/**', '.github/workflows/forge-prototype.yml']
+permissions:
+  contents: read
+jobs:
+  simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check docs/forge-preview/app.mjs
+      - run: node --test factory-prototype/tests/model.test.mjs
