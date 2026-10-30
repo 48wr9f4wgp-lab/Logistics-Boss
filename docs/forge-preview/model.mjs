@@ -1,4 +1,6 @@
 export const VERSION=1;
+// Shared by real-time playback and completion skipping; rendering frequency must not change outcomes.
+export const TICK=.05;
 export const MACHINES={cut:{name:'切断機',cost:2600,time:3,color:'#f3b65c'},drill:{name:'ボール盤',cost:3200,time:5,color:'#67b7c4'},inspect:{name:'検品台',cost:1800,time:2,color:'#9dbf8b'},lathe:{name:'旋盤',cost:5800,time:8,color:'#789fd1'}};
 export const OFFERS=[{id:'first',name:'町の金物店',product:'plate',label:'取付プレート',qty:12,cost:600,pay:2800,due:200,quality:1},{id:'bulk',name:'建設会社の量産注文',product:'plate',label:'取付プレート',qty:28,cost:1300,pay:5900,due:290,quality:1},{id:'fine',name:'機械メーカーの特注',product:'shaft',label:'精密シャフト',qty:10,cost:1400,pay:6200,due:240,quality:2},{id:'relief',name:'支給材の小口加工',product:'plate',label:'取付プレート',qty:6,cost:0,pay:1000,due:180,quality:1},{id:'rush',name:'建設現場の追加便',product:'plate',label:'短納期プレート',qty:28,cost:1800,pay:7200,due:200,quality:1,growth:'量産ルート'},{id:'master',name:'測定機器メーカー',product:'shaft',label:'高精度シャフト',qty:10,cost:2200,pay:8800,due:150,quality:3,growth:'精密ルート'}];
 export const route=p=>p==='shaft'?['cut','lathe','inspect']:['cut','drill','inspect'];
@@ -51,6 +53,19 @@ export function production(s, orderId=null) {
 export function frontOrder(s){
   const active=s.orders.filter(o=>!o.shipped);
   return active.find(o=>o.done===o.qty)||active[0]||null;
+}
+
+// A bounded chunk, yielding to the UI between calls. Never dispatch or skip past a ready order.
+export function advanceToReady(s,maxTicks=100){
+  const limit=Number.isFinite(maxTicks)?Math.max(0,Math.min(200,Math.floor(maxTicks))):0;
+  let ticks=0;
+  while(true){
+    const o=frontOrder(s);
+    if(!o)return {status:'idle',ticks};
+    if(o.done===o.qty)return {status:'ready',ticks,orderId:o.id};
+    if(ticks>=limit)return {status:'producing',ticks};
+    step(s,TICK);ticks++;
+  }
 }
 
 // Optional accounting keeps pre-v0.3 saves playable without inventing history.

@@ -1,4 +1,4 @@
-# 町工場 / FORGE — v0.6
+# 町工場 / FORGE — v0.7
 
 New title-local gameplay prototype, approved 2026-10-29. Current task replaces the FLOTRA concept; historical FLOTRA code and saves remain untouched. Production target remains iPhone/iOS. This browser build is an engineering preview, not a native release or production-engine decision.
 
@@ -7,7 +7,7 @@ New title-local gameplay prototype, approved 2026-10-29. Current task replaces t
 Existing development Pages: `/Logistics-Boss/forge-preview/`.
 
 1. Open 受注 and accept 町の金物店 (12 plates).
-2. Accepting closes the sheet and starts production. Use 3× if desired.
+2. Accepting closes the sheet and starts production. Tap 完成まで進める on the factory board to skip the waiting, or watch at 1×/3×. Wages and deadlines still advance; the button warns about both. The next completed order automatically pauses time and offers 出荷する. 注文一覧 remains available beside it.
 3. Tap 出荷する to collect payment and view a receipt: material, actual wages, profit before investment, production time, travel and rework. Money is paid only once. The result screen pauses time and links to the next order, equipment or workers.
 4. Choose more machinery, worker training, expansion, or a lathe to unlock shafts. 成長案件 shows two next contracts and links to missing equipment/training.
 5. Move/install equipment during an order: select 設備 → 移動/設置場所. Workers finish only their assigned stages, then pause. Tap a highlighted empty floor tile; production resumes automatically. Cancel also resumes. The 工程待ち buttons select machinery directly. The floating card shows its worker plus shared waiting/carrying/working counts for the machine kind; the floor highlights the assigned worker’s actual remaining route. Move, upgrade or open details from that card. Repeat the same stage button to cycle through multiple machines of that kind. Selection alone does not pause production.
@@ -43,6 +43,14 @@ If funds are insufficient, the next action opens ordinary orders (including zero
 
 The optional `goalOffer` accepts only `rush`, `master`, null or absence. Old saves continue; v0.5 ignores the field and remains compatible. Existing v0.4 restrictions for newer contract IDs still apply to earlier rollback targets.
 
+## Skip waiting (v0.7)
+
+The production board's primary action changes with the order: 注文を見る → 完成まで進める → 出荷する. Skipping processes the actual workers, travel, machinery, quality, payroll and experience; it neither grants free production nor dispatches automatically. It stops at the first ready order, even with two contracts running. A ready order prevents further skipping, including after reloading, when playback starts paused. Ship it to continue the other order.
+
+Normal playback and skipping now share fixed 0.05-second simulation ticks. The normal frame loop carries sub-tick remainder; the skip loop executes at most 100 ticks per frame so input can be handled between chunks. Pause/stop, a menu, placement, hiding the page or a save/writer problem ends skipping. A 1,200-game-second ceiling stops a stalled job with a message; partial work is retained. No offline work or new save fields. Reopening an unfinished order resumes ordinary playback, never an unattended skip.
+
+The scheduling algorithm is unchanged; using one timestep removes the old frame-rate-dependent outcome differences. Historical .1-second model benchmarks and pre-v0.7 browser receipts are therefore not exact comparisons against v0.7. Qualification alone still does not guarantee delivery; equipment and layout interact through shared worker scheduling.
+
 ## Order results
 
 Repeat the same offer to compare with its previous measured result. 経営 keeps the last 12 receipts. Actual payroll is split equally among unfinished orders each tick; no additional wages are charged for the receipt. Production time ends at completion, while the existing deadline still applies at dispatch. Investment costs are reported separately in cumulative expenses. Comparisons reflect all conditions, including concurrent orders and worker growth, and do not prove a specific investment caused the change.
@@ -51,9 +59,9 @@ Existing saves continue. Orders accepted before v0.3 show payment/material but e
 
 ## Verification
 
-Run `node --test factory-prototype/tests/*.test.mjs` and `node --check docs/forge-preview/app.mjs`. Thirty-seven tests cover growth budgets, goal persistence, active-order guidance, screen-space picking and payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
+Run `node --test factory-prototype/tests/*.test.mjs` and `node --check docs/forge-preview/app.mjs`. Forty-three tests cover completion skipping, fixed-tick equivalence, bounded interruption/resumption, growth budgets, goal persistence, active-order guidance, screen-space picking and payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
 
-Initial simulated order: 114.6 game seconds, 12 completed parts, cash 4,819.78 before 2,800 payout (starting 5,500, material 600). This is deterministic model evidence, not a measured iPhone session. Cloud-browser interaction evidence is recorded separately in VERIFICATION.md.
+Initial simulated order at the shared v0.7 tick: 115.4 game seconds, 12 completed parts, cash ¥4,819.22 before ¥2,800 payout (starting ¥5,500, material ¥600). This is deterministic model evidence, not a measured iPhone session. Cloud-browser interaction evidence is recorded separately in VERIFICATION.md.
 
 ## Limits
 

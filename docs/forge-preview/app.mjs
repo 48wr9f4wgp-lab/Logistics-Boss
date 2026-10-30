@@ -1,18 +1,20 @@
 import * as M from './model.mjs';
 import {project,machineHull,pickMachine} from './view.mjs';
 const $=s=>document.querySelector(s),KEY='forge.factory.v1',canvas=$('#world'),ctx=canvas.getContext('2d');
-let s=M.fresh(),speed=1,last=0,zoom=1,pan={x:0,y:0},placing=null,selected=null,tab=null,toastUntil=0,revision=null,writer=false,saveBlocked=false,paintTime=0,placementCells=[],resumeSpeed=1;
+let s=M.fresh(),speed=1,last=0,zoom=1,pan={x:0,y:0},placing=null,selected=null,tab=null,toastUntil=0,revision=null,writer=false,saveBlocked=false,paintTime=0,placementCells=[],resumeSpeed=1,skipping=null,tickRemainder=0;
 try{const raw=localStorage.getItem(KEY);if(raw){const env=JSON.parse(raw);if(!M.validate(env.state))throw Error('invalid');s=env.state;revision=env.revision;}}catch{saveBlocked=true;speed=0;}
+// A completed saved order remains safe to dispatch after reopening the page.
+if(s.orders.some(o=>!o.shipped&&o.done===o.qty))speed=0;
 function toast(t){if(tab){$('#sheetNotice').textContent=t;$('#sheetNotice').hidden=false;}$('#toast').textContent=t;$('#toast').style.display='block';toastUntil=performance.now()+4200;}
 function save(){if(!writer||saveBlocked)return;try{const previous=localStorage.getItem(KEY);if(previous&&JSON.parse(previous).revision!==revision){writer=false;speed=0;toast('別の画面で保存されました。再読み込みしてください');return;}revision=crypto.randomUUID?.()||String(Date.now()+Math.random());localStorage.setItem(KEY,JSON.stringify({revision,state:s}));}catch{saveBlocked=true;toast('保存できません。設定から進行を書き出せます');}}
 if(navigator.locks){navigator.locks.request(KEY,{ifAvailable:true},async lock=>{if(!lock){toast('別のタブで起動中です。この画面は閲覧専用');return;}writer=true;if(saveBlocked)toast('保存データを読み込めません。上書きせず停止しました');await new Promise(resolve=>window.addEventListener('pagehide',()=>{save();resolve();},{once:true}));});}else{writer=true;}
 window.addEventListener('storage',e=>{if(e.key===KEY){writer=false;speed=0;toast('別画面の更新を検出。再読み込みしてください');}});
 window.addEventListener('pageshow',e=>{if(e.persisted){writer=false;speed=0;toast('復帰しました。続けるには再読み込みしてください');}});
-document.addEventListener('visibilitychange',()=>{save();last=0;});window.addEventListener('pagehide',save);setInterval(save,5000);
-function act(fn){if(!writer||saveBlocked){toast(saveBlocked?'保存に問題があります。設定を開いてください':'別画面で起動中です。再読み込みしてください');return;}const before=new Set(M.OFFERS.filter(o=>o.growth&&M.offerStatus(s,o.id).qualified).map(o=>o.id));const error=fn();if(error)toast(error);else{const unlocked=M.OFFERS.filter(o=>o.growth&&!before.has(o.id)&&M.offerStatus(s,o.id).qualified);if(unlocked.length)M.note(s,`受注条件を達成：${unlocked.map(o=>o.label).join('・')}`);save();toast(s.log[0]);}update();if(tab)renderPanel();return !error;}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSkip();save();last=0;tickRemainder=0;});window.addEventListener('pagehide',save);setInterval(save,5000);
+function act(fn){if(!writer||saveBlocked){toast(saveBlocked?'保存に問題があります。設定を開いてください':'別画面で起動中です。再読み込みしてください');return;}stopSkip();const before=new Set(M.OFFERS.filter(o=>o.growth&&M.offerStatus(s,o.id).qualified).map(o=>o.id));const error=fn();if(error)toast(error);else{const unlocked=M.OFFERS.filter(o=>o.growth&&!before.has(o.id)&&M.offerStatus(s,o.id).qualified);if(unlocked.length)M.note(s,`受注条件を達成：${unlocked.map(o=>o.label).join('・')}`);save();toast(s.log[0]);}update();if(tab)renderPanel();return !error;}
 const money=v=>'¥'+Math.floor(v).toLocaleString('ja-JP');
-function update(){ $('#cash').textContent=money(s.cash);$('#deliveries').textContent=s.delivered+' 件';$('#clock').textContent=`${Math.floor(s.clock/60).toString().padStart(2,'0')}:${Math.floor(s.clock%60).toString().padStart(2,'0')}`;$('#floor').textContent=`第一工場 · ${s.width} × ${s.height}`;const orders=s.orders.filter(o=>!o.shipped),o=M.frontOrder(s);$('#orderTitle').textContent=o?`${o.label}　${o.done} / ${o.qty} 個`:'次の注文で工場を育てよう';$('#orderAction').textContent=o&&o.done===o.qty?'出荷する ↗':'注文を見る ↗';$('#orderProgress').style.width=o?`${o.done/o.qty*100}%`:'0%';const busy=s.workers.filter(w=>w.job).length;$('#activity').textContent=placing?(placing.draining?'現在の工程を仕上げ中':'配置モード'):speed===0?'一時停止中':`${busy} / 3 人 作業中`;const plan=M.growthPlan(s,s.goalOffer);$('#goal').textContent=plan?`目標：${plan.offer.label}`:s.delivered===0?'最初の製品を出荷しよう':'次の成長目標を選ぼう';$('#hint').textContent=plan?planHint(plan):s.delivered===0?'受注 → 自動生産 → 出荷で入金':'必要な投資と材料費を見て、次の仕事へ';$('#growthAction').textContent=plan?'目標を見る ›':'成長案件 ›';updateSelection();document.querySelectorAll('[data-speed]').forEach(b=>{b.classList.toggle('active',+b.dataset.speed===speed);b.disabled=!!placing;});}
-function open(panel){if(placing)endPlacement();tab=panel;$('#sheet').dataset.panel=panel;$('#sheetNotice').hidden=true;renderPanel();if(!$('#sheet').open)$('#sheet').showModal();$('#sheet').scrollTop=0;updateSelection();}function close(){tab=null;$('#sheet').close();updateSelection();}$('#close').onclick=close;$('#sheet').addEventListener('cancel',()=>{tab=null;updateSelection();});document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>open(b.dataset.panel));$('#menu').onclick=()=>open('save');$('#growthAction').onclick=()=>open('growth');$('#orderAction').onclick=()=>{const o=M.frontOrder(s);if(o&&o.done===o.qty)ship(o.id);else open('orders');};document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{speed=+b.dataset.speed;update();});$('#plus').onclick=()=>zoom=Math.min(2,zoom+.15);$('#minus').onclick=()=>{zoom=Math.max(.7,zoom-.15);if(zoom<=1)pan={x:0,y:0};};
+function update(){ $('#cash').textContent=money(s.cash);$('#deliveries').textContent=s.delivered+' 件';$('#clock').textContent=`${Math.floor(s.clock/60).toString().padStart(2,'0')}:${Math.floor(s.clock%60).toString().padStart(2,'0')}`;$('#floor').textContent=`第一工場 · ${s.width} × ${s.height}`;const o=M.frontOrder(s);$('#orderTitle').textContent=o?`${o.label}　${o.done} / ${o.qty} 個`:'次の注文で工場を育てよう';$('#orderAction').textContent=skipping?'早送りを停止':o&&o.done===o.qty?'出荷する ↗':o?'完成まで進める »':'注文を見る ↗';$('#orderAction').disabled=!!placing||!writer||saveBlocked;$('#orderMore').hidden=!o;$('#orderMore').disabled=!!placing;$('#orderHint').textContent=skipping?'完成した注文で自動停止':o&&o.done===o.qty?(speed===0?'完成！ 出荷して代金を受け取ろう':'出荷して代金を受け取ろう'):o?'人件費・納期も進みます':'受注 → 完成まで進める → 出荷';$('#orderProgress').style.width=o?`${o.done/o.qty*100}%`:'0%';const busy=s.workers.filter(w=>w.job).length;$('#activity').textContent=placing?(placing.draining?'現在の工程を仕上げ中':'配置モード'):skipping?'完成まで進めています':speed===0?'一時停止中':`${busy} / 3 人 作業中`;const plan=M.growthPlan(s,s.goalOffer);$('#goal').textContent=plan?`目標：${plan.offer.label}`:s.delivered===0?'最初の製品を出荷しよう':'次の成長目標を選ぼう';$('#hint').textContent=plan?planHint(plan):s.delivered===0?'受注 → 完成まで進める → 出荷で入金':'必要な投資と材料費を見て、次の仕事へ';$('#growthAction').textContent=plan?'目標を見る ›':'成長案件 ›';updateSelection();document.querySelectorAll('[data-speed]').forEach(b=>{b.classList.toggle('active',+b.dataset.speed===speed);b.disabled=!!placing;});}
+function open(panel){stopSkip();if(placing)endPlacement();tab=panel;$('#sheet').dataset.panel=panel;$('#sheetNotice').hidden=true;renderPanel();if(!$('#sheet').open)$('#sheet').showModal();$('#sheet').scrollTop=0;updateSelection();}function close(){tab=null;$('#sheet').close();updateSelection();}$('#close').onclick=close;$('#sheet').addEventListener('cancel',()=>{tab=null;updateSelection();});document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>open(b.dataset.panel));$('#menu').onclick=()=>open('save');$('#growthAction').onclick=()=>open('growth');$('#orderAction').onclick=()=>{if(skipping){stopSkip();return;}const o=M.frontOrder(s);if(o&&o.done===o.qty)ship(o.id);else if(o)startSkip();else open('orders');};$('#orderMore').onclick=()=>open('orders');document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{stopSkip();speed=+b.dataset.speed;update();});$('#plus').onclick=()=>zoom=Math.min(2,zoom+.15);$('#minus').onclick=()=>{zoom=Math.max(.7,zoom-.15);if(zoom<=1)pan={x:0,y:0};};
 const stageNames={cut:'切断',drill:'穴あけ',lathe:'旋盤',inspect:'検品'};
 function selectMachine(id,focus=false){
   selected=id;
@@ -105,6 +107,7 @@ function receipt(r,expanded){
 function change(now,before,unit,lowerBetter){const diff=now-before;if(Math.abs(diff)<.05)return '変化なし';return `${Math.abs(diff).toFixed(1)}${unit}${diff<0?(lowerBetter?'短縮':'減'):(lowerBetter?'増加':'増')}`;}
 function escape(t){return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function place(p){
+  stopSkip();
   if(!writer||saveBlocked){toast('進行を保存できる画面で配置してください');return;}
   if(!p.id&&s.cash<M.MACHINES[p.kind].cost){toast('資金が足りません。材料費も残して投資しましょう');return;}
   close();selected=p.id||null;resumeSpeed=speed||1;placing={...p,draining:s.workers.some(w=>w.job)};
@@ -150,4 +153,32 @@ const trY=s.height+.7;box(s.width-2.4,trY,1.65,.65,.6,'#b7c9c7','#e5ece4','#829e
 if(placing&&!placing.draining)for(const {x,y} of placementCells){poly([point(x+.05,y+.05,.01),point(x+.95,y+.05,.01),point(x+.95,y+.95,.01),point(x+.05,y+.95,.01)],'#b6d99544','#d8ed9d');}
 }
 let down=null;canvas.onpointerdown=e=>{down={x:e.clientX,y:e.clientY,px:pan.x,py:pan.y};canvas.setPointerCapture(e.pointerId);};canvas.onpointermove=e=>{if(down&&!placing){pan.x=Math.max(-300,Math.min(300,down.px+e.clientX-down.x));pan.y=Math.max(-200,Math.min(200,down.py+e.clientY-down.y));}};canvas.onpointerup=e=>{if(!down)return;const tap=Math.hypot(e.clientX-down.x,e.clientY-down.y)<8;down=null;if(!tap)return;const r=canvas.getBoundingClientRect(),{u,ox,oy}=viewport;const a=(e.clientX-r.left-ox)/u,b=(e.clientY-r.top-oy)/(u*.5),x=Math.floor((a+b)/2),y=Math.floor((b-a)/2);if(placing){if(placing.draining){toast('今の工程が終わると床を選べます');return;}const p=placing;const ok=act(()=>p.id?M.move(s,p.id,x,y):M.purchase(s,p.kind,x,y));if(ok){selected=p.id||s.machines.find(m=>m.x===x&&m.y===y)?.id||null;endPlacement();}}else{const id=pickMachine({x:e.clientX-r.left,y:e.clientY-r.top},hitTargets);selectMachine(id);}};canvas.onpointercancel=()=>down=null;
-function frame(t){if(last&&writer&&!saveBlocked&&!document.hidden&&!tab&&(!placing||placing.draining)&&speed){let d=Math.min((t-last)/1000,.25)*speed;while(d>0){const slice=Math.min(.1,d);M.step(s,slice,{assignNew:!placing});d-=slice;if(placing?.draining&&!s.workers.some(w=>w.job)){placing.draining=false;speed=0;save();showPlacement();break;}}}last=t;draw(t);if(t-paintTime>250){update();paintTime=t;}if(t>toastUntil)$('#toast').style.display='none';requestAnimationFrame(frame);}update();requestAnimationFrame(frame);
+function startSkip(){
+  if(placing||tab||!writer||saveBlocked)return;
+  const o=M.frontOrder(s);if(!o||o.done===o.qty)return;
+  skipping={ticks:0,clock:s.clock,cash:s.cash};speed=0;tickRemainder=0;last=0;update();
+}
+function stopSkip(message='早送りを停止しました'){
+  if(!skipping)return;
+  skipping=null;speed=0;tickRemainder=0;last=0;M.note(s,message);save();toast(message);update();
+}
+function frame(t){
+  const playable=writer&&!saveBlocked&&!document.hidden&&!tab;
+  if(skipping){
+    if(!playable||placing)stopSkip();
+    else{
+      const result=M.advanceToReady(s,100);skipping.ticks+=result.ticks;
+      if(result.status==='ready')stopSkip(`生産完了 · 工場時間 +${Math.round(s.clock-skipping.clock)}秒 / 人件費 ${money(skipping.cash-s.cash)}。出荷できます`);
+      else if(result.status==='idle')stopSkip('進める注文がありません');
+      else if(skipping.ticks>=24000)stopSkip('いったん停止しました。設備と工程待ちを確認してください');
+    }
+  }else if(last&&playable&&(!placing||placing.draining)&&speed){
+    tickRemainder+=Math.min((t-last)/1000,.25)*speed;
+    while(tickRemainder>=M.TICK){
+      M.step(s,M.TICK,{assignNew:!placing});tickRemainder-=M.TICK;
+      if(placing?.draining&&!s.workers.some(w=>w.job)){placing.draining=false;speed=0;tickRemainder=0;save();showPlacement();break;}
+    }
+  }else tickRemainder=0;
+  last=t;draw(t);if(t-paintTime>250){update();paintTime=t;}if(t>toastUntil)$('#toast').style.display='none';requestAnimationFrame(frame);
+}
+update();requestAnimationFrame(frame);

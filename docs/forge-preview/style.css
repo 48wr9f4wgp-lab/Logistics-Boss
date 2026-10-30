@@ -32,3 +32,12 @@ dialog[data-panel="growth"]{max-height:92svh}
 .plan-steps .current{color:#ffdb8d;border-color:#f0b65f;font-weight:700}.plan-steps .done{color:#bdd6ac;border-color:#91ae7f}
 .plan-budget{font-size:12px;margin:12px 0 8px}.plan-budget>div{display:flex;justify-content:space-between;gap:10px;padding:5px 0}.plan-budget dt{color:var(--muted)}.plan-budget dd{margin:0;font-variant-numeric:tabular-nums}.plan-budget .budget-total{border-top:1px solid #526267;margin-top:4px;padding-top:9px;font-weight:700}
 .plan-detail{font-size:11px;margin:8px 0}.plan-funds{color:#c6dea9;background:#192e29;padding:9px 10px;border-radius:6px;margin:9px 0}.plan-funds.short{color:#f7ca8c;background:#352e25}.growth-card .plan-note{display:block;font-size:10px;line-height:1.6}.plan-next{display:block;font-size:12px;margin-top:16px}.goal-progress{font-size:15px;color:var(--ink)}
+
+/* The next decision stays on the factory board, with time/cost impact visible before skipping. */
+.order-strip{flex-wrap:wrap;gap:8px;padding:10px 16px 12px;flex-shrink:0}
+.order-strip>div:first-child{flex:1 1 100%}
+#orderHint{display:block;letter-spacing:0;font-size:11px;margin-top:5px}
+.order-actions{display:flex;gap:8px;width:100%}
+#orderAction{flex:1;font-size:13px}
+#orderMore{background:transparent;color:var(--muted);border:1px solid #465b60}
+#orderMore[hidden]{display:none}
