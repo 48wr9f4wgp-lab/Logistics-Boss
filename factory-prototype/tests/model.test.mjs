@@ -86,3 +86,42 @@ test('display quote and payment agree at the exact deadline and a fraction past 
   assert.equal(quote.late,over>0);assert.equal(quote.pay,over?850:1000);const cash=s.cash;M.dispatch(s,o.id);assert.equal(s.cash-cash,quote.pay);assert.equal(s.results[0].payout,quote.pay);
  }
 });
+test('growth contracts reject missing prerequisites without spending or changing state',()=>{
+ const s=M.fresh();for(const id of ['rush','master']){const before=JSON.stringify(s);assert.equal(M.offerStatus(s,id).qualified,false);assert.ok(M.accept(s,id));assert.equal(JSON.stringify(s),before);}
+ assert.equal(M.offerStatus(s,'first').available,true);assert.equal(M.offerStatus(s,'relief').available,true);
+ assert.equal(M.offerStatus(s,'unknown').available,false);
+});
+test('volume qualification opens with drill upgrade OR a second drill, and funds/slots still apply',()=>{
+ for(const option of ['upgrade','second']){const s=M.fresh();assert.equal(option==='upgrade'?M.upgrade(s,'m2'):M.purchase(s,'drill',4,3),null);
+  const before=JSON.stringify(s);assert.equal(M.offerStatus(s,'rush').qualified,true);assert.equal(JSON.stringify(s),before);
+  assert.equal(M.offerStatus(s,'master').qualified,false);assert.equal(M.accept(s,'rush'),null);M.accept(s,'relief');const full=JSON.stringify(s);
+  assert.equal(M.offerStatus(s,'rush').available,false);assert.ok(M.accept(s,'rush'));assert.equal(JSON.stringify(s),full);
+ }
+ const poor=M.fresh();M.upgrade(poor,'m2');poor.cash=1799;assert.equal(M.offerStatus(poor,'rush').qualified,true);assert.equal(M.offerStatus(poor,'rush').available,false);assert.ok(M.accept(poor,'rush'));assert.equal(poor.cash,1799);assert.equal(M.accept(poor,'relief'),null);
+});
+test('precision requires BOTH a lathe and skill 3, and natural experience can qualify',()=>{
+ const a=M.fresh();a.cash=15000;M.train(a,0);M.train(a,0);assert.equal(M.offerStatus(a,'master').qualified,false);M.purchase(a,'lathe',4,3);assert.equal(M.offerStatus(a,'master').qualified,true);
+ const b=M.fresh();b.cash=15000;M.purchase(b,'lathe',4,3);M.train(b,0);assert.equal(M.offerStatus(b,'master').qualified,false);
+ b.workers[0].xp=29;M.accept(b,'relief');finish(b);assert.ok(b.workers[0].skill>=3);assert.equal(M.offerStatus(b,'master').qualified,true);
+});
+test('selling qualifying equipment closes future acceptance without cancelling an accepted order',()=>{
+ const s=M.fresh();M.purchase(s,'drill',4,3);const extra=s.machines.at(-1).id;M.accept(s,'rush');assert.equal(M.sell(s,extra),null);
+ assert.equal(M.offerStatus(s,'rush').qualified,false);finish(s);assert.equal(M.dispatch(s,s.orders[0].id),null);assert.equal(s.results[0].offerId,'rush');assert.equal(M.validate(s),true);
+});
+test('both growth contracts serialize mid-job, finish, pay once and preserve receipt validation',()=>{
+ for(const id of ['rush','master']){
+  const s=M.fresh();s.cash=25000;M.upgrade(s,'m2');M.purchase(s,'lathe',4,3);M.train(s,0);M.train(s,0);
+  assert.equal(M.accept(s,id),null);for(let i=0;i<110;i++)M.step(s,.1);const restored=JSON.parse(JSON.stringify(s));assert.equal(M.validate(restored),true);
+  finish(s);finish(restored);assert.deepEqual(restored,s);const o=restored.orders[0];assert.equal(o.done,o.qty);M.dispatch(restored,o.id);
+  const saved=JSON.stringify(restored);assert.ok(M.dispatch(restored,o.id));assert.equal(JSON.stringify(restored),saved);assert.equal(M.validate(JSON.parse(saved)),true);
+ }
+});
+test('investment paths alter growth-order outcomes: faster volume, less precision rework',()=>{
+ function run(id,improve){const s=M.fresh();s.cash=30000;
+  if(id==='rush'){M.upgrade(s,'m2');if(improve)for(const m of s.machines)M.upgrade(s,m.id);}
+  else{M.purchase(s,'lathe',4,3);M.train(s,0);M.train(s,0);s.workers[0].role='inspect';if(improve)for(const w of s.workers)while(w.skill<3)M.train(s,w.id);}
+  M.accept(s,id);finish(s);M.dispatch(s,s.orders[0].id);return s.results[0];
+ }
+ const slow=run('rush',false),fast=run('rush',true);assert.equal(slow.late,true);assert.equal(fast.late,false);assert.ok(fast.seconds<slow.seconds);assert.ok(M.resultProfit(fast)>M.resultProfit(slow));
+ const apprentice=run('master',false),skilled=run('master',true);assert.ok(apprentice.rework>0);assert.equal(skilled.rework,0);assert.ok(skilled.seconds<apprentice.seconds);assert.equal(skilled.late,false);
+});
