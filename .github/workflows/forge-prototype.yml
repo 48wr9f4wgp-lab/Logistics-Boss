@@ -17,4 +17,4 @@ jobs:
         with:
           node-version: '22'
       - run: node --check docs/forge-preview/app.mjs
-      - run: node --test factory-prototype/tests/model.test.mjs
+      - run: node --test factory-prototype/tests/*.test.mjs

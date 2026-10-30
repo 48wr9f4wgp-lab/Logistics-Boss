@@ -1,4 +1,4 @@
-# 町工場 / FORGE — v0.4
+# 町工場 / FORGE — v0.5
 
 New title-local gameplay prototype, approved 2026-10-29. Current task replaces the FLOTRA concept; historical FLOTRA code and saves remain untouched. Production target remains iPhone/iOS. This browser build is an engineering preview, not a native release or production-engine decision.
 
@@ -10,7 +10,7 @@ Existing development Pages: `/Logistics-Boss/forge-preview/`.
 2. Accepting closes the sheet and starts production. Use 3× if desired.
 3. Tap 出荷する to collect payment and view a receipt: material, actual wages, profit before investment, production time, travel and rework. Money is paid only once. The result screen pauses time and links to the next order, equipment or workers.
 4. Choose more machinery, worker training, expansion, or a lathe to unlock shafts. 成長案件 shows two next contracts and links to missing equipment/training.
-5. Move/install equipment during an order: select 設備 → 移動/設置場所. Workers finish only their assigned stages, then pause. Tap a highlighted empty floor tile; production resumes automatically. Cancel also resumes. The 工程待ち row shows waiting parts by next stage; tap it for carrying/working counts.
+5. Move/install equipment during an order: select 設備 → 移動/設置場所. Workers finish only their assigned stages, then pause. Tap a highlighted empty floor tile; production resumes automatically. Cancel also resumes. The 工程待ち buttons select machinery directly. The floating card shows its worker plus shared waiting/carrying/working counts for the machine kind; the floor highlights the assigned worker’s actual remaining route. Move, upgrade or open details from that card. Repeat the same stage button to cycle through multiple machines of that kind. Selection alone does not pause production.
 
 Menus pause time. Drag the floor to pan; use +/- to zoom. Repeated low-value customer-material jobs allow recovery without material funding. A late order loses 15% of its payout, with no escalating penalty. Work and costs stop while the page is hidden. No offline earnings.
 
@@ -41,7 +41,7 @@ Existing saves continue. Orders accepted before v0.3 show payment/material but e
 
 ## Verification
 
-Run `node --test factory-prototype/tests/model.test.mjs` and `node --check docs/forge-preview/app.mjs`. Twenty-seven tests cover payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
+Run `node --test factory-prototype/tests/*.test.mjs` and `node --check docs/forge-preview/app.mjs`. Thirty-one tests cover screen-space picking and payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
 
 Initial simulated order: 114.6 game seconds, 12 completed parts, cash 4,819.78 before 2,800 payout (starting 5,500, material 600). This is deterministic model evidence, not a measured iPhone session. Cloud-browser interaction evidence is recorded separately in VERIFICATION.md.
 
