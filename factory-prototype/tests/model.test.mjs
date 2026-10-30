@@ -24,4 +24,65 @@ test('production board counts every part once across waiting, carrying, working 
  const s=M.fresh();M.accept(s,'first');M.accept(s,'relief');const original=JSON.stringify(s);const initial=M.production(s);assert.equal(JSON.stringify(s),original);assert.equal(initial.stages.cut.waiting,18);
  for(let t=0;t<1600;t++){M.step(s,.1);if(t%100===0){const p=M.production(s);assert.equal(Object.values(p.stages).reduce((n,q)=>n+q.waiting+q.walking+q.working,p.complete),18);const first=M.production(s,s.orders[0].id);assert.equal(Object.values(first.stages).reduce((n,q)=>n+q.waiting+q.walking+q.working,first.complete),12);}}
 });
-test('a completed second order is offered for dispatch before an unfinished first one',()=>{const s=M.fresh();M.accept(s,'bulk');M.accept(s,'relief');const second=s.orders[1];for(const p of s.parts.filter(p=>p.order===second.id)){p.stage=3;p.done=true;}second.done=second.qty;assert.equal(M.validate(s),true);assert.equal(M.frontOrder(s).id,second.id);M.dispatch(s,second.id);assert.equal(M.frontOrder(s).id,s.orders[0].id);});
+test('a completed second order is offered for dispatch before an unfinished first one',()=>{const s=M.fresh();M.accept(s,'bulk');M.accept(s,'relief');const second=s.orders[1];for(const p of s.parts.filter(p=>p.order===second.id)){p.stage=3;p.done=true;}second.done=second.qty;second.accounting.completedAt=s.clock;assert.equal(M.validate(s),true);assert.equal(M.frontOrder(s).id,second.id);M.dispatch(s,second.id);assert.equal(M.frontOrder(s).id,s.orders[0].id);});
+
+test('shipment receipt reconciles the actual payroll and excludes investment, and pays only once',()=>{
+ const s=M.fresh();M.train(s,0);M.accept(s,'first');const initial=s.cash;finish(s);
+ const o=s.orders[0],completed=o.accounting.completedAt,wages=o.accounting.wages;
+ assert.ok(Math.abs((initial-s.cash)-wages)<1e-7);for(let i=0;i<2500;i++)M.step(s,.1);
+ M.dispatch(s,o.id);const r=s.results[0];assert.equal(r.late,true);assert.equal(r.payout,2380);
+ assert.equal(r.seconds,completed-o.start);assert.equal(r.wages,wages);assert.equal(r.walk,s.stats.walk);
+ assert.ok(Math.abs(M.resultProfit(r)-(s.cash-initial-o.cost))<1e-7);
+ const serialized=JSON.stringify(s);assert.ok(M.dispatch(s,o.id));assert.equal(JSON.stringify(s),serialized);assert.equal(M.validate(s),true);
+});
+test('two simultaneous orders share actual payroll, completed orders stop accruing it',()=>{
+ const s=M.fresh();M.accept(s,'first');M.accept(s,'relief');const before=s.expense;
+ M.step(s,.1);assert.equal(s.orders[0].accounting.wages,s.orders[1].accounting.wages);
+ let frozen=null;for(let i=0;i<3000&&s.parts.some(p=>!p.done);i++){
+  M.step(s,.1);const ready=s.orders.find(o=>o.done===o.qty);
+  if(frozen)assert.equal(s.orders.find(o=>o.id===frozen.id).accounting.wages,frozen.wages);
+  else if(ready)frozen={id:ready.id,wages:ready.accounting.wages};
+ }
+ assert.ok(frozen);assert.ok(Math.abs(s.orders.reduce((n,o)=>n+o.accounting.wages,0)-(s.expense-before))<1e-7);
+ assert.ok(Math.abs(s.orders.reduce((n,o)=>n+o.accounting.walk,0)-s.stats.walk)<1e-7);
+ for(const o of s.orders)assert.equal(o.done,o.qty);assert.equal(M.validate(s),true);
+ const poor=M.fresh();poor.cash=.02;M.accept(poor,'relief');finish(poor);M.dispatch(poor,poor.orders[0].id);
+ assert.equal(poor.results[0].wages,.02);assert.equal(M.resultProfit(poor.results[0]),999.98);
+});
+test('legacy in-flight save finishes honestly, then new orders gain full measurements',()=>{
+ const s=M.fresh();M.accept(s,'first');for(let i=0;i<120;i++)M.step(s,.1);
+ delete s.results;delete s.orders[0].accounting;delete s.orders[0].offerId;
+ const legacy=JSON.parse(JSON.stringify(s));assert.equal(M.validate(legacy),true);finish(legacy);
+ M.dispatch(legacy,legacy.orders[0].id);assert.equal(legacy.results[0].wages,null);assert.equal(M.resultProfit(legacy.results[0]),null);
+ M.accept(legacy,'first');finish(legacy);M.dispatch(legacy,legacy.orders.find(o=>!o.shipped).id);
+ assert.ok(legacy.results[0].wages>0);assert.equal(M.previousResult(legacy,legacy.results[0]),null);assert.equal(M.validate(legacy),true);
+});
+test('same-offer comparisons survive reload and history is bounded without changing receipts',()=>{
+ const s=M.fresh();for(let i=0;i<14;i++){M.accept(s,i===12?'first':'relief');finish(s);M.dispatch(s,s.orders.find(o=>!o.shipped).id);}
+ assert.equal(s.results.length,12);const r=s.results[0],before=JSON.stringify(s);
+ assert.equal(M.previousResult(s,r).orderId,s.results[2].orderId);assert.equal(JSON.stringify(s),before);
+ const restored=JSON.parse(before);assert.equal(M.validate(restored),true);assert.deepEqual(restored.results,s.results);
+ assert.deepEqual(M.previousResult(restored,restored.results[0]),M.previousResult(s,r));
+});
+test('receipt shows shorter routes and lower actual wages after layout improvement',()=>{
+ const a=M.fresh(),b=M.fresh();M.move(b,'m2',3,1);M.move(b,'m3',4,1);
+ for(const s of [a,b]){M.accept(s,'bulk');finish(s);M.dispatch(s,s.orders[0].id);}
+ const old=a.results[0],improved=b.results[0];assert.ok(improved.walk<old.walk);assert.ok(improved.seconds<old.seconds);
+ assert.ok(improved.wages<old.wages);assert.ok(M.resultProfit(improved)>M.resultProfit(old));
+});
+test('optional receipt data is validated, including null fields, bounds and duplicates',()=>{
+ const s=M.fresh();M.accept(s,'first');finish(s);M.dispatch(s,s.orders[0].id);
+ for(const mutate of [
+  s=>s.results=null,s=>s.results[0].wages=-1,s=>s.results[0].seconds=null,s=>s.results[0].rework=.5,
+  s=>s.results[0].offerId='unknown',s=>s.results[0].payout=999999,s=>s.results[0].seconds=s.clock+1,
+  s=>{s.results.push({...s.results[0]});s.delivered++;},s=>s.orders[0].accounting.completedAt=s.clock+1,
+  s=>s.orders[0].accounting.wages=NaN,s=>delete s.orders[0].accounting
+ ]){const b=structuredClone(s);mutate(b);assert.equal(M.validate(b),false);}
+});
+
+test('display quote and payment agree at the exact deadline and a fraction past it',()=>{
+ for(const over of [0,.01]){const s=M.fresh();M.accept(s,'relief');finish(s);const o=s.orders[0];s.clock=o.start+o.due+over;
+  const before=JSON.stringify(s),quote=M.shipmentQuote(s,o);assert.equal(JSON.stringify(s),before);
+  assert.equal(quote.late,over>0);assert.equal(quote.pay,over?850:1000);const cash=s.cash;M.dispatch(s,o.id);assert.equal(s.cash-cash,quote.pay);assert.equal(s.results[0].payout,quote.pay);
+ }
+});

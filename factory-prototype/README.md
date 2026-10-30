@@ -1,4 +1,4 @@
-# 町工場 / FORGE — v0.2
+# 町工場 / FORGE — v0.3
 
 New title-local gameplay prototype, approved 2026-10-29. Current task replaces the FLOTRA concept; historical FLOTRA code and saves remain untouched. Production target remains iPhone/iOS. This browser build is an engineering preview, not a native release or production-engine decision.
 
@@ -8,7 +8,7 @@ Existing development Pages: `/Logistics-Boss/forge-preview/`.
 
 1. Open 受注 and accept 町の金物店 (12 plates).
 2. Accepting closes the sheet and starts production. Use 3× if desired.
-3. Tap 出荷する to collect payment. Money is paid only once.
+3. Tap 出荷する to collect payment and view a receipt: material, actual wages, profit before investment, production time, travel and rework. Money is paid only once. The result screen pauses time and links to the next order, equipment or workers.
 4. Choose more machinery, worker training, expansion, or a lathe to unlock shafts.
 5. Move/install equipment during an order: select 設備 → 移動/設置場所. Workers finish only their assigned stages, then pause. Tap a highlighted empty floor tile; production resumes automatically. Cancel also resumes. The 工程待ち row shows waiting parts by next stage; tap it for carrying/working counts.
 
@@ -18,9 +18,15 @@ Menus pause time. Drag the floor to pan; use +/- to zoom. Repeated low-value cus
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
 
+## Order results
+
+Repeat the same offer to compare with its previous measured result. 経営 keeps the last 12 receipts. Actual payroll is split equally among unfinished orders each tick; no additional wages are charged for the receipt. Production time ends at completion, while the existing deadline still applies at dispatch. Investment costs are reported separately in cumulative expenses. Comparisons reflect all conditions, including concurrent orders and worker growth, and do not prove a specific investment caused the change.
+
+Existing saves continue. Orders accepted before v0.3 show payment/material but explicitly lack measured wages, profit and production statistics. The next accepted order is measured from the beginning. Optional accounting fields retain schema 1 and the save namespace.
+
 ## Verification
 
-Run `node --test factory-prototype/tests/model.test.mjs` and `node --check docs/forge-preview/app.mjs`. Fourteen tests cover payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
+Run `node --test factory-prototype/tests/model.test.mjs` and `node --check docs/forge-preview/app.mjs`. Twenty-one tests cover payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
 
 Initial simulated order: 114.6 game seconds, 12 completed parts, cash 4,819.78 before 2,800 payout (starting 5,500, material 600). This is deterministic model evidence, not a measured iPhone session. Cloud-browser interaction evidence is recorded separately in VERIFICATION.md.
 
