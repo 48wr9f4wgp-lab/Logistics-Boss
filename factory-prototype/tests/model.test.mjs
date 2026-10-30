@@ -10,3 +10,18 @@ test('expansion, sale and training change state only on valid transactions',()=>
 test('save validation rejects wrong version, negative funds, invalid job and unreachable geometry',()=>{assert.equal(M.validate(M.fresh()),true);for(const mutate of [s=>s.version=2,s=>s.cash=-1,s=>s.machines[0].kind='unknown',s=>s.workers[0].job={part:'bad',machine:'m1',remaining:1,path:[]},s=>s.machines[0].y=6]){const s=M.fresh();mutate(s);assert.equal(M.validate(s),false);}});
 test('late orders disclose and apply bounded penalty',()=>{const s=M.fresh();M.accept(s,'relief');finish(s);s.clock=999;const before=s.cash;M.dispatch(s,s.orders[0].id);assert.equal(s.cash-before,850);});
 test('malformed saves cannot duplicate a part or assign one machine twice',()=>{const a=M.fresh();M.accept(a,'first');M.step(a,.1);assert.equal(M.validate(a),true);const b=structuredClone(a);b.workers[1].job=structuredClone(b.workers[0].job);assert.equal(M.validate(b),false);const c=structuredClone(a);c.parts.push(structuredClone(c.parts[0]));assert.equal(M.validate(c),false);assert.equal(M.validate({version:1,machines:[null]}),false);});
+test('layout pause finishes only assigned stages, then resumes an unfinished order without losing parts',()=>{
+ const s=M.fresh();M.accept(s,'bulk');for(let i=0;i<160;i++)M.step(s,.1);
+ const ids=s.parts.map(p=>p.id),stages=s.parts.reduce((n,p)=>n+p.stage,0),jobs=s.workers.filter(w=>w.job).length;
+ assert.ok(jobs>0);let ticks=0;while(s.workers.some(w=>w.job)&&ticks++<1000)M.step(s,.1,{assignNew:false});
+ assert.ok(ticks<1000);assert.equal(s.parts.reduce((n,p)=>n+p.stage,0),stages+jobs);assert.ok(s.orders[0].done<s.orders[0].qty);
+ assert.deepEqual(s.parts.map(p=>p.id),ids);assert.equal(M.validate(JSON.parse(JSON.stringify(s))),true);
+ let dest=null;for(let x=1;x<s.width;x++)for(let y=0;y<s.height-1;y++)if(M.canPlace(s,'drill',x,y,'m2')&&(x!==5||y!==1))dest={x,y};
+ assert.ok(dest);assert.equal(M.move(s,'m2',dest.x,dest.y),null);finish(s);assert.equal(s.orders[0].done,28);assert.equal(s.stats.processed,84);
+});
+test('new equipment cannot cover unfinished material after a layout pause',()=>{const s=M.fresh();M.accept(s,'first');s.parts[0].x=3;s.parts[0].y=3;assert.equal(M.canPlace(s,'cut',3,3),false);});
+test('production board counts every part once across waiting, carrying, working and complete',()=>{
+ const s=M.fresh();M.accept(s,'first');M.accept(s,'relief');const original=JSON.stringify(s);const initial=M.production(s);assert.equal(JSON.stringify(s),original);assert.equal(initial.stages.cut.waiting,18);
+ for(let t=0;t<1600;t++){M.step(s,.1);if(t%100===0){const p=M.production(s);assert.equal(Object.values(p.stages).reduce((n,q)=>n+q.waiting+q.walking+q.working,p.complete),18);const first=M.production(s,s.orders[0].id);assert.equal(Object.values(first.stages).reduce((n,q)=>n+q.waiting+q.walking+q.working,first.complete),12);}}
+});
+test('a completed second order is offered for dispatch before an unfinished first one',()=>{const s=M.fresh();M.accept(s,'bulk');M.accept(s,'relief');const second=s.orders[1];for(const p of s.parts.filter(p=>p.order===second.id)){p.stage=3;p.done=true;}second.done=second.qty;assert.equal(M.validate(s),true);assert.equal(M.frontOrder(s).id,second.id);M.dispatch(s,second.id);assert.equal(M.frontOrder(s).id,s.orders[0].id);});
