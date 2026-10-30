@@ -1,12 +1,12 @@
 export const VERSION=1;
 export const MACHINES={cut:{name:'切断機',cost:2600,time:3,color:'#f3b65c'},drill:{name:'ボール盤',cost:3200,time:5,color:'#67b7c4'},inspect:{name:'検品台',cost:1800,time:2,color:'#9dbf8b'},lathe:{name:'旋盤',cost:5800,time:8,color:'#789fd1'}};
-export const OFFERS=[{id:'first',name:'町の金物店',product:'plate',label:'取付プレート',qty:12,cost:600,pay:2800,due:200,quality:1},{id:'bulk',name:'建設会社の量産注文',product:'plate',label:'取付プレート',qty:28,cost:1300,pay:5900,due:290,quality:1},{id:'fine',name:'機械メーカーの特注',product:'shaft',label:'精密シャフト',qty:10,cost:1400,pay:6200,due:240,quality:2},{id:'relief',name:'支給材の小口加工',product:'plate',label:'取付プレート',qty:6,cost:0,pay:1000,due:180,quality:1}];
+export const OFFERS=[{id:'first',name:'町の金物店',product:'plate',label:'取付プレート',qty:12,cost:600,pay:2800,due:200,quality:1},{id:'bulk',name:'建設会社の量産注文',product:'plate',label:'取付プレート',qty:28,cost:1300,pay:5900,due:290,quality:1},{id:'fine',name:'機械メーカーの特注',product:'shaft',label:'精密シャフト',qty:10,cost:1400,pay:6200,due:240,quality:2},{id:'relief',name:'支給材の小口加工',product:'plate',label:'取付プレート',qty:6,cost:0,pay:1000,due:180,quality:1},{id:'rush',name:'建設現場の追加便',product:'plate',label:'短納期プレート',qty:28,cost:1800,pay:7200,due:200,quality:1,growth:'量産ルート'},{id:'master',name:'測定機器メーカー',product:'shaft',label:'高精度シャフト',qty:10,cost:2200,pay:8800,due:150,quality:3,growth:'精密ルート'}];
 export const route=p=>p==='shaft'?['cut','lathe','inspect']:['cut','drill','inspect'];
 export function fresh(){return {version:VERSION,cash:5500,revenue:0,expense:0,clock:0,width:8,height:6,next:1,delivered:0,machines:[{id:'m1',kind:'cut',x:2,y:1,level:1},{id:'m2',kind:'drill',x:5,y:1,level:1},{id:'m3',kind:'inspect',x:5,y:4,level:1}],workers:['青木','森','佐藤'].map((name,i)=>({id:i,name,x:1+i,y:3,skill:1,xp:0,role:'auto',mentor:false,job:null})),orders:[],results:[],parts:[],log:['小口注文から、最初の出荷を目指そう。'],stats:{rework:0,walk:0,processed:0}};}
 export function note(s,t){s.log.unshift(t);s.log=s.log.slice(0,12);}
 export function path(s,a,b,ms=s.machines){const block=new Set(ms.map(m=>`${m.x},${m.y}`));const key=p=>`${p.x},${p.y}`;let queue=[{x:Math.round(a.x),y:Math.round(a.y),p:[]}],seen=new Set();while(queue.length){const n=queue.shift(),k=key(n);if(seen.has(k))continue;seen.add(k);if(n.x===b.x&&n.y===b.y)return n.p;for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const q={x:n.x+dx,y:n.y+dy};if(q.x<0||q.y<0||q.x>=s.width||q.y>=s.height||block.has(key(q)))continue;queue.push({...q,p:[...n.p,q]});}}return null;}
 export function canPlace(s,kind,x,y,ignore=null){if(!MACHINES[kind]||!Number.isInteger(x)||!Number.isInteger(y)||x<1||y<0||x>=s.width||y>=s.height-1)return false;if(s.machines.some(m=>m.id!==ignore&&m.x===x&&m.y===y))return false;const ms=[...s.machines.filter(m=>m.id!==ignore),{id:ignore||'new',kind,x,y}];if(s.workers.some(w=>w.job||Math.round(w.x)===x&&Math.round(w.y)===y))return false;if(s.parts.some(p=>!p.done&&p.x===x&&p.y===y))return false;const starts=[...s.workers,...s.parts.filter(p=>!p.done)];return ms.every(m=>path(s,{x:0,y:0},{x:m.x,y:m.y+1},ms)!==null)&&starts.every(p=>path(s,{x:0,y:0},{x:Math.round(p.x),y:Math.round(p.y)},ms)!==null);}
-export function accept(s,id){const o=OFFERS.find(o=>o.id===id);if(!o)return '注文が見つかりません';if(s.orders.filter(o=>!o.shipped).length>=2)return '進行中の注文は2件まで';if(route(o.product).some(k=>!s.machines.some(m=>m.kind===k)))return '旋盤を導入すると受注できます';if(s.cash<o.cost)return '材料費が足りません。支給材の注文を選べます';const n={...o,id:s.next++,start:s.clock,done:0,shipped:false,offerId:o.id,accounting:{wages:0,walk:0,rework:0,completedAt:null}};s.cash-=o.cost;s.expense+=o.cost;s.orders.push(n);for(let i=0;i<o.qty;i++)s.parts.push({id:`${n.id}-${i}`,order:n.id,product:o.product,stage:0,x:0,y:0,busy:false,done:false});note(s,`${o.label} ${o.qty}個を受注`);return null;}
+export function accept(s,id){const o=OFFERS.find(o=>o.id===id),status=offerStatus(s,id);if(!status.available)return status.reason;const n={...o,id:s.next++,start:s.clock,done:0,shipped:false,offerId:o.id,accounting:{wages:0,walk:0,rework:0,completedAt:null}};s.cash-=o.cost;s.expense+=o.cost;s.orders.push(n);for(let i=0;i<o.qty;i++)s.parts.push({id:`${n.id}-${i}`,order:n.id,product:o.product,stage:0,x:0,y:0,busy:false,done:false});note(s,`${o.label} ${o.qty}個を受注`);return null;}
 export function dispatch(s,id){const o=s.orders.find(o=>o.id===id);if(!o||o.shipped||o.done!==o.qty)return 'まだ出荷できません';const {late,pay}=shipmentQuote(s,o);s.cash+=pay;s.revenue+=pay;s.delivered++;
 const a=o.accounting,measured=!!a&&a.completedAt!==null;
 const report={orderId:o.id,offerId:o.offerId??null,label:o.label,qty:o.qty,payout:pay,material:o.cost,late,shippedAt:s.clock,wages:measured?a.wages:null,seconds:measured?a.completedAt-o.start:null,walk:measured?a.walk:null,rework:measured?a.rework:null};
@@ -30,7 +30,7 @@ export function validate(s){try {if(!validState(s)||!validAccounting(s))return f
  if(new Set(s.workers.map(w=>w.id)).size!==3||!s.workers.every(w=>w.id>=0&&w.id<3&&w.x>=0&&w.y>=0&&w.x<s.width&&w.y<s.height&&w.xp>=0&&typeof w.mentor==='boolean'))return false;
  const assigned=new Set(),occupied=new Set();for(const w of s.workers){const j=w.job;if(!j)continue;if(assigned.has(j.part)||occupied.has(j.machine)||!['walk','work'].includes(j.phase)||!j.path.every(p=>Number.isInteger(p.x)&&Number.isInteger(p.y)&&p.x>=0&&p.y>=0&&p.x<s.width&&p.y<s.height))return false;assigned.add(j.part);occupied.add(j.machine);}
  for(const p of s.parts){const o=orders.get(p.order);if(p.product!==o.product||o.shipped||typeof p.done!=='boolean'||p.done!==(p.stage===3)||p.busy!==assigned.has(p.id)||p.done&&p.busy||!Number.isInteger(p.x)||!Number.isInteger(p.y)||p.x<0||p.y<0||p.x>=s.width||p.y>=s.height)return false;}
- for(const o of s.orders){if(typeof o.label!=='string'||typeof o.shipped!=='boolean'||!Number.isInteger(o.qty)||!Number.isInteger(o.done)||![1,2].includes(o.quality))return false;const parts=s.parts.filter(p=>p.order===o.id);if(!o.shipped&&(parts.length!==o.qty||parts.filter(p=>p.done).length!==o.done))return false;}
+ for(const o of s.orders){if(typeof o.label!=='string'||typeof o.shipped!=='boolean'||!Number.isInteger(o.qty)||!Number.isInteger(o.done)||![1,2,3].includes(o.quality))return false;const parts=s.parts.filter(p=>p.order===o.id);if(!o.shipped&&(parts.length!==o.qty||parts.filter(p=>p.done).length!==o.done))return false;}
  return s.log.every(t=>typeof t==='string'&&t.length<500);
  }catch{return false;}}
 
@@ -83,3 +83,15 @@ export function previousResult(s,r){
 }
 
 export function shipmentQuote(s,o){const late=s.clock>o.start+o.due;return {late,pay:Math.round(o.pay*(late?.85:1))};}
+
+// Eligibility is derived, not a permanent unlock: existing contracts keep running.
+export function offerStatus(s,id){
+  const o=OFFERS.find(v=>v.id===id);
+  if(!o)return {available:false,qualified:false,requirements:[],reason:'注文が見つかりません'};
+  const requirements=route(o.product).filter(kind=>kind==='lathe'||!s.machines.some(m=>m.kind===kind)).map(kind=>({label:`${MACHINES[kind].name}を設置`,met:s.machines.some(m=>m.kind===kind),panel:'machines'}));
+  if(id==='rush')requirements.push({label:'ボール盤 Lv.2以上、または2台',met:s.machines.filter(m=>m.kind==='drill').reduce((n,m)=>n+m.level,0)>=2,panel:'machines'});
+  if(id==='master')requirements.push({label:'技能3以上の職人が1人',met:s.workers.some(w=>w.skill>=3),panel:'workers'});
+  const missing=requirements.filter(r=>!r.met),qualified=missing.length===0;
+  const reason=!qualified?'受注条件：'+missing.map(r=>r.label).join('・'):s.orders.filter(o=>!o.shipped).length>=2?'進行中の注文は2件まで':s.cash<o.cost?'材料費が足りません。支給材の注文を選べます':null;
+  return {available:reason===null,qualified,requirements,reason};
+}
