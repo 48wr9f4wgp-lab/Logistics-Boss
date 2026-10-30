@@ -1,4 +1,4 @@
-# 町工場 / FORGE — v0.5
+# 町工場 / FORGE — v0.6
 
 New title-local gameplay prototype, approved 2026-10-29. Current task replaces the FLOTRA concept; historical FLOTRA code and saves remain untouched. Production target remains iPhone/iOS. This browser build is an engineering preview, not a native release or production-engine decision.
 
@@ -33,6 +33,16 @@ The home-screen entry and order menu open 成長案件. Fulfilled requirements r
 
 v0.1–v0.3 saves continue unchanged. Saves containing new offer IDs/quality 3 require v0.4 or later; export before any rollback and retain a pre-update backup for older versions.
 
+## Growth goal and preparation plan (v0.6)
+
+成長案件 → この目標を追う pins either contract to the factory HUD and persists it across reloads. It is a guide, not an exclusive specialization; all other contracts and normal equipment/worker controls stay available. The selected goal sorts first when reopened.
+
+Plans show remaining equipment/training costs plus the separate material cost. Rush uses the cheaper qualifying drill upgrade when needed; precision uses a missing lathe and paid training for the currently highest-skilled worker. Natural skill growth or an alternative qualifying second drill reduces the remaining budget. Fresh-state totals: rush ¥1,500 preparation + ¥1,800 material = ¥3,300; precision ¥5,800 lathe + ¥2,400 training + ¥2,200 material = ¥10,400. These exclude ongoing wages and additional throughput investment; eligibility does not guarantee on-time delivery.
+
+If funds are insufficient, the next action opens ordinary orders (including zero-material recovery work). Otherwise it offers the next priced upgrade, placement or training, then acceptance. No money is automatically reserved or spent by the guide. Every transaction uses the existing validation. Two occupied order slots direct to current orders. An active target contract takes priority over preparing another: show production, or ship the ready order and open its actual receipt. If two target orders are active, a finished one takes precedence. After dispatch, the same goal remains available for another run; there is no invented permanent achievement or bonus.
+
+The optional `goalOffer` accepts only `rush`, `master`, null or absence. Old saves continue; v0.5 ignores the field and remains compatible. Existing v0.4 restrictions for newer contract IDs still apply to earlier rollback targets.
+
 ## Order results
 
 Repeat the same offer to compare with its previous measured result. 経営 keeps the last 12 receipts. Actual payroll is split equally among unfinished orders each tick; no additional wages are charged for the receipt. Production time ends at completion, while the existing deadline still applies at dispatch. Investment costs are reported separately in cumulative expenses. Comparisons reflect all conditions, including concurrent orders and worker growth, and do not prove a specific investment caused the change.
@@ -41,7 +51,7 @@ Existing saves continue. Orders accepted before v0.3 show payment/material but e
 
 ## Verification
 
-Run `node --test factory-prototype/tests/*.test.mjs` and `node --check docs/forge-preview/app.mjs`. Thirty-one tests cover screen-space picking and payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
+Run `node --test factory-prototype/tests/*.test.mjs` and `node --check docs/forge-preview/app.mjs`. Thirty-seven tests cover growth budgets, goal persistence, active-order guidance, screen-space picking and payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
 
 Initial simulated order: 114.6 game seconds, 12 completed parts, cash 4,819.78 before 2,800 payout (starting 5,500, material 600). This is deterministic model evidence, not a measured iPhone session. Cloud-browser interaction evidence is recorded separately in VERIFICATION.md.
 

@@ -21,3 +21,14 @@
 dialog[data-panel="result"]{max-height:92svh}
 
 .goal>div{flex:1;min-width:0}#growthAction{flex:none;font-size:11px;padding:8px;background:#20363a;color:var(--gold);min-height:44px}.growth-entry{margin:0 0 16px;color:var(--gold);background:#293c32}.offer-path{display:flex;justify-content:space-between;font-size:11px;margin:10px 0;color:var(--gold)}.offer-path b{background:#15262c;padding:3px 7px;border-radius:4px}.offer-requirements{padding:10px 12px;margin:12px 0 0;list-style:none;border:1px solid #526469;border-radius:8px;background:#182b30;font-size:12px;line-height:1.8}.offer-requirements li+li{margin-top:4px}.offer-requirements .met{color:#b5d2a3}.offer-blocked{color:#f0cc92}
+
+/* Growth plans keep the selected goal, funding and next action together. */
+dialog[data-panel="growth"]{max-height:92svh}
+.plan-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.plan-heading>small{color:var(--gold)}.plan-heading button{font-size:11px;padding:8px 10px}
+.chosen-goal{border-color:#d1ac65}.chosen-goal .plan-heading button:disabled{opacity:1;border-color:#8a8159;color:#e5d8a0;background:#293d34}
+.plan-steps{display:flex;list-style:none;padding:0;margin:16px 0 12px;gap:6px;font-size:11px}
+.plan-steps li{flex:1;border-bottom:3px solid #41565a;padding:0 0 7px;color:#b2c0bf}
+.plan-steps .current{color:#ffdb8d;border-color:#f0b65f;font-weight:700}.plan-steps .done{color:#bdd6ac;border-color:#91ae7f}
+.plan-budget{font-size:12px;margin:12px 0 8px}.plan-budget>div{display:flex;justify-content:space-between;gap:10px;padding:5px 0}.plan-budget dt{color:var(--muted)}.plan-budget dd{margin:0;font-variant-numeric:tabular-nums}.plan-budget .budget-total{border-top:1px solid #526267;margin-top:4px;padding-top:9px;font-weight:700}
+.plan-detail{font-size:11px;margin:8px 0}.plan-funds{color:#c6dea9;background:#192e29;padding:9px 10px;border-radius:6px;margin:9px 0}.plan-funds.short{color:#f7ca8c;background:#352e25}.growth-card .plan-note{display:block;font-size:10px;line-height:1.6}.plan-next{display:block;font-size:12px;margin-top:16px}.goal-progress{font-size:15px;color:var(--ink)}

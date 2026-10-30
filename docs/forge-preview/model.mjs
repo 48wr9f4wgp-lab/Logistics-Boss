@@ -26,6 +26,7 @@ for(const o of producing)if(o.accounting)o.accounting.wages+=wage/producing.leng
 function validState(s){if(!s||s.version!==VERSION||![s.cash,s.clock,s.revenue,s.expense].every(n=>Number.isFinite(n)&&n>=0)||![[8,6],[10,8]].some(([w,h])=>s.width===w&&s.height===h)||!Number.isInteger(s.next)||s.next<1||!Number.isInteger(s.delivered)||!s.stats||!Object.values(s.stats).every(Number.isFinite))return false;if(!Array.isArray(s.machines)||s.machines.length>70||!Array.isArray(s.workers)||s.workers.length!==3||!Array.isArray(s.orders)||s.orders.length>3||!Array.isArray(s.parts)||s.parts.length>60||!Array.isArray(s.log))return false;const ids=new Set(),cells=new Set();for(const m of s.machines){if(!MACHINES[m.kind]||!Number.isInteger(m.level)||m.level<1||m.level>3||!Number.isInteger(m.x)||!Number.isInteger(m.y)||m.x<1||m.y<0||m.x>=s.width||m.y>=s.height-1||ids.has(m.id)||cells.has(`${m.x},${m.y}`))return false;ids.add(m.id);cells.add(`${m.x},${m.y}`);}if(!['cut','drill','inspect'].every(k=>s.machines.some(m=>m.kind===k)))return false;if(!s.machines.every(m=>path(s,{x:0,y:0},{x:m.x,y:m.y+1})!==null))return false;for(const o of s.orders){if(!['plate','shaft'].includes(o.product)||![o.qty,o.cost,o.pay,o.start,o.done,o.due,o.quality].every(n=>Number.isFinite(n)&&n>=0)||o.qty>28||o.done>o.qty||!Number.isInteger(o.id))return false;}const partIds=new Set();for(const p of s.parts){if(partIds.has(p.id)||!s.orders.some(o=>o.id===p.order)||!['plate','shaft'].includes(p.product)||!Number.isInteger(p.stage)||p.stage<0||p.stage>3||![p.x,p.y].every(Number.isFinite))return false;partIds.add(p.id);}for(const w of s.workers){if(!Number.isInteger(w.id)||typeof w.name!=='string'||![w.x,w.y,w.skill,w.xp].every(Number.isFinite)||w.skill<1||w.skill>4||!['auto','machine','inspect'].includes(w.role))return false;if(w.job&&(!partIds.has(w.job.part)||!ids.has(w.job.machine)||!Number.isFinite(w.job.remaining)||!Array.isArray(w.job.path)||!w.job.path.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y))))return false;}return true;}
 
 export function validate(s){try {if(!validState(s)||!validAccounting(s))return false;
+ if(s.goalOffer!==undefined&&s.goalOffer!==null&&!OFFERS.some(o=>o.id===s.goalOffer&&o.growth))return false;
  const orders=new Map(s.orders.map(o=>[o.id,o]));if(orders.size!==s.orders.length)return false;
  if(new Set(s.workers.map(w=>w.id)).size!==3||!s.workers.every(w=>w.id>=0&&w.id<3&&w.x>=0&&w.y>=0&&w.x<s.width&&w.y<s.height&&w.xp>=0&&typeof w.mentor==='boolean'))return false;
  const assigned=new Set(),occupied=new Set();for(const w of s.workers){const j=w.job;if(!j)continue;if(assigned.has(j.part)||occupied.has(j.machine)||!['walk','work'].includes(j.phase)||!j.path.every(p=>Number.isInteger(p.x)&&Number.isInteger(p.y)&&p.x>=0&&p.y>=0&&p.x<s.width&&p.y<s.height))return false;assigned.add(j.part);occupied.add(j.machine);}
@@ -94,4 +95,42 @@ export function offerStatus(s,id){
   const missing=requirements.filter(r=>!r.met),qualified=missing.length===0;
   const reason=!qualified?'受注条件：'+missing.map(r=>r.label).join('・'):s.orders.filter(o=>!o.shipped).length>=2?'進行中の注文は2件まで':s.cash<o.cost?'材料費が足りません。支給材の注文を選べます':null;
   return {available:reason===null,qualified,requirements,reason};
+}
+
+export function setGoal(s,id){
+  const o=OFFERS.find(o=>o.id===id&&o.growth);
+  if(!o)return '成長案件を選んでください';
+  s.goalOffer=id;note(s,`目標：${o.label}を納品しよう`);return null;
+}
+
+// Read-only preparation budget, not a throughput or on-time delivery forecast.
+export function growthPlan(s,id){
+  const offer=OFFERS.find(o=>o.id===id&&o.growth);
+  if(!offer)return null;
+  const status=offerStatus(s,id),preparations=[];
+  if(id==='rush'&&!status.qualified){
+    const drill=s.machines.find(m=>m.kind==='drill');
+    preparations.push({type:'upgrade',id:drill.id,label:'ボール盤を改良',cost:1500*drill.level,total:1500*drill.level});
+  }
+  if(id==='master'){
+    if(!s.machines.some(m=>m.kind==='lathe'))preparations.push({type:'purchase',kind:'lathe',label:'旋盤を設置',cost:MACHINES.lathe.cost,total:MACHINES.lathe.cost});
+    const worker=[...s.workers].sort((a,b)=>b.skill-a.skill||a.id-b.id)[0];
+    if(worker.skill<3){
+      let total=0;for(let level=worker.skill;level<3;level++)total+=800*level;
+      preparations.push({type:'train',id:worker.id,label:`${worker.name}を研修`,cost:800*worker.skill,total,target:3});
+    }
+  }
+  const investment=preparations.reduce((n,p)=>n+p.total,0),required=investment+offer.cost;
+  const shortage=Math.max(0,Math.ceil(required-s.cash));
+  const active=s.orders.filter(o=>!o.shipped&&o.offerId===id);
+  const order=active.find(o=>o.done===o.qty)||active[0]||null;
+  let phase,next;
+  if(order){
+    phase=order.done===order.qty?'ship':'producing';
+    next=phase==='ship'?{type:'ship',id:order.id,label:'出荷して入金'}:{type:'floor',label:'工場で生産を見る'};
+  }else if(s.orders.filter(o=>!o.shipped).length>=2){phase='slots';next={type:'orders',label:'進行中の注文を確認'};}
+  else if(shortage){phase='funds';next={type:'orders',label:'通常受注で資金を作る'};}
+  else if(preparations.length){phase='prepare';next=preparations[0];}
+  else{phase='ready';next={type:'accept',id,label:'受注して生産開始'};}
+  return {offer,status,preparations,investment,required,shortage,order,phase,next};
 }
