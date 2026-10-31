@@ -1,4 +1,4 @@
-# マチコバ！ — v0.9.2
+# マチコバ！ — v0.10
 
 **小さな工場、大きな夢。**
 
@@ -10,9 +10,9 @@ New title-local gameplay prototype, approved 2026-10-29. Current task replaces t
 
 Existing development Pages: `/Logistics-Boss/forge-preview/`.
 
-1. Open 受注 and accept 町の金物店 (12 plates).
+1. Open 最初の注文を見る and accept the highlighted 町の金物店 (12 plates). If material funds have already been spent, existing zero-material recovery work is highlighted instead.
 2. Accepting closes the sheet and starts production. Tap 完成まで進める on the factory board to skip the waiting, or watch at 1×/3×. Wages and deadlines still advance; the button warns about both. The next completed order automatically pauses time and offers 出荷する. 注文一覧 remains available beside it.
-3. Tap 出荷する to collect payment and view a receipt: material, actual wages, profit before investment, production time, travel and rework. Money is paid only once. The result screen pauses time and links to the next order, equipment or workers.
+3. Tap 出荷する to collect payment and view the actual profit plus the next action. The result screen pauses time. Open 収支の内訳・前回との比較 for material, actual wages, production time, travel and rework. Money is paid only once. Start a growth plan from the result, or finish the other active order first.
 4. Choose more machinery, worker training, expansion, or a lathe to unlock shafts. 成長案件 shows two next contracts and links to missing equipment/training.
 5. Move/install equipment during an order: select 設備 → 移動/設置場所. Workers finish only their assigned stages, then pause. Tap a highlighted empty floor tile; production resumes automatically. Cancel also resumes. The 工程待ち buttons select machinery directly. The floating card shows its worker plus shared waiting/carrying/working counts for the machine kind; the floor highlights the assigned worker’s actual remaining route. Move, upgrade or open details from that card. Repeat the same stage button to cycle through multiple machines of that kind. Selection alone does not pause production.
 
@@ -29,6 +29,14 @@ The factory now uses an original illustrated workshop renderer: high cutaway wal
 The mobile shell gives more space to the factory and uses compact controls and consistent drawn icons. Equipment labels are optional through the tag button and remain visible for the selected machine. The frame button restores the overview and clears the selection. Stage buttons remain an alternative to touching the small machine drawings. Label hit testing follows the final overlay order, so a visible label selects its own machine even when it overlaps another body.
 
 Rendering reads the existing state without changing it. Static surroundings are cached, drawing is capped at 30 frames/second, and the existing fixed simulation ticks run independently. No art/CDN downloads or additional runtime dependencies. The save schema, key, model, prices and scheduling are unchanged. Existing v0.8 in-flight saves remain supported.
+
+## From shipment to the next goal (v0.10)
+
+Before the first shipment, the available 12-piece order is highlighted above the other offers. The existing zero-material recovery order takes its place if the first order's material cost is unaffordable. Existing commitments always take priority.
+
+The result screen identifies a first ordinary shipment or a growth-contract delivery, shows on-time/late status and actual profit, and places its next-action button before the optional accounting details. It uses current factory state: a remaining completed order is offered for dispatch; an unfinished order gets an explicit completion-skip button with the existing wage/deadline notice. Otherwise ordinary orders lead to choosing a growth goal or continuing the current goal's preparation/funding. Growth-contract results offer the next goal and a repeat attempt; late deliveries first point to equipment/layout review and clearly show the 15% deduction.
+
+Repeat opens the actual delivered contract's preparation card without accepting it or changing the selected goal. Plans, receipts and ordinary menus remain available after reload. Reports without a known offer use ordinary guidance. No bonus, permanent achievement, new save field, automatic investment or new economic rule is introduced; the rolling receipt history is not treated as a permanent achievement ledger.
 
 ## Growth orders
 
@@ -81,7 +89,7 @@ Existing saves continue. Orders accepted before v0.3 show payment/material but e
 
 ## Verification
 
-Run `node --test factory-prototype/tests/*.test.mjs` and syntax-check `app.mjs`, `workshop.mjs` and `view.mjs`. Forty-seven tests cover shared processing calculations, investment costs/in-flight work, completion skipping, fixed-tick equivalence, bounded interruption/resumption, growth budgets, goal persistence, active-order guidance, screen-space picking and label overlays, payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves. Local v0.9 verification also rendered fresh, working, upgraded and expanded factories through NAPI Canvas, comparing paused/reduced-motion frames and confirming that rendering leaves state unchanged.
+Run `node --test factory-prototype/tests/*.test.mjs` and syntax-check `app.mjs`, `guidance.mjs`, `workshop.mjs` and `view.mjs`. Fifty-eight tests cover read-only shipment guidance and legacy reports, first-order/recovery recommendations, shared processing calculations, investment costs/in-flight work, completion skipping, fixed-tick equivalence, bounded interruption/resumption, growth budgets, goal persistence, active-order guidance, screen-space picking and label overlays, payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves. Local v0.9 verification also rendered fresh, working, upgraded and expanded factories through NAPI Canvas, comparing paused/reduced-motion frames and confirming that rendering leaves state unchanged.
 
 Initial simulated order at the shared v0.7 tick: 115.4 game seconds, 12 completed parts, cash ¥4,819.22 before ¥2,800 payout (starting ¥5,500, material ¥600). This is deterministic model evidence, not a measured iPhone session. Cloud-browser interaction evidence is recorded separately in VERIFICATION.md.
 
