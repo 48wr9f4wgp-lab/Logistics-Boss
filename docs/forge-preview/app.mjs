@@ -69,7 +69,11 @@ $('#close').onclick=close;
 $('#sheet').addEventListener('cancel',()=>{tab=null;updateSelection();});
 $('#menu').onclick=()=>open('manage');
 $('#controls').addEventListener('toggle',()=>{if($('#controls').open){selected=null;updateSelection();}});
-document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{stopSkip();speed=+b.dataset.speed;update();});
+document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{
+  stopSkip();speed=+b.dataset.speed;
+  if(speed===0)draw();
+  update();
+});
 $('#plus').onclick=()=>zoom=Math.min(2,zoom+.15);
 $('#minus').onclick=()=>{zoom=Math.max(.7,zoom-.15);if(zoom<=1)pan={x:0,y:0};};
 $('#labels').onclick=()=>{showLabels=!showLabels;$('#labels').setAttribute('aria-pressed',String(showLabels));$('#labels').setAttribute('aria-label',showLabels?'設備名を隠す':'設備名を表示');};
