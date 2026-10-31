@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as M from '../../docs/forge-preview/model.mjs';
-import {workerVisualState} from '../../docs/forge-preview/workshop.mjs';
+import {workerVisualState,floorStock} from '../../docs/forge-preview/workshop.mjs';
 
 const at=(a,b)=>a.x===b.x&&a.y===b.y;
 const idle={phase:'idle',part:null,machine:null};
@@ -173,4 +173,47 @@ test('missing jobs, broken references and unknown job phases safely return an em
     assert.deepEqual(workerVisualState(state,worker),idle);
     assert.equal(JSON.stringify(state),before);
   }
+});
+
+test('each unfinished part has exactly one visual location throughout a real two-order run',()=>{
+  const s=M.fresh();s.cash=20000;M.purchase(s,'lathe',4,3);
+  M.accept(s,'first');M.accept(s,'fine');
+  const observed=new Set();
+  for(let n=0;n<10000&&s.parts.some(p=>!p.done);n++){
+    M.step(s,M.TICK);
+    const visuals=s.workers.map(w=>workerVisualState(s,w));
+    const stock=floorStock(s.parts,visuals);
+    const visible=[...stock.incoming];
+    for(const bin of stock.stations){
+      assert.ok(bin.parts.length>0);
+      for(const part of bin.parts){
+        assert.equal(part.x,bin.x);assert.equal(part.y,bin.y);
+        observed.add('buffer-'+part.product);visible.push(part);
+      }
+    }
+    for(const v of visuals){
+      if(v.phase==='work'||v.phase==='carry')visible.push(v.part);
+      if(v.phase==='pickup'&&v.part.stage>0){
+        assert.ok(stock.stations.some(bin=>bin.parts.includes(v.part)));
+        observed.add('reserved-'+v.part.product);
+      }
+    }
+    assert.equal(new Set(visible).size,visible.length,'no part is painted twice');
+    assert.deepEqual(visible.map(p=>p.id).sort(),s.parts.filter(p=>!p.done).map(p=>p.id).sort());
+  }
+  assert.ok(s.parts.every(p=>p.done));
+  assert.deepEqual(observed,new Set(['buffer-plate','buffer-shaft','reserved-plate','reserved-shaft']));
+});
+
+test('waiting stock follows the saved pickup cell after a station moves',()=>{
+  const {s,w,part,machine}=allocated();
+  advanceUntil(s,()=>!w.job);
+  const before={x:part.x,y:part.y};
+  assert.equal(M.move(s,machine.id,3,1),null);
+  const restored=JSON.parse(JSON.stringify(s));
+  const snapshot=JSON.stringify(restored);
+  const stock=floorStock(restored.parts,restored.workers.map(w=>workerVisualState(restored,w)));
+  assert.deepEqual(stock.stations.map(({x,y})=>({x,y})),[before]);
+  assert.equal(stock.stations[0].parts[0].id,part.id);
+  assert.equal(JSON.stringify(restored),snapshot);
 });

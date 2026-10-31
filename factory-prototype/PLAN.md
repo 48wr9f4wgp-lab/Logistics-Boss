@@ -29,3 +29,5 @@ Initial slice: plates and precision shafts, cutter/drill/inspection and purchasa
 v0.12: The player reported too many places to look. One ticket on the floor now handles the common order, work, shipment and next-step journey. Optional controls and management live behind two named entries. Keep the approved workshop renderer and existing saves. Evaluate the next player impression on iPhone.
 
 v0.13: Build a more legible, material-rich workshop around the v0.12 single work ticket. Use north-light roof bays, directional light on the slab, distinct machine silhouettes and a warm workbench behind the interactive miniature. Evaluate the scene at normal phone scale and after enlargement.
+
+v0.14: Continue the visual pass by making workers, machine controls and material handoffs readable in motion. The walking direction and pose follow the existing job. In-process stock remains at its actual service cell until pickup. Verify mixed orders, reloads and equipment moves, alongside the normal mobile ticket.
