@@ -31,3 +31,5 @@ v0.12: The player reported too many places to look. One ticket on the floor now 
 v0.13: Build a more legible, material-rich workshop around the v0.12 single work ticket. Use north-light roof bays, directional light on the slab, distinct machine silhouettes and a warm workbench behind the interactive miniature. Evaluate the scene at normal phone scale and after enlargement.
 
 v0.14: Continue the visual pass by making workers, machine controls and material handoffs readable in motion. The walking direction and pose follow the existing job. In-process stock remains at its actual service cell until pickup. Verify mixed orders, reloads and equipment moves, alongside the normal mobile ticket.
+
+v0.15: A commercial-quality art target for the main workshop. Bake original three-dimensional tool bodies, moving assemblies, crew, truck and rooms with a single lighting setup. Validate against the same shift in v0.14, including existing save paths, reduced motion and direct control selection. Physical iPhone review remains open.

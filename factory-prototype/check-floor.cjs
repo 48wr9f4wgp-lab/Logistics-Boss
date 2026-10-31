@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const { mkdir } = require('node:fs/promises');
 const path = require('node:path');
-const { chromium } = require('playwright-core');
+const { chromium, webkit } = require('playwright-core');
 
 async function check(browser, url, width, height) {
   const context = await browser.newContext({viewport:{width,height}, isMobile:true, hasTouch:true});
@@ -11,13 +11,15 @@ async function check(browser, url, width, height) {
   page.on('pageerror', error => errors.push(error.message));
   const folder = path.join(process.env.RUNNER_TEMP || '.', 'factory-floor-screens');
   await mkdir(folder, {recursive:true});
-  const capture = name => page.screenshot({path:path.join(folder, width+'-'+name+'.jpg'), quality:86});
+  const engine=browser.browserType().name();
+  const capture = name => page.screenshot({path:path.join(folder, engine+'-'+width+'-'+name+'.jpg'), quality:86});
   const button = name => page.getByRole('button', {name,exact:true});
   const ticket = page.locator('#orderAction');
   const shown = async locator => locator.waitFor({state:'visible',timeout:10000});
   try {
     await page.goto(url, {waitUntil:'load'});
     await shown(button('材料費 ¥600 で受注する'));
+    await page.locator('#world[data-artwork="ready"]').waitFor();
     await page.waitForFunction(()=>!document.querySelector('#orderAction').disabled);
     await page.evaluate(async()=>{
       await document.fonts.ready;
@@ -93,7 +95,7 @@ async function check(browser, url, width, height) {
     await page.getByText('収支の内訳・前回との比較',{exact:true}).click();
     await shown(page.getByText('人件費',{exact:true}));
     assert.deepEqual(errors,[]);
-    console.log(width+'×'+height+' passed: opening, reload, controls, work, dispatch, growth and receipt.');
+    console.log(engine+' '+width+'×'+height+' passed: opening, reload, controls, work, dispatch, growth and receipt.');
   } finally {
     await context.close();
   }
@@ -115,7 +117,8 @@ async function checkShift(browser,url) {
     await page.goto(url,{waitUntil:'load'});
     const ticket=page.getByRole('button',{name:'完成まで進める',exact:true});
     await ticket.waitFor({state:'visible'});
-    await page.screenshot({path:path.join(process.env.RUNNER_TEMP||'.','factory-floor-screens','390-crew-working.jpg'),quality:90});
+    await page.locator('#world[data-artwork="ready"]').waitFor();
+    await page.screenshot({path:path.join(process.env.RUNNER_TEMP||'.','factory-floor-screens',browser.browserType().name()+'-390-crew-working.jpg'),quality:90});
     await ticket.click();
     await page.getByRole('button',{name:'出荷する',exact:true}).click();
     await page.getByRole('button',{name:'次の成長目標を選ぶ',exact:true}).waitFor({state:'visible'});
@@ -123,10 +126,43 @@ async function checkShift(browser,url) {
     console.log('390×844 DPR2 passed: restored busy crew, rendering and shipment.');
   } finally {await context.close();}
 }
+async function checkExpandedArt(browser,url,offlineArt=false){
+  const M=await import('../docs/forge-preview/model.mjs'),s=M.fresh();
+  s.cash=50000;M.expand(s);M.purchase(s,'lathe',4,3);
+  for(const m of s.machines){M.upgrade(s,m.id);M.upgrade(s,m.id);}
+  M.accept(s,'fine');
+  for(let i=0;i<2000&&!s.workers.some(w=>w.job?.phase==='work'&&s.machines.find(m=>m.id===w.job.machine)?.kind==='lathe');i++)M.step(s,M.TICK);
+  assert.ok(M.validate(s));
+  const engine=browser.browserType().name();
+  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+  try{
+    if(offlineArt)await context.route('**/art/*-v015.webp',r=>r.abort());
+    await context.addInitScript(state=>localStorage.setItem('forge.factory.v1',JSON.stringify({revision:'expanded-art',state})),s);
+    const page=await context.newPage(),errors=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    await page.goto(url,{waitUntil:'load'});
+    const world=page.locator('#world[data-artwork="'+(offlineArt?'partial':'ready')+'"]');
+    await world.waitFor();
+    if(!offlineArt){
+      await page.screenshot({path:path.join(process.env.RUNNER_TEMP||'.','factory-floor-screens',engine+'-expanded.jpg'),quality:90});
+      const assets=await page.evaluate(()=>performance.getEntriesByType('resource').map(r=>r.name));
+      assert.ok(assets.some(f=>f.includes('room-10-v015.webp')));
+      assert.ok(!assets.some(f=>f.includes('room-8-v015.webp')));
+    }
+    await page.getByRole('button',{name:'完成まで進める',exact:true}).click();
+    await page.getByRole('button',{name:'出荷する',exact:true}).click();
+    await page.getByRole('button',{name:'次の成長目標を選ぶ',exact:true}).waitFor();
+    assert.deepEqual(errors,[]);
+    console.log(engine+' expanded '+(offlineArt?'fallback':'baked')+' passed: level 3, lathe, reduced motion and dispatch.');
+  }finally{await context.close();}
+}
 (async()=>{
-  const browser=await chromium.launch({channel:'chrome',args:['--no-sandbox']});
+  const browser=process.argv[3]==='webkit'?await webkit.launch():await chromium.launch({channel:'chrome',args:['--no-sandbox']});
   try {
-    for(const [width,height] of [[390,844],[320,568]])await check(browser,process.argv[2],width,height);
+    const sizes=process.argv[3]==='webkit'?[[390,844]]:[[390,844],[320,568]];
+    for(const [width,height] of sizes)await check(browser,process.argv[2],width,height);
     await checkShift(browser,process.argv[2]);
+    await checkExpandedArt(browser,process.argv[2]);
+    if(process.argv[3]!=='webkit')await checkExpandedArt(browser,process.argv[2],true);
   } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
