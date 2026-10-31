@@ -1,4 +1,6 @@
-# FORGE / 町工場 — first playable slice
+# マチコバ！ — first playable slice
+
+Confirmed public title: マチコバ！ / tagline: 小さな工場、大きな夢。 User decision: 2026-10-31. Previous working title: FORGE / 町工場. See `NAMING_DECISION_2026-10-31.md`.
 Title-local, 2026-10-29. User-approved new concept; old FLOTRA development is superseded for this task, preserved unchanged.
 
 Goal: touch-first factory placement, orders, actual worker routing/production, dispatch, reinvestment and worker training, with two investment directions. iPhone remains intended production target. This dependency-free Canvas/DOM build is a bounded engineering/gameplay prototype, not a production engine decision or a native iOS build. Production decision UNDECIDED; release approval NOT_REQUESTED. Existing repository and development Pages only.
