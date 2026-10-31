@@ -21,3 +21,5 @@ Initial slice: plates and precision shafts, cutter/drill/inspection and purchasa
 
 2026-10-31 / v0.9: explicit player feedback rejected the placeholder graphics. Implement the approved stylized workshop direction in the playable development build: recognisable machinery, working people, light/materials, visible upgrades, and more mobile scene space. See CHANGE_PACKET_v09.md. This is the next visual iteration, not a native release or a claim that visual appeal has been validated by the player.
 
+2026-10-31 / v0.10: connect the existing shipment loop to investment and growth goals. Highlight the first affordable order and give result-screen guidance based on remaining commitments, current goals and actual delivery status. Keep detailed accounting available without placing it before the next decision. See CHANGE_PACKET_v010.md. This is a bounded guidance pass with no new systems, rewards or saved state; device/fun validation remains open.
+

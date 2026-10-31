@@ -163,3 +163,28 @@ dialog::backdrop{background:#0d1c17b8;backdrop-filter:blur(5px)}
   footer{padding-top:3px;padding-bottom:max(5px,env(safe-area-inset-bottom))}
 }
 
+/* v0.10 — keep the shipment's next decision beside its actual profit. */
+.card.recommended-offer{border-color:#d9b56c;background:#2b3c2a;box-shadow:inset 3px 0 #e7ba6f}
+.offer-recommendation{display:block;font-size:11px;font-weight:650;color:#f1ce8d;margin-bottom:9px}
+.other-offers{font-size:13px;color:var(--muted);margin:0 0 10px}
+.receipt-heading{display:flex;align-items:center;gap:11px}
+.receipt-heading>div{min-width:0}
+.receipt-heading h3{font-size:18px;line-height:1.4;margin:4px 0 0}
+.receipt-check{display:grid;place-items:center;width:38px;height:38px;flex:none;border:1px solid #a9bf81;border-radius:50%;background:#3a5033;color:#deedba;font-size:22px}
+.receipt-check.late{border-color:#d1a36a;background:#51412a;color:#f1ce9c}
+.receipt-status{font-size:11px;color:#c5dca9;margin:9px 0 0}
+.receipt-status.late{color:#f3c48b}
+.receipt .result-profit{padding:13px 0 14px}
+.result-brief{font-size:11px;line-height:1.6;margin:0 0 12px;color:#d0ddbc}
+.result-next{padding:13px 0 0;border-top:1px solid #596b485e}
+.result-next>small{color:#e6c78e;font-size:10px;letter-spacing:1px}
+.result-next h4{font-size:14px;line-height:1.5;margin:5px 0 4px}
+.result-next p{font-size:11px;line-height:1.65;margin:0 0 4px}
+.result-next button{font-size:12px;min-height:46px;line-height:1.5;white-space:normal}
+.result-next button+button{margin-top:7px;background:transparent;color:#d1d8bf;border-color:#81926970}
+.receipt-details{margin-top:16px;border-top:1px solid #596b485e}
+.receipt-details>summary{min-height:44px;padding:14px 0 10px;cursor:pointer;font-size:11px;color:#c8d4b8}
+.receipt-details[open]>summary{margin-bottom:5px}
+.result-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.result-actions button{padding:9px 4px;font-size:11px;min-height:44px}
+
