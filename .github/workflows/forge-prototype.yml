@@ -1,5 +1,6 @@
 name: Factory prototype checks
 on:
+  workflow_dispatch:
   pull_request:
     paths: ['docs/forge-preview/**', 'factory-prototype/**', '.github/workflows/forge-prototype.yml']
   push:
@@ -23,3 +24,21 @@ jobs:
           node --check docs/forge-preview/view.mjs
       - run: node --test factory-prototype/tests/*.test.mjs
 
+      - name: Exercise the factory ticket in mobile Chrome
+        env:
+          NODE_PATH: ${{ runner.temp }}/factory-browser/node_modules
+        run: |
+          npm install --prefix "$RUNNER_TEMP/factory-browser" --no-save --ignore-scripts --no-audit playwright-core@1.56.1
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            url='https://48wr9f4wgp-lab.github.io/Logistics-Boss/forge-preview/'
+          else
+            python3 -m http.server 8100 --bind 127.0.0.1 --directory docs >/dev/null 2>&1 &
+            url='http://127.0.0.1:8100/forge-preview/'
+          fi
+          node factory-prototype/check-floor.cjs "$url"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factory-floor-screens
+          path: ${{ runner.temp }}/factory-floor-screens
+          if-no-files-found: ignore

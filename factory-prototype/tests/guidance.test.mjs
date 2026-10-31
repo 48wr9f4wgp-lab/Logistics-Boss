@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as M from '../../docs/forge-preview/model.mjs';
-import {openingOffer,deliveryGuide} from '../../docs/forge-preview/guidance.mjs';
+import {openingOffer,deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs';
 
 function ready(s) {
   for(let i=0;i<120;i++){
@@ -176,4 +176,37 @@ test('serialized in-flight continuation produces the same read-only advice and n
   const cash=s.cash,clock=s.clock,report=s.results[0];
   deliveryGuide(s,report);openingOffer(s);
   assert.equal(s.cash,cash);assert.equal(s.clock,clock);assert.equal(JSON.stringify(s),serialized);
+});
+
+test('the floor ticket follows the opening through shipment, including paused and reloaded work',()=>{
+  const s=M.fresh();
+  const first=floorTicket(freeze(structuredClone(s)));
+  assert.equal(first.action.id,'first');assert.match(first.action.label,/¥600/);
+  M.accept(s,first.action.id);
+  let ticket=floorTicket(JSON.parse(JSON.stringify(s)),{paused:true});
+  assert.equal(ticket.label,'一時停止中');assert.equal(ticket.action.type,'skip');
+  assert.match(ticket.hint,/人件費と納期/);
+  assert.equal(floorTicket(s,{skipping:true}).action.type,'stop');
+  const order=ready(s);
+  ticket=floorTicket(s);assert.equal(ticket.progress,1);assert.equal(ticket.action.id,order.id);
+  assert.equal(ticket.action.type,'ship');assert.match(ticket.hint,/2,800/);
+  M.dispatch(s,order.id);
+  assert.equal(floorTicket(s).action.panel,'growth');
+});
+
+test('zero-cost entry, concurrent orders, funding and legacy progress use the same ticket',()=>{
+  const s=M.fresh();s.cash=100;
+  const relief=floorTicket(s);
+  assert.equal(relief.action.id,'relief');assert.match(relief.action.label,/¥0/);
+  s.cash=5500;deliver(s);M.setGoal(s,'master');
+  assert.equal(floorTicket(s).action.panel,'orders');
+  M.accept(s,'first');const first=ready(s);M.accept(s,'relief');s.orders.reverse();
+  assert.equal(floorTicket(s).action.id,first.id);
+  M.dispatch(s,first.id);
+  assert.equal(floorTicket(s).action.type,'skip');
+  M.dispatch(s,ready(s).id);
+  s.cash=25000;
+  assert.equal(floorTicket(s).action.id,'master');
+  delete s.goalOffer;delete s.results;
+  assert.equal(floorTicket(s).action.panel,'growth');
 });

@@ -7,7 +7,7 @@
   <meta name="description" content="マチコバ！ — 小さな工場、大きな夢。職人と設備を育てる町工場経営ゲーム。">
   <meta name="application-name" content="マチコバ！">
   <title>マチコバ！ — 小さな工場、大きな夢。</title>
-  <link rel="stylesheet" href="style.css?v=0.10">
+  <link rel="stylesheet" href="style.css?v=0.12">
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -22,42 +22,34 @@
   <main id="app">
     <header>
       <div class="brand"><div class="brand-mark"><svg aria-hidden="true"><use href="#i-workshop"/></svg></div><div><h1>マチコバ！</h1><small>小さな工場、大きな夢。</small></div></div>
-      <button id="menu" aria-label="保存と設定">•••</button>
+      <div class="header-actions"><div class="wallet"><small>手元資金</small><b id="cash">¥5,500</b></div><button id="menu" aria-haspopup="dialog">管理</button></div>
     </header>
-    <section class="metrics" aria-label="工場の経営状況">
-      <div><small>手元資金</small><b id="cash"></b></div>
-      <div><small>出荷実績</small><b id="deliveries"></b></div>
-      <div><small>工場時間</small><b id="clock"></b></div>
-    </section>
-    <section class="goal"><span class="dot"></span><div><strong id="goal"></strong><small id="hint"></small></div><button id="growthAction">成長案件 ›</button></section>
     <section id="scene" aria-label="町工場">
-      <canvas id="world" aria-label="町工場の設備と職人。設備は下の工程ボタンからも選べます"></canvas>
-      <div class="scene-top"><span id="floor">第一工場 · 8 × 6</span><div class="scene-tools"><button id="labels" aria-label="設備名を表示" aria-pressed="false" title="設備名を表示"><svg aria-hidden="true"><use href="#i-label"/></svg></button><button id="viewReset" aria-label="工場全体を表示" title="工場全体を表示"><svg aria-hidden="true"><use href="#i-center"/></svg></button></div></div>
-      <div class="zoom-controls"><button id="plus" aria-label="拡大">＋</button><button id="minus" aria-label="縮小">−</button></div>
+      <canvas id="world" aria-label="町工場の設備と職人。操作の工程待ちからも設備を選べます"></canvas>
+      <details id="controls"><summary>操作</summary>
+        <div class="toolbox">
+          <div class="tool-row"><span>再生速度</span><div class="speeds" role="group" aria-label="再生速度"><button data-speed="0" aria-label="一時停止">Ⅱ</button><button data-speed="1" aria-label="等速">1×</button><button data-speed="3" aria-label="3倍速">3×</button></div></div>
+          <div class="tool-row"><span>表示</span><div><button id="minus" aria-label="縮小">−</button><button id="plus" aria-label="拡大">＋</button><button id="viewReset">全景</button><button id="labels" aria-pressed="false">設備名</button></div></div>
+          <div id="flow" role="group" aria-label="工程待ち。押すと設備を選択"><small>工程待ち</small></div>
+          <small id="activity"></small>
+        </div>
+      </details>
       <div id="placeHint" hidden></div>
       <aside id="machineQuick" aria-label="選択した設備" hidden>
         <div class="quick-head"><strong id="machineTitle"></strong><button id="quickClose" aria-label="設備の選択を解除">✕</button></div>
         <div id="machineWorker"></div><small id="machineQueue"></small><div id="machineEffect"></div>
         <div class="quick-actions"><button id="quickMove">移動</button><button id="quickUpgrade"></button><button id="quickDetail">詳細</button></div>
       </aside>
-      <div class="scene-bottom"><span id="activity">稼働準備</span><div class="speeds" role="group" aria-label="時間の進み方"><button data-speed="0" aria-label="一時停止">Ⅱ</button><button data-speed="1" class="active" aria-label="等速">1×</button><button data-speed="3" aria-label="3倍速">3×</button></div></div>
     </section>
-    <div id="flow" role="group" aria-label="工程待ち。押すと設備を選択"><small>工程待ち</small></div>
-    <section class="order-strip" aria-label="次のアクション">
-      <div><small class="board-eyebrow">受注と生産</small><strong id="orderTitle">最初の注文を受けよう</strong><small id="orderHint">受注 → 完成まで進める → 出荷</small></div>
-      <div class="order-actions"><button id="orderAction" aria-describedby="orderHint">注文を見る ↗</button><button id="orderMore" hidden>注文一覧</button></div><div id="orderProgress"></div>
+    <section class="order-strip" aria-label="次の行動">
+      <div class="ticket-copy"><small id="ticketLabel">最初の注文</small><strong id="orderTitle"></strong><small id="orderHint"></small></div>
+      <button id="orderAction" aria-describedby="orderTitle orderHint">受注する</button>
+      <div id="orderProgress" aria-hidden="true"></div>
     </section>
     <div id="toast" role="status" aria-live="polite"></div>
-    <nav aria-label="工場メニュー">
-      <button data-panel="orders" class="nav-primary"><svg aria-hidden="true"><use href="#i-orders"/></svg>受注</button>
-      <button data-panel="machines"><svg aria-hidden="true"><use href="#i-machine"/></svg>設備</button>
-      <button data-panel="workers"><svg aria-hidden="true"><use href="#i-worker"/></svg>職人</button>
-      <button data-panel="finance"><svg aria-hidden="true"><use href="#i-growth"/></svg>経営</button>
-    </nav>
-    <footer>開発版 v0.11 · 進行は自動保存</footer>
   </main>
-  <dialog id="sheet" aria-labelledby="sheetTitle"><div class="sheet-head"><h2 id="sheetTitle"></h2><button id="close" aria-label="閉じる">✕</button></div><div id="sheetNotice" role="status" hidden></div><div id="sheetBody"></div></dialog>
-  <script type="module" src="app.mjs?v=0.11"></script>
+  <dialog id="sheet" aria-labelledby="sheetTitle"><div class="sheet-head"><h2 id="sheetTitle"></h2><button id="close" aria-label="工場へ戻る">工場へ戻る</button></div><div id="sheetNotice" role="status" hidden></div><div id="sheetBody"></div></dialog>
+  <script type="module" src="app.mjs?v=0.12"></script>
 </body>
 </html>
 
