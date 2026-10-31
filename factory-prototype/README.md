@@ -1,4 +1,4 @@
-# マチコバ！ — v0.15
+# マチコバ！ — v0.16
 
 **小さな工場、大きな夢。**
 
@@ -13,14 +13,20 @@ Existing development Pages: `/Logistics-Boss/forge-preview/`.
 1. The ticket beneath the workshop shows the first job (12 plates), the payout and the material cost on the accept button. It starts the job here. If funds are short, the ticket offers the existing zero-material recovery job.
 2. Watch the workers, or tap 完成まで進める to advance real work, wages and deadlines. The skip stops at the first completed order. Tap 出荷する on the same ticket to collect payment.
 3. Shipment pauses playback and shows the actual profit and next step on the ticket. A second unfinished order takes priority. 管理 → 経営と出荷記録 retains the detailed receipt, including legacy reports.
-4. 管理 holds the order list, both growth paths, investments, training, finances and save tools. 操作 opens floor controls for playback, zoom, labels and stage selection. A machine can also be selected by tapping the floor directly. For a move, finish the current stages, tap a highlighted tile, or cancel.
+4. 管理 holds the order list, both growth paths, investments, training, finances and save tools. 操作 opens floor controls for playback, zoom, labels and stage selection. A machine can also be selected by tapping the floor directly. For a move, finish the current stages, tap a highlighted tile to preview the actual equipment, and confirm with the bottom button or cancel.
 5. In a growth plan open 条件と費用の内訳 for the full budget and requirements. Both routes remain available.
 
-Management sheets pause time. The floor controls and direct selection allow work to continue. Drag the floor to pan. Repeated low-value customer-material jobs allow recovery without material funding. A late order loses 15% of its payout, with no escalating penalty. Work and costs stop while the page is hidden. No offline earnings.
+Management sheets pause time. The floor controls and direct selection allow work to continue. Drag the floor to pan, or pinch with two fingers to zoom at their midpoint. These gestures also work during placement. Repeated low-value customer-material jobs allow recovery without material funding. A late order loses 15% of its payout, with no escalating penalty. Work and costs stop while the page is hidden. No offline earnings.
 
 ## Implemented
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
+
+## Shipping and direct manipulation (v0.16)
+
+The dock shows separate packaging for plates and shafts. A successful shipment immediately updates the account and briefly shows that order on the departing truck. [Four-second shipping view](evidence/machikoba-v016-shipping.mp4).
+
+During placement you can try several cells before choosing ここに移動 or ここに設置. The original location and cash are retained until confirmation. The bottom strip includes cancel and price. A two-finger pinch never selects a machine or a destination. With the floor focused, arrow keys cycle permitted locations and Enter focuses the confirm button. Inside 管理, ‹ 戻る returns to the preceding sheet and 工場へ戻る closes it.
 
 ## Lit workshop models (v0.15)
 

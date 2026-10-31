@@ -2,6 +2,7 @@
 const assert = require('node:assert/strict');
 const { mkdir } = require('node:fs/promises');
 const path = require('node:path');
+const {checkFloorControls}=require('./check-floor-controls.cjs');
 const { chromium, webkit } = require('playwright-core');
 
 async function check(browser, url, width, height) {
@@ -136,7 +137,7 @@ async function checkExpandedArt(browser,url,offlineArt=false){
   const engine=browser.browserType().name();
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
   try{
-    if(offlineArt)await context.route('**/art/*-v015.webp',r=>r.abort());
+    if(offlineArt)await context.route(/\/art\/[^/]+-v01[56]\.webp(?:\?.*)?$/,r=>r.abort());
     await context.addInitScript(state=>localStorage.setItem('forge.factory.v1',JSON.stringify({revision:'expanded-art',state})),s);
     const page=await context.newPage(),errors=[];
     page.on('pageerror',e=>errors.push(e.message));
@@ -161,6 +162,7 @@ async function checkExpandedArt(browser,url,offlineArt=false){
   try {
     const sizes=process.argv[3]==='webkit'?[[390,844]]:[[390,844],[320,568]];
     for(const [width,height] of sizes)await check(browser,process.argv[2],width,height);
+    await checkFloorControls(browser,process.argv[2]);
     await checkShift(browser,process.argv[2]);
     await checkExpandedArt(browser,process.argv[2]);
     if(process.argv[3]!=='webkit')await checkExpandedArt(browser,process.argv[2],true);

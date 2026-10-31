@@ -1,5 +1,6 @@
-import {paintRoom,paintEquipment,machinePose} from './miniature-art.mjs?v=0.15';
-import {drawCrewMember} from './crew.mjs?v=0.15';
+import {paintCargo,departurePose} from './shipping.mjs?v=0.16';
+import {paintRoom,paintEquipment,machinePose} from './miniature-art.mjs?v=0.16';
+import {drawCrewMember} from './crew.mjs?v=0.16';
 import {project, machineHull} from './view.mjs?v=0.13';
 
 // Original, dependency-free workshop art. This layer only reads simulation state.
@@ -682,9 +683,10 @@ function waitingParts(g,stock) {
   g.box(x,y+d-.025,w,.025,.08,'#457784','#83a5a4','#345361',.072);
 }
 
-function materials(g,s,incoming) {
+function materials(g,s,incoming,shippingArt) {
   const {box,line}=g;
-  pallet(g,.08,.13,.7,.65);
+  if(shippingArt)paintCargo(g,shippingArt,'pallet',.08,.13);
+  else pallet(g,.08,.13,.7,.65);
   const plates=incoming.filter(p=>p.product==='plate'),shafts=incoming.filter(p=>p.product==='shaft');
   const plateLayers=Math.min(4,Math.ceil(plates.length/5));
   for(let i=0;i<plateLayers;i++){
@@ -692,22 +694,42 @@ function materials(g,s,incoming) {
     line([[.15,.27,.209+i*.05],[.67,.27,.209+i*.05]],'#edf0da',.8);
   }
   for(let i=0;i<Math.min(4,Math.ceil(shafts.length/4));i++)workpiece(g,shafts[0],.14,.2+i*.1,.17+plateLayers*.05,1.5);
-  pallet(g,.08,s.height-.86,.72,.68);
-  const ready=s.orders.reduce((n,o)=>n+(!o.shipped?o.done:0),0);
-  for(let i=0;i<Math.min(6,Math.ceil(ready/3));i++){
-    const x=.12+(i%2)*.32,y=s.height-.8+(Math.floor(i/2)%2)*.29,z=.16+Math.floor(i/4)*.27;
-    box(x,y,.28,.25,.25,'#a58d5a','#d5c291','#7f7149',z);
-    box(x+.12,y,.035,.25,.006,'#d7cba0','#e7dab0','#bfb184',z+.252);
-  }
+  const dockY=s.height-.86;
+  if(shippingArt)paintCargo(g,shippingArt,'pallet',.08,dockY);
+  else pallet(g,.08,dockY,.72,.68);
+  // Keep the second order on the dock when the first one departs.
+  const ready=s.orders.filter(o=>!o.shipped&&o.done>0);
+  ready.forEach((order,lane)=>{
+    const shaft=order.product==='shaft',across=shaft?1:2;
+    const count=Math.min(3,Math.ceil(order.done/6)),scale=shaft ? .88:.77;
+    for(let i=0;i<count;i++){
+      const x=.105+(i%across)*.348,y=dockY+.035+lane*.308,z=.17+Math.floor(i/across)*(shaft ? .234:.30)*scale;
+      if(shippingArt)paintCargo(g,shippingArt,order.product,x,y,z,scale);
+      else{
+        const w=(shaft ? .72:.43)*scale,d=(shaft ? .28:.36)*scale,h=(shaft ? .235:.30)*scale;
+        box(x,y,w,d,h,'#ad895c','#d7bd8b','#876b49',z);
+        box(x+w*.19,y,.022,d,.006,'#789396','#a3b3a6','#627c82',z+h);
+      }
+    }
+  });
 }
 
-function truck(g,s) {
-  const {box,line,disk,face,shadow,dot}=g,x=s.width-2.6,y=s.height+.54;
+function truck(g,s,x,cargo) {
+  const {box,line,disk,face,shadow,dot}=g,y=s.height+.54;
   shadow(x+.02,y+.03,2.15,.7,.22);
   box(x+.05,y+.08,2.15,.62,.16,'#4d6651','#74866a','#334b38',.13);
   // Small cream kei truck with an open steel bed.
   box(x+.06,y+.1,1.38,.59,.13,'#b5c2a3','#dbe1bf','#829778',.31);
   box(x+.06,y+.1,1.38,.055,.24,'#b6c4a3','#e0e4c3','#7c9575',.35);
+  if(cargo){
+    const shaft=cargo.startsWith('shaft');
+    const count=cargo.endsWith('2')?2:1;
+    for(let i=0;i<count;i++){
+      const xx=x+.12+(shaft?0:i*.49),yy=y+.14+(shaft?i*.28:0),w=shaft ? .72:.43,d=shaft ? .26:.35;
+      box(xx,yy,w,d,.27,'#a57d52','#d3b783','#806145',.46);
+      box(xx+.08,yy,.025,d,.006,'#66878a','#9bada4','#506b70',.733);
+    }
+  }
   box(x+.06,y+.65,1.38,.055,.24,'#bec9a6','#e6e7c5','#879a77',.35);
   box(x+.06,y+.12,.06,.51,.24,'#b4c1a0','#e1e6c4','#809773',.35);
   for(let n=0;n<5;n++)line([[x+.17+n*.24,y+.708,.38],[x+.17+n*.24,y+.708,.53]],'#899e7b',.65);
@@ -743,7 +765,14 @@ function floorSelection(g,s,opt) {
   }
   if(opt.placing&&!opt.placing.draining){
     for(const {x,y} of opt.placementCells||[]){
-      face([[x+.06,y+.06,.015],[x+.94,y+.06,.015],[x+.94,y+.94,.015],[x+.06,y+.94,.015]],'#b9d87e32','#dfedaa',.85);
+      face([[x+.06,y+.06,.015],[x+.94,y+.06,.015],[x+.94,y+.94,.015],[x+.06,y+.94,.015]],'#badb9252','#d8e6ba',.80);
+    }
+    const c=opt.placing.candidate;
+    if(c){
+      const x=c.x,y=c.y;
+      const corners=[[x+.02,y+.02,.02],[x+.98,y+.02,.02],[x+.98,y+.98,.02],[x+.02,y+.98,.02]];
+      face(corners,'#f8c56380','#4c412d',Math.max(2.8,g.v.u*.12));
+      line([...corners,corners[0]],'#ffdb86',Math.max(1.5,g.v.u*.075));
     }
   }
 }
@@ -772,18 +801,23 @@ export function drawWorkshop(ctx,state,viewport,options={}) {
   staticScene(ctx,state,viewport,art?.roomWidth===state.width?art.room:null);
   const g=painter(ctx,viewport);
   floorSelection(g,state,opt);
+  const destination=opt.placing?.candidate;
+  const source=destination?state.machines.find(m=>m.id===opt.placing.id):null;
+  const preview=destination?{id:null,kind:opt.placing.kind,level:source?.level||1,...destination}:null;
   const visuals=state.workers.map(w=>workerVisualState(state,w));
   const stock=floorStock(state.parts,visuals);
   // Cast every machine shadow on the slab before painting stock or people.
   if(art?.machines)for(const m of state.machines){
     const tool=painter(ctx,objectView(viewport,m.x+.5,m.y+.5,1.13));
-    paintEquipment(tool,m,art.machines,'shadow');
+    ctx.save();if(m===source)ctx.globalAlpha*=.25;
+    paintEquipment(tool,m,art.machines,'shadow');ctx.restore();
   }
-  materials(g,state,stock.incoming);
+  materials(g,state,stock.incoming,art?.shipping);
   const entities=[
     ...state.machines.map(m=>({depth:m.x+m.y+.9,type:'machine',m})),
     ...state.workers.map((w,i)=>({depth:w.x+w.y+.94,type:'worker',w,visual:visuals[i]})),
-    ...stock.stations.map(bin=>({depth:bin.x+bin.y+.85,type:'stock',bin}))
+    ...stock.stations.map(bin=>({depth:bin.x+bin.y+.85,type:'stock',bin})),
+    ...(preview?[{depth:preview.x+preview.y+.9,type:'preview',m:preview}]:[])
   ].sort((a,b)=>a.depth-b.depth||Number(a.type==='worker')-Number(b.type==='worker'));
   const targets=[],labels=[];
   for(const entity of entities){
@@ -804,16 +838,25 @@ export function drawWorkshop(ctx,state,viewport,options={}) {
       const part=w?state.parts.find(p=>p.id===w.job.part):null;
       const local=objectView(viewport,m.x+.5,m.y+.5,1.13);
       const tool=painter(ctx,local);
+      ctx.save();
+      if(m===source)ctx.globalAlpha*=.28;
+      if(entity.type==='preview')ctx.globalAlpha*=.83;
       machine(tool,m,w,opt,part);
+      ctx.restore();
+      if(entity.type==='preview')continue;
       const target={id:m.id,hull:machineHull(local,m)};
       targets.push(target);
       if((opt.showLabels||m.id===opt.selected)&&!opt.placing)labels.push({target,m,w,tool});
     }
   }
-  if(art?.truck){
-    g.shadow(state.width-2.6,state.height+.59,2.1,.70,.22);
-    paintRoom(ctx,viewport,art.truck,'truck',state.width-2.6,state.height+.54,-.12);
-  }else truck(g,state);
+  const delivery=departurePose(state.width,opt.shipment,opt.shipmentElapsed||0,opt.reducedMotion);
+  ctx.save();ctx.globalAlpha*=delivery.alpha;
+  if(art?.truck&&(!delivery.cargo||art.shipping)){
+    g.shadow(delivery.x,state.height+.59,2.1,.70,.22);
+    if(delivery.cargo)paintCargo(g,art.shipping,delivery.cargo,delivery.x,state.height+.54,-.12);
+    else paintRoom(ctx,viewport,art.truck,'truck',delivery.x,state.height+.54,-.12);
+  }else truck(g,state,delivery.x,delivery.cargo);
+  ctx.restore();
   // Nameplates are an intentional optional overlay; the machinery stays visible.
   for(const {target,m,w,tool} of labels)target.label=badge(tool,m,w,m.id===opt.selected);
   ctx.restore();

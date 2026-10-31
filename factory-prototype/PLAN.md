@@ -33,3 +33,5 @@ v0.13: Build a more legible, material-rich workshop around the v0.12 single work
 v0.14: Continue the visual pass by making workers, machine controls and material handoffs readable in motion. The walking direction and pose follow the existing job. In-process stock remains at its actual service cell until pickup. Verify mixed orders, reloads and equipment moves, alongside the normal mobile ticket.
 
 v0.15: A commercial-quality art target for the main workshop. Bake original three-dimensional tool bodies, moving assemblies, crew, truck and rooms with a single lighting setup. Validate against the same shift in v0.14, including existing save paths, reduced motion and direct control selection. Physical iPhone review remains open.
+
+v0.16: Finish the visual loop at dispatch with order-specific packed cargo and an interruptible departure. Then improve the floor interaction: pinch around the fingers, pan during placement, preview/commit or cancel, and preserve management navigation. Normal play still has one bottom ticket.

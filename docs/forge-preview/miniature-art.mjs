@@ -5,7 +5,7 @@ import {frames} from './art/machine-frames-v015.mjs';
 import {roomFrames} from './art/room-frames-v015.mjs';
 
 export function createArtLoader(){
-  const art={machines:null,truck:null,crew:null,room:null,roomWidth:0};
+  const art={machines:null,shipping:null,truck:null,crew:null,room:null,roomWidth:0};
   let requested=0;
   function load(file,accept){
     const picture=new Image();
@@ -14,6 +14,7 @@ export function createArtLoader(){
   }
   load('machines-v015.webp',image=>{art.machines=image;});
   load('crew-v015.webp',image=>{art.crew=image;});
+  load('shipping-v016.webp',image=>{art.shipping=image;});
   load('truck-v015.webp',image=>{art.truck=image;});
   return width=>{
     if(requested!==width){
