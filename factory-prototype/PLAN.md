@@ -14,3 +14,5 @@ Initial slice: plates and precision shafts, cutter/drill/inspection and purchasa
 2026-10-31 / v0.6: selected growth contract, preparation/material budget, and state-based next action. See CHANGE_PACKET_v06.md. This completes the bounded guidance pass; before expanding content further, prioritize a short iPhone play session of accept → invest → deliver and collect concrete feedback on readability, decisions and waiting. No actual-device or fun greenlight yet.
 
 2026-10-31 / v0.7: direct user feedback reported too much waiting. Added an opt-in completion skip with real costs and automatic pause at the next ready order. See CHANGE_PACKET_v07.md. No new game systems/content; this addresses the wait before the next decision.
+
+2026-10-31 / v0.8: investment feedback shows actual per-piece processing and inspection effects before upgrade/training, remaining cash/shortfalls, and visible machine levels. See CHANGE_PACKET_v08.md. This is a decision/readability pass, not new content or a claim of proven fun.

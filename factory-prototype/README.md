@@ -1,4 +1,4 @@
-# 町工場 / FORGE — v0.7
+# 町工場 / FORGE — v0.8
 
 New title-local gameplay prototype, approved 2026-10-29. Current task replaces the FLOTRA concept; historical FLOTRA code and saves remain untouched. Production target remains iPhone/iOS. This browser build is an engineering preview, not a native release or production-engine decision.
 
@@ -51,6 +51,16 @@ Normal playback and skipping now share fixed 0.05-second simulation ticks. The n
 
 The scheduling algorithm is unchanged; using one timestep removes the old frame-rate-dependent outcome differences. Historical .1-second model benchmarks and pre-v0.7 browser receipts are therefore not exact comparisons against v0.7. Qualification alone still does not guarantee delivery; equipment and layout interact through shared worker scheduling.
 
+## Investment feedback (v0.8)
+
+設備 shows the current and next-level per-piece processing times, plus the cash remaining after the priced upgrade or the funding shortfall. Reference times use skill 1, no quality adjustment, and exclude transport and waiting for a worker. Inspection upgrades also show the supported quality at skill 1. New-machine cards show the reference time and actual purchase cost. At the level cap there is no invented next price or upgrade.
+
+職人 shows the current and next-skill times against one existing machine of each kind, with that machine's level shown. Mentoring's processing penalty is included when enabled; quality adjustment is excluded and the supported inspection quality is shown separately (up to current contract quality 3). When several machines of a kind exist, the first installed machine is the reference; this is not a forecast of the worker's next assignment. The skill cap and insufficient funds disable training. Upgrades, training and new placements also keep their existing model-side validation.
+
+Both previews call the exact processing calculation used for actual job assignment. Improvements take effect at the next assignment; an already assigned job retains its stored processing duration. This does not guarantee faster total-order completion: travel, work allocation, quality and concurrent orders remain relevant.
+
+The factory floor labels each machine's level and adds one/two gold reinforcement marks at levels 2/3. Its direct card keeps a short processing comparison; full funding/quality details live in the equipment panel. Stage selection recenters the machine above the card after layout settles. At 390×844, the selected-card floor minimum is 326px so the footer and bottom controls remain within the viewport. All save fields and economic/production rules remain unchanged.
+
 ## Order results
 
 Repeat the same offer to compare with its previous measured result. 経営 keeps the last 12 receipts. Actual payroll is split equally among unfinished orders each tick; no additional wages are charged for the receipt. Production time ends at completion, while the existing deadline still applies at dispatch. Investment costs are reported separately in cumulative expenses. Comparisons reflect all conditions, including concurrent orders and worker growth, and do not prove a specific investment caused the change.
@@ -59,7 +69,7 @@ Existing saves continue. Orders accepted before v0.3 show payment/material but e
 
 ## Verification
 
-Run `node --test factory-prototype/tests/*.test.mjs` and `node --check docs/forge-preview/app.mjs`. Forty-three tests cover completion skipping, fixed-tick equivalence, bounded interruption/resumption, growth budgets, goal persistence, active-order guidance, screen-space picking and payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
+Run `node --test factory-prototype/tests/*.test.mjs` and `node --check docs/forge-preview/app.mjs`. Forty-six tests cover shared processing calculations, investment costs/in-flight work, completion skipping, fixed-tick equivalence, bounded interruption/resumption, growth budgets, goal persistence, active-order guidance, screen-space picking and payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
 
 Initial simulated order at the shared v0.7 tick: 115.4 game seconds, 12 completed parts, cash ¥4,819.22 before ¥2,800 payout (starting ¥5,500, material ¥600). This is deterministic model evidence, not a measured iPhone session. Cloud-browser interaction evidence is recorded separately in VERIFICATION.md.
 
