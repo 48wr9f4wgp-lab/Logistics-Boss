@@ -76,3 +76,18 @@ Initial simulated order at the shared v0.7 tick: 115.4 game seconds, 12 complete
 ## Limits
 
 Early procedural isometric graphics. No native iPhone/Safari performance validation, no user fun/retention validation, no market qualification or production greenlight. No breakdowns, outsourcing, multiple buildings or custom brands yet. Native iOS engine/build route and art target remain subsequent decisions, not inferred from the old game. All graphics are original code-generated geometry; no third-party art or CDN dependencies.
+
+## v0.9 — Workshop visuals
+
+The workshop now uses locally bundled machine illustrations, a warm cutaway room,
+depth-sorted workers, and activity tied to real assignments. Initial 1.3× work view
+makes equipment easier to see; 作業 resets the camera, − shows the full floor.
+Menus, paused simulation, reduced-motion preference, and save/read-only guards
+freeze illustrative motion. The simulation and ordinary save key/schema are unchanged.
+
+`qa.html` is the development-only phone-size harness on the existing Pages destination.
+It opens `index.html?qa=visual09`, which uses **only** `forge.factory.qa.visual09`.
+Ordinary URLs continue using `forge.factory.v1`; no copying or migration between slots.
+The harness avoids competing with a user's open game and verifies 390×844/375×667.
+The generated concept is an aspirational target, not a screenshot or promise of
+full 3D art parity. Current art is a 2.5D Canvas renderer with machine sprites.

@@ -1,6 +1,6 @@
 // Canvas geometry shared by painting and picking; all coordinates are CSS pixels.
 export function project(view, x, y, z = 0) {
-  return {x: view.ox + (x-y)*view.u, y: view.oy + (x+y)*view.u*.5-z*view.u};
+  return {x: view.ox + (x-y)*view.u, y: view.oy + (x+y)*view.u*(view.slope??.5)-z*view.u};
 }
 
 export function machineHull(view, m) {
