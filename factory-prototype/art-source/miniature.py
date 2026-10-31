@@ -321,6 +321,15 @@ def surroundings(work,dest):
     pic.save(dest/'truck-v015.webp',quality=91,method=6,exact=True);info['truck']=[round(n,6) for n in world]
     (dest/'room-frames-v015.mjs').write_text('export const roomFrames = '+json.dumps(info)+';\n')
 
+def shipping(work,dest):
+    from shipping import build
+    entries=[]
+    for key in ('pallet','plate','shaft','plate-1','plate-2','shaft-1','shaft-2'):
+        scene=Scene();build(scene,key)
+        im,world=render(scene,work,'shipping-'+key,445,395,130,122,170,0,6,8)
+        entries.append((key,im,world))
+    pack(entries,1024,dest,'shipping-v016.webp','shipping-frames-v016.mjs','shippingFrames')
+
 if __name__=='__main__':
     work=Path(sys.argv[1]).resolve();dest=Path(sys.argv[2]).resolve()
     work.mkdir(parents=True,exist_ok=True);dest.mkdir(parents=True,exist_ok=True)
@@ -328,3 +337,4 @@ if __name__=='__main__':
     if len(sys.argv)<4 or sys.argv[3]=='machines':equipment(work,dest)
     if len(sys.argv)<4 or sys.argv[3]=='rooms':surroundings(work,dest)
     if len(sys.argv)<4 or sys.argv[3]=='crew':portraits(work,dest)
+    if len(sys.argv)<4 or sys.argv[3]=='shipping':shipping(work,dest)

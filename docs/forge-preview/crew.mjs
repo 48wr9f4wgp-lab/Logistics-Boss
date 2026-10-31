@@ -1,4 +1,4 @@
-import {paintCrewBust} from './miniature-art.mjs?v=0.15';
+import {paintCrewBust} from './miniature-art.mjs?v=0.16';
 // Screen-space figure painting in a local, ground-facing frame. Units are tile units.
 const TAU=Math.PI*2;
 const uniforms=[

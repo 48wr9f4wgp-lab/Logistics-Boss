@@ -1,12 +1,14 @@
+import {floorGesture,changeCamera} from './floor-input.mjs?v=0.16';
+import {departureDuration} from './shipping.mjs?v=0.16';
 import * as M from './model.mjs';
 import {openingOffer,deliveryGuide,floorTicket} from './guidance.mjs?v=0.12';
 import {project,pickMachine} from './view.mjs?v=0.13';
-import {drawWorkshop} from './workshop.mjs?v=0.15';
-import {createArtLoader} from './miniature-art.mjs?v=0.15';
+import {drawWorkshop} from './workshop.mjs?v=0.16';
+import {createArtLoader} from './miniature-art.mjs?v=0.16';
 const workshopArt=createArtLoader();
 const $=s=>document.querySelector(s),KEY='forge.factory.v1',canvas=$('#world'),ctx=canvas.getContext('2d');
 let s=M.fresh(),speed=1,last=0,zoom=1,pan={x:0,y:0},placing=null,selected=null,tab=null,toastUntil=0,revision=null,writer=false,saveBlocked=false,paintTime=0,placementCells=[],resumeSpeed=1,skipping=null,tickRemainder=0,showLabels=false,lastDraw=-Infinity;
-let growthFocus=null, recentShipment=null;
+let growthFocus=null, recentShipment=null, departure=null;
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 try{const raw=localStorage.getItem(KEY);if(raw){const env=JSON.parse(raw);if(!M.validate(env.state))throw Error('invalid');s=env.state;revision=env.revision;}}catch{saveBlocked=true;speed=0;}
 // A completed saved order remains safe to dispatch after reopening the page.
@@ -16,7 +18,7 @@ function save(){if(!writer||saveBlocked)return;try{const previous=localStorage.g
 if(navigator.locks){navigator.locks.request(KEY,{ifAvailable:true},async lock=>{if(!lock){toast('別のタブで起動中です。この画面は閲覧専用');return;}writer=true;update();if(saveBlocked)toast('保存データを読み込めません。上書きせず停止しました');await new Promise(resolve=>window.addEventListener('pagehide',()=>{save();resolve();},{once:true}));});}else{writer=true;}
 window.addEventListener('storage',e=>{if(e.key===KEY){writer=false;speed=0;toast('別画面の更新を検出。再読み込みしてください');}});
 window.addEventListener('pageshow',e=>{if(e.persisted){writer=false;speed=0;toast('復帰しました。続けるには再読み込みしてください');}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSkip();save();last=0;tickRemainder=0;});window.addEventListener('pagehide',save);setInterval(save,5000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){departure=null;stopSkip();}save();last=0;tickRemainder=0;});window.addEventListener('pagehide',save);setInterval(save,5000);
 function act(fn,announce=true){if(!writer||saveBlocked){toast(saveBlocked?'保存に問題があります。設定を開いてください':'別画面で起動中です。再読み込みしてください');return;}stopSkip();const before=new Set(M.OFFERS.filter(o=>o.growth&&M.offerStatus(s,o.id).qualified).map(o=>o.id));const error=fn();if(error)toast(error);else{const unlocked=M.OFFERS.filter(o=>o.growth&&!before.has(o.id)&&M.offerStatus(s,o.id).qualified);if(unlocked.length)M.note(s,`受注条件を達成：${unlocked.map(o=>o.label).join('・')}`);recentShipment=null;save();if(announce)toast(s.log[0]);}update();if(tab)renderPanel();return !error;}
 const money=v=>'¥'+Math.floor(v).toLocaleString('ja-JP');
 function update(){
@@ -24,6 +26,8 @@ function update(){
   const button=$('#orderAction');
   $('.order-strip').hidden=!!placing;
   $('#controls').hidden=!!placing;
+  $('#placementBar').hidden=!placing;
+  if(placing)$('#confirmPlace').disabled=!placing.candidate||!writer||saveBlocked;
   $('#cash').textContent=money(s.cash);
   $('#ticketLabel').textContent=ticket.label;
   if(recentShipment){
@@ -58,17 +62,35 @@ function runFloorAction(action){
   else if(action.type==='growth')open('growth',action.id);
   else if(action.type==='panel')open(action.panel);
 }
-function open(panel,focusId=null){
+const sheetTrail=[];
+function open(panel,focusId=null,restoring=false){
+  const sheet=$('#sheet');
+  if(!tab)sheetTrail.length=0;
+  else if(!restoring&&tab!==panel){
+    const ancestor=sheetTrail.findIndex(entry=>entry.panel===panel&&entry.focusId===focusId);
+    if(ancestor>=0)sheetTrail.length=ancestor;
+    else sheetTrail.push({panel:tab,focusId:growthFocus,scroll:sheet.scrollTop,
+      focusIndex:[...$('#sheetBody').querySelectorAll('button,summary,select')].indexOf(document.activeElement)});
+  }
   growthFocus=panel==='growth'?focusId:null;
   stopSkip();if(placing)endPlacement();
   $('#controls').open=false;
-  tab=panel;$('#sheet').dataset.panel=panel;$('#sheetNotice').hidden=true;
-  renderPanel();if(!$('#sheet').open)$('#sheet').showModal();
-  $('#sheet').scrollTop=0;updateSelection();
+  tab=panel;sheet.dataset.panel=panel;$('#sheetNotice').hidden=true;
+  $('#sheetBack').hidden=sheetTrail.length===0;
+  renderPanel();if(!sheet.open)sheet.showModal();
+  sheet.scrollTop=0;$('#sheetTitle').focus({preventScroll:true});updateSelection();
 }
-function close(){tab=null;$('#sheet').close();updateSelection();}
+$('#sheetBack').onclick=()=>{
+  const previous=sheetTrail.pop();
+  if(!previous)return;
+  open(previous.panel,previous.focusId,true);
+  const control=$('#sheetBody').querySelectorAll('button,summary,select')[previous.focusIndex];
+  control?.focus({preventScroll:true});
+  $('#sheet').scrollTop=previous.scroll;
+};
+function close(){tab=null;sheetTrail.length=0;$('#sheet').close();updateSelection();}
 $('#close').onclick=close;
-$('#sheet').addEventListener('cancel',()=>{tab=null;updateSelection();});
+$('#sheet').addEventListener('cancel',()=>{tab=null;sheetTrail.length=0;updateSelection();});
 $('#menu').onclick=()=>open('manage');
 $('#controls').addEventListener('toggle',()=>{if($('#controls').open){selected=null;updateSelection();}});
 document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{
@@ -76,21 +98,28 @@ document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{
   if(speed===0)draw();
   update();
 });
-$('#plus').onclick=()=>zoom=Math.min(2,zoom+.15);
-$('#minus').onclick=()=>{zoom=Math.max(.7,zoom-.15);if(zoom<=1)pan={x:0,y:0};};
+function zoomButton(delta){
+  const center={x:canvas.clientWidth/2,y:canvas.clientHeight/2};
+  applyCamera(center,center,(zoom+delta)/zoom);
+}
+$('#plus').onclick=()=>zoomButton(.25);
+$('#minus').onclick=()=>zoomButton(-.25);
 $('#labels').onclick=()=>{showLabels=!showLabels;$('#labels').setAttribute('aria-pressed',String(showLabels));$('#labels').setAttribute('aria-label',showLabels?'設備名を隠す':'設備名を表示');};
-$('#viewReset').onclick=()=>{zoom=1;pan={x:0,y:0};selected=null;updateSelection();};
+$('#viewReset').onclick=()=>{zoom=1;pan={x:0,y:0};selected=null;updateSelection();draw();};
 const stageNames={cut:'切断',drill:'穴あけ',lathe:'旋盤',inspect:'検品'};
 function selectMachine(id,focus=false){
   selected=id;
   if(id)$('#controls').open=false;
   const m=s.machines.find(m=>m.id===id);
   updateSelection();
-  if(m&&focus)requestAnimationFrame(()=>{
+  if(m)requestAnimationFrame(()=>{
     if(selected!==id||!viewport.u)return;
     const cardHeight=$('#machineQuick').getBoundingClientRect().height;
     const p=point(m.x+.5,m.y+.5,.5),targetY=Math.max(55,Math.min(viewport.h*.32,viewport.h-64-cardHeight-40));
-    pan.x+=viewport.w*.5-p.x;pan.y+=targetY-p.y;
+    // Direct taps only move the camera if the card would cover the selected tool.
+    const cardTop=$('#machineQuick').getBoundingClientRect().top-canvas.getBoundingClientRect().top;
+    if(focus){pan.x+=viewport.w*.5-p.x;pan.y+=targetY-p.y;}
+    else if(p.y+viewport.u*.75>cardTop)pan.y-=p.y+viewport.u*.75-cardTop+8;
   });
 }
 function updateSelection(){
@@ -163,7 +192,7 @@ if(tab==='orders'){
 }
 if(tab==='growth'){html='<p>目標を選ぶと工場画面で追えます。量産・精密はいつでも切替でき、両方を伸ばせます。</p>'+M.OFFERS.filter(o=>o.growth).sort((a,b)=>Number(b.id===(growthFocus||s.goalOffer))-Number(a.id===(growthFocus||s.goalOffer))).map(growthCard).join('')+'<button class="wide" data-next="orders">通常の注文を見る</button>';}
 if(tab==='machines'){
-  html='<p>改良の効果は次の作業割当から。表示は加工だけの時間で、注文全体は配置や職人の担当でも変わります。移動では今の工程を仕上げて停止し、配置後に再開します。</p>';
+  html='<p>改良の効果は次の作業割当から。表示は加工だけの時間で、注文全体は配置や職人の担当でも変わります。移動では今の工程を仕上げて停止し、配置後は直前の再生速度に戻ります。</p>';
   for(const m of [...s.machines].sort((a,b)=>Number(b.id===selected)-Number(a.id===selected))){
     const worker=s.workers.find(w=>w.job?.machine===m.id),q=M.production(s).stages[m.kind];
     html+=card(`${m.id===selected?'<span class="tag">選択中</span> ':''}${M.MACHINES[m.kind].name}　Lv.${m.level}`,`<small>${worker?worker.job.phase==='walk'?'担当者が運搬中':worker.job.rework?'品質調整中':'加工中':'担当者・材料待ち'} · 座標 ${m.x}, ${m.y}</small><p>同種工程：待ち ${q.waiting}個 · 運搬 ${q.walking}個 · 加工 ${q.working}個</p>${machineEffect(m)}<div class="row"><button data-move="${m.id}">移動</button><button data-upgrade="${m.id}" ${m.level>=3||s.cash<1500*m.level?'disabled':''}>${m.level>=3?'改良済み':`Lv.${m.level+1}に改良 · ${money(1500*m.level)}`}</button><button data-sell="${m.id}">売却</button></div>`);
@@ -177,8 +206,8 @@ if(tab==='workers'){
 }
 if(tab==='result'){const r=s.results?.[0];html=r?receipt(r,true):'<p>まだ出荷記録がありません。</p>';}
 if(tab==='finance'){html=card('工場の状況','<div class="row"><span>出荷実績</span><b>'+s.delivered+'件</b></div><div class="row"><span>工場時間</span><b>'+Math.floor(s.clock/60)+'分'+Math.floor(s.clock%60)+'秒</b></div>')+card('収支',`<div class="row"><span>累計売上</span><b>${money(s.revenue)}</b></div><div class="row"><span>材料・投資・人件費</span><b>${money(s.expense)}</b></div><p>加工する部品がある間、人件費は毎秒¥0.7。画面を閉じている間の生産・請求はありません。</p>`)+'<h3>出荷の振り返り</h3><p>直近12件を保存。利益は設備・研修・増築費を引く前の金額です。</p>'+(s.results?.length?'<button class="wide" data-next="result">直近の出荷結果を開く</button>'+s.results.map(r=>`<details class="result-history"><summary>${escape(r.label)} × ${r.qty}<b>${M.resultProfit(r)===null?'記録なし':signedMoney(M.resultProfit(r))}</b></summary>${receipt(r,false)}</details>`).join(''):'<p>出荷すると結果をここで見返せます。</p>')+card('工場を広げる',`<p>床面積を8×6から10×8へ。追加設備と動線のための余白を作ります。</p><button class="primary wide" id="expand" ${s.width===10?'disabled':''}>${s.width===10?'拡張済み':'増築する · ¥3,500'}</button>`)+card('生産の記録',`<p>完了工程 ${s.stats.processed}回<br>品質調整 ${s.stats.rework}回<br>運搬・移動距離 ${Math.floor(s.stats.walk)}マス</p>`)+card('工場日誌',s.log.map(t=>`<p>${escape(t)}</p>`).join(''));}
-if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② 完成まで進めるで待ち時間をスキップ（人件費・納期も進む）<br>③ 完成した注文を出荷して入金<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。「操作」で速度、拡大縮小、全景表示、設備名を切り替えます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置モードでは床をタップしてください。</p><small>開発版 v0.15</small>');}
-body.innerHTML=html;body.querySelectorAll('[data-result-action]').forEach(b=>b.onclick=()=>runResultAction(b.dataset.resultAction));body.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{if(act(()=>M.setGoal(s,b.dataset.goal))){growthFocus=null;renderPanel();$('#sheet').scrollTop=0;}});body.querySelectorAll('[data-plan-action]').forEach(b=>b.onclick=()=>runPlan(b.dataset.planAction));body.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>open(b.dataset.next));body.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>{if(act(()=>M.accept(s,b.dataset.order))){close();speed=speed||1;update();}});body.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>ship(+b.dataset.ship));body.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>place({kind:b.dataset.buy}));body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>place({id:b.dataset.move,kind:s.machines.find(m=>m.id===b.dataset.move).kind}));body.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>act(()=>M.upgrade(s,b.dataset.upgrade)));body.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>act(()=>M.sell(s,b.dataset.sell)));body.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>act(()=>M.train(s,+b.dataset.train)));body.querySelectorAll('[data-role]').forEach(b=>b.onchange=()=>act(()=>{s.workers.find(w=>w.id===+b.dataset.role).role=b.value;M.note(s,'担当の優先順位を変更');}));body.querySelectorAll('[data-mentor]').forEach(b=>b.onclick=()=>act(()=>{const w=s.workers.find(w=>w.id===+b.dataset.mentor);w.mentor=!w.mentor;M.note(s,`${w.name}の指導役を変更`);}));if($('#expand'))$('#expand').onclick=()=>act(()=>M.expand(s));if($('#export'))$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({revision,state:s})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='machikoba-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};if($('#reload'))$('#reload').onclick=()=>location.reload();if($('#import'))$('#import').onchange=async e=>{try{const f=e.target.files[0];if(!f||f.size>200000)throw Error();const data=JSON.parse(await f.text());if(!M.validate(data.state))throw Error();if(!writer){toast('別のタブを閉じて再読み込みしてください');return;}if(!confirm('現在の進行を、選んだセーブに置き換えますか？'))return;s=data.state;recentShipment=null;saveBlocked=false;revision=JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null;save();update();renderPanel();toast('セーブを読み込みました');}catch{toast('対応する正常なセーブではありません。進行は変更していません');}};}
+if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② 完成まで進めるで待ち時間をスキップ（人件費・納期も進む）<br>③ 完成した注文を出荷して入金<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.16</small>');}
+body.innerHTML=html;body.querySelectorAll('[data-result-action]').forEach(b=>b.onclick=()=>runResultAction(b.dataset.resultAction));body.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{if(act(()=>M.setGoal(s,b.dataset.goal))){growthFocus=null;renderPanel();$('#sheet').scrollTop=0;}});body.querySelectorAll('[data-plan-action]').forEach(b=>b.onclick=()=>runPlan(b.dataset.planAction));body.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>open(b.dataset.next));body.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>{if(act(()=>M.accept(s,b.dataset.order))){close();speed=speed||1;update();}});body.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>ship(+b.dataset.ship));body.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>place({kind:b.dataset.buy}));body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>place({id:b.dataset.move,kind:s.machines.find(m=>m.id===b.dataset.move).kind}));body.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>act(()=>M.upgrade(s,b.dataset.upgrade)));body.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>act(()=>M.sell(s,b.dataset.sell)));body.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>act(()=>M.train(s,+b.dataset.train)));body.querySelectorAll('[data-role]').forEach(b=>b.onchange=()=>act(()=>{s.workers.find(w=>w.id===+b.dataset.role).role=b.value;M.note(s,'担当の優先順位を変更');}));body.querySelectorAll('[data-mentor]').forEach(b=>b.onclick=()=>act(()=>{const w=s.workers.find(w=>w.id===+b.dataset.mentor);w.mentor=!w.mentor;M.note(s,`${w.name}の指導役を変更`);}));if($('#expand'))$('#expand').onclick=()=>act(()=>M.expand(s));if($('#export'))$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({revision,state:s})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='machikoba-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};if($('#reload'))$('#reload').onclick=()=>location.reload();if($('#import'))$('#import').onchange=async e=>{try{const f=e.target.files[0];if(!f||f.size>200000)throw Error();const data=JSON.parse(await f.text());if(!M.validate(data.state))throw Error();if(!writer){toast('別のタブを閉じて再読み込みしてください');return;}if(!confirm('現在の進行を、選んだセーブに置き換えますか？'))return;s=data.state;recentShipment=null;departure=null;saveBlocked=false;revision=JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null;save();update();renderPanel();toast('セーブを読み込みました');}catch{toast('対応する正常なセーブではありません。進行は変更していません');}};}
 
 
 function runPlan(id){
@@ -209,8 +238,10 @@ const signedMoney=v=>(v<0?'−':'+')+'¥'+Math.round(Math.abs(v)).toLocaleString
 const resultMoney=v=>'¥'+v.toLocaleString('ja-JP',{minimumFractionDigits:1,maximumFractionDigits:1});
 const duration=v=>v.toFixed(1)+'秒';
 function ship(id){
+  const order=s.orders.find(o=>o.id===id);
   if(!act(()=>M.dispatch(s,id),false))return;
   recentShipment=s.results[0];speed=0;
+  departure={product:order.product,qty:order.qty,start:performance.now()};
   if(tab)close();
   $('#toast').style.display='none';
   update();$('#orderAction').focus({preventScroll:true});
@@ -247,22 +278,63 @@ function place(p){
   stopSkip();
   if(!writer||saveBlocked){toast('進行を保存できる画面で配置してください');return;}
   if(!p.id&&s.cash<M.MACHINES[p.kind].cost){toast('資金が足りません。材料費も残して投資しましょう');return;}
-  $('#controls').open=false;close();selected=p.id||null;resumeSpeed=speed||1;placing={...p,draining:s.workers.some(w=>w.job)};
+  $('#controls').open=false;close();selected=p.id||null;resumeSpeed=speed;placing={...p,candidate:null,draining:s.workers.some(w=>w.job)};
   speed=placing.draining?3:0;showPlacement();update();
+  canvas.tabIndex=0;canvas.setAttribute('aria-describedby','placeStatus');canvas.focus({preventScroll:true});
 }
 function showPlacement(){
-  $('#placeHint').hidden=false;
-  const text=placing.draining?'今の工程を仕上げて停止します':'光る床をタップ → 配置して生産再開';
-  $('#placeHint').innerHTML=`${text} <button id="cancelPlace">取消して再開</button>`;
-  $('#cancelPlace').onclick=endPlacement;
   placementCells=[];
-  if(!placing.draining)for(let x=1;x<s.width;x++)for(let y=0;y<s.height-1;y++)if(M.canPlace(s,placing.kind,x,y,placing.id))placementCells.push({x,y});
+  if(!placing.draining){
+    const original=s.machines.find(m=>m.id===placing.id);
+    for(let x=1;x<s.width;x++)for(let y=0;y<s.height-1;y++){
+      if(original?.x===x&&original.y===y)continue;
+      if(M.canPlace(s,placing.kind,x,y,placing.id))placementCells.push({x,y});
+    }
+  }
+  placementTicket();
 }
-function endPlacement(){placing=null;placementCells=[];$('#placeHint').hidden=true;speed=resumeSpeed;update();if(selected)selectMachine(selected,true);}
+function placementTicket(message){
+  const p=placing,c=p.candidate,m=M.MACHINES[p.kind],button=$('#confirmPlace');
+  $('#placeTitle').textContent=m.name+(p.id?'の移動':'の設置');
+  $('#placeStatus').textContent=message||(p.draining?'職人が今の工程を終えると、床を選べます。':
+    c?'仮置き中 · '+(c.x+1)+'列 '+(c.y+1)+'段。ほかの床を押して変更できます。':
+    placementCells.length?'光る床をタップして仮置き。二本指で拡大できます。':'置ける床がありません。ほかの設備や通路を確認してください。');
+  button.disabled=!c||!writer||saveBlocked;
+  button.textContent=p.id?'ここに移動':'ここに設置 · '+money(m.cost);
+}
+function endPlacement(){
+  placing=null;placementCells=[];speed=resumeSpeed;
+  canvas.removeAttribute('tabindex');canvas.removeAttribute('aria-describedby');
+  update();if(selected)selectMachine(selected,true);
+  const next=selected?$('#quickMove'):$('#orderAction');
+  if(!tab)next.focus({preventScroll:true});
+}
+$('#cancelPlace').onclick=endPlacement;
+$('#confirmPlace').onclick=()=>{
+  const p=placing,c=p?.candidate;
+  if(!c||p.draining)return;
+  const ok=act(()=>p.id?M.move(s,p.id,c.x,c.y):M.purchase(s,p.kind,c.x,c.y));
+  if(ok){
+    selected=p.id||s.machines.find(m=>m.x===c.x&&m.y===c.y)?.id||null;
+    endPlacement();
+  }else if(placing){p.candidate=null;showPlacement();}
+};
+canvas.addEventListener('keydown',event=>{
+  if(!placing)return;
+  if(event.key==='Escape'){event.preventDefault();endPlacement();return;}
+  if(placing.draining||!placementCells.length)return;
+  if(event.key==='Enter'){event.preventDefault();if(placing.candidate)$('#confirmPlace').focus();return;}
+  if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
+  event.preventDefault();
+  const index=placementCells.indexOf(placing.candidate),n=placementCells.length;
+  const delta=['ArrowLeft','ArrowUp'].includes(event.key)?-1:1;
+  placing.candidate=placementCells[index===-1?(delta>0?0:n-1):(index+delta+n)%n];
+  placementTicket();draw();
+});
 
 let viewport={w:0,h:0,u:0,ox:0,oy:0},hitTargets=[];
 function point(x,y,z=0){return project(viewport,x,y,z);}
-function draw(t){
+function draw(t=performance.now()){
   const rect=canvas.getBoundingClientRect();
   if(rect.width<1||rect.height<1)return;
   const dpr=Math.min(devicePixelRatio||1,2),W=rect.width,H=rect.height;
@@ -274,11 +346,44 @@ function draw(t){
   viewport={w:W,h:H,u,ox:W*.5-(s.width-s.height)*u*.5+u*.22+pan.x,oy:H*.5-(s.width+s.height)*u*.21+pan.y};
   const running=writer&&!saveBlocked&&!document.hidden&&!tab&&(speed>0||!!skipping)&&(!placing||placing.draining);
   const art=workshopArt(s.width);
-  const artMode=art.machines&&art.crew&&art.truck&&art.room?'ready':'partial';
+  const artMode=art.machines&&art.crew&&art.truck&&art.room&&art.shipping?'ready':'partial';
   if(canvas.dataset.artwork!==artMode)canvas.dataset.artwork=artMode;
-  hitTargets=drawWorkshop(ctx,s,viewport,{art,time:s.clock*1000,running,reducedMotion:reducedMotion.matches,selected,placing,placementCells,showLabels});
+  const elapsed=departure?Math.max(0,t-departure.start):0;
+  if(elapsed>=departureDuration)departure=null;
+  hitTargets=drawWorkshop(ctx,s,viewport,{art,shipment:departure,shipmentElapsed:elapsed,time:s.clock*1000,running,reducedMotion:reducedMotion.matches,selected,placing,placementCells,showLabels});
 }
-let down=null;canvas.onpointerdown=e=>{down={x:e.clientX,y:e.clientY,px:pan.x,py:pan.y};canvas.setPointerCapture(e.pointerId);};canvas.onpointermove=e=>{if(down&&!placing){pan.x=Math.max(-300,Math.min(300,down.px+e.clientX-down.x));pan.y=Math.max(-200,Math.min(200,down.py+e.clientY-down.y));}};canvas.onpointerup=e=>{if(!down)return;const tap=Math.hypot(e.clientX-down.x,e.clientY-down.y)<8;down=null;if(!tap)return;const r=canvas.getBoundingClientRect(),{u,ox,oy}=viewport;const a=(e.clientX-r.left-ox)/u,b=(e.clientY-r.top-oy)/(u*.5),x=Math.floor((a+b)/2),y=Math.floor((b-a)/2);if(placing){if(placing.draining){toast('今の工程が終わると床を選べます');return;}const p=placing;const ok=act(()=>p.id?M.move(s,p.id,x,y):M.purchase(s,p.kind,x,y));if(ok){selected=p.id||s.machines.find(m=>m.x===x&&m.y===y)?.id||null;endPlacement();}}else{const id=pickMachine({x:e.clientX-r.left,y:e.clientY-r.top},hitTargets);selectMachine(id);}};canvas.onpointercancel=()=>down=null;
+function applyCamera(from,to,ratio){
+  const camera=changeCamera({zoom,pan},from,to,ratio,canvas.clientWidth,canvas.clientHeight);
+  zoom=camera.zoom;pan=camera.pan;
+}
+function tapFloor(p){
+  if(tab)return;
+  // A pinch/pan and the next tap can occur between animation frames.
+  draw();
+  if(!placing){selectMachine(pickMachine(p,hitTargets));return;}
+  if(placing.draining)return;
+  const {u,ox,oy}=viewport;
+  if(!u)return;
+  const a=(p.x-ox)/u,b=(p.y-oy)/(u*.5);
+  const x=Math.floor((a+b)/2),y=Math.floor((b-a)/2);
+  placing.candidate=placementCells.find(c=>c.x===x&&c.y===y)||null;
+  placementTicket(placing.candidate?null:'ここには置けません。通路を残せる光る床を選んでください。');
+  draw();
+}
+const gesture=floorGesture(applyCamera,tapFloor);
+const localPoint=e=>{
+  const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};
+};
+canvas.onpointerdown=e=>{
+  if(e.button!==0||tab)return;
+  $('#controls').open=false;
+  canvas.setPointerCapture(e.pointerId);gesture.down(e.pointerId,localPoint(e));
+};
+canvas.onpointermove=e=>gesture.move(e.pointerId,localPoint(e));
+canvas.onpointerup=e=>gesture.up(e.pointerId,localPoint(e));
+canvas.onpointercancel=canvas.onlostpointercapture=e=>gesture.cancel(e.pointerId);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)gesture.reset();});
+window.addEventListener('blur',()=>gesture.reset());
 function startSkip(){
   if(placing||tab||!writer||saveBlocked)return;
   const o=M.frontOrder(s);if(!o||o.done===o.qty)return;
