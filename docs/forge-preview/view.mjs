@@ -25,14 +25,21 @@ function distance(p, polygon) {
   return inside?0:nearest;
 }
 export function pickMachine(p, targets, tolerance=6) {
-  // Targets are in paint order. A true foreground hit wins over a nearby object.
+  // Labels are painted after every body. Resolve that overlay before body depth.
+  const ordered=[...targets].reverse();
+  const labelPolygon=r=>[{x:r.x,y:r.y},{x:r.x+r.w,y:r.y},{x:r.x+r.w,y:r.y+r.h},{x:r.x,y:r.y+r.h}];
+  for(const target of ordered){
+    if(target.label&&distance(p,labelPolygon(target.label))<.001)return target.id;
+  }
+  // A true foreground body hit still wins over a merely nearby label or body.
   let nearest=null,best=tolerance;
-  for(const target of [...targets].reverse()) {
+  for(const target of ordered) {
     const r=target.label;
-    const label=r?[{x:r.x,y:r.y},{x:r.x+r.w,y:r.y},{x:r.x+r.w,y:r.y+r.h},{x:r.x,y:r.y+r.h}]:null;
+    const label=r?labelPolygon(r):null;
     const d=Math.min(distance(p,target.hull),label?distance(p,label):Infinity);
     if(d<.001)return target.id;
     if(d<best){best=d;nearest=target.id;}
   }
   return nearest;
 }
+

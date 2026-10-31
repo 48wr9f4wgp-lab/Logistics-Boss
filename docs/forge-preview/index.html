@@ -1,1 +1,62 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#15262b"><title>町工場 / FORGE</title><link rel="stylesheet" href="style.css"></head><body><main id="app"><header><div><small>FACTORY MANAGEMENT · 01</small><h1>町工場 <span>FORGE</span></h1></div><button id="menu" aria-label="保存と設定">•••</button></header><section class="metrics"><div><small>運転資金</small><b id="cash"></b></div><div><small>出荷実績</small><b id="deliveries"></b></div><div><small>工場時間</small><b id="clock"></b></div></section><section class="goal"><span class="dot"></span><div><strong id="goal"></strong><small id="hint"></small></div><button id="growthAction">成長案件 ›</button></section><section id="scene"><canvas id="world" aria-label="工場配置図。設備は下の工程待ちボタンからも選択できます"></canvas><div class="scene-top"><span id="floor">第一工場 · 8 × 6</span><div><button id="minus" aria-label="縮小">−</button><button id="plus" aria-label="拡大">＋</button></div></div><div id="placeHint" hidden></div><aside id="machineQuick" aria-label="選択した設備" hidden><div class="quick-head"><strong id="machineTitle"></strong><button id="quickClose" aria-label="設備の選択を解除">✕</button></div><div id="machineWorker"></div><small id="machineQueue"></small><div id="machineEffect"></div><div class="quick-actions"><button id="quickMove">移動</button><button id="quickUpgrade"></button><button id="quickDetail">詳細</button></div></aside><div class="scene-bottom"><span id="activity">稼働準備</span><div class="speeds"><button data-speed="0">Ⅱ</button><button data-speed="1" class="active">1×</button><button data-speed="3">3×</button></div></div></section><div id="flow" role="group" aria-label="工程待ち。押すと設備を選択"><small>工程<br>待ち</small></div><section class="order-strip"><div><small>PRODUCTION BOARD</small><strong id="orderTitle">最初の注文を受けよう</strong><small id="orderHint">受注 → 完成まで進める → 出荷</small></div><div class="order-actions"><button id="orderAction" aria-describedby="orderHint">注文を見る ↗</button><button id="orderMore" hidden>注文一覧</button></div><div id="orderProgress"></div></section><div id="toast" role="status" aria-live="polite"></div><nav><button data-panel="orders" class="nav-primary"><span>▤</span>受注</button><button data-panel="machines"><span>▦</span>設備</button><button data-panel="workers"><span>♙</span>職人</button><button data-panel="finance"><span>↗</span>経営</button></nav><footer>開発試作 v0.8 · 生産中の中断は自動保存</footer></main><dialog id="sheet"><div class="sheet-head"><h2 id="sheetTitle"></h2><button id="close" aria-label="閉じる">✕</button></div><div id="sheetNotice" role="status" hidden></div><div id="sheetBody"></div></dialog><script type="module" src="app.mjs"></script></body></html>
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#172321">
+  <meta name="description" content="小さな町工場を育てる経営ゲーム。職人と設備を育てて、次の仕事へ。">
+  <title>町工場 / FORGE</title>
+  <link rel="stylesheet" href="style.css?v=0.9">
+</head>
+<body>
+  <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-orders" viewBox="0 0 24 24"><path d="M8 4H5v17h14V4h-3M9 3h6v4H9zM8 11h8M8 15h6"/></symbol>
+    <symbol id="i-machine" viewBox="0 0 24 24"><path d="M4 20h16M6 20v-6h12v6M8 14V4h9v4h-6v6M15 8v4M4 14h16M10 17h4"/></symbol>
+    <symbol id="i-worker" viewBox="0 0 24 24"><path d="M7 9V7a5 5 0 0 1 10 0v2M5 9h14M12 2v4M8 10v2a4 4 0 0 0 8 0v-2M4 22v-3c0-3 4-4 8-4s8 1 8 4v3M8 16v6M16 16v6"/></symbol>
+    <symbol id="i-growth" viewBox="0 0 24 24"><path d="M4 20V4M4 20h17M8 16v-4M13 16V8M18 16V5M7 7l5-4 6-1"/></symbol>
+    <symbol id="i-center" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5M9 12h6M12 9v6"/></symbol>
+    <symbol id="i-label" viewBox="0 0 24 24"><path d="M3 5h8l10 10-6 6L3 9z"/><circle cx="7.5" cy="8" r="1"/></symbol>
+    <symbol id="i-forge" viewBox="0 0 32 32"><path d="M5 8h22v5H15l-3 6h8v5H7v-5l4-6H5z"/></symbol>
+  </defs></svg>
+  <main id="app">
+    <header>
+      <div class="brand"><div class="brand-mark"><svg aria-hidden="true"><use href="#i-forge"/></svg></div><div><h1>町工場 <span>FORGE</span></h1><small>つくって、稼いで、育てる。</small></div></div>
+      <button id="menu" aria-label="保存と設定">•••</button>
+    </header>
+    <section class="metrics" aria-label="工場の経営状況">
+      <div><small>手元資金</small><b id="cash"></b></div>
+      <div><small>出荷実績</small><b id="deliveries"></b></div>
+      <div><small>工場時間</small><b id="clock"></b></div>
+    </section>
+    <section class="goal"><span class="dot"></span><div><strong id="goal"></strong><small id="hint"></small></div><button id="growthAction">成長案件 ›</button></section>
+    <section id="scene" aria-label="町工場">
+      <canvas id="world" aria-label="町工場の設備と職人。設備は下の工程ボタンからも選べます"></canvas>
+      <div class="scene-top"><span id="floor">第一工場 · 8 × 6</span><div class="scene-tools"><button id="labels" aria-label="設備名を表示" aria-pressed="false" title="設備名を表示"><svg aria-hidden="true"><use href="#i-label"/></svg></button><button id="viewReset" aria-label="工場全体を表示" title="工場全体を表示"><svg aria-hidden="true"><use href="#i-center"/></svg></button></div></div>
+      <div class="zoom-controls"><button id="plus" aria-label="拡大">＋</button><button id="minus" aria-label="縮小">−</button></div>
+      <div id="placeHint" hidden></div>
+      <aside id="machineQuick" aria-label="選択した設備" hidden>
+        <div class="quick-head"><strong id="machineTitle"></strong><button id="quickClose" aria-label="設備の選択を解除">✕</button></div>
+        <div id="machineWorker"></div><small id="machineQueue"></small><div id="machineEffect"></div>
+        <div class="quick-actions"><button id="quickMove">移動</button><button id="quickUpgrade"></button><button id="quickDetail">詳細</button></div>
+      </aside>
+      <div class="scene-bottom"><span id="activity">稼働準備</span><div class="speeds" role="group" aria-label="時間の進み方"><button data-speed="0" aria-label="一時停止">Ⅱ</button><button data-speed="1" class="active" aria-label="等速">1×</button><button data-speed="3" aria-label="3倍速">3×</button></div></div>
+    </section>
+    <div id="flow" role="group" aria-label="工程待ち。押すと設備を選択"><small>工程待ち</small></div>
+    <section class="order-strip" aria-label="次のアクション">
+      <div><small class="board-eyebrow">受注と生産</small><strong id="orderTitle">最初の注文を受けよう</strong><small id="orderHint">受注 → 完成まで進める → 出荷</small></div>
+      <div class="order-actions"><button id="orderAction" aria-describedby="orderHint">注文を見る ↗</button><button id="orderMore" hidden>注文一覧</button></div><div id="orderProgress"></div>
+    </section>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <nav aria-label="工場メニュー">
+      <button data-panel="orders" class="nav-primary"><svg aria-hidden="true"><use href="#i-orders"/></svg>受注</button>
+      <button data-panel="machines"><svg aria-hidden="true"><use href="#i-machine"/></svg>設備</button>
+      <button data-panel="workers"><svg aria-hidden="true"><use href="#i-worker"/></svg>職人</button>
+      <button data-panel="finance"><svg aria-hidden="true"><use href="#i-growth"/></svg>経営</button>
+    </nav>
+    <footer>開発版 v0.9 · 進行は自動保存</footer>
+  </main>
+  <dialog id="sheet" aria-labelledby="sheetTitle"><div class="sheet-head"><h2 id="sheetTitle"></h2><button id="close" aria-label="閉じる">✕</button></div><div id="sheetNotice" role="status" hidden></div><div id="sheetBody"></div></dialog>
+  <script type="module" src="app.mjs?v=0.9"></script>
+</body>
+</html>
+

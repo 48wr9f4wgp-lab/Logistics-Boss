@@ -1,4 +1,4 @@
-# 町工場 / FORGE — v0.8
+# 町工場 / FORGE — v0.9
 
 New title-local gameplay prototype, approved 2026-10-29. Current task replaces the FLOTRA concept; historical FLOTRA code and saves remain untouched. Production target remains iPhone/iOS. This browser build is an engineering preview, not a native release or production-engine decision.
 
@@ -17,6 +17,14 @@ Menus pause time. Drag the floor to pan; use +/- to zoom. Repeated low-value cus
 ## Implemented
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
+
+## Workshop visuals (v0.9)
+
+The factory now uses an original illustrated workshop renderer: high cutaway walls, steel columns, windows and window light, concrete joints, wear, cast shadows, a tool cabinet, material pallets and a small delivery truck. The cutter, drill press, lathe and inspection bench have distinct mechanical shapes and materials. Levels 2/3 add guards, panels and hardware to the actual equipment. Workers share a depth-sorted drawing pass with machinery; walking, carrying, machining, drill feed and cutting sparks follow the real simulation state. Paused play and the system reduced-motion preference freeze the animated details.
+
+The mobile shell gives more space to the factory and uses compact controls and consistent drawn icons. Equipment labels are optional through the tag button and remain visible for the selected machine. The frame button restores the overview and clears the selection. Stage buttons remain an alternative to touching the small machine drawings. Label hit testing follows the final overlay order, so a visible label selects its own machine even when it overlaps another body.
+
+Rendering reads the existing state without changing it. Static surroundings are cached, drawing is capped at 30 frames/second, and the existing fixed simulation ticks run independently. No art/CDN downloads or additional runtime dependencies. The save schema, key, model, prices and scheduling are unchanged. Existing v0.8 in-flight saves remain supported.
 
 ## Growth orders
 
@@ -69,10 +77,11 @@ Existing saves continue. Orders accepted before v0.3 show payment/material but e
 
 ## Verification
 
-Run `node --test factory-prototype/tests/*.test.mjs` and `node --check docs/forge-preview/app.mjs`. Forty-six tests cover shared processing calculations, investment costs/in-flight work, completion skipping, fixed-tick equivalence, bounded interruption/resumption, growth budgets, goal persistence, active-order guidance, screen-space picking and payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves.
+Run `node --test factory-prototype/tests/*.test.mjs` and syntax-check `app.mjs`, `workshop.mjs` and `view.mjs`. Forty-seven tests cover shared processing calculations, investment costs/in-flight work, completion skipping, fixed-tick equivalence, bounded interruption/resumption, growth budgets, goal persistence, active-order guidance, screen-space picking and label overlays, payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves. Local v0.9 verification also rendered fresh, working, upgraded and expanded factories through NAPI Canvas, comparing paused/reduced-motion frames and confirming that rendering leaves state unchanged.
 
 Initial simulated order at the shared v0.7 tick: 115.4 game seconds, 12 completed parts, cash ¥4,819.22 before ¥2,800 payout (starting ¥5,500, material ¥600). This is deterministic model evidence, not a measured iPhone session. Cloud-browser interaction evidence is recorded separately in VERIFICATION.md.
 
 ## Limits
 
-Early procedural isometric graphics. No native iPhone/Safari performance validation, no user fun/retention validation, no market qualification or production greenlight. No breakdowns, outsourcing, multiple buildings or custom brands yet. Native iOS engine/build route and art target remain subsequent decisions, not inferred from the old game. All graphics are original code-generated geometry; no third-party art or CDN dependencies.
+Original procedural isometric workshop graphics. No native iPhone/Safari performance validation, no user fun/retention validation, no market qualification or production greenlight. No breakdowns, outsourcing, multiple buildings or custom brands yet. Native iOS engine/build route remains a subsequent decision, not inferred from the old game. All graphics are original code-generated geometry; no third-party art or CDN dependencies.
+
