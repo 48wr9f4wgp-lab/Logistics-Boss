@@ -19,7 +19,13 @@ async function check(browser, url, width, height) {
     await page.goto(url, {waitUntil:'load'});
     await shown(button('材料費 ¥600 で受注する'));
     await page.waitForFunction(()=>!document.querySelector('#orderAction').disabled);
-    await page.evaluate(()=>document.fonts.ready);
+    await page.evaluate(async()=>{
+      await document.fonts.ready;
+      const backdrop=new Image();
+      backdrop.src=new URL('art/workbench-v013.webp',document.baseURI).href;
+      await backdrop.decode();
+      if(!getComputedStyle(document.querySelector('#scene')).backgroundImage.includes(backdrop.src))throw Error('workbench is not displayed');
+    });
     assert.equal(await page.locator('button:visible, summary:visible').count(), 3, 'one ticket, management and floor controls');
     const bounds = await ticket.boundingBox();
     assert.ok(bounds && bounds.height >= 44 && bounds.y + bounds.height <= height);
@@ -38,6 +44,26 @@ async function check(browser, url, width, height) {
     await page.locator('#controls summary').click();
     await button('一時停止').click();
     await shown(page.getByText('一時停止中',{exact:true}));
+    // Compare actual paused pixels across a zoom/reset. A transparent canvas must clear old art.
+    const world=page.locator('#world');
+    const frame=()=>world.evaluate(c=>c.toDataURL());
+    const paused=await frame();
+    await button('拡大').click();
+    await page.waitForFunction(ref=>document.querySelector('#world').toDataURL()!==ref,paused);
+    await button('全景').click();
+    await page.waitForFunction(ref=>document.querySelector('#world').toDataURL()===ref,paused);
+    await page.locator('#controls summary').click();
+    // Press the head of the initial drill as rendered on the factory floor.
+    const hit=await world.evaluate(c=>{
+      const {width:w,height:h}=c.getBoundingClientRect();
+      const u=Math.min(w/16.45,(h-62)/10.7);
+      const ox=w*.5-u+.22*u,oy=h*.5-14*u*.21;
+      return {x:ox+4*u,y:oy+3.5*u-1.22*u};
+    });
+    await world.click({position:hit});
+    await shown(page.getByText('ボール盤 · Lv.1',{exact:true}));
+    await button('設備の選択を解除').click();
+    await page.locator('#controls summary').click();
     await button('設備名').click();
     await button('拡大').click();
     await button('全景').click();

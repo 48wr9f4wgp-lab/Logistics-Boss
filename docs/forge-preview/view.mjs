@@ -5,7 +5,7 @@ export function project(view, x, y, z = 0) {
 
 export function machineHull(view, m) {
   const x=m.x+.06, y=m.y+.08, w=.88, d=.8;
-  const h={cut:1.05,drill:1.25,lathe:1.05,inspect:1.01}[m.kind];
+  const h={cut:1.27,drill:1.415,lathe:1.05,inspect:1.30}[m.kind];
   return [[x,y,h],[x+w,y,h],[x+w,y,0],[x+w,y+d,0],[x,y+d,0],[x,y+d,h]]
     .map(([a,b,z])=>project(view,a,b,z));
 }
