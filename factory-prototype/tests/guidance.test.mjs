@@ -210,3 +210,13 @@ test('zero-cost entry, concurrent orders, funding and legacy progress use the sa
   delete s.goalOffer;delete s.results;
   assert.equal(floorTicket(s).action.panel,'growth');
 });
+
+test('a late shipment keeps its review action on the floor until another decision',()=>{
+  const s=M.fresh();M.upgrade(s,'m2');M.setGoal(s,'rush');
+  const report=deliver(s,'rush');
+  assert.equal(report.late,true);
+  assert.equal(floorTicket(s,{shipment:report}).action.panel,'machines');
+  assert.equal(floorTicket(s).action.id,'rush');
+  M.accept(s,'relief');
+  assert.equal(floorTicket(s,{shipment:report}).action.type,'skip');
+});

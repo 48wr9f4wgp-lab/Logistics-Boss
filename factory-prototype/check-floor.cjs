@@ -18,6 +18,8 @@ async function check(browser, url, width, height) {
   try {
     await page.goto(url, {waitUntil:'load'});
     await shown(button('材料費 ¥600 で受注する'));
+    await page.waitForFunction(()=>!document.querySelector('#orderAction').disabled);
+    await page.evaluate(()=>document.fonts.ready);
     assert.equal(await page.locator('button:visible, summary:visible').count(), 3, 'one ticket, management and floor controls');
     const bounds = await ticket.boundingBox();
     assert.ok(bounds && bounds.height >= 44 && bounds.y + bounds.height <= height);
@@ -31,6 +33,7 @@ async function check(browser, url, width, height) {
     await shown(button('完成まで進める'));
     await page.reload();
     await shown(button('完成まで進める'));
+    await page.waitForFunction(()=>!document.querySelector('#orderAction').disabled);
     await capture('work');
     await page.locator('#controls summary').click();
     await button('一時停止').click();
@@ -41,6 +44,10 @@ async function check(browser, url, width, height) {
     await page.getByRole('button',{name:/切断機：工程待ち/}).click();
     await shown(button('移動'));
     await button('設備の選択を解除').click();
+    await page.locator('#controls summary').click();
+    await button('設備名を隠す').click();
+    await button('全景').click();
+    await page.locator('#controls summary').click();
     await ticket.click();
     await shown(button('出荷する'));
     const readyBounds = await ticket.boundingBox();

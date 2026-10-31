@@ -11,7 +11,7 @@ permissions:
 jobs:
   simulation:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,9 +28,19 @@ jobs:
         env:
           NODE_PATH: ${{ runner.temp }}/factory-browser/node_modules
         run: |
+          if ! fc-list :lang=ja | grep -q .; then
+            sudo apt-get -qq update && sudo apt-get -qq install -y fonts-noto-cjk
+          fi
           npm install --prefix "$RUNNER_TEMP/factory-browser" --no-save --ignore-scripts --no-audit playwright-core@1.56.1
-          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+          if [ "$GITHUB_EVENT_NAME" != pull_request ]; then
             url='https://48wr9f4wgp-lab.github.io/Logistics-Boss/forge-preview/'
+            for attempt in {1..24}; do
+              if curl -fsSL --max-time 5 "${url}app.mjs?verify=${GITHUB_SHA}&try=${attempt}" -o "$RUNNER_TEMP/deployed-app.mjs" &&
+                 cmp -s docs/forge-preview/app.mjs "$RUNNER_TEMP/deployed-app.mjs"; then break; fi
+              sleep 5
+            done
+            cmp docs/forge-preview/app.mjs "$RUNNER_TEMP/deployed-app.mjs"
+            url="${url}?verify=${GITHUB_SHA}"
           else
             python3 -m http.server 8100 --bind 127.0.0.1 --directory docs >/dev/null 2>&1 &
             url='http://127.0.0.1:8100/forge-preview/'

@@ -80,7 +80,7 @@ export function deliveryGuide(s,report=s.results?.[0]) {
 }
 
 // Only the action on this ticket is promoted on the factory floor.
-export function floorTicket(s,{skipping=false,paused=false}={}) {
+export function floorTicket(s,{skipping=false,paused=false,shipment=null}={}) {
   const order=M.frontOrder(s);
   if(order){
     const ready=order.done===order.qty;
@@ -96,9 +96,15 @@ export function floorTicket(s,{skipping=false,paused=false}={}) {
   if(starter)return {
     label:starter.id==='first'?'最初の注文 · '+starter.name:starter.name,
     title:starter.label+'を'+starter.qty+'個つくろう',
-    hint:'納品すると '+money(starter.pay)+'。受注すると職人が作り始めます。',
+    hint:'納期内の売上は '+money(starter.pay)+'。受注すると職人が作り始めます。',
     action:{type:'accept',id:starter.id,label:'材料費 '+money(starter.cost)+' で受注する'}
   };
+  // Immediately after dispatch, keep the existing report's priority (including late deliveries).
+  if(shipment){
+    const guide=deliveryGuide(s,shipment);
+    const title=guide.primary.panel==='growth'?'量産と精密、どちらを伸ばそう？':guide.title;
+    return {label:'次の仕事',title,hint:'',action:guide.primary};
+  }
   const plan=M.growthPlan(s,s.goalOffer);
   if(plan)return {
     label:'工場の目標',title:plan.offer.label,
