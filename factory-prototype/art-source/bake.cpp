@@ -133,6 +133,7 @@ V shade(int id,V p,V eye,uint32_t& seed,int rays){
   float nl=max(0.f,dot(n,key)),up=sat(n.z*.50+.50);
   V fill=V{.24f,.30f,.37f}*ao+V{.26f,.26f,.23f}*(ao*up);
   fill=fill+V{.38f,.32f,.24f}*(ao*max(0.f,dot(n,unit({-.4f,1.f,.38f}))));
+  if(m.texture==8)fill=fill+V{.18f,.13f,.09f};
   V sun=V{2.05f,1.62f,1.11f}*(nl*vis);
   V reflection=n*(2*dot(n,eye))-eye;
   float rough=m.rough,band=powf(max(0.f,dot(reflection,unit({-.50f,.72f,.56f}))),3.5f/(rough+.055f));

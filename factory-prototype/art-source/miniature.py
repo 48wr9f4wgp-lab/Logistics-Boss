@@ -34,7 +34,7 @@ material('glass','bbd3c6',.10,.25,5)
 material('lamp','ffe4a5',.02,.3,5)
 material('shade','2a494b',.1,.62)
 material('gasket','373e40',.05,.6)
-material('skin','d5aa83',.01,.65)
+material('skin','dfb389',.01,.65,8)
 material('hair','58493d',0,.74)
 material('denim','42677d',.02,.69,1)
 material('canvas','a8764f',.02,.73,1)
@@ -231,16 +231,15 @@ def crew(s,person,facing,work):
     jacket_axes=[[1,0,0],[0,slope[2],-slope[1]],slope]
     s.add(8,coat,(0,lean*.5,.533),(.186,.121,.194),.058,jacket_axes)
     # A reinforced yoke, center seam and rear belt are visible while leaning into the machine.
-    yoke=('steel','oak','mint')[person]
-    s.chain([(-.139,lean*.84-.116,.655),(0,lean*.84-.134,.625),(.139,lean*.84-.116,.655)],.007,yoke)
+    yoke=('denim','canvas','twill')[person]
+    s.chain([(-.119,lean*.84-.091,.655),(0,lean*.84-.121,.625),(.119,lean*.84-.091,.655)],.007,yoke)
     s.chain([(0,lean*.84-.135,.624),(0,lean*.50-.125,.53),(0,lean*.18-.115,.424)],.006,coat)
     s.chain([(-.083,lean*.3-.103,.462),(-.053,lean*.3-.115,.448)],.008,coat)
-    s.box(-.140,lean*.29-.084,.342,.28,.168,.042,'dark',.013)
-    s.box(-.037,lean*.29+.084,.345,.074,.012,.030,'brass',.004)
+    s.box(-.119,lean*.29-.073,.362,.238,.146,.040,'dark',.018)
+    s.box(-.027,lean*.29+.073,.368,.054,.012,.023,'brass',.004)
     s.rod((0,lean-.01,.685),(0,lean+.012,.802),.074,'skin')
     for side in (-1,1):
-        s.chain([(side*.096,lean+.068,.704),(side*.047,lean+.126,.664),(side*.020,lean+.112,.706)],.013,'cream')
-    s.box(-.121,lean*.19-.111,.372,.24,.025,.032,'dark',.006)
+        s.chain([(side*.084,lean+.061,.704),(side*.037,lean+.106,.664),(side*.018,lean+.102,.706)],.009,'cream')
     s.box(.042,lean+.103,.548,.073,.018,.075,coat,.008)
     s.box(.04,lean+.120,.60,.078,.012,.014,'mint',.003)
     for z in (.46,.53,.60):s.ball((0,lean*.68+.125,z),.008,'brass')
@@ -249,11 +248,12 @@ def crew(s,person,facing,work):
     egg((0,head-.043,neck+.063),(.116,.090,.087),'hair')
     for side in (-1,1):
         egg((side*.112,head-.004,neck),(.027,.033,.041),'skin')
-        egg((side*.052,head+.092,neck+.021),(.014,.010,.010),'hair')
-    egg((0,head+.106,neck+.001),(.028,.043,.035),'skin')
-    egg((0,head+.004,neck+.096),(.156,.152,.114),cap,True)
-    egg((0,head+.038,neck+.089),(.167,.183,.026),cap)
-    s.chain([(0,head-.092,neck+.154),(0,head-.028,neck+.205),(0,head+.072,neck+.190)],.012,cap)
+        egg((side*.053,head+.105,neck+.010),(.017,.014,.015),'hair')
+    egg((0,head+.116,neck-.012),(.030,.040,.032),'skin')
+    s.chain([(-.027,head+.096,neck-.064),(0,head+.104,neck-.066),(.027,head+.096,neck-.064)],.005,'hair')
+    egg((0,head+.004,neck+.123),(.151,.142,.105),cap,True)
+    egg((0,head+.024,neck+.115),(.159,.156,.019),cap)
+    s.chain([(0,head-.092,neck+.183),(0,head-.028,neck+.227),(0,head+.072,neck+.208)],.012,cap)
     dx,dy=((1,0),(0,1),(-1,0),(0,-1))[facing]
     orientation=np.array([[-dy,dx,0],[dx,dy,0],[0,0,1]])
     rotated=[]
