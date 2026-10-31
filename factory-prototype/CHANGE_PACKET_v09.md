@@ -26,6 +26,12 @@ Only `docs/forge-preview`, `factory-prototype` and the existing scoped workflow.
 - Rendering leaves state byte-identical; paused and reduced-motion frames are unchanged as animation time varies; working frames change.
 - The real mobile browser layout and public click journey are checked after the normal development deployment. They are separate from Canvas-only checks. Physical iPhone/Safari performance and the player's judgement of the new art remain unverified.
 
+## Public browser verification
+
+The development Pages deployment for `625e95085f41f73a6fc7c4b14201e88b982f1a89` completed successfully. A fresh isolated browser confirmed v0.9 and tested the actual public page: accept 12 plates, skip to completion, dispatch, upgrade the cutter to level 2, then reload. Cash, delivered count and level persisted; no page or console errors occurred. Optional labels, zoom and overview reset worked.
+
+At 390×844 the scene grew from 320px to 420px, with no page overflow. 320×740 and 1280×900 also fit. A 57px vertical overflow was found at 375×667 and 390×667, so a compact-height layout was added to keep the complete action/menu area visible. Its short-screen recheck is recorded in the follow-up browser evidence. Tests use an isolated test save, not the player's browser data.
+
 ## Rollback
 
 Revert this change and redeploy the same development Pages. Existing v0.8 save data needs no conversion.
