@@ -1,4 +1,4 @@
-# マチコバ！ — v0.14
+# マチコバ！ — v0.15
 
 **小さな工場、大きな夢。**
 
@@ -21,6 +21,10 @@ Management sheets pause time. The floor controls and direct selection allow work
 ## Implemented
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
+
+## Lit workshop models (v0.15)
+
+The initial and expanded shop, truck, three crew busts and all four machine types use original offline-rendered artwork. Static tool bodies cover levels 1–3. The 24 active poses per tool share a phase with the worker's hands. The live part is composited between the bed and the foreground mechanism. Only the currently needed floor size is fetched. [Same-shift visual comparison](evidence/machikoba-v015-production.jpg) · [Art pipeline and validation](CHANGE_PACKET_v015.md).
 
 ## Crew at work (v0.14)
 

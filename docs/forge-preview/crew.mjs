@@ -1,3 +1,4 @@
+import {paintCrewBust} from './miniature-art.mjs?v=0.15';
 // Screen-space figure painting in a local, ground-facing frame. Units are tile units.
 const TAU=Math.PI*2;
 const uniforms=[
@@ -38,6 +39,14 @@ export function drawCrewMember(g,w,visual,opt,contact) {
     ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';
     ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke();
   };
+  function fabric(from,to,base,light,shade,radius){
+    const vx=to[0]-from[0],vy=to[1]-from[1],len=Math.hypot(vx,vy)||1;
+    let nx=-vy/len,ny=vx/len;
+    if(nx+ny*.4<0){nx=-nx;ny=-ny;}
+    const gradient=ctx.createLinearGradient(from[0]-nx*radius,from[1]-ny*radius,from[0]+nx*radius,from[1]+ny*radius);
+    gradient.addColorStop(0,light);gradient.addColorStop(.40,base);gradient.addColorStop(1,shade);
+    return gradient;
+  }
   function footfall(side){
     const step=stride*side,ground=local(side*.115,stance+step*.18+.035,0);
     const planted=Math.max(0,-step);
@@ -64,9 +73,9 @@ export function drawCrewMember(g,w,visual,opt,contact) {
     const elbow=work?[shoulder[0]+(hand[0]-shoulder[0])*.52-look*.042,shoulder[1]+(hand[1]-shoulder[1])*.48+.115]:
       local(side*.205,stance+(carry ? .11 : -stride*side*.095),.48+sway);
     stroke([shoulder,elbow,hand],colors.shade,.126);
-    stroke([shoulder,elbow],side===near?colors.cloth:colors.shade,.119);
+    stroke([shoulder,elbow],fabric(shoulder,elbow,colors.cloth,colors.light,colors.shade,.06),.12);
     const cuff=[elbow[0]+(hand[0]-elbow[0])*.82,elbow[1]+(hand[1]-elbow[1])*.82];
-    stroke([elbow,cuff],side===near?colors.light:colors.cloth,.094);
+    stroke([elbow,cuff],fabric(elbow,cuff,colors.cloth,colors.light,colors.shade,.048),.098);
     stroke([cuff,hand],colors.shade,.082);
     ellipse(hand[0],hand[1],.052,.048,'#dbaf85');
   }
@@ -133,7 +142,14 @@ export function drawCrewMember(g,w,visual,opt,contact) {
   footfall(-near);footfall(near);leg(-near);leg(near);
   arm(-near);
   if(carry&&back)carriedPart();
-  torso();head();
+  if(opt.art?.crew){
+    paintCrewBust(ctx,opt.art.crew,w.id,dx,dy,work,stance,sway);
+    const shoulder=local(-.10,stance+lean,.63+sway);
+    for(let i=1;i<w.skill;i++){
+      const x=shoulder[0]+(i-1)*.036;
+      stroke([[x,shoulder[1]],[x+.016,shoulder[1]-.035]],'#f0d7a0',.018);
+    }
+  }else{torso();head();}
   if(carry&&!back)carriedPart();
   arm(near);ctx.restore();
 }

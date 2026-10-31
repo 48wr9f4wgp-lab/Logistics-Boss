@@ -10,8 +10,8 @@ permissions:
   contents: read
 jobs:
   simulation:
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,7 +24,7 @@ jobs:
           node --check docs/forge-preview/view.mjs
       - run: node --test factory-prototype/tests/*.test.mjs
 
-      - name: Exercise the factory ticket in mobile Chrome
+      - name: Exercise the factory ticket in mobile Chromium and WebKit
         env:
           NODE_PATH: ${{ runner.temp }}/factory-browser/node_modules
         run: |
@@ -46,6 +46,8 @@ jobs:
             url='http://127.0.0.1:8100/forge-preview/'
           fi
           node factory-prototype/check-floor.cjs "$url"
+          node "$NODE_PATH/playwright-core/cli.js" install --with-deps webkit
+          node factory-prototype/check-floor.cjs "$url" webkit
       - uses: actions/upload-artifact@v4
         if: always()
         with:
