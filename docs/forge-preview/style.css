@@ -229,3 +229,11 @@ summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .growth-details>summary{min-height:44px;padding:12px 0;color:var(--muted);cursor:pointer;font-size:12px}
 @media(min-width:700px){.order-strip{grid-template-columns:minmax(0,1fr) minmax(230px,32%);padding:16px 28px max(20px,env(safe-area-inset-bottom));align-items:center}}
 @media(max-width:360px){.header-actions{gap:8px}.wallet b{font-size:15px}.order-strip{padding-inline:13px}}
+
+/* The static workbench is behind the live, transparent isometric miniature. */
+#scene{
+  background-color:#334744;
+  background-image:linear-gradient(155deg,rgba(32,47,44,.18),rgba(13,33,35,.43)),url('art/workbench-v013.webp'),linear-gradient(#52615a,#293e40);
+  background-size:cover;
+  background-position:center;
+}

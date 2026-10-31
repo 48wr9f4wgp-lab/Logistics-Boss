@@ -1,4 +1,4 @@
-# マチコバ！ — v0.12
+# マチコバ！ — v0.13
 
 **小さな工場、大きな夢。**
 
@@ -21,6 +21,10 @@ Management sheets pause time. The floor controls and direct selection allow work
 ## Implemented
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
+
+## The workbench miniature (v0.13)
+
+The workshop sits on a walnut display base in a window-lit atelier. A single bundled WebP provides the workbench behind the transparent canvas. The navigable factory, roof bays, steelwork, lighting, stock, four kinds of machinery, crew and truck are painted from the game in real time or cached as static scenery. The raised drill, saw guard, people and machines use the same floor anchors as before. The renderer uses the enlarged machine projection for tap targets and labels. See [the visual change record](CHANGE_PACKET_v013.md).
 
 ## Workshop visuals (v0.9)
 
@@ -107,5 +111,5 @@ v0.11 public visual/interaction verification is in `CHANGE_PACKET_v011.md` and `
 
 ## Limits
 
-Original procedural isometric workshop graphics. No native iPhone/Safari performance validation, no user fun/retention validation, no market qualification or production greenlight. No breakdowns, outsourcing, multiple buildings or custom brands yet. Native iOS engine/build route remains a subsequent decision, not inferred from the old game. All graphics are original code-generated geometry; no third-party art or CDN dependencies.
+Original procedural isometric workshop graphics. No native iPhone/Safari performance validation, no user fun/retention validation, no market qualification or production greenlight. No breakdowns, outsourcing, multiple buildings or custom brands yet. Native iOS engine/build route remains a subsequent decision, not inferred from the old game. The factory uses code-generated geometry and the locally bundled, generated atelier backdrop.
 
