@@ -1,4 +1,4 @@
-# マチコバ！ — v0.10
+# マチコバ！ — v0.11
 
 **小さな工場、大きな夢。**
 
@@ -29,6 +29,14 @@ The factory now uses an original illustrated workshop renderer: high cutaway wal
 The mobile shell gives more space to the factory and uses compact controls and consistent drawn icons. Equipment labels are optional through the tag button and remain visible for the selected machine. The frame button restores the overview and clears the selection. Stage buttons remain an alternative to touching the small machine drawings. Label hit testing follows the final overlay order, so a visible label selects its own machine even when it overlaps another body.
 
 Rendering reads the existing state without changing it. Static surroundings are cached, drawing is capped at 30 frames/second, and the existing fixed simulation ticks run independently. No art/CDN downloads or additional runtime dependencies. The save schema, key, model, prices and scheduling are unchanged. Existing v0.8 in-flight saves remain supported.
+
+## Workshop finish and real work poses (v0.11)
+
+The player approved the existing miniature-workshop direction and requested more refinement. The scene now uses broader metal reflections and paint edges, restrained wood grain, window-light panes and mullion shadows, wall contact shading and layered shadows under machinery and people. The existing machine colors, factory framing, floor cells and interaction regions remain in place.
+
+Workers have clearer proportions and short bent-arm poses toward their assigned machine. Their existing job path distinguishes walking to collect material from carrying it to the machine: hands stay empty before pickup, then show the actual plate or shaft. Work surfaces also show the assigned part only during processing, including drilled holes after the plate's drilling stage. The incoming pallet represents actual pending material; it is empty with no order and retains a reserved part until its worker reaches it.
+
+`workerVisualState()` reads existing jobs and part positions without writing state or introducing a save field. Eight focused tests verify actual pickup/service arrival, consecutive stages, plate/shaft references, serialized continuation and safe fallback. Model, prices, scheduling, save format/key and gameplay guidance are unchanged. Same-state paused/reduced-motion render comparisons remain still, active work animates, and static scenery continues to reuse its cache. See `CHANGE_PACKET_v011.md` for the bounded visual comparison and verification scope.
 
 ## From shipment to the next goal (v0.10)
 
@@ -89,7 +97,7 @@ Existing saves continue. Orders accepted before v0.3 show payment/material but e
 
 ## Verification
 
-Run `node --test factory-prototype/tests/*.test.mjs` and syntax-check `app.mjs`, `guidance.mjs`, `workshop.mjs` and `view.mjs`. Fifty-eight tests cover read-only shipment guidance and legacy reports, first-order/recovery recommendations, shared processing calculations, investment costs/in-flight work, completion skipping, fixed-tick equivalence, bounded interruption/resumption, growth budgets, goal persistence, active-order guidance, screen-space picking and label overlays, payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves. Local v0.9 verification also rendered fresh, working, upgraded and expanded factories through NAPI Canvas, comparing paused/reduced-motion frames and confirming that rendering leaves state unchanged.
+Run `node --test factory-prototype/tests/*.test.mjs` and syntax-check `app.mjs`, `guidance.mjs`, `workshop.mjs` and `view.mjs`. Sixty-six tests cover actual worker pickup/carry/work boundaries, read-only shipment guidance and legacy reports, first-order/recovery recommendations, shared processing calculations, investment costs/in-flight work, completion skipping, fixed-tick equivalence, bounded interruption/resumption, growth budgets, goal persistence, active-order guidance, screen-space picking and label overlays, payouts, competing orders, actual efficiency changes, insolvency recovery, placement rejection, mid-job serialized continuation, purchases/expansion/sale and malformed saves. Local v0.9/v0.11 verification also rendered fresh, working, upgraded and expanded factories through NAPI Canvas, comparing paused/reduced-motion frames and confirming that rendering leaves state unchanged.
 
 Initial simulated order at the shared v0.7 tick: 115.4 game seconds, 12 completed parts, cash ¥4,819.22 before ¥2,800 payout (starting ¥5,500, material ¥600). This is deterministic model evidence, not a measured iPhone session. Cloud-browser interaction evidence is recorded separately in VERIFICATION.md.
 

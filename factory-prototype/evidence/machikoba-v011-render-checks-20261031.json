@@ -1,0 +1,45 @@
+{
+  "pausedStable": true,
+  "reducedMotionStable": true,
+  "activeAnimates": true,
+  "modelUnchanged": true,
+  "staticCacheReused": true,
+  "meanCachedRenderMs": 3.7006909333333473,
+  "fixtures": {
+    "fresh": {
+      "clock": 0,
+      "phases": [
+        "idle",
+        "idle",
+        "idle"
+      ]
+    },
+    "working": {
+      "clock": 12.050000000000036,
+      "phases": [
+        "idle",
+        "work",
+        "work"
+      ]
+    },
+    "expanded": {
+      "clock": 13.00000000000005,
+      "phases": [
+        "pickup",
+        "work",
+        "idle"
+      ]
+    },
+    "carry": {
+      "clock": 2.000000000000001,
+      "phases": [
+        "carry",
+        "idle",
+        "idle"
+      ]
+    }
+  },
+  "environment": "Local NAPI Canvas; not physical iPhone/Safari",
+  "version": "v0.11",
+  "base_commit": "b6afc956a1948c841810535d45197f8923b29e4b"
+}

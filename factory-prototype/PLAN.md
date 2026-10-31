@@ -23,3 +23,5 @@ Initial slice: plates and precision shafts, cutter/drill/inspection and purchasa
 
 2026-10-31 / v0.10: connect the existing shipment loop to investment and growth goals. Highlight the first affordable order and give result-screen guidance based on remaining commitments, current goals and actual delivery status. Keep detailed accounting available without placing it before the next decision. See CHANGE_PACKET_v010.md. This is a bounded guidance pass with no new systems, rewards or saved state; device/fun validation remains open.
 
+2026-10-31 / v0.11: the player liked the graphics and explicitly requested further polish. Keep the current miniature-workshop direction and refine material separation, window/contact lighting and real pickup/carry/working poses. See CHANGE_PACKET_v011.md. This locks the existing direction as the reference for refinement; it does not authorize an unrelated redesign or change the game model, native-production decision or device-validation status.
+

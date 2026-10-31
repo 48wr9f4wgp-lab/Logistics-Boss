@@ -1,7 +1,7 @@
 import * as M from './model.mjs';
 import {openingOffer,deliveryGuide} from './guidance.mjs?v=0.10';
 import {project,pickMachine} from './view.mjs?v=0.9';
-import {drawWorkshop} from './workshop.mjs?v=0.9.2';
+import {drawWorkshop} from './workshop.mjs?v=0.11';
 const $=s=>document.querySelector(s),KEY='forge.factory.v1',canvas=$('#world'),ctx=canvas.getContext('2d');
 let s=M.fresh(),speed=1,last=0,zoom=1,pan={x:0,y:0},placing=null,selected=null,tab=null,toastUntil=0,revision=null,writer=false,saveBlocked=false,paintTime=0,placementCells=[],resumeSpeed=1,skipping=null,tickRemainder=0,showLabels=false,lastDraw=-Infinity;
 let growthFocus=null;
