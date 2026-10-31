@@ -188,3 +188,44 @@ dialog::backdrop{background:#0d1c17b8;backdrop-filter:blur(5px)}
 .result-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .result-actions button{padding:9px 4px;font-size:11px;min-height:44px}
 
+
+/* One work ticket anchors normal play. The shop itself stays unobstructed. */
+#app{min-height:405px}
+.header-actions,.wallet{display:flex;align-items:center}
+.header-actions{gap:14px}
+.wallet{flex-direction:column;align-items:flex-end;gap:1px}
+.wallet small{font-size:10px;letter-spacing:.4px}
+.wallet b{font-size:17px;font-variant-numeric:tabular-nums;color:#f3cb88}
+#menu,#controls summary{border:1px solid #aaba9966;border-radius:8px;min-height:44px;padding:0 13px;background:#23382e;color:#e4e8d9;font-size:13px}
+#scene{min-height:165px}
+#controls{position:absolute;z-index:4;right:12px;top:12px;max-width:calc(100% - 24px)}
+#controls summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:center;gap:6px;width:max-content;margin-left:auto}
+#controls summary::-webkit-details-marker{display:none}
+#controls summary::after{content:'⌄';line-height:1}
+#controls[open] summary::after{content:'⌃'}
+summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.toolbox{margin-top:5px;padding:10px 12px;border:1px solid #73856d;background:#1a2d24f8;border-radius:9px;box-shadow:0 6px 18px #07141755}
+.tool-row,.tool-row>div{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.tool-row+.tool-row{margin-top:5px}
+.tool-row span,#controls #flow small{font-size:11px;color:#bccab4;margin-right:8px;max-width:none}
+.tool-row button{min-width:44px;min-height:44px;padding:5px;font-size:12px}
+#controls #flow{margin-top:8px;padding:3px 0;gap:4px;background:transparent;min-height:44px}
+#controls #flow button{min-width:44px;min-height:44px}
+#activity{display:block;margin-top:6px;font-size:11px;color:var(--muted)}
+#labels[aria-pressed=true]{color:var(--gold);border-color:var(--gold)}
+#machineQuick{bottom:12px}
+#placeHint{top:12px}
+.order-strip{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-height:0;padding:15px 18px max(16px,env(safe-area-inset-bottom));border-top:1px solid #66745b}
+#ticketLabel{display:block;color:#eac78d;letter-spacing:.9px;font-size:11px}
+.order-strip strong{margin:4px 0 0;font-size:19px;line-height:1.35;letter-spacing:.2px}
+#orderHint{margin-top:4px;font-size:12px;line-height:1.5}
+#orderAction{width:100%;min-height:49px;font-size:15px}
+#orderProgress{bottom:auto;top:0}
+#toast{top:max(72px,calc(env(safe-area-inset-top) + 62px));bottom:auto;pointer-events:none}
+.manage-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.manage-links button{display:flex;align-items:center;justify-content:space-between;min-height:54px;text-align:left;font-size:14px}
+.manage-links span{color:var(--muted)}
+.growth-details{margin-top:10px}
+.growth-details>summary{min-height:44px;padding:12px 0;color:var(--muted);cursor:pointer;font-size:12px}
+@media(min-width:700px){.order-strip{grid-template-columns:minmax(0,1fr) minmax(230px,32%);padding:16px 28px max(20px,env(safe-area-inset-bottom));align-items:center}}
+@media(max-width:360px){.header-actions{gap:8px}.wallet b{font-size:15px}.order-strip{padding-inline:13px}}

@@ -1,4 +1,4 @@
-# マチコバ！ — v0.11
+# マチコバ！ — v0.12
 
 **小さな工場、大きな夢。**
 
@@ -10,13 +10,13 @@ New title-local gameplay prototype, approved 2026-10-29. Current task replaces t
 
 Existing development Pages: `/Logistics-Boss/forge-preview/`.
 
-1. Open 最初の注文を見る and accept the highlighted 町の金物店 (12 plates). If material funds have already been spent, existing zero-material recovery work is highlighted instead.
-2. Accepting closes the sheet and starts production. Tap 完成まで進める on the factory board to skip the waiting, or watch at 1×/3×. Wages and deadlines still advance; the button warns about both. The next completed order automatically pauses time and offers 出荷する. 注文一覧 remains available beside it.
-3. Tap 出荷する to collect payment and view the actual profit plus the next action. The result screen pauses time. Open 収支の内訳・前回との比較 for material, actual wages, production time, travel and rework. Money is paid only once. Start a growth plan from the result, or finish the other active order first.
-4. Choose more machinery, worker training, expansion, or a lathe to unlock shafts. 成長案件 shows two next contracts and links to missing equipment/training.
-5. Move/install equipment during an order: select 設備 → 移動/設置場所. Workers finish only their assigned stages, then pause. Tap a highlighted empty floor tile; production resumes automatically. Cancel also resumes. The 工程待ち buttons select machinery directly. The floating card shows its worker plus shared waiting/carrying/working counts for the machine kind; the floor highlights the assigned worker’s actual remaining route. Move, upgrade or open details from that card. Repeat the same stage button to cycle through multiple machines of that kind. Selection alone does not pause production.
+1. The ticket beneath the workshop shows the first job (12 plates), the payout and the material cost on the accept button. It starts the job here. If funds are short, the ticket offers the existing zero-material recovery job.
+2. Watch the workers, or tap 完成まで進める to advance real work, wages and deadlines. The skip stops at the first completed order. Tap 出荷する on the same ticket to collect payment.
+3. Shipment pauses playback and shows the actual profit and next step on the ticket. A second unfinished order takes priority. 管理 → 経営と出荷記録 retains the detailed receipt, including legacy reports.
+4. 管理 holds the order list, both growth paths, investments, training, finances and save tools. 操作 opens floor controls for playback, zoom, labels and stage selection. A machine can also be selected by tapping the floor directly. For a move, finish the current stages, tap a highlighted tile, or cancel.
+5. In a growth plan open 条件と費用の内訳 for the full budget and requirements. Both routes remain available.
 
-Menus pause time. Drag the floor to pan; use +/- to zoom. Repeated low-value customer-material jobs allow recovery without material funding. A late order loses 15% of its payout, with no escalating penalty. Work and costs stop while the page is hidden. No offline earnings.
+Management sheets pause time. The floor controls and direct selection allow work to continue. Drag the floor to pan. Repeated low-value customer-material jobs allow recovery without material funding. A late order loses 15% of its payout, with no escalating penalty. Work and costs stop while the page is hidden. No offline earnings.
 
 ## Implemented
 

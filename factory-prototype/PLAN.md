@@ -25,3 +25,5 @@ Initial slice: plates and precision shafts, cutter/drill/inspection and purchasa
 
 2026-10-31 / v0.11: the player liked the graphics and explicitly requested further polish. Keep the current miniature-workshop direction and refine material separation, window/contact lighting and real pickup/carry/working poses. See CHANGE_PACKET_v011.md. This locks the existing direction as the reference for refinement; it does not authorize an unrelated redesign or change the game model, native-production decision or device-validation status.
 
+
+v0.12: The player reported too many places to look. One ticket on the floor now handles the common order, work, shipment and next-step journey. Optional controls and management live behind two named entries. Keep the approved workshop renderer and existing saves. Evaluate the next player impression on iPhone.

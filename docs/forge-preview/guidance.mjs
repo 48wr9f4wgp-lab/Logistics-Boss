@@ -78,3 +78,41 @@ export function deliveryGuide(s,report=s.results?.[0]) {
     secondary:panel('orders','通常の注文を続ける')
   };
 }
+
+// Only the action on this ticket is promoted on the factory floor.
+export function floorTicket(s,{skipping=false,paused=false,shipment=null}={}) {
+  const order=M.frontOrder(s);
+  if(order){
+    const ready=order.done===order.qty;
+    const label=skipping?'早送り中':ready?'出荷待ち':paused?'一時停止中':'製作中';
+    const title=order.label+'　'+order.done+' / '+order.qty+'個';
+    const hint=ready?'納品して '+money(M.shipmentQuote(s,order).pay)+' を受け取れます':
+      skipping?'注文が完成すると止まります。':'職人が運搬・加工します。早送り中も人件費と納期は進みます。';
+    const action=skipping?{type:'stop',label:'早送りを止める'}:
+      ready?{type:'ship',id:order.id,label:'出荷する'}:{type:'skip',id:order.id,label:'完成まで進める'};
+    return {label,title,hint,action,progress:order.done/order.qty};
+  }
+  const starter=openingOffer(s);
+  if(starter)return {
+    label:starter.id==='first'?'最初の注文 · '+starter.name:starter.name,
+    title:starter.label+'を'+starter.qty+'個つくろう',
+    hint:'納期内の売上は '+money(starter.pay)+'。受注すると職人が作り始めます。',
+    action:{type:'accept',id:starter.id,label:'材料費 '+money(starter.cost)+' で受注する'}
+  };
+  // Immediately after dispatch, keep the existing report's priority (including late deliveries).
+  if(shipment){
+    const guide=deliveryGuide(s,shipment);
+    const title=guide.primary.panel==='growth'?'量産と精密、どちらを伸ばそう？':guide.title;
+    return {label:'次の仕事',title,hint:'',action:guide.primary};
+  }
+  const plan=M.growthPlan(s,s.goalOffer);
+  if(plan)return {
+    label:'工場の目標',title:plan.offer.label,
+    hint:plan.phase==='funds'?'次の投資と材料費まで、あと '+money(plan.shortage)+'。':
+      plan.phase==='ready'?'設備と職人の準備ができました。':'次の準備は「'+plan.next.label+'」です。',
+    action:plan.phase==='funds'?panel('orders','資金を作る注文を選ぶ'):growth(plan.offer.id,'目標の計画を見る')
+  };
+  const guide=deliveryGuide(s);
+  return guide?{label:'次の仕事',title:guide.title,hint:'',action:guide.primary}:
+    {label:'次の仕事',title:'工場を育てよう',hint:'設備や職人を育てると、新しい仕事を受けられます。',action:panel('growth','成長目標を選ぶ')};
+}
