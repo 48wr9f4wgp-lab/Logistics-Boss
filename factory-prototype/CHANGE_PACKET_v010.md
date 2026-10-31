@@ -31,3 +31,14 @@ Base: `bd6da3c3d1ac85ed8c91e1106ddc8b911f84f641` (v0.9.2). Revert this UI/guidan
 ## Pre-deployment verification
 
 All 58 tests pass locally, including 11 new guidance cases. Changed browser modules pass syntax checks. Independent code review found no blocking issue in action re-evaluation, duplicate-payment protection, remaining-order priority, temporary plan focus, legacy reports or save compatibility. The simulation model, renderer, saved-state format and existing test files are unchanged. Public mobile verification follows the normal CI/merge/Pages workflow and is not claimed by these local checks.
+
+## Public verification and progress
+
+- Code delivered through PR #181; verified code commit `f9683d1be3569623e6c03cd2ab01faaf01fbd8c1`. PR CI, main CI and development Pages deployment succeeded.
+- A fresh isolated public-browser session completed the actual opening order, skip, dispatch, growth-goal selection, drill upgrade, growth acceptance, completion and dispatch. First profit was displayed as +¥2,119.
+- Result primary actions were visible at scroll position zero at 390×844, 320×740 and 375×667. No horizontal overflow. Root also inspected the captured first-result image.
+- The natural first rush attempt was late under the unchanged model and correctly displayed the 15% deduction, equipment/layout review and retry. A separate isolated state built with the public model confirmed the on-time growth result. Retrying a delivered rush contract while the selected goal was precision opened rush first without spending or changing the selected goal.
+- With another order active, the result offered explicit completion skipping. The remaining 28 pieces finished and stopped awaiting shipment; no automatic dispatch occurred. Page errors were zero; the normal journey also had zero console errors.
+- Evidence: `evidence/machikoba-v010-first-result-20261031.jpg` and `evidence/machikoba-v010-browser-20261031.json`. These are public Chromium observations, not a physical iPhone/Safari session.
+
+ACTIVE_PHASE: VERTICAL_SLICE / device feedback pending. LAST_VERIFIED_DONE: v0.10 shipment-to-growth guidance and the bounded public journeys above. BLOCKED: none for this change. NEXT: use the current first-shipment-to-growth loop for a short iPhone play session and assess whether the investment choice is clear and worth repeating before expanding game content. Production decision remains UNDECIDED; no native release or enjoyment validation is implied.

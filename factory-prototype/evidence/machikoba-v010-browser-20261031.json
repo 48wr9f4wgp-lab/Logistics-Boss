@@ -1,0 +1,190 @@
+{
+  "version": "v0.10",
+  "public_url": "https://48wr9f4wgp-lab.github.io/Logistics-Boss/forge-preview/?v=0.10&verify=f9683d1b",
+  "tested_commit": "f9683d1be3569623e6c03cd2ab01faaf01fbd8c1",
+  "environment": "Firecrawl Chromium; new isolated contexts; not physical iPhone/Safari",
+  "source_handling": "Public URLs and public model only; no local project source transfer",
+  "normal_user_path": {
+    "opening_action": "最初の注文を見る ↗",
+    "recommendation": "この12個を受注して始める",
+    "first_result": {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "dialogScrollTop": 0,
+      "heading": "はじめての出荷完了！",
+      "status": "納期内に納品",
+      "profit": "+¥2,119",
+      "nextTitle": "次は、工場の成長目標を選ぼう",
+      "body": "設備や職人を育てて、次の仕事へ。必要な投資と材料費を比べて目標を選べます。",
+      "primary": "次の成長目標を選ぶ",
+      "secondary": "通常の注文を続ける",
+      "primaryBounds": {
+        "top": 593,
+        "bottom": 639,
+        "left": 35,
+        "right": 355
+      },
+      "primaryInitiallyVisible": true,
+      "detailsOpen": false
+    },
+    "small_result_layouts": [
+      {
+        "width": 320,
+        "height": 740,
+        "scrollWidth": 320,
+        "dialogScrollTop": 0,
+        "heading": "はじめての出荷完了！",
+        "status": "納期内に納品",
+        "profit": "+¥2,119",
+        "nextTitle": "次は、工場の成長目標を選ぼう",
+        "body": "設備や職人を育てて、次の仕事へ。必要な投資と材料費を比べて目標を選べます。",
+        "primary": "次の成長目標を選ぶ",
+        "secondary": "通常の注文を続ける",
+        "primaryBounds": {
+          "top": 489,
+          "bottom": 535,
+          "left": 35,
+          "right": 285
+        },
+        "primaryInitiallyVisible": true,
+        "detailsOpen": false
+      },
+      {
+        "width": 375,
+        "height": 667,
+        "scrollWidth": 375,
+        "dialogScrollTop": 0,
+        "heading": "はじめての出荷完了！",
+        "status": "納期内に納品",
+        "profit": "+¥2,119",
+        "nextTitle": "次は、工場の成長目標を選ぼう",
+        "body": "設備や職人を育てて、次の仕事へ。必要な投資と材料費を比べて目標を選べます。",
+        "primary": "次の成長目標を選ぶ",
+        "secondary": "通常の注文を続ける",
+        "primaryBounds": {
+          "top": 440.921875,
+          "bottom": 486.921875,
+          "left": 35,
+          "right": 340
+        },
+        "primaryInitiallyVisible": true,
+        "detailsOpen": false
+      }
+    ],
+    "growth_panel": "成長案件",
+    "preparation": "ボール盤を改良 · ¥1,500",
+    "next_plan_action": "受注して生産開始 · 材料 ¥1,800",
+    "growth_result": {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "dialogScrollTop": 0,
+      "heading": "成長案件を納品！",
+      "status": "納期超過 · 報酬15%減",
+      "profit": "+¥4,177",
+      "nextTitle": "次は、納期内の出荷を目指そう",
+      "body": "設備の加工時間や配置を見直して、次の注文に備えよう。受注条件の達成だけでは納期は保証されません。",
+      "primary": "設備・動線を見直す",
+      "secondary": "同じ案件に再挑戦",
+      "primaryBounds": {
+        "top": 593,
+        "bottom": 639,
+        "left": 35,
+        "right": 355
+      },
+      "primaryInitiallyVisible": true,
+      "detailsOpen": false
+    },
+    "retry": {
+      "panel": "成長案件",
+      "firstOffer": "短納期プレート",
+      "state": {
+        "cash": 10295.860000000932,
+        "goal": "rush",
+        "delivered": 2,
+        "drill": 2
+      }
+    },
+    "retry_did_not_change_cash_or_goal": true,
+    "page_errors": [],
+    "console_errors": []
+  },
+  "isolated_public_model_scenarios": [
+    {
+      "kind": "ontime",
+      "seed": {
+        "scenario": "ontime",
+        "reportOffer": "rush",
+        "reportLate": false,
+        "quote": {
+          "late": false,
+          "pay": 7200
+        },
+        "goal": "master",
+        "active": null
+      },
+      "result": {
+        "heading": "成長案件を納品！",
+        "status": "納期内に納品",
+        "body": "同じ案件で効率を伸ばすことも、別の成長案件に挑むこともできます。",
+        "primary": "次の成長目標を選ぶ",
+        "secondary": "同じ案件をもう一度",
+        "dialogScrollTop": 0,
+        "primaryInitiallyVisible": true
+      },
+      "retry": {
+        "firstOffer": "短納期プレート",
+        "before": {
+          "cash": 10783.905000000483,
+          "goal": "master"
+        },
+        "after": {
+          "cash": 10783.905000000483,
+          "goal": "master"
+        },
+        "unchanged": true
+      },
+      "errors": []
+    },
+    {
+      "kind": "remaining",
+      "seed": {
+        "scenario": "remaining",
+        "reportOffer": "first",
+        "reportLate": false,
+        "quote": {
+          "late": false,
+          "pay": 2800
+        },
+        "goal": null,
+        "active": {
+          "offerId": "bulk",
+          "done": 0,
+          "qty": 28
+        }
+      },
+      "result": {
+        "heading": "はじめての出荷完了！",
+        "status": "納期内に納品",
+        "body": "「取付プレート」は0 / 28個が完成。完成まで進めると、人件費・納期も進みます。",
+        "primary": "残りを完成まで進める",
+        "secondary": null,
+        "dialogScrollTop": 0,
+        "primaryInitiallyVisible": true
+      },
+      "afterSkip": {
+        "delivered": 1,
+        "remainingOffer": "bulk",
+        "remainingDone": 28,
+        "remainingQty": 28,
+        "remainingShipped": false,
+        "action": "出荷する ↗",
+        "dialogOpen": false
+      },
+      "errors": []
+    }
+  ],
+  "screenshot": "factory-prototype/evidence/machikoba-v010-first-result-20261031.jpg",
+  "outcome": "All requested checks passed. Initial natural growth path is late under unchanged model rules and is accurately labeled as late with 15% deduction."
+}
