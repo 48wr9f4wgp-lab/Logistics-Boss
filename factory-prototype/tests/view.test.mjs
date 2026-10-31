@@ -36,3 +36,13 @@ test('small edge tolerance does not override a real hit or select distant floor'
   assert.equal(pickMachine({x:32,y:5},[a,b]),null);
   assert.equal(pickMachine({x:5,y:5},[]),null);
 });
+
+test('visible nameplates select their machine above foreground machine bodies',()=>{
+  const back={id:'back',hull:[{x:0,y:0},{x:10,y:0},{x:10,y:10},{x:0,y:10}],label:{x:20,y:20,w:20,h:12}};
+  const front={id:'front',hull:[{x:20,y:20},{x:50,y:20},{x:50,y:50},{x:20,y:50}]};
+  assert.equal(pickMachine({x:25,y:25},[back,front]),'back');
+  assert.equal(pickMachine({x:41,y:25},[back,front]),'front','label tolerance cannot steal a real body hit');
+  front.label={x:24,y:22,w:20,h:12};
+  assert.equal(pickMachine({x:28,y:26},[back,front]),'front','last painted label wins');
+});
+

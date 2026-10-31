@@ -16,3 +16,6 @@ Initial slice: plates and precision shafts, cutter/drill/inspection and purchasa
 2026-10-31 / v0.7: direct user feedback reported too much waiting. Added an opt-in completion skip with real costs and automatic pause at the next ready order. See CHANGE_PACKET_v07.md. No new game systems/content; this addresses the wait before the next decision.
 
 2026-10-31 / v0.8: investment feedback shows actual per-piece processing and inspection effects before upgrade/training, remaining cash/shortfalls, and visible machine levels. See CHANGE_PACKET_v08.md. This is a decision/readability pass, not new content or a claim of proven fun.
+
+2026-10-31 / v0.9: explicit player feedback rejected the placeholder graphics. Implement the approved stylized workshop direction in the playable development build: recognisable machinery, working people, light/materials, visible upgrades, and more mobile scene space. See CHANGE_PACKET_v09.md. This is the next visual iteration, not a native release or a claim that visual appeal has been validated by the player.
+

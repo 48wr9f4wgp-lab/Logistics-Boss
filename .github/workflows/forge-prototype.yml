@@ -16,5 +16,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --check docs/forge-preview/app.mjs
+      - name: Check browser modules
+        run: |
+          node --check docs/forge-preview/app.mjs
+          node --check docs/forge-preview/workshop.mjs
+          node --check docs/forge-preview/view.mjs
       - run: node --test factory-prototype/tests/*.test.mjs
+
