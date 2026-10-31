@@ -1,4 +1,8 @@
-# 町工場 / FORGE — v0.9
+# マチコバ！ — v0.9.2
+
+**小さな工場、大きな夢。**
+
+Official title **マチコバ！** and tagline **小さな工場、大きな夢。** confirmed by the user on 2026-10-31. See `NAMING_DECISION_2026-10-31.md`. FORGE / 町工場 were working titles; historical files and technical identifiers retain their previous names for continuity.
 
 New title-local gameplay prototype, approved 2026-10-29. Current task replaces the FLOTRA concept; historical FLOTRA code and saves remain untouched. Production target remains iPhone/iOS. This browser build is an engineering preview, not a native release or production-engine decision.
 

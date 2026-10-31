@@ -154,8 +154,8 @@ function building(g,s) {
   ctx.save();ctx.translate(a.x,a.y);ctx.transform(.89,.445,0,1,0,0);
   ctx.fillStyle='#233e33';ctx.fillRect(-v.u*1.05,-v.u*.32,v.u*2.1,v.u*.4);
   ctx.strokeStyle='#a6b18a';ctx.lineWidth=.65;ctx.strokeRect(-v.u*1.05,-v.u*.32,v.u*2.1,v.u*.4);
-  ctx.fillStyle='#f3dfad';ctx.font='700 '+Math.max(6,v.u*.23)+'px system-ui';ctx.textAlign='center';
-  ctx.fillText('F O R G E',0,-v.u*.055);ctx.restore();
+  ctx.fillStyle='#f3dfad';ctx.font='700 '+Math.max(6,v.u*.25)+'px system-ui';ctx.textAlign='center';
+  ctx.fillText('マチコバ！',0,-v.u*.055,v.u*1.9);ctx.restore();
 }
 
 function exterior(g,s) {
