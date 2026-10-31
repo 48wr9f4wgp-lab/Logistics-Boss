@@ -1,0 +1,94 @@
+{
+  "version": "v0.11",
+  "commit": "300b67c3457f79007c8320ead2025d596bfcf67b",
+  "public_url": "https://48wr9f4wgp-lab.github.io/Logistics-Boss/forge-preview/?v=0.11&verify=300b67c3",
+  "environment": "New isolated Chromium context, 390x844, DPR1, touch/mobile emulation; not physical iPhone/Safari",
+  "before": "factory-prototype/evidence/machikoba-v011-before-20261031.jpg",
+  "after": "factory-prototype/evidence/machikoba-v011-mobile-20261031.jpg",
+  "working": "factory-prototype/evidence/machikoba-v011-working-20261031.jpg",
+  "checks": {
+    "ready": true,
+    "initial": {
+      "footer": "開発版 v0.11 · 進行は自動保存",
+      "cash": "¥5,500",
+      "deliveries": "0 件",
+      "clock": "00:00",
+      "labels": "false",
+      "paused": "active",
+      "canvas": {
+        "x": 0,
+        "y": 182.1875,
+        "width": 390,
+        "height": 420.015625
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dpr": 1
+    },
+    "working": {
+      "title": "取付プレート　0 / 12 個",
+      "activity": "1 / 3 人 作業中",
+      "toastVisible": false
+    },
+    "pauseCheck": {
+      "stable": true,
+      "clockBefore": "00:04",
+      "clockAfter": "00:04"
+    },
+    "reducedMotion": {
+      "applied": true,
+      "clockBefore": "00:04",
+      "clockAfter": "00:05",
+      "pausedStable": true,
+      "note": "Live model movement is expected while running; fixed-state decorative-motion equality was separately tested locally."
+    },
+    "labels": {
+      "pressed": "true",
+      "changed": true
+    },
+    "zoom": {
+      "changed": true,
+      "resetRestores": true
+    },
+    "selection": {
+      "hit": {
+        "x": 195,
+        "y": 350.57786283557044,
+        "id": "m1"
+      },
+      "visible": true,
+      "title": "切断機 · Lv.1"
+    },
+    "placement": {
+      "id": "m1",
+      "from": {
+        "x": 2,
+        "y": 1
+      },
+      "to": {
+        "x": 3,
+        "y": 1
+      },
+      "click": {
+        "x": 221.17449664429532,
+        "y": 380.67853397651004
+      },
+      "actual": {
+        "x": 3,
+        "y": 1
+      },
+      "matches": true
+    },
+    "completedTitle": "取付プレート　12 / 12 個",
+    "result": {
+      "heading": "はじめての出荷完了！",
+      "profit": "+¥2,124",
+      "delivered": "1 件"
+    },
+    "errors": [],
+    "consoleErrors": []
+  },
+  "outcome": "All limited rendering and interaction checks passed; baseline and after conditions match."
+}

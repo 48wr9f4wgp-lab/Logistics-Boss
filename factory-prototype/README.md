@@ -103,6 +103,8 @@ Initial simulated order at the shared v0.7 tick: 115.4 game seconds, 12 complete
 
 v0.10 public verification is recorded in `CHANGE_PACKET_v010.md` and `evidence/machikoba-v010-browser-20261031.json`, with the first-result image in `evidence/machikoba-v010-first-result-20261031.jpg`. It covers the normal first-shipment-to-growth journey, on-time/late result guidance, retry without spending/changing goals, a remaining order's explicit skip, and narrow/short mobile result layouts. The tested code commit is `f9683d1be3569623e6c03cd2ab01faaf01fbd8c1`; physical iPhone/Safari remains unverified.
 
+v0.11 public visual/interaction verification is in `CHANGE_PACKET_v011.md` and `evidence/machikoba-v011-browser-20261031.json`. Same-condition before/after and working images accompany that record. Tested code commit: `300b67c3457f79007c8320ead2025d596bfcf67b`. Pausing, reduced-motion settings, labels, direct selection, zoom/reset, relocation, skip and dispatch passed in isolated Chromium at 390×844. Local fixed-state renderer probes and eight pickup/carry boundary tests complement this; they do not establish physical iPhone performance.
+
 ## Limits
 
 Original procedural isometric workshop graphics. No native iPhone/Safari performance validation, no user fun/retention validation, no market qualification or production greenlight. No breakdowns, outsourcing, multiple buildings or custom brands yet. Native iOS engine/build route remains a subsequent decision, not inferred from the old game. All graphics are original code-generated geometry; no third-party art or CDN dependencies.

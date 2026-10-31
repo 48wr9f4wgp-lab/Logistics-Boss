@@ -42,3 +42,15 @@ The renderer now has readable metal reflections/paint edges, visible wood grain,
 All 66 tests pass, including eight new tests in `tests/workshop-state.test.mjs`; module syntax checks pass. The real-path investigation covered 180 jobs / 14,820 walking ticks with no pickup-cell revisits or classification errors. Root and a separate visual reviewer inspected fresh, working, carrying and upgraded/expanded comparisons. The existing direction and machine distinctions are preserved, with no blocking visual issue found.
 
 Local NAPI Canvas probes confirm state unchanged, paused frames stable, reduced-motion frames stable, active work animating and static-cache reuse. Mean cached drawing was approximately 3.70ms in that local probe; this is neither an iPhone measurement nor a frame-rate guarantee. Public browser validation follows deployment and is recorded separately below when complete.
+
+## Public verification and progress
+
+PR #182 passed CI and merged as `300b67c3457f79007c8320ead2025d596bfcf67b`. Main CI and the established development Pages deployment both succeeded. A new isolated Chromium context checked the real public v0.11 page; no local source was transferred to a remote browser.
+
+Before/after captures use the same 390×844 / DPR1 conditions: fresh state, ¥5,500, zero deliveries, clock 00:00, overview camera, labels off and paused. Root and the visual reviewer inspected the final public images. The window light, surfaces, shadows and working poses retain the approved direction without a newly observed framing/readability issue at this size.
+
+The public journey confirmed active production, stable paused canvas/clock, reduced-motion setting application, direct canvas selection, label toggling, zoom and exact-image overview restoration, machine relocation from (2,1) to (3,1), completion skipping to 12/12 and dispatch. The explicit movement test changed travel and its measured receipt in that isolated save; no user save was touched. Page and console errors: zero. The fixed-state decorative reduced-motion equality was tested separately from live model movement.
+
+Evidence: `evidence/machikoba-v011-before-20261031.jpg`, `evidence/machikoba-v011-mobile-20261031.jpg`, `evidence/machikoba-v011-working-20261031.jpg`, `evidence/machikoba-v011-browser-20261031.json` and `evidence/machikoba-v011-render-checks-20261031.json`.
+
+ACTIVE_PHASE: VERTICAL_SLICE / visual refinement. LAST_VERIFIED_DONE: v0.11 render polish plus the bounded browser journey above. BLOCKED: none for this request. NEXT: collect the player's iPhone impression of the refined scene during normal work and growth, preserving the approved direction for further polish. Physical iPhone/Safari performance and production greenlight remain separate; no new production commitment was made.
