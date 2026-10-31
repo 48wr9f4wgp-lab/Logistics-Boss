@@ -98,9 +98,35 @@ async function check(browser, url, width, height) {
     await context.close();
   }
 }
+// Restore a busy shift through the same save path that a returning player uses.
+async function checkShift(browser,url) {
+  const M=await import('../docs/forge-preview/model.mjs');
+  const s=M.fresh();
+  M.accept(s,'first');
+  for(let i=0;i<744;i++)M.step(s,M.TICK);
+  assert.ok(M.validate(s));
+  const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+  try {
+    await context.addInitScript(state=>{
+      localStorage.setItem('forge.factory.v1',JSON.stringify({revision:'crew-visual-check',state}));
+    },s);
+    const page=await context.newPage(),errors=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    await page.goto(url,{waitUntil:'load'});
+    const ticket=page.getByRole('button',{name:'完成まで進める',exact:true});
+    await ticket.waitFor({state:'visible'});
+    await page.screenshot({path:path.join(process.env.RUNNER_TEMP||'.','factory-floor-screens','390-crew-working.jpg'),quality:90});
+    await ticket.click();
+    await page.getByRole('button',{name:'出荷する',exact:true}).click();
+    await page.getByRole('button',{name:'次の成長目標を選ぶ',exact:true}).waitFor({state:'visible'});
+    assert.deepEqual(errors,[]);
+    console.log('390×844 DPR2 passed: restored busy crew, rendering and shipment.');
+  } finally {await context.close();}
+}
 (async()=>{
   const browser=await chromium.launch({channel:'chrome',args:['--no-sandbox']});
   try {
     for(const [width,height] of [[390,844],[320,568]])await check(browser,process.argv[2],width,height);
+    await checkShift(browser,process.argv[2]);
   } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

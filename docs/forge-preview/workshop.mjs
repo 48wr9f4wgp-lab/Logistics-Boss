@@ -1,3 +1,4 @@
+import {drawCrewMember} from './crew.mjs?v=0.14';
 import {project, machineHull} from './view.mjs?v=0.13';
 
 // Original, dependency-free workshop art. This layer only reads simulation state.
@@ -394,7 +395,31 @@ function workpiece(g,part,x,y,z,scale=1) {
   }
 }
 
-function saw(g,m,active,t,part) {
+// Both the machine and its operator paint these exact points. The steel is
+// clamped on the bed; the worker reaches the controls on the operator side.
+function controls(m,active,t) {
+  const x=m.x,y=m.y;
+  switch(m.kind){
+    case 'cut': {
+      const feed=active?(1+Math.sin(t*.004))*.065:0;
+      return {feed,left:[x+.37,y+.84,.73],right:[x+.66,y+.95,1.06-feed]};
+    }
+    case 'drill': {
+      const angle=active?-.08+.55*Math.sin(t*.004):.18;
+      return {angle,left:[x+.25,y+.76,.76],right:[x+.93,y+.34+Math.cos(angle)*.32,1.08+Math.sin(angle)*.32]};
+    }
+    case 'lathe': {
+      const slide=active?Math.sin(t*.0018)*.08:0,angle=active?t*.003:0;
+      return {slide,angle,left:[x+.30,y+.81,.72],right:[x+.58+slide+.104*Math.cos(angle),y+.76,.74+.104*Math.sin(angle)]};
+    }
+    case 'inspect': {
+      const jaw=active ? .54+.055*Math.sin(t*.004) : .56;
+      return {jaw,left:[x+.30,y+.66,.84],right:[x+jaw,y+.66,.84]};
+    }
+  }
+}
+
+function saw(g,m,active,t,part,grip) {
   const {box,line,disk,face,dot}=g,x=m.x,y=m.y,l=m.level;
   details(g,m,{light:'#e7c37a'});
   // Cast pedestal, machined bed, rail and clamped stock.
@@ -415,7 +440,7 @@ function saw(g,m,active,t,part) {
   const angle=active?t*.018:0;
   // Circular abrasive wheel, bright rim and fan slots.
   // Cut-off wheel and a heavy enamel guard, built in the blade's own plane.
-  const feed=active?(1+Math.sin(t*.004))*.045:0;
+  const feed=grip.feed;
   const cx=x+.59,cy=y+.46,cz=.96-feed,r=.285;
   disk(cx,cy,cz,r,'yz','#344a54','#e1e3d0',angle,8);
   disk(cx+.012,cy,cz,r*.72,'yz','#718994','#cad6ce',angle+.25,5);
@@ -431,8 +456,8 @@ function saw(g,m,active,t,part) {
   face(guard,g.wash([cx,cy,cz+r],[cx,cy,cz],[[0,'#ffd28a'],[.34,'#ed8f47'],[1,'#a8472b']]),'#773e2d',.85);
   line(guard.slice(1,10),'#ffd693',Math.max(.8,g.v.u*.035));
   dot(cx+.04,cy,cz,.048,'#e9e4cd','#354751');
-  line([[x+.55,y+.29,1.02],[x+.66,y+.11,1.18],[x+.81,y+.13,1.19]],'#344c51',Math.max(1.7,g.v.u*.075));
-  line([[x+.68,y+.11,1.2],[x+.8,y+.13,1.21]],'#b6c2b3',.85);
+  line([[x+.59,y+.47,1.23-feed],[x+.63,y+.72,1.25-feed],grip.right],'#45575a',Math.max(1.4,g.v.u*.065));
+  line([[x+.65,y+.85,1.14-feed],grip.right],'#293e46',Math.max(1.8,g.v.u*.088));
   if(l>=2){
     face([[x+.16,y+.69,.67],[x+.55,y+.69,.67],[x+.55,y+.69,.87],[x+.16,y+.69,.87]],'#b0d9c04b','#d4d8ad',.9);
     box(x+.69,y+.65,.12,.15,.2,'#4b6656','#8f9c77','#304a3a',.66);
@@ -446,7 +471,7 @@ function saw(g,m,active,t,part) {
   }
 }
 
-function drill(g,m,active,t,part) {
+function drill(g,m,active,t,part,grip) {
   const {box,line,disk,face,dot}=g,x=m.x,y=m.y,l=m.level;
   details(g,m,{light:'#a7c8ab'});
   g.upright(x+.44,y+.28,.17,.15,.17,[[0,'#305461'],[.4,'#73a69d'],[1,'#325665']],'#82aea8');
@@ -462,17 +487,18 @@ function drill(g,m,active,t,part) {
   line([[x+.21,y+.60,1.355],[x+.65,y+.60,1.355]],'#def3cf',.9);
   for(let n=0;n<4;n++)line([[x+.27+n*.082,y+.603,1.2],[x+.27+n*.082,y+.603,1.29]],'#24515e',.9);
   g.upright(x+.46,y+.48,.96,.066,.18,[[0,'#526b74'],[.38,'#e7e6cf'],[1,'#617a80']],'#bfc6b8');
-  const z=active ? .81+Math.sin(t*.006)*.085 : .86;
+  const z=active ? .80+Math.sin(grip.angle)*.18 : .86;
   box(x+.4,y+.43,.09,.09,.2,'#a1bab6','#f0f1dc','#668b86',z);
   line([[x+.445,y+.475,z-.095],[x+.445,y+.475,z+.04]],'#d9e2cf',Math.max(1.3,g.v.u*.05));
   line([[x+.445,y+.475,z-.095],[x+.445,y+.475,z-.13]],'#4d6f5c',1);
+  line([[x+.66,y+.34,1.08],[x+.93,y+.34,1.08]],'#657f80',Math.max(1.45,g.v.u*.07));
   for(let n=0;n<3;n++){
-    const a=(active?Math.sin(t*.006)*.13:0)+n*TAU/3;
-    const tip=[x+.74,y+.35+Math.cos(a)*.20,1.12+Math.sin(a)*.20];
-    line([[x+.74,y+.35,1.12],tip],'#d1dbce',Math.max(.85,g.v.u*.045));
-    dot(...tip,.045,'#3b4e52');
+    const a=grip.angle+n*TAU/3;
+    const tip=[x+.93,y+.34+Math.cos(a)*.32,1.08+Math.sin(a)*.32];
+    line([[x+.93,y+.34,1.08],tip],'#d1dbce',Math.max(.85,g.v.u*.045));
+    dot(...tip,.045,n===0?'#ad6846':'#3b4e52');
   }
-  dot(x+.74,y+.35,1.12,.045,'#e5dbc0');
+  dot(x+.93,y+.34,1.08,.045,'#e5dbc0');
   line([[x+.26,y+.48,.9],[x+.26,y+.73,.9]],'#78997e',1.4);
   dot(x+.26,y+.74,.9,.034,'#354e3d');
   if(l>=2){
@@ -487,7 +513,7 @@ function drill(g,m,active,t,part) {
   }
 }
 
-function lathe(g,m,active,t,part) {
+function lathe(g,m,active,t,part,grip) {
   const {box,line,disk,face,dot}=g,x=m.x,y=m.y,l=m.level;
   details(g,m,{light:'#b9c8a4'});
   box(x+.10,y+.15,.80,.66,.42,g.wash([x,y+.81,.6],[x+.85,y+.81,.17],[[0,'#668eb1'],[.45,'#476e98'],[1,'#2d4a66']]),'#afc4d2','#2d4e69',.17);
@@ -507,10 +533,13 @@ function lathe(g,m,active,t,part) {
   g.upright(x+.78,y+.19,.6,.10,.14,[[0,'#3d5868'],[.4,'#a7b6aa'],[1,'#446076']],'#c1c9b7');
   workpiece(g,part,x+.36,y+.363,.82,1.1);
   box(x+.7,y+.29,.13,.29,.2,'#708fa2','#b4c7ce','#4a6b80',.68);
-  const slide=active?Math.sin(t*.0018)*.08:0;
+  const slide=grip.slide;
   box(x+.48+slide,y+.52,.18,.12,.15,'#506f56','#9aac87','#34503a',.68);
   line([[x+.56+slide,y+.55,.83],[x+.56+slide,y+.46,.87]],'#b5c2a4',1.7);
   disk(x+.58+slide,y+.7,.74,.1,'xz','#486447','#b7c4a1',active?t*.003:0,4);
+  line([[x+.58+slide,y+.70,.74],grip.right],'#bdd2c9',1);
+  dot(...grip.right,.038,'#4a6265');
+  line([[x+.22,y+.75,.64],grip.left],'#65797c',1.4);
   dot(x+.24,y+.677,.92,.024,'#d4a15d');
   if(l>=2){
     face([[x+.35,y+.26,.68],[x+.74,y+.26,.68],[x+.74,y+.26,1.02],[x+.35,y+.26,1.02]],'#b9d7bd44','#bccc9e',1);
@@ -523,7 +552,7 @@ function lathe(g,m,active,t,part) {
   }
 }
 
-function inspection(g,m,active,t,part) {
+function inspection(g,m,active,t,part,grip) {
   const {box,line,face,disk,dot}=g,x=m.x,y=m.y,l=m.level;
   details(g,m,{light:'#d7cb9e'});
   for(const dx of [.15,.75])for(const dy of [.14,.68])box(x+dx,y+dy,.075,.075,.54,'#728b87','#c0cbbc','#425e60',.13);
@@ -535,10 +564,11 @@ function inspection(g,m,active,t,part) {
   box(x+.16,y+.58,.65,.18,.17,'#879c91','#c4ccae','#5c7769',.49);
   line([[x+.37,y+.765,.58],[x+.59,y+.765,.58]],'#ced0a4',1.1);
   face([[x+.24,y+.28,.77],[x+.57,y+.28,.77],[x+.57,y+.6,.77],[x+.24,y+.6,.77]],'#405b63','#779397',.7);
-  workpiece(g,part,x+.29,y+.33,.775,.75);
+  workpiece(g,part,x+.27,y+.45,.775,1);
   // Caliper, clipboard, articulated lamp and bright but local task lighting.
-  line([[x+.32,y+.52,.82],[x+.54,y+.52,.82]],'#d7dec4',1);
-  line([[x+.33,y+.49,.82],[x+.33,y+.55,.82]],'#d7dec4',1);
+  line([[x+.23,y+.66,.84],[x+.70,y+.66,.84]],'#415765',Math.max(1.4,g.v.u*.06));
+  line([grip.left,grip.right],'#e2e8d9',1.0);
+  for(const at of [grip.left,grip.right])line([at,[at[0],y+.52,.835]],'#ebefda',Math.max(.85,g.v.u*.042));
   face([[x+.64,y+.35,.774],[x+.8,y+.35,.774],[x+.8,y+.58,.774],[x+.64,y+.58,.774]],'#e1d9b2');
   for(let n=0;n<3;n++)line([[x+.67,y+.39+n*.045,.778],[x+.77,y+.39+n*.045,.778]],'#9b9f7b',.6);
   line([[x+.2,y+.19,.78],[x+.13,y+.19,1.10],[x+.44,y+.31,1.24]],'#344b51',Math.max(1.4,g.v.u*.055));
@@ -574,87 +604,19 @@ function machine(g,m,worker,opt,part) {
       g.line([[x,y,.016],[x+length*.5,y+.018,.022],[x+length,y+.005,.018]],n%2?'#d8d9b6':'#718a7e',.6);
     }
   }
-  ({cut:saw,drill,lathe,inspect:inspection}[m.kind])(g,m,active,t,active?part:null);
+  const grip=controls(m,active,t);
+  ({cut:saw,drill,lathe,inspect:inspection}[m.kind])(g,m,active,t,active?part:null,grip);
   // Status is truthful even while the user has paused the clock.
   const z={cut:.95,drill:1.2,lathe:.99,inspect:.98}[m.kind];
   g.dot(m.x+.85,m.y+.2,z,.036,active?'#c4df91':worker?'#e6c67d':'#657c60','#3f5947');
-  if(moving&&m.kind==='cut'){
-    // A bounded handful of tiny trails; no particles while stopped.
-    for(let n=0;n<4;n++){
-      const f=(opt.time*.002+n*.27)%1;
-      const x=m.x+.59+f*.35,y=m.y+.58+f*.18,z=.71-f*.19;
-      g.line([[x,y,z],[x+.035,y+.025,z-.018]],n%2?'#ffdea0':'#f4ba68',Math.max(.7,g.v.u*.025));
+  if(moving&&m.kind==='cut'&&grip.feed>.055){
+    const x=m.x+.61,y=m.y+.57,z=.69;
+    for(let n=0;n<6;n++){
+      const f=(t*.0022+n*.173)%1,reach=.24+noise(n+31)*.32;
+      const px=x+f*reach,py=y+f*(noise(n+88)-.25)*.30,pz=z+f*(.21-f*.4);
+      g.line([[px,py,pz],[px+.075*(1-f),py+.012,pz+.015]],n%2?'#ffe8a0':'#ed9653',Math.max(.7,g.v.u*.038));
     }
   }
-}
-
-function worker(g,w,opt,visual) {
-  const {ctx,v,p,box,line,dot}=g;
-  const walking=visual.phase==='pickup'||visual.phase==='carry',working=visual.phase==='work';
-  const moving=opt.running&&!opt.reducedMotion;
-  const t=moving?opt.time:0,phase=walking&&moving?Math.sin(t*.014+w.id*1.8):0;
-  const foot=p(w.x+.45,w.y+.45);
-  g.softShadow(w.x+.59,w.y+.45,.37,.16,.38);
-  ctx.fillStyle='#233b2b25';ctx.beginPath();ctx.ellipse(foot.x+2,foot.y+2,v.u*.27,v.u*.115,0,0,TAU);ctx.fill();
-  ctx.fillStyle='#203b2d50';ctx.beginPath();ctx.ellipse(foot.x+.5,foot.y+.8,v.u*.17,v.u*.07,0,0,TAU);ctx.fill();
-  const colors=[['#31627c','#86a5ae'],['#aa6741','#e5ac71'],['#397b70','#8eb89d']][w.id%3];
-  // Stable workwear silhouettes with two independently stepping legs.
-  const bob=walking&&moving?Math.abs(phase)*.025:0,x=w.x,y=w.y;
-  // Only the upper-body pose leans within the worker's service cell. Logical
-  // position, path and hit geometry remain exactly where the model put them.
-  const lean=working?-.2:0;
-  for(const [dx,sign] of [[.35,-1],[.49,1]]){
-    box(x+dx,y+.35+phase*.048*sign,.085,.11,.27,colors[0],colors[1],'#344d3f',.055+bob);
-    box(x+dx-.025,y+.37+phase*.048*sign,.13,.14,.065,'#34463a','#64725b','#24392b',.015);
-  }
-  box(x+.29,y+.28+lean,.32,.25,.33,colors[0],colors[1],'#314755',.29+bob);
-  g.face([[x+.34,y+.534+lean,.60+bob],[x+.44,y+.534+lean,.52+bob],[x+.46,y+.534+lean,.59+bob]],'#e7d8ac');
-  line([[x+.46,y+.535+lean,.36+bob],[x+.46,y+.535+lean,.52+bob]],'#a4b8a5',.65);
-  dot(x+.33,y+.32+lean,.55+bob,.06,colors[1]);
-  dot(x+.58,y+.32+lean,.55+bob,.06,colors[0]);
-  // Belt, chest pocket and pale shirt/collar.
-  line([[x+.32,y+.515+lean,.33+bob],[x+.59,y+.515+lean,.33+bob]],'#2d4937',Math.max(.7,v.u*.033));
-  box(x+.45,y+.515+lean,.075,.015,.065,'#a0b29b','#c4ceac','#6d8869',.49+bob);
-  line([[x+.4,y+.405+lean,.6+bob],[x+.48,y+.405+lean,.6+bob]],'#e3d6b2',Math.max(.9,v.u*.04));
-  const head=p(x+.445,y+.405+lean,.745+bob),r=v.u*.141;
-  ctx.save();ctx.translate(head.x,head.y);
-  const skin=ctx.createLinearGradient(-r,0,r,r);
-  skin.addColorStop(0,'#f6d4a1');skin.addColorStop(.54,'#ddac80');skin.addColorStop(1,'#966b56');
-  ctx.fillStyle=skin;ctx.beginPath();ctx.ellipse(0,r*.57,r*.72,r*.88,0,0,TAU);ctx.fill();
-  ctx.fillStyle='#594f4a';ctx.beginPath();ctx.ellipse(r*.5,r*.48,r*.21,r*.37,-.18,0,TAU);ctx.fill();
-  const cap=ctx.createLinearGradient(-r,-r,r,r*.5);
-  cap.addColorStop(0,w.id===1?'#ffefd0':'#ffe9a2');
-  cap.addColorStop(.5,w.id===1?'#d1d2bc':'#f0b853');
-  cap.addColorStop(1,w.id===1?'#8d9e9e':'#b5793c');
-  ctx.fillStyle=cap;ctx.beginPath();ctx.ellipse(0,0,r,r*.79,-.12,Math.PI,TAU);ctx.fill();
-  ctx.beginPath();ctx.ellipse(0,0,r*1.11,r*.34,-.12,0,TAU);ctx.fill();
-  ctx.restore();
-  if(visual.phase==='carry'){
-    line([[x+.31,y+.34,.55+bob],[x+.32,y+.56,.44+bob],[x+.4,y+.6,.44+bob]],colors[0],Math.max(1.6,v.u*.07));
-    line([[x+.57,y+.35,.55+bob],[x+.67,y+.52,.44+bob]],colors[1],Math.max(1.5,v.u*.065));
-    workpiece(g,visual.part,x+.36,y+.5,.42+bob,1.12);
-    dot(x+.37,y+.57,.43+bob,.034,'#dfc39a');dot(x+.68,y+.55,.43+bob,.034,'#dfc39a');
-  }else if(working){
-    const m=visual.machine;
-    const handZ={cut:.66,drill:.64,lathe:.72,inspect:.7}[m.kind]||.66;
-    const motion=moving?Math.sin(t*.006+w.id)*.018:0;
-    // Short bent arms reach the near edge of the assigned machine; the worker
-    // never stretches across the gap from the centre of the service cell.
-    for(const [side,color] of [[-.1,colors[1]],[.12,colors[0]]]){
-      const shoulder=[x+.45+side,y+.34+lean,.55];
-      const hand=[m.x+.46+side,m.y+.98+motion,handZ];
-      const elbow=[shoulder[0]+(side<0?-.045:.045),y+.07,.57+motion];
-      line([shoulder,elbow,hand],color,Math.max(1.3,v.u*.06));
-      dot(...hand,.035,'#dfc39a');
-    }
-  }else{
-    const swing=walking?phase*.045:0;
-    line([[x+.31,y+.33,.55+bob],[x+.26,y+.43+swing,.34+bob]],colors[1],Math.max(1.8,v.u*.075));
-    line([[x+.58,y+.34,.55+bob],[x+.63,y+.43-swing,.34+bob]],colors[0],Math.max(1.8,v.u*.075));
-    dot(x+.26,y+.43+swing,.33+bob,.036,'#dfc39a');dot(x+.63,y+.43-swing,.33+bob,.036,'#dfc39a');
-  }
-  // Actual skill progression is visible as stitched marks, without a noisy label.
-  for(let n=1;n<w.skill;n++)line([[x+.34+n*.045,y+.518+lean,.5+bob],[x+.34+n*.045,y+.518+lean,.54+bob]],'#ebd89b',.7);
 }
 
 // Accent the miniature's people and tools at phone scale. Keep the floor anchor
@@ -664,12 +626,38 @@ function objectView(v,x,y,scale) {
   return {...v,u,ox:v.ox+(x-y)*delta,oy:v.oy+(x+y)*.5*delta};
 }
 
-function materials(g,s,visuals) {
+// An assigned worker may still be on the way to the part. Keep that part
+// on its actual floor cell until pickup, even after a layout change or reload.
+export function floorStock(parts,visuals) {
+  const inHand=new Set(visuals.filter(v=>v.phase==='carry'||v.phase==='work').map(v=>v.part.id));
+  const incoming=[],byCell=new Map();
+  for(const part of parts){
+    if(part.done||inHand.has(part.id))continue;
+    if(part.stage===0&&part.x===0&&part.y===0){incoming.push(part);continue;}
+    const key=part.x+','+part.y;
+    if(!byCell.has(key))byCell.set(key,{x:part.x,y:part.y,parts:[]});
+    byCell.get(key).parts.push(part);
+  }
+  return {incoming,stations:[...byCell.values()]};
+}
+
+function waitingParts(g,stock) {
+  // A shallow removable tote at the edge of the pickup cell. Only actual
+  // waiting parts get drawn; a second product is visible even in a full tote.
+  const x=stock.x+.54,y=stock.y+.03,w=.44,d=.34;
+  g.shadow(x,y,w,d,.14);
+  g.box(x,y,w,d,.077,'#3e6e7b','#708e8b','#304f5c');
+  g.box(x,y,w,.026,.085,'#668884','#88aaa2','#3c626d',.072);
+  const plates=stock.parts.filter(p=>p.product==='plate');
+  const shafts=stock.parts.filter(p=>p.product==='shaft');
+  for(let i=0;i<Math.min(plates.length,3);i++)workpiece(g,plates[i],x+.033,y+.04,.09+i*.045,1.16);
+  for(let i=0;i<Math.min(shafts.length,3);i++)workpiece(g,shafts[i],x+.035,y+.10+i*.047,.106+Math.min(plates.length,3)*.045,1.02);
+  g.box(x,y+d-.025,w,.025,.08,'#457784','#83a5a4','#345361',.072);
+}
+
+function materials(g,s,incoming) {
   const {box,line}=g;
   pallet(g,.08,.13,.7,.65);
-  const removed=new Set(visuals.filter(v=>v.phase==='carry'||v.phase==='work').map(v=>v.part.id));
-  const incoming=s.parts.filter(p=>!p.done&&p.stage===0&&p.x===0&&p.y===0&&!removed.has(p.id));
-  // These are compact stacks of actual incoming orders, never decorative stock.
   const plates=incoming.filter(p=>p.product==='plate'),shafts=incoming.filter(p=>p.product==='shaft');
   const plateLayers=Math.min(4,Math.ceil(plates.length/5));
   for(let i=0;i<plateLayers;i++){
@@ -756,17 +744,27 @@ export function drawWorkshop(ctx,state,viewport,options={}) {
   staticScene(ctx,state,viewport);
   const g=painter(ctx,viewport);
   floorSelection(g,state,opt);
+  const visuals=state.workers.map(w=>workerVisualState(state,w));
+  const stock=floorStock(state.parts,visuals);
+  materials(g,state,stock.incoming);
   const entities=[
     ...state.machines.map(m=>({depth:m.x+m.y+.9,type:'machine',m})),
-    ...state.workers.map(w=>({depth:w.x+w.y+.94,type:'worker',w}))
+    ...state.workers.map((w,i)=>({depth:w.x+w.y+.94,type:'worker',w,visual:visuals[i]})),
+    ...stock.stations.map(bin=>({depth:bin.x+bin.y+.85,type:'stock',bin}))
   ].sort((a,b)=>a.depth-b.depth||Number(a.type==='worker')-Number(b.type==='worker'));
-  const visuals=state.workers.map(w=>workerVisualState(state,w));
-  materials(g,state,visuals);
   const targets=[],labels=[];
   for(const entity of entities){
+    if(entity.type==='stock'){waitingParts(g,entity.bin);continue;}
     if(entity.type==='worker'){
       const w=entity.w,portrait=painter(ctx,objectView(viewport,w.x+.45,w.y+.45,1.16));
-      worker(portrait,w,opt,visuals[state.workers.indexOf(w)]);
+      const visual=entity.visual;
+      let contact=null;
+      if(visual.phase==='work'){
+        const m=visual.machine,tool=objectView(viewport,m.x+.5,m.y+.5,1.13);
+        const grip=controls(m,true,opt.running&&!opt.reducedMotion?opt.time:0);
+        contact={left:project(tool,...grip.left),right:project(tool,...grip.right)};
+      }
+      drawCrewMember(portrait,w,visual,opt,contact);
     }
     else{
       const m=entity.m,w=state.workers.find(w=>w.job?.machine===m.id);
