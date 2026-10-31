@@ -1,0 +1,320 @@
+{
+  "public_url": "https://48wr9f4wgp-lab.github.io/Logistics-Boss/forge-preview/?v=0.9.1",
+  "verified_stylesheet": "style.css?v=0.9.1",
+  "browser": "Firecrawl isolated Chromium browser, not physical iPhone/Safari",
+  "phone_layout": {
+    "innerWidth": 390,
+    "innerHeight": 844,
+    "scrollWidth": 390,
+    "scrollHeight": 844,
+    "scene": {
+      "x": 0,
+      "y": 182.1875,
+      "width": 390,
+      "height": 420.015625,
+      "bottom": 602.203125
+    },
+    "nav": {
+      "x": 0,
+      "y": 762,
+      "width": 390,
+      "height": 60,
+      "bottom": 822
+    },
+    "footer": {
+      "x": 0,
+      "y": 822,
+      "width": 390,
+      "height": 22,
+      "bottom": 844
+    }
+  },
+  "controls": {
+    "labelsOn": "true",
+    "labelsOff": "false",
+    "labelPixelsChanged": true,
+    "zoomChangesCanvas": true,
+    "resetRestoresCanvas": true,
+    "zoomChanged": true
+  },
+  "workflow": {
+    "acceptedTitle": "取付プレート　0 / 12 個",
+    "completedTitle": "取付プレート　12 / 12 個",
+    "result": "納品完了 · 取付プレート × 12今回の受注利益+¥2,119設備・研修・増築費を引く前入金¥2,800.0材料費−¥600.0人件費−¥80.8生産時間115.4秒移動距離306マス品質調整0回同じ注文をもう一度出荷すると、前回と比べられます。人件費は未完成の注文で均等配分。生産時間は受注から完成まで（出荷待ちを除く）。金額は表示時に丸めています。次の注文へ設備に投資職人を育てる",
+    "beforeUpgrade": "切断機 · Lv.1",
+    "afterUpgrade": "切断機 · Lv.2",
+    "savedBefore": {
+      "cash": 6119.220000000336,
+      "delivered": 1,
+      "cut": 2
+    },
+    "savedAfter": {
+      "cash": 6119.220000000336,
+      "delivered": 1,
+      "cut": 2
+    },
+    "afterReload": {
+      "machine": "切断機 · Lv.2",
+      "cash": "¥6,119",
+      "deliveries": "1 件"
+    }
+  },
+  "console_errors": [],
+  "page_errors": [],
+  "initial_responsive_layouts": [
+    {
+      "innerWidth": 320,
+      "innerHeight": 740,
+      "scrollWidth": 320,
+      "scrollHeight": 740,
+      "scene": {
+        "x": 0,
+        "y": 182.1875,
+        "width": 320,
+        "height": 316.015625,
+        "bottom": 498.203125
+      },
+      "nav": {
+        "x": 0,
+        "y": 658,
+        "width": 320,
+        "height": 60,
+        "bottom": 718
+      },
+      "footer": {
+        "x": 0,
+        "y": 718,
+        "width": 320,
+        "height": 22,
+        "bottom": 740
+      },
+      "overflowing": []
+    },
+    {
+      "innerWidth": 375,
+      "innerHeight": 667,
+      "scrollWidth": 360,
+      "scrollHeight": 724,
+      "scene": {
+        "x": 0,
+        "y": 182.1875,
+        "width": 360,
+        "height": 300,
+        "bottom": 482.1875
+      },
+      "nav": {
+        "x": 0,
+        "y": 641.984375,
+        "width": 360,
+        "height": 60,
+        "bottom": 701.984375
+      },
+      "footer": {
+        "x": 0,
+        "y": 701.984375,
+        "width": 360,
+        "height": 22,
+        "bottom": 723.984375
+      },
+      "overflowing": []
+    },
+    {
+      "innerWidth": 390,
+      "innerHeight": 667,
+      "scrollWidth": 375,
+      "scrollHeight": 724,
+      "scene": {
+        "x": 0,
+        "y": 182.1875,
+        "width": 375,
+        "height": 300,
+        "bottom": 482.1875
+      },
+      "nav": {
+        "x": 0,
+        "y": 641.984375,
+        "width": 375,
+        "height": 60,
+        "bottom": 701.984375
+      },
+      "footer": {
+        "x": 0,
+        "y": 701.984375,
+        "width": 375,
+        "height": 22,
+        "bottom": 723.984375
+      },
+      "overflowing": []
+    },
+    {
+      "innerWidth": 1280,
+      "innerHeight": 900,
+      "scrollWidth": 1280,
+      "scrollHeight": 900,
+      "scene": {
+        "x": 100,
+        "y": 182.1875,
+        "width": 1080,
+        "height": 502.8125,
+        "bottom": 685
+      },
+      "nav": {
+        "x": 340,
+        "y": 823,
+        "width": 600,
+        "height": 53,
+        "bottom": 876
+      },
+      "footer": {
+        "x": 100,
+        "y": 876,
+        "width": 1080,
+        "height": 24,
+        "bottom": 900
+      },
+      "overflowing": []
+    }
+  ],
+  "compact_fix_layouts": [
+    {
+      "selected": false,
+      "innerWidth": 375,
+      "innerHeight": 667,
+      "scrollWidth": 375,
+      "scrollHeight": 667,
+      "scene": {
+        "x": 0,
+        "y": 157,
+        "width": 375,
+        "height": 287.203125,
+        "bottom": 444.203125
+      },
+      "nav": {
+        "x": 0,
+        "y": 595,
+        "width": 375,
+        "height": 53,
+        "bottom": 648
+      },
+      "footer": {
+        "x": 0,
+        "y": 648,
+        "width": 375,
+        "height": 19,
+        "bottom": 667
+      },
+      "quick": null,
+      "quickHidden": true
+    },
+    {
+      "selected": true,
+      "innerWidth": 375,
+      "innerHeight": 667,
+      "scrollWidth": 375,
+      "scrollHeight": 667,
+      "scene": {
+        "x": 0,
+        "y": 157,
+        "width": 375,
+        "height": 287.203125,
+        "bottom": 444.203125
+      },
+      "nav": {
+        "x": 0,
+        "y": 595,
+        "width": 375,
+        "height": 53,
+        "bottom": 648
+      },
+      "footer": {
+        "x": 0,
+        "y": 648,
+        "width": 375,
+        "height": 19,
+        "bottom": 667
+      },
+      "quick": {
+        "x": 12,
+        "y": 197.203125,
+        "width": 351,
+        "height": 183,
+        "bottom": 380.203125
+      },
+      "quickHidden": false
+    },
+    {
+      "selected": false,
+      "innerWidth": 390,
+      "innerHeight": 667,
+      "scrollWidth": 390,
+      "scrollHeight": 667,
+      "scene": {
+        "x": 0,
+        "y": 157,
+        "width": 390,
+        "height": 287.203125,
+        "bottom": 444.203125
+      },
+      "nav": {
+        "x": 0,
+        "y": 595,
+        "width": 390,
+        "height": 53,
+        "bottom": 648
+      },
+      "footer": {
+        "x": 0,
+        "y": 648,
+        "width": 390,
+        "height": 19,
+        "bottom": 667
+      },
+      "quick": null,
+      "quickHidden": true
+    },
+    {
+      "selected": true,
+      "innerWidth": 390,
+      "innerHeight": 667,
+      "scrollWidth": 390,
+      "scrollHeight": 667,
+      "scene": {
+        "x": 0,
+        "y": 157,
+        "width": 390,
+        "height": 287.203125,
+        "bottom": 444.203125
+      },
+      "nav": {
+        "x": 0,
+        "y": 595,
+        "width": 390,
+        "height": 53,
+        "bottom": 648
+      },
+      "footer": {
+        "x": 0,
+        "y": 648,
+        "width": 390,
+        "height": 19,
+        "bottom": 667
+      },
+      "quick": {
+        "x": 12,
+        "y": 197.203125,
+        "width": 366,
+        "height": 183,
+        "bottom": 380.203125
+      },
+      "quickHidden": false
+    }
+  ],
+  "visual_note": "Short-height equipment selection displays the detail card over most of the factory canvas; all action buttons and bottom menu remain visible.",
+  "final_screenshots": {
+    "initial": "forge-v09-mobile-20261031.jpg",
+    "working": "forge-v09-working-20261031.jpg"
+  },
+  "checked_date": "2026-10-31 Asia/Tokyo",
+  "gameplay_revision": "625e95085f41f73a6fc7c4b14201e88b982f1a89",
+  "compact_layout_revision": "0db94a9947341ea584a9d327523249bfa663e853"
+}

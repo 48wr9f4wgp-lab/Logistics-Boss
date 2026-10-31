@@ -30,7 +30,9 @@ Only `docs/forge-preview`, `factory-prototype` and the existing scoped workflow.
 
 The development Pages deployment for `625e95085f41f73a6fc7c4b14201e88b982f1a89` completed successfully. A fresh isolated browser confirmed v0.9 and tested the actual public page: accept 12 plates, skip to completion, dispatch, upgrade the cutter to level 2, then reload. Cash, delivered count and level persisted; no page or console errors occurred. Optional labels, zoom and overview reset worked.
 
-At 390×844 the scene grew from 320px to 420px, with no page overflow. 320×740 and 1280×900 also fit. A 57px vertical overflow was found at 375×667 and 390×667, so a compact-height layout was added to keep the complete action/menu area visible. Its short-screen recheck is recorded in the follow-up browser evidence. Tests use an isolated test save, not the player's browser data.
+At 390×844 the scene grew from 320px to 420px, with no page overflow. 320×740 and 1280×900 also fit. A 57px vertical overflow was found at 375×667 and 390×667, so a compact-height layout was added to keep the complete action/menu area visible. The follow-up public deployment at `0db94a9947341ea584a9d327523249bfa663e853` passed all four short-screen cases: both widths with and without machine selection. Content height was 667px, the navigation ended at 648px and the footer at 667px. No page or console errors. Tests use an isolated test save, not the player's browser data.
+
+Final screenshots and browser observations: `evidence/forge-v09-mobile-20261031.jpg`, `evidence/forge-v09-working-20261031.jpg`, and `evidence/forge-v09-browser-20261031.json`. The screenshots show the real published page; the initial screenshot uses a fresh paused test save for a stable capture. Small-screen selection intentionally overlays much of the factory with its detail card, while the actions and bottom navigation remain reachable.
 
 ## Rollback
 
