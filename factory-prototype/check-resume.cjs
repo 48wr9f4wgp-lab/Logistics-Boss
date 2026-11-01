@@ -23,7 +23,9 @@ async function checkResume(browser,url){
     const suspended=await snapshot(ctx);assert.equal(M.frontOrder(suspended.state).offerId,'first');
     assert.ok(suspended.state.clock>0);
     await page.waitForTimeout(350);assert.deepEqual(await snapshot(ctx),suspended,'nothing runs while away');
-    await page.goBack();await btn('工場の改善を選ぶ').waitFor({timeout:30000});
+    // Restoring a cached document fires pageshow, not a fresh load event.
+    await page.evaluate(()=>{history.back();});
+    await btn('工場の改善を選ぶ').waitFor({timeout:30000});
     const cached=await page.evaluate(()=>window.restoredFromHistory);
     const expected=structuredClone(suspended.state);
     let ready;do{ready=M.advanceToReady(expected,200);}while(ready.status==='producing');
