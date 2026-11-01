@@ -2,6 +2,7 @@
 const assert = require('node:assert/strict');
 const { mkdir } = require('node:fs/promises');
 const path = require('node:path');
+const {checkImprovement}=require('./check-improvement.cjs');
 const {checkFloorControls}=require('./check-floor-controls.cjs');
 const { chromium, webkit } = require('playwright-core');
 
@@ -80,10 +81,11 @@ async function check(browser, url, width, height) {
     const readyBounds = await ticket.boundingBox();
     assert.ok(Math.abs((bounds.y+bounds.height)-(readyBounds.y+readyBounds.height)) <= 1);
     await ticket.click();
-    await shown(button('次の成長目標を選ぶ'));
+    await shown(button('工場の改善を選ぶ'));
     assert.match(await page.locator('#ticketLabel').innerText(),/出荷完了.*利益/);
     await capture('shipped');
     await ticket.click();
+    await button('改善はあとで · 成長目標へ').click();
     await shown(page.getByRole('heading',{name:'成長案件',exact:true}));
     await page.getByRole('button',{name:'この目標を追う'}).first().click();
     await button('工場へ戻る').click();
@@ -120,7 +122,7 @@ async function checkShift(browser,url) {
     await page.screenshot({path:path.join(process.env.RUNNER_TEMP||'.','factory-floor-screens',browser.browserType().name()+'-390-crew-working.jpg'),quality:90});
     await ticket.click();
     await page.getByRole('button',{name:'出荷する',exact:true}).click();
-    await page.getByRole('button',{name:'次の成長目標を選ぶ',exact:true}).waitFor({state:'visible'});
+    await page.getByRole('button',{name:'工場の改善を選ぶ',exact:true}).waitFor({state:'visible'});
     assert.deepEqual(errors,[]);
     console.log('390×844 DPR2 passed: restored busy crew, rendering and shipment.');
   } finally {await context.close();}
@@ -160,6 +162,7 @@ async function checkExpandedArt(browser,url,offlineArt=false){
   try {
     const sizes=process.argv[3]==='webkit'?[[390,844]]:[[390,844],[320,568]];
     for(const [width,height] of sizes)await check(browser,process.argv[2],width,height);
+    for(const choice of ['move','upgrade'])await checkImprovement(browser,process.argv[2],choice);
     await checkFloorControls(browser,process.argv[2]);
     await checkShift(browser,process.argv[2]);
     await checkExpandedArt(browser,process.argv[2]);

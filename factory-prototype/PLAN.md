@@ -37,3 +37,5 @@ v0.15: A commercial-quality art target for the main workshop. Bake original thre
 v0.16: Finish the visual loop at dispatch with order-specific packed cargo and an interruptible departure. Then improve the floor interaction: pinch around the fingers, pan during placement, preview/commit or cancel, and preserve management navigation. Normal play still has one bottom ticket.
 
 v0.17: Refine the approved daylight miniature at normal phone scale and close range. Frame the physical plinth and preserve the size of the crew and tools. Stage-specific workpieces, local work lights and material wear carry the visual story through production. See CHANGE_PACKET_v017.md.
+
+v0.18: Turn the first paid shipment into an optional repeat order. Contrast a free layout change with a paid drill upgrade, show the actual service-cell trip in placement, and measure the next delivery against the player’s own previous receipt. The growth contracts remain directly accessible.
