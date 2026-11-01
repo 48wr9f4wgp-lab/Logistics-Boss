@@ -49,17 +49,24 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
       const [before,after]=rows||[];
       if(!before||!after||before.error||after.error){estimate.textContent=after?.error||before?.error||'この注文の見積を取得できません';return;}
 
-      const role=movementReason(before,after);
-      estimate.textContent=moves.length?'完成 '+time(before)+' → '+time(after)+' ／ 移動 '+steps(before)+' → '+steps(after)+'。'+role:
-        '現状の'+batch+'　完成 '+time(before)+' ／ 総移動 '+steps(before);
-      if(p.estimateOffer)estimate.textContent=(offer==='rush'?'短納期':'通常便')+batch+'　'+estimate.textContent+' ／ 納期'+Math.abs(after.margin).toFixed(1)+'秒'+(after.late?'超過':'余裕');
+      const term=p.estimateOffer?(offer==='rush'?'短納期':'通常便')+batch+'　':'';
+      const deadline=p.estimateOffer?'納期'+Math.abs(after.margin).toFixed(1)+'秒'+(after.late?'超過':'余裕'):'';
+      const lines=moves.length?[
+        term+'完成　'+time(before)+' → '+time(after),
+        '総移動　'+steps(before)+' → '+steps(after),
+        [movementReason(before,after),deadline].filter(Boolean).join(' ／ ')
+      ]:[term+'現状の完成　'+time(before),'総移動　'+steps(before),deadline];
+      estimate.textContent=lines.filter(Boolean).join('\n');
       p.legs=after.legs||[];
     });
   }
   function option(row,label){
     const button=document.createElement('button');button.type='button';
     const here=same(row,rankingResult.base);
-    button.textContent=label+' · '+(here?'現在地':cellName(row))+'\n'+time(row.quote)+'／'+steps(row.quote);
+    const heading=document.createElement('span'),goal=document.createElement('span'),location=document.createElement('small'),value=document.createElement('strong');
+    heading.className='candidate-heading';goal.textContent=label;location.textContent=here?'現在地':cellName(row);
+    value.textContent=time(row.quote)+'／'+steps(row.quote);
+    heading.append(goal,location);button.append(heading,value);
     button.dataset.x=row.x;button.dataset.y=row.y;
     button.setAttribute('aria-pressed',String(same(row,p.candidate)));
     button.onclick=()=>choose(row);suggestions.append(button);

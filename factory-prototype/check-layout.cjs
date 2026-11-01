@@ -29,8 +29,15 @@ async function checkLayout(browser,url){
     const walk=page.locator('#layoutSuggestions button').filter({hasText:'歩数が最少'});
     await fast.waitFor();assert.match(await fast.innerText(),/5列2段[\s\S]+106.6秒／232マス/);
     assert.match(await walk.innerText(),/7列2段[\s\S]+110.0秒／220マス/);
-    await fast.tap();await quote.filter({hasText:/106.6秒.*検品担当の移動が65マス減/}).waitFor();
-    await walk.tap();await quote.filter({hasText:/110.0秒.*検品担当の移動が75マス減/}).waitFor();
+    const fits=await fast.evaluate(b=>{
+      const box=b.getBoundingClientRect();
+      return [...b.querySelectorAll('span,small,strong')].every(n=>{
+        const r=n.getBoundingClientRect();return r.x>=box.x&&r.right<=box.right+.5&&r.bottom<=box.bottom;
+      });
+    });
+    assert.ok(fits,'candidate text must stay inside its phone-sized button');
+    await fast.tap();await quote.filter({hasText:/106.6秒[\s\S]*検品担当の移動が65マス減/}).waitFor();
+    await walk.tap();await quote.filter({hasText:/110.0秒[\s\S]*検品担当の移動が75マス減/}).waitFor();
     assert.equal(await confirm.isEnabled(),true);
     const box=await confirm.boundingBox();assert.ok(box.y>=0&&box.y+box.height<=height);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
