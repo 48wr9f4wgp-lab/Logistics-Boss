@@ -352,3 +352,10 @@ dialog[data-panel="inquiry"] .sheet-head{padding-block:5px}
 #layoutBriefForecast{display:block;min-height:1.4em;line-height:1.35;font-size:12px;color:#f3d99f;font-variant-numeric:tabular-nums}
 
 #orderComparison.brief-outcome{word-break:keep-all;overflow-wrap:anywhere}
+
+.shop-sign{margin:0 0 12px;padding:12px 14px;border:1px solid #bca36c;border-inline-start:4px solid #e1bf79;border-radius:8px;background:#283e33;color:#faeacc}
+.shop-sign small{color:#e5cc96;font-size:11px}
+.shop-sign h3{font-size:20px;margin:4px 0}
+.shop-sign p{margin:0;font-size:13px;line-height:1.5;color:#ece1cb}
+.order-strip.earned-sign{border-top:2px solid #d8b87d;background:#243c31}
+.order-strip.earned-sign #ticketLabel{color:#f2d495}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.23';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.24';
 import {deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs';
 import {repeatOffer,startRepeat,transferPath,neighboringCell,comparisonLine} from '../../docs/forge-preview/improvement.mjs';
 

@@ -1,4 +1,4 @@
-# マチコバ！ — v0.23
+# マチコバ！ — v0.24
 
 **小さな工場、大きな夢。**
 
@@ -21,6 +21,10 @@ Management sheets pause time. The floor controls and direct selection allow work
 ## Implemented
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
+
+## 町工場の初達成（v0.24）
+
+量産は短納期プレート28個を200秒以内、精密は高精度シャフト10本を150秒以内に出荷すると、工場に最初の看板が付く。工場画面・出荷票で初達成を知らせ、「管理 → 経営と出荷記録」にその出荷の実績を残す。資金や設備を引き継ぎ、もう片方にも挑める。以前のセーブは残っている出荷票の古い方から復元する。既に消えた履歴や算出できない納期余裕は補わない。
 
 ## 金物店の改善依頼と紹介（v0.23）
 

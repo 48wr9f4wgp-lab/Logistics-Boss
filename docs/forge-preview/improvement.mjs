@@ -1,8 +1,8 @@
-import {isBriefId} from './brief.mjs?v=0.23';
-import {applyLayout} from './layout.mjs?v=0.23';
+import {isBriefId} from './brief.mjs?v=0.24';
+import {applyLayout} from './layout.mjs?v=0.24';
 // First repeat order. The saved shipment, route planner and normal work orders
 // are the source of truth. There is no tutorial cursor or simulated reward.
-import * as M from './model.mjs?v=0.23';
+import * as M from './model.mjs?v=0.24';
 
 export function repeatOffer(s){
   if(M.frontOrder(s))return null;

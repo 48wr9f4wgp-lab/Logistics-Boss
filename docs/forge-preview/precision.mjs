@@ -1,6 +1,6 @@
 // An assignment and an optional investment belong to this shaft contract only.
 // An unnamed inspector keeps the factory's normal scheduling rules.
-import * as M from './model.mjs?v=0.23';
+import * as M from './model.mjs?v=0.24';
 
 export function shaftEntryCost(s){
   const material=M.OFFERS.find(o=>o.id==='fine').cost;

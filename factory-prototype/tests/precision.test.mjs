@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.23';
-import {estimateOrder} from '../../docs/forge-preview/estimate.mjs?v=0.23';
-import {acceptPrecision,installStarterLathe,precisionPlan,shaftEntryCost} from '../../docs/forge-preview/precision.mjs?v=0.23';
-import {deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs?v=0.23';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.24';
+import {estimateOrder} from '../../docs/forge-preview/estimate.mjs?v=0.24';
+import {acceptPrecision,installStarterLathe,precisionPlan,shaftEntryCost} from '../../docs/forge-preview/precision.mjs?v=0.24';
+import {deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs?v=0.24';
 
 function finish(s){
   let q;do{q=M.advanceToReady(s,200);}while(q.status==='producing');

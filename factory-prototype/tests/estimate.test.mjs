@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.23';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.24';
 import {estimateOrder} from '../../docs/forge-preview/estimate.mjs';
 import {createEstimator} from '../../docs/forge-preview/estimate-client.mjs';
-import {startRepeat,transferPath} from '../../docs/forge-preview/improvement.mjs?v=0.23';
+import {startRepeat,transferPath} from '../../docs/forge-preview/improvement.mjs?v=0.24';
 import {deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs';
 
 function finish(s){
