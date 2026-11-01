@@ -1,17 +1,19 @@
+import {layoutEditor} from './layout-editor.mjs?v=0.22';
+import {applyLayout} from './layout.mjs?v=0.22';
 import {floorGesture,changeCamera} from './floor-input.mjs?v=0.16';
 import {departureDuration} from './shipping.mjs?v=0.16';
-import * as M from './model.mjs?v=0.21';
-import {openingOffer,deliveryGuide,floorTicket} from './guidance.mjs?v=0.21';
-import {repeatOffer,startRepeat,transferPath,neighboringCell,comparisonLine} from './improvement.mjs?v=0.21';
+import * as M from './model.mjs?v=0.22';
+import {openingOffer,deliveryGuide,floorTicket} from './guidance.mjs?v=0.22';
+import {repeatOffer,startRepeat,comparisonLine} from './improvement.mjs?v=0.22';
 import {frameWorkshop,project,pickMachine} from './view.mjs?v=0.17';
-import {drawWorkshop} from './workshop.mjs?v=0.18';
+import {drawWorkshop} from './workshop.mjs?v=0.22';
 import {createArtLoader} from './miniature-art.mjs?v=0.17';
-import {createEstimator} from './estimate-client.mjs?v=0.21';
-import {acceptPrecision,installStarterLathe} from './precision.mjs?v=0.21';
-import {precisionDesk,bindPrecisionDesk} from './precision-view.mjs?v=0.21';
-import {advanceToReview,decideInquiry,inquiryContext} from './inquiry.mjs?v=0.21';
-import {pairResult,yenGain} from './pairing.mjs?v=0.21';
-import {bindInquiry,inquirySheet} from './inquiry-view.mjs?v=0.21';
+import {createEstimator} from './estimate-client.mjs?v=0.22';
+import {acceptPrecision,installStarterLathe} from './precision.mjs?v=0.22';
+import {precisionDesk,bindPrecisionDesk} from './precision-view.mjs?v=0.22';
+import {advanceToReview,decideInquiry,inquiryContext} from './inquiry.mjs?v=0.22';
+import {pairResult,yenGain} from './pairing.mjs?v=0.22';
+import {bindInquiry,inquirySheet} from './inquiry-view.mjs?v=0.22';
 const workshopArt=createArtLoader(),estimator=createEstimator();
 const shaftChoice={offer:'fine',inspector:null,investment:'none',benchId:null};
 const $=s=>document.querySelector(s),KEY='forge.factory.v1',canvas=$('#world'),ctx=canvas.getContext('2d');
@@ -35,7 +37,7 @@ function update(){
   $('.order-strip').hidden=!!placing;
   $('#controls').hidden=!!placing;
   $('#placementBar').hidden=!placing;
-  if(placing)$('#confirmPlace').disabled=!placing.candidate||!writer||saveBlocked;
+  if(placing)$('#confirmPlace').disabled=placing.editor?!placing.editor.canConfirm():!placing.candidate||!writer||saveBlocked;
   $('#cash').textContent=money(s.cash);
   $('#ticketLabel').textContent=ticket.label;
   const consult=!placing&&!skipping&&inquiryContext(s),entry=$('#inquiryEntry');
@@ -208,13 +210,12 @@ function improvementSheet(){
   const next=M.processingTime('drill',{level:drill.level+1});
   const total=upgradeCost===null?null:material+upgradeCost;
   const unlock=!M.offerStatus(s,'rush').qualified;
-  const path=transferPath(s,drill);
   const upgradeText=upgradeCost===null?'このボール盤は最高レベルです。':
     `技能1の穴あけ ${seconds(before)} → ${seconds(next)}／個。${unlock?'短納期の注文も開きます。':''}`;
   const disabled=total===null||s.cash<total||!writer||saveBlocked;
   const shortage=total!==null&&s.cash<total?'あと '+money(Math.ceil(total-s.cash))+' 必要':'';
   return `<p class="trial-baseline"><strong>取付プレート ${offer.qty}個 · 再注文</strong>前回 ${seconds(report.seconds)} · 移動 ${Math.round(report.walk)}マス<br>今回の材料費 ${money(material)}</p>
-    <article class="card trial-choice"><div><h3>ボール盤を移す</h3><small>移設 ¥0</small></div><p>切断から穴あけまで${path?'片道'+(path.length-1)+'マス':''}。床で仮置きして比較できます。</p><button class="wide" id="trialMove" ${!writer||saveBlocked?'disabled':''}>置き場所を試す</button></article>
+    <article class="card trial-choice"><div><h3>設備の配置を組み直す</h3><small>移設 ¥0</small></div><p>切断機・ボール盤・検品台を動かして、12個の完成時間と職人の歩数を比べられます。</p><button class="wide" id="trialMove" ${!writer||saveBlocked?'disabled':''}>置き場所を試す</button></article>
     <article class="card trial-choice"><div><h3>ボール盤を改良する</h3><small>${upgradeCost===null?'最高レベル':'改良 '+money(upgradeCost)}</small></div><p>${upgradeText}</p>${!disabled?'<small id="upgradeEstimate">12個の見積中…</small>':''}<button class="wide" id="trialUpgrade" ${disabled?'disabled':''}>${total===null?'改良済み':'改良して受注 · '+money(total)}</button>${shortage?'<small>'+shortage+'</small>':''}</article>
     <button class="wide" data-next="growth">改善はあとで · 成長目標へ</button>`;
 }
@@ -342,7 +343,7 @@ if(tab==='workers'){
 }
 if(tab==='result'){const r=s.results?.[0];html=r?receipt(r,true):'<p>まだ出荷記録がありません。</p>';}
 if(tab==='finance'){html=card('工場の状況','<div class="row"><span>出荷実績</span><b>'+s.delivered+'件</b></div><div class="row"><span>工場時間</span><b>'+Math.floor(s.clock/60)+'分'+Math.floor(s.clock%60)+'秒</b></div>')+card('収支',`<div class="row"><span>累計売上</span><b>${money(s.revenue)}</b></div><div class="row"><span>材料・投資・人件費</span><b>${money(s.expense)}</b></div><p>加工する部品がある間、人件費は毎秒¥0.7。画面を閉じている間の生産・請求はありません。</p>`)+'<h3>出荷の振り返り</h3><p>直近12件を保存。利益は設備・研修・増築費を引く前の金額です。</p>'+(s.results?.length?'<button class="wide" data-next="result">直近の出荷結果を開く</button>'+s.results.map(r=>`<details class="result-history"><summary>${escape(r.label)} × ${r.qty}<b>${M.resultProfit(r)===null?'記録なし':signedMoney(M.resultProfit(r))}</b></summary>${receipt(r,false)}</details>`).join(''):'<p>出荷すると結果をここで見返せます。</p>')+card('工場を広げる',`<p>床面積を8×6から10×8へ。追加設備と動線のための余白を作ります。</p><button class="primary wide" id="expand" ${s.width===10?'disabled':''}>${s.width===10?'拡張済み':'増築する · ¥3,500'}</button>`)+card('生産の記録',`<p>完了工程 ${s.stats.processed}回<br>品質調整 ${s.stats.rework}回<br>運搬・移動距離 ${Math.floor(s.stats.walk)}マス</p>`)+card('工場日誌',s.log.map(t=>`<p>${escape(t)}</p>`).join(''));}
-if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② 完成まで進めるで待ち時間をスキップ（人件費・納期も進む）<br>③ 完成した注文を出荷して入金<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.21</small>');}
+if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② 完成まで進めるで待ち時間をスキップ（人件費・納期も進む）<br>③ 完成した注文を出荷して入金<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.22</small>');}
 body.innerHTML=html;
 setupPanelEstimate();
 if($('#allGrowth'))$('#allGrowth').onclick=()=>open('growth');
@@ -458,17 +459,18 @@ function place(p){
 }
 function showPlacement(){
   placementCells=[];
+  if(!placing.draining && placing.id && !M.frontOrder(s)){
+    const offer=placing.estimateOffer||(placing.kind==='lathe'?'fine':'first');
+    $('#placementBar').dataset.estimating='true';
+    placing.editor=layoutEditor(s,placing,offer,()=>writer&&!saveBlocked,cells=>{placementCells=cells;});
+    return;
+  }
   if(!placing.draining){
     const original=s.machines.find(m=>m.id===placing.id);
     for(let x=1;x<s.width;x++)for(let y=0;y<s.height-1;y++){
       if(original?.x===x&&original.y===y)continue;
       if(M.canPlace(s,placing.kind,x,y,placing.id))placementCells.push({x,y});
     }
-  }
-  if(placing.trial){
-    const drill=s.machines.find(m=>m.id===placing.id);
-    placing.beforePath=transferPath(s,drill);
-    placing.candidate=neighboringCell(s,drill,placementCells);
   }
   placementTicket();
 }
@@ -479,49 +481,27 @@ function placementTicket(message){
     c?'仮置き中 · '+(c.x+1)+'列 '+(c.y+1)+'段。ほかの床を押して変更できます。':
     placementCells.length?'光る床をタップして仮置き。二本指で拡大できます。':'置ける床がありません。ほかの設備や通路を確認してください。');
   button.disabled=!c||!writer||saveBlocked;
-  if(p.trial){
-    const trial=repeatOffer(s);
-    p.route=c&&trial?transferPath(s,trial.drill,c):null;
-    $('#placeTitle').textContent='ボール盤を移して12個を作る';
-    if(!message&&p.route&&p.beforePath)$('#placeStatus').textContent='仮置き · 切断→穴あけの片道 '+(p.beforePath.length-1)+' → '+(p.route.length-1)+'マス。床を押すと変更できます。';
-    button.textContent=trial?'移動して受注 · '+money(trial.offer.cost):'受注できません';
-    button.disabled=button.disabled||!trial;
-  }else if(p.precisionLathe){
+  if(p.precisionLathe){
     $('#placeTitle').textContent='最初の旋盤を試す';
     button.textContent='旋盤を設置 · '+money(m.cost);
-  }else if(p.estimateOffer){
-    $('#placeTitle').textContent=m.name+'の配置を試す';
-    button.textContent='移動して見積に戻る';
   }else button.textContent=p.id?'ここに移動':'ここに設置 · '+money(m.cost);
   placementEstimate(p,c);
 }
 function placementEstimate(p,cell){
   const el=$('#layoutEstimate');
-  const estimating=!!(p.trial||p.estimateOffer||p.precisionLathe);
+  const estimating=!!p.precisionLathe;
   $('#placementBar').dataset.estimating=String(estimating);
   el.hidden=!estimating;
   el.classList.toggle('empty-estimate',!cell);
   if(!estimating||!cell){el.textContent='';estimator.cancel();return;}
-  el.textContent='今の配置と仮置きで見積中…';
-  if(p.precisionLathe){
-    el.textContent='標準10本を見積中…';
-    estimator.request(s,[{lathe:cell,precision:{offer:'fine'}}],rows=>{
-      const q=rows?.[0];
-      el.textContent=q&&!q.error?'設置後の標準10本　'+seconds(q.seconds)+' · 品質調整 '+q.rework+'本':q?.error||'見積を表示できません';
-    });return;
-  }
-  const offer=p.estimateOffer||'first';
-  const variant=p.trial?{repeat:'move',cell}:{offer,move:{id:p.id,...cell}};
-  estimator.request(s,[{offer},variant],rows=>{
-    const [before,after]=rows||[];
-    if(!before||!after||before.error||after.error){el.textContent='見積を表示できません';return;}
-    const duration='現状 '+seconds(before.seconds)+' → 仮置き '+seconds(after.seconds);
-    el.textContent=p.trial?'12個の見積　'+duration+' ／ 総移動 '+Math.round(before.walk)+' → '+Math.round(after.walk)+'マス':
-      (offer==='rush'?'短納期':'通常便')+'28個　'+duration+' ／ '+deadlineText(after);
+  el.textContent='標準10本を見積中…';
+  estimator.request(s,[{lathe:cell,precision:{offer:'fine'}}],rows=>{
+    const q=rows?.[0];
+    el.textContent=q&&!q.error?'設置後の標準10本　'+seconds(q.seconds)+' · 品質調整 '+q.rework+'本':q?.error||'見積を表示できません';
   });
 }
 function endPlacement(){
-  estimator.cancel();$('#layoutEstimate').hidden=true;
+  placing?.editor?.close();estimator.cancel();$('#layoutEstimate').hidden=true;
   placing=null;placementCells=[];speed=resumeSpeed;
   canvas.removeAttribute('tabindex');canvas.removeAttribute('aria-describedby');
   update();if(selected)selectMachine(selected,true);
@@ -540,28 +520,37 @@ $('#cancelPlace').onclick=cancelPlacement;
 $('#confirmPlace').onclick=()=>{
   const p=placing,c=p?.candidate;
   if(!c||p.draining)return;
-  const ok=p.precisionLathe?act(()=>installStarterLathe(s,c),false):p.trial?act(()=>startRepeat(s,'move',c),false):
+  if(p.editor){
+    if(!p.editor.canConfirm())return;
+    const ok=act(()=>p.trial?startRepeat(s,'layout',p.editor.moves):applyLayout(s,p.editor.moves),false);
+    if(ok){
+      if(p.trial)resumeSpeed=resumeSpeed||1;
+      selected=null;endPlacement();
+      if(p.estimateOffer)open('growth','rush',false,p.estimateOffer);
+    }
+    return;
+  }
+  const ok=p.precisionLathe?act(()=>installStarterLathe(s,c),false):
     act(()=>p.id?M.move(s,p.id,c.x,c.y):M.purchase(s,p.kind,c.x,c.y));
   if(ok){
-    if(p.estimateOffer||p.precisionLathe)selected=null;
-    else if(p.trial){selected=null;resumeSpeed=resumeSpeed||1;}
-    else selected=p.id||s.machines.find(m=>m.x===c.x&&m.y===c.y)?.id||null;
+    selected=p.precisionLathe?null:p.id||s.machines.find(m=>m.x===c.x&&m.y===c.y)?.id||null;
     endPlacement();
-    if(p.estimateOffer)open('growth','rush',false,p.estimateOffer);
-    else if(p.precisionLathe){shaftChoice.offer='fine';open('precision');}
+    if(p.precisionLathe){shaftChoice.offer='fine';open('precision');}
   }else if(placing){p.candidate=null;showPlacement();}
 };
 canvas.addEventListener('keydown',event=>{
   if(!placing)return;
   if(event.key==='Escape'){event.preventDefault();cancelPlacement();return;}
   if(placing.draining||!placementCells.length)return;
-  if(event.key==='Enter'){event.preventDefault();if(placing.candidate)$('#confirmPlace').focus();return;}
+  if(event.key==='Enter'){event.preventDefault();if(!$('#confirmPlace').disabled)$('#confirmPlace').focus();return;}
   if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
   event.preventDefault();
-  const index=placementCells.indexOf(placing.candidate),n=placementCells.length;
+  const index=placementCells.findIndex(c=>c.x===placing.candidate?.x&&c.y===placing.candidate?.y),n=placementCells.length;
   const delta=['ArrowLeft','ArrowUp'].includes(event.key)?-1:1;
-  placing.candidate=placementCells[index===-1?(delta>0?0:n-1):(index+delta+n)%n];
-  placementTicket();draw();
+  const cell=placementCells[index===-1?(delta>0?0:n-1):(index+delta+n)%n];
+  if(placing.editor)placing.editor.choose(cell);
+  else{placing.candidate=cell;placementTicket();}
+  draw();
 });
 
 let viewport={w:0,h:0,u:0,ox:0,oy:0},hitTargets=[];
@@ -581,7 +570,8 @@ function draw(t=performance.now()){
   if(canvas.dataset.artwork!==artMode)canvas.dataset.artwork=artMode;
   const elapsed=departure?Math.max(0,t-departure.start):0;
   if(elapsed>=departureDuration)departure=null;
-  hitTargets=drawWorkshop(ctx,s,viewport,{art,shipment:departure,shipmentElapsed:elapsed,time:s.clock*1000,running,reducedMotion:reducedMotion.matches,selected,placing,placementCells,showLabels});
+  const floor=placing?.planMachines?{...s,machines:placing.planMachines}:s;
+  hitTargets=drawWorkshop(ctx,floor,viewport,{art,shipment:departure,shipmentElapsed:elapsed,time:s.clock*1000,running,reducedMotion:reducedMotion.matches,selected,placing,placementCells,showLabels});
 }
 function applyCamera(from,to,ratio){
   const camera=changeCamera({zoom,pan},from,to,ratio,canvas.clientWidth,canvas.clientHeight);
@@ -597,8 +587,9 @@ function tapFloor(p){
   if(!u)return;
   const a=(p.x-ox)/u,b=(p.y-oy)/(u*.5);
   const x=Math.floor((a+b)/2),y=Math.floor((b-a)/2);
+  if(placing.editor){placing.editor.choose({x,y});draw();return;}
   placing.candidate=placementCells.find(c=>c.x===x&&c.y===y)||null;
-  placementTicket(placing.candidate?null:'ここには置けません。通路を残せる光る床を選んでください。');
+  placementTicket(placing.candidate?null:(M.placementIssue(s,placing.kind,x,y,placing.id)||'現在と違う床を選んでください'));
   draw();
 }
 const gesture=floorGesture(applyCamera,tapFloor);
@@ -649,7 +640,8 @@ function frame(t){
   last=t;if(!document.hidden&&t-lastDraw>=1000/30){draw(t);lastDraw=t;}if(t-paintTime>250){update();paintTime=t;}if(t>toastUntil)$('#toast').style.display='none';requestAnimationFrame(frame);
 }
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden)estimator.cancel();
+  if(document.hidden){estimator.cancel();placing?.editor?.suspend();}
+  else if(placing?.editor)placing.editor.resume();
   else if(placing)placementTicket();
   else if(tab)setupPanelEstimate();
 });

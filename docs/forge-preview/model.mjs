@@ -1,4 +1,4 @@
-import {preferredOrder,recordPair,validPairRecord,validPairLinks} from './pairing.mjs?v=0.21';
+import {preferredOrder,recordPair,validPairRecord,validPairLinks} from './pairing.mjs?v=0.22';
 export const VERSION=1;
 // Shared by real-time playback and completion skipping; rendering frequency must not change outcomes.
 export const TICK=.05;
@@ -13,7 +13,30 @@ export function processingTime(kind,{skill=1,level=1,mentor=false,quality=1}={})
 export function fresh(){return {version:VERSION,cash:5500,revenue:0,expense:0,clock:0,width:8,height:6,next:1,delivered:0,machines:[{id:'m1',kind:'cut',x:2,y:1,level:1},{id:'m2',kind:'drill',x:5,y:1,level:1},{id:'m3',kind:'inspect',x:5,y:4,level:1}],workers:['青木','森','佐藤'].map((name,i)=>({id:i,name,x:1+i,y:3,skill:1,xp:0,role:'auto',mentor:false,job:null})),orders:[],results:[],parts:[],log:['小口注文から、最初の出荷を目指そう。'],stats:{rework:0,walk:0,processed:0}};}
 export function note(s,t){s.log.unshift(t);s.log=s.log.slice(0,12);}
 export function path(s,a,b,ms=s.machines){const block=new Set(ms.map(m=>`${m.x},${m.y}`));const key=p=>`${p.x},${p.y}`;let queue=[{x:Math.round(a.x),y:Math.round(a.y),p:[]}],seen=new Set();while(queue.length){const n=queue.shift(),k=key(n);if(seen.has(k))continue;seen.add(k);if(n.x===b.x&&n.y===b.y)return n.p;for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const q={x:n.x+dx,y:n.y+dy};if(q.x<0||q.y<0||q.x>=s.width||q.y>=s.height||block.has(key(q)))continue;queue.push({...q,p:[...n.p,q]});}}return null;}
-export function canPlace(s,kind,x,y,ignore=null){if(!MACHINES[kind]||!Number.isInteger(x)||!Number.isInteger(y)||x<1||y<0||x>=s.width||y>=s.height-1)return false;if(s.machines.some(m=>m.id!==ignore&&m.x===x&&m.y===y))return false;const ms=[...s.machines.filter(m=>m.id!==ignore),{id:ignore||'new',kind,x,y}];if(s.workers.some(w=>w.job||Math.round(w.x)===x&&Math.round(w.y)===y))return false;if(s.parts.some(p=>!p.done&&p.x===x&&p.y===y))return false;const starts=[...s.workers,...s.parts.filter(p=>!p.done)];return ms.every(m=>path(s,{x:0,y:0},{x:m.x,y:m.y+1},ms)!==null)&&starts.every(p=>path(s,{x:0,y:0},{x:Math.round(p.x),y:Math.round(p.y)},ms)!==null);}
+// Validate the final floor, including swaps, in the same graph workers use.
+export function floorIssue(s,machines,changed){
+  if(s.workers.some(w=>w.job))return '職人が今の工程を終えると配置できます';
+  for(const m of changed){
+    if(!MACHINES[m.kind]||!Number.isInteger(m.x)||!Number.isInteger(m.y)||m.x<0||m.y<0||m.x>=s.width||m.y>=s.height)return '工場の床の内側を選んでください';
+    if(m.x===0)return '左端の列は材料を運ぶ通路です';
+    if(m.y===s.height-1)return '手前に職人が立つ作業マスを1つ残してください';
+    if(machines.some(other=>other!==m&&other.x===m.x&&other.y===m.y))return '別の設備がこの床を使っています';
+    if(s.workers.some(w=>Math.round(w.x)===m.x&&Math.round(w.y)===m.y))return '職人が立っている床です';
+    if(s.parts.some(p=>!p.done&&p.x===m.x&&p.y===m.y))return '仕掛品が置かれている床です';
+  }
+  const gate={x:0,y:0};
+  for(const m of machines){
+    if(machines.some(other=>other.x===m.x&&other.y===m.y+1))return MACHINES[m.kind].name+'の正面の作業マスをふさいでいます';
+    if(!path(s,gate,{x:m.x,y:m.y+1},machines))return '搬入口から'+MACHINES[m.kind].name+'の作業マスへの通路が途切れます';
+  }
+  if([...s.workers,...s.parts.filter(p=>!p.done)].some(p=>!path(s,gate,{x:Math.round(p.x),y:Math.round(p.y)},machines)))return '職人か仕掛品が搬入口から到達できなくなります';
+  return null;
+}
+export function placementIssue(s,kind,x,y,ignore=null){
+  const m={id:ignore,kind,x,y},machines=[...s.machines.filter(m=>m.id!==ignore),m];
+  return floorIssue(s,machines,[m]);
+}
+export function canPlace(s,kind,x,y,ignore=null){return placementIssue(s,kind,x,y,ignore)===null;}
 export function accept(s,id,quote){const o=OFFERS.find(o=>o.id===id),status=offerStatus(s,id);if(!status.available)return status.reason;const n={...o,id:s.next++,start:s.clock,done:0,shipped:false,offerId:o.id,accounting:{wages:0,walk:0,rework:0,completedAt:null}};
 if(quote){
   const recorded={seconds:quote.seconds,profit:quote.profit};
@@ -37,7 +60,7 @@ export function upgrade(s,id){const m=s.machines.find(m=>m.id===id);if(!m||m.lev
 export function train(s,id){const w=s.workers.find(w=>w.id===id);if(!w||w.skill>=4)return '最高技能です';const cost=800*w.skill;if(s.cash<cost)return '資金が足りません';s.cash-=cost;s.expense+=cost;w.skill++;note(s,`${w.name}の技能が ${w.skill} に向上`);return null;}
 export function expand(s){if(s.width===10)return '敷地は拡張済みです';if(s.cash<3500)return '拡張には¥3,500必要です';s.cash-=3500;s.expense+=3500;s.width=10;s.height=8;note(s,'工場を拡張しました');return null;}
 export function sell(s,id){if(s.workers.some(w=>w.job))return '作業終了後に売却できます';const m=s.machines.find(m=>m.id===id);if(!m)return '設備が見つかりません';if(['cut','drill','inspect'].includes(m.kind)&&s.machines.filter(x=>x.kind===m.kind).length===1)return '立て直しに必要な最後の基本設備は残します';if(m.kind==='lathe'&&s.orders.some(o=>!o.shipped&&o.product==='shaft'))return 'シャフトを出荷してから売却できます';const refund=Math.floor(MACHINES[m.kind].cost*.65);s.cash+=refund;s.machines=s.machines.filter(x=>x!==m);note(s,`設備売却 +¥${refund}`);return null;}
-function assign(s,w){
+function assign(s,w,onAssign){
   const named=new Map(s.orders.filter(o=>!o.shipped&&o.inspectorId!==undefined).map(o=>[o.id,o.inspectorId]));
   const inspector=p=>p.stage===2?named.get(p.order):undefined;
   const priority=p=>{
@@ -48,12 +71,12 @@ function assign(s,w){
   const preferred=preferredOrder(s.orders);
   const candidates=s.parts.filter(p=>!p.done&&!p.busy&&(inspector(p)===undefined||inspector(p)===w.id))
     .sort((a,b)=>Number(b.order===preferred)-Number(a.order===preferred)||priority(a)-priority(b)||b.stage-a.stage);
-  for(const p of candidates){const kind=route(p.product)[p.stage];const ms=s.machines.filter(m=>m.kind===kind&&!s.workers.some(v=>v.job?.machine===m.id));for(const m of ms){const a=path(s,w,p),b=path(s,p,{x:m.x,y:m.y+1});if(a===null||b===null)continue;const order=s.orders.find(o=>o.id===p.order);const rework=kind==='inspect'&&w.skill+m.level-1<order.quality;w.job={part:p.id,machine:m.id,path:[...a,...b],remaining:processingTime(kind,{skill:w.skill,level:m.level,mentor:w.mentor,quality:order.quality}),phase:'walk',rework};p.busy=true;return;}}}
-export function step(s,dt,{assignNew=true}={}){if(!Number.isFinite(dt)||dt<=0)return;dt=Math.min(dt,.25);s.clock+=dt;const active=s.parts.some(p=>!p.done);if(active){const wage=Math.min(s.cash,dt*.7);s.cash-=wage;s.expense+=wage;
+  for(const p of candidates){const kind=route(p.product)[p.stage];const ms=s.machines.filter(m=>m.kind===kind&&!s.workers.some(v=>v.job?.machine===m.id));for(const m of ms){const a=path(s,w,p),b=path(s,p,{x:m.x,y:m.y+1});if(a===null||b===null)continue;const order=s.orders.find(o=>o.id===p.order);const rework=kind==='inspect'&&w.skill+m.level-1<order.quality;w.job={part:p.id,machine:m.id,path:[...a,...b],remaining:processingTime(kind,{skill:w.skill,level:m.level,mentor:w.mentor,quality:order.quality}),phase:'walk',rework};p.busy=true;if(onAssign)onAssign(p,m,b);return;}}}
+export function step(s,dt,{assignNew=true,onWalk=null,onAssign=null}={}){if(!Number.isFinite(dt)||dt<=0)return;dt=Math.min(dt,.25);s.clock+=dt;const active=s.parts.some(p=>!p.done);if(active){const wage=Math.min(s.cash,dt*.7);s.cash-=wage;s.expense+=wage;
 // Allocate the actual payroll once, including idle staff, among unfinished orders.
 const producing=s.orders.filter(o=>!o.shipped&&o.done<o.qty);
 for(const o of producing)if(o.accounting)o.accounting.wages+=wage/producing.length;
-}for(const w of s.workers){if(!w.job&&assignNew)assign(s,w);const j=w.job;if(!j)continue;const p=s.parts.find(p=>p.id===j.part);if(!p){w.job=null;continue;}if(j.path.length){const target=j.path[0],dist=Math.hypot(target.x-w.x,target.y-w.y),d=dt*2.2;if(dist<=d){w.x=target.x;w.y=target.y;j.path.shift();}else{w.x+=(target.x-w.x)*d/dist;w.y+=(target.y-w.y)*d/dist;}const distance=Math.min(dist,d);s.stats.walk+=distance;const a=s.orders.find(o=>o.id===p.order).accounting;if(a)a.walk+=distance;j.phase='walk';}else{j.phase='work';j.remaining-=dt;if(j.remaining<=0){const m=s.machines.find(m=>m.id===j.machine);p.x=m.x;p.y=m.y+1;p.stage++;p.busy=false;p.done=p.stage===route(p.product).length;const order=s.orders.find(o=>o.id===p.order);if(p.done){order.done++;if(order.accounting&&order.done===order.qty)order.accounting.completedAt=s.clock;}if(j.rework){s.stats.rework++;if(order.accounting)order.accounting.rework++;}s.stats.processed++;w.xp+=1+(s.workers.some(v=>v.id!==w.id&&v.mentor)?0.4:0);if(w.xp>=30&&w.skill<4){w.skill++;w.xp-=30;order.accounting?.growth?.push({worker:w.id,skill:w.skill});note(s,`${w.name}が実務で成長しました`);}w.job=null;}}}}
+}for(const w of s.workers){if(!w.job&&assignNew)assign(s,w,onAssign);const j=w.job;if(!j)continue;const p=s.parts.find(p=>p.id===j.part);if(!p){w.job=null;continue;}if(j.path.length){const target=j.path[0],dist=Math.hypot(target.x-w.x,target.y-w.y),d=dt*2.2;if(dist<=d){w.x=target.x;w.y=target.y;j.path.shift();}else{w.x+=(target.x-w.x)*d/dist;w.y+=(target.y-w.y)*d/dist;}const distance=Math.min(dist,d);s.stats.walk+=distance;if(onWalk)onWalk(p,distance);const a=s.orders.find(o=>o.id===p.order).accounting;if(a)a.walk+=distance;j.phase='walk';}else{j.phase='work';j.remaining-=dt;if(j.remaining<=0){const m=s.machines.find(m=>m.id===j.machine);p.x=m.x;p.y=m.y+1;p.stage++;p.busy=false;p.done=p.stage===route(p.product).length;const order=s.orders.find(o=>o.id===p.order);if(p.done){order.done++;if(order.accounting&&order.done===order.qty)order.accounting.completedAt=s.clock;}if(j.rework){s.stats.rework++;if(order.accounting)order.accounting.rework++;}s.stats.processed++;w.xp+=1+(s.workers.some(v=>v.id!==w.id&&v.mentor)?0.4:0);if(w.xp>=30&&w.skill<4){w.skill++;w.xp-=30;order.accounting?.growth?.push({worker:w.id,skill:w.skill});note(s,`${w.name}が実務で成長しました`);}w.job=null;}}}}
 function validState(s){if(!s||s.version!==VERSION||![s.cash,s.clock,s.revenue,s.expense].every(n=>Number.isFinite(n)&&n>=0)||![[8,6],[10,8]].some(([w,h])=>s.width===w&&s.height===h)||!Number.isInteger(s.next)||s.next<1||!Number.isInteger(s.delivered)||!s.stats||!Object.values(s.stats).every(Number.isFinite))return false;if(!Array.isArray(s.machines)||s.machines.length>70||!Array.isArray(s.workers)||s.workers.length!==3||!Array.isArray(s.orders)||s.orders.length>3||!Array.isArray(s.parts)||s.parts.length>60||!Array.isArray(s.log))return false;const ids=new Set(),cells=new Set();for(const m of s.machines){if(!MACHINES[m.kind]||!Number.isInteger(m.level)||m.level<1||m.level>3||!Number.isInteger(m.x)||!Number.isInteger(m.y)||m.x<1||m.y<0||m.x>=s.width||m.y>=s.height-1||ids.has(m.id)||cells.has(`${m.x},${m.y}`))return false;ids.add(m.id);cells.add(`${m.x},${m.y}`);}if(!['cut','drill','inspect'].every(k=>s.machines.some(m=>m.kind===k)))return false;if(!s.machines.every(m=>path(s,{x:0,y:0},{x:m.x,y:m.y+1})!==null))return false;for(const o of s.orders){if(!['plate','shaft'].includes(o.product)||![o.qty,o.cost,o.pay,o.start,o.done,o.due,o.quality].every(n=>Number.isFinite(n)&&n>=0)||o.qty>28||o.done>o.qty||!Number.isInteger(o.id))return false;}const partIds=new Set();for(const p of s.parts){if(partIds.has(p.id)||!s.orders.some(o=>o.id===p.order)||!['plate','shaft'].includes(p.product)||!Number.isInteger(p.stage)||p.stage<0||p.stage>3||![p.x,p.y].every(Number.isFinite))return false;partIds.add(p.id);}for(const w of s.workers){if(!Number.isInteger(w.id)||typeof w.name!=='string'||![w.x,w.y,w.skill,w.xp].every(Number.isFinite)||w.skill<1||w.skill>4||!['auto','machine','inspect'].includes(w.role))return false;if(w.job&&(!partIds.has(w.job.part)||!ids.has(w.job.machine)||!Number.isFinite(w.job.remaining)||!Array.isArray(w.job.path)||!w.job.path.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y))))return false;}return true;}
 
 export function validate(s){try {if(!validState(s)||!validAccounting(s)||!validPairLinks(s))return false;
@@ -87,7 +110,7 @@ export function frontOrder(s){
 }
 
 // A bounded chunk, yielding to the UI between calls. Never dispatch or skip past a ready order.
-export function advanceToReady(s,maxTicks=100){
+export function advanceToReady(s,maxTicks=100,onWalk=null,onAssign=null){
   const limit=Number.isFinite(maxTicks)?Math.max(0,Math.min(200,Math.floor(maxTicks))):0;
   let ticks=0;
   while(true){
@@ -95,7 +118,7 @@ export function advanceToReady(s,maxTicks=100){
     if(!o)return {status:'idle',ticks};
     if(o.done===o.qty)return {status:'ready',ticks,orderId:o.id};
     if(ticks>=limit)return {status:'producing',ticks};
-    step(s,TICK);ticks++;
+    step(s,TICK,{onWalk,onAssign});ticks++;
   }
 }
 

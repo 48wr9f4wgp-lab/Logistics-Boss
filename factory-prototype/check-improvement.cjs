@@ -31,7 +31,9 @@ async function checkImprovement(browser,url,choice){
     assert.ok(drillButton.y+drillButton.height<=height,'both choices must fit on the initial phone screen');
     await screen('choices');
     await button('置き場所を試す').click();
-    assert.match(await page.locator('#placeStatus').innerText(),/3 → 1マス/);
+    assert.equal(await page.locator('#confirmPlace').isEnabled(),false);
+    const suggested=page.locator('#layoutSuggestions button').filter({hasText:/速さ・歩数とも最良[\s\S]*4列2段/});
+    await suggested.click();
     await page.locator('#layoutEstimate').filter({hasText:/117.4秒.*98.6秒/}).waitFor();
     await button('取消').click();
     assert.equal((await saved()).cash,s.cash);
@@ -40,12 +42,13 @@ async function checkImprovement(browser,url,choice){
       await button('置き場所を試す').click();
       const world=page.locator('#world'),rect=await world.boundingBox();
       const v=frameWorkshop(rect.width,rect.height,s.width);
-      await world.tap({position:project(v,2.5,1.5)});
+      await world.tap({position:project(v,.5,1.5)});
       assert.equal(await page.locator('#confirmPlace').isEnabled(),false);
       assert.equal((await world.boundingBox()).height,rect.height,'invalid tiles must not shift the floor');
       await world.tap({position:project(v,3.5,1.5)});
+      await page.locator('#layoutEstimate').filter({hasText:/98.6秒[\s\S]*穴あけ担当/}).waitFor();
       await screen('route');
-      await button('移動して受注 · ¥600').click();
+      await button('この配置で受注 · ¥600').click();
     }else{
       await button('改良して受注 · ¥2,100').click();
     }

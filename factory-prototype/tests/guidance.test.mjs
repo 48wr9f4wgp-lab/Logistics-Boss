@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.21';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.22';
 import {openingOffer,deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs';
 
 function ready(s) {

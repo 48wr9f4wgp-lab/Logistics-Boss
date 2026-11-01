@@ -321,3 +321,24 @@ dialog[data-panel="inquiry"] .sheet-head{padding-block:5px}
 .inquiry-note{display:block;margin:6px 0;color:var(--muted);font-size:11px;line-height:1.4}
 
 #inquiryPicker .inquiry-late{color:#ffb99b}
+
+#placementBar:has(#layoutTools:not([hidden])){padding:7px 12px max(8px,env(safe-area-inset-bottom))}
+#layoutTools{margin-top:3px}
+.layout-picker{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.layout-picker label,.layout-picker button{font-size:12px}
+.layout-picker select{background:#243f35;color:#edf1e8;border:1px solid #718b73;border-radius:7px;min-height:44px;padding:0 5px}
+.layout-picker button{padding:5px 10px}
+#layoutCoverage{display:block;min-height:17px;color:#bcd1b8;font-size:11px;line-height:17px}
+#layoutSuggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;height:46px}
+#layoutSuggestions button{white-space:nowrap;text-align:left;font-size:12px;line-height:1.3;padding:4px 7px;background:#31483b;border-color:#789171}
+#layoutSuggestions button:only-child{grid-column:span 2}
+#placementBar:has(#layoutTools:not([hidden])) #placeStatus{margin:2px 0;min-height:2.8em}
+#placementBar:has(#layoutTools:not([hidden])) #layoutEstimate{min-height:3.95em;line-height:1.3;margin:1px 0}
+@media(min-width:700px){#placementBar>div:first-child{flex:1;min-width:0}}
+
+#layoutSuggestions button[aria-pressed="true"]{border-color:#f5d68b;background:#42513a;box-shadow:inset 0 0 0 1px #e5cc87}
+
+#layoutSuggestions .candidate-heading{display:flex;align-items:baseline;justify-content:space-between;gap:2px;font-size:12px;line-height:1.3}
+#layoutSuggestions .candidate-heading small{font-size:11px;font-weight:500;color:#e4dfc6}
+#layoutSuggestions strong{display:block;margin-top:1px;font-size:13px;font-variant-numeric:tabular-nums}
+#placementBar:has(#layoutTools:not([hidden])) #layoutEstimate{white-space:pre-line}
