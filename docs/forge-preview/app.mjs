@@ -25,7 +25,7 @@ const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 try{const raw=localStorage.getItem(KEY);if(raw){const env=JSON.parse(raw);if(!M.validate(env.state))throw Error('invalid');s=env.state;restoreSpecialties(s);restoreWorkMode();revision=env.revision;}}catch{saveBlocked=true;speed=0;}
 function restoreWorkMode(){
   // Previously accepted jobs retain their original manual shipping agreement.
-  if(s.autoWork===undefined)s.autoWork=!M.frontOrder(s);
+  if(s.autoWork===undefined&&!M.frontOrder(s))s.autoWork=true;
 }
 // A completed saved order remains safe to dispatch after reopening the page.
 if(s.orders.some(o=>!o.shipped&&o.done===o.qty))speed=0;
@@ -103,7 +103,8 @@ function update(){
       const waiting=M.route(active.product).filter(k=>queues[k].waiting>0).sort((a,b)=>queues[b].waiting-queues[a].waiting)[0];
       if(!active.briefId)floorHint=waiting?M.MACHINES[waiting].name+'の前で'+queues[waiting].waiting+(active.product==='shaft'?'本':'個')+'が順番待ち。':'職人が残りの運搬・加工を進めています。';
     }
-  }else if(s.autoWork&&action.type==='accept')floorHint='受注すると職人が製作し、完成時に出荷します。';
+  }else if(active&&s.autoWork===undefined&&!skipping)floorHint='この注文は手動出荷。「操作 → おまかせ」で今から任せられます。';
+  else if(s.autoWork&&action.type==='accept')floorHint='受注すると職人が製作し、完成時に出荷します。';
   button.hidden=delegated&&!decision;
   $('#skipDelegated').hidden=!delegated||!!decision;
   $('#autoMode').classList.toggle('active',s.autoWork===true);
@@ -459,7 +460,11 @@ const resultMoney=v=>'¥'+v.toLocaleString('ja-JP',{minimumFractionDigits:1,maxi
 const duration=v=>v.toFixed(1)+'秒';
 function ship(id){
   const order=s.orders.find(o=>o.id===id);
-  if(!act(()=>M.dispatch(s,id),false))return;
+  if(!act(()=>{
+    const error=M.dispatch(s,id);
+    if(!error)restoreWorkMode();
+    return error;
+  },false))return;
   recentShipment=s.results[0];speed=0;
   departure={product:order.product,qty:order.qty,start:performance.now()};
   if(tab)close();

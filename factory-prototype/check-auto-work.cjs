@@ -1,4 +1,5 @@
 const assert=require('node:assert/strict');
+const path=require('node:path');
 async function checkAutoWork(browser,url){
   const M=await import('../docs/forge-preview/model.mjs');
   const engine=browser.browserType().name(),width=engine==='webkit'?390:320,height=width===320?568:844;
@@ -6,10 +7,10 @@ async function checkAutoWork(browser,url){
     let r;do{r=M.advanceToReady(s,200);}while(r.status==='producing');
     assert.equal(M.dispatch(s,r.orderId),null);
   }
-  for(const scenario of ['first','inquiry','pair','legacy']){
+  for(const scenario of ['first','inquiry','pair','legacy','switch']){
     const s=M.fresh(),expected=structuredClone(s);
     if(scenario==='first'){M.accept(expected,'first');finish(expected);}
-    else if(scenario!=='legacy'){for(let i=0;i<2;i++){M.accept(s,'first');finish(s);}M.accept(s,'bulk');}
+    else if(['inquiry','pair'].includes(scenario)){for(let i=0;i<2;i++){M.accept(s,'first');finish(s);}M.accept(s,'bulk');}
     else{M.accept(s,'first');delete s.autoWork;}
     const ctx=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true});
     try{
@@ -23,13 +24,14 @@ async function checkAutoWork(browser,url){
       if(scenario==='first'){
         await button('材料費 ¥600 で受注する').click();
         assert.equal(await page.locator('#orderAction').isVisible(),false);
+        await page.screenshot({path:path.join(process.env.RUNNER_TEMP||'.','factory-floor-screens',engine+'-'+width+'-auto-floor.jpg'),quality:90});
         await page.reload();
         await button('工場の改善を選ぶ').waitFor({timeout:30000});
         const paid=await read();assert.equal(paid.delivered,1);assert.equal(M.frontOrder(paid),null);
         assert.equal(paid.cash,expected.cash);assert.deepEqual(paid.results,expected.results);
         await page.reload();await button('工場の改善を選ぶ').waitFor();
         assert.equal((await read()).cash,paid.cash);
-      }else if(scenario!=='legacy'){
+      }else if(['inquiry','pair'].includes(scenario)){
         await button('小口6個の条件を見る').waitFor();
         await page.waitForTimeout(350);await page.reload();await button('小口6個の条件を見る').waitFor();
         const paused=await read();assert.equal(paused.clock,s.clock);assert.deepEqual(paused.parts,s.parts);
@@ -55,8 +57,9 @@ async function checkAutoWork(browser,url){
         assert.equal(paid.results[0].payout,solo.results[0].payout);
       }else{
         await button('完成まで進める').click();await button('出荷する').waitFor();
-        const held=await read();assert.equal(held.delivered,0);assert.equal(held.autoWork,false);
-        await page.locator('#controls summary').click();await button('おまかせ運転').click();
+        const held=await read();assert.equal(held.delivered,0);assert.equal(held.autoWork,undefined);
+        if(scenario==='switch'){await page.locator('#controls summary').click();await button('おまかせ運転').click();}
+        else await button('出荷する').click();
         await page.waitForFunction(()=>JSON.parse(localStorage.getItem('forge.factory.v1')).state.delivered===1);
         assert.equal((await read()).autoWork,true);
       }
