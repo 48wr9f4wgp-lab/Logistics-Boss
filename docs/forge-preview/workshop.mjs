@@ -733,13 +733,19 @@ function waitingParts(g,stock) {
   // waiting parts get drawn; a second product is visible even in a full tote.
   const x=stock.x+.54,y=stock.y+.03,w=.44,d=.34;
   g.shadow(x,y,w,d,.14);
-  g.box(x,y,w,d,.077,'#3e6e7b','#708e8b','#304f5c');
-  g.box(x,y,w,.026,.085,'#668884','#88aaa2','#3c626d',.072);
+  const q=g.p(x,y);
+  if(g.station)paintStationDetail(g.ctx,g.station,'tote-back',q.x,q.y,g.v.u);
+  else{
+    g.box(x,y,w,d,.077,'#3e6e7b','#708e8b','#304f5c');
+    g.box(x,y,w,.026,.085,'#668884','#88aaa2','#3c626d',.072);
+  }
   const plates=stock.parts.filter(p=>p.product==='plate');
   const shafts=stock.parts.filter(p=>p.product==='shaft');
-  for(let i=0;i<Math.min(plates.length,3);i++)workpiece(g,plates[i],x+.033,y+.04,.09+i*.045,1.16);
-  for(let i=0;i<Math.min(shafts.length,3);i++)workpiece(g,shafts[i],x+.035,y+.10+i*.047,.106+Math.min(plates.length,3)*.045,1.02);
-  g.box(x,y+d-.025,w,.025,.08,'#457784','#83a5a4','#345361',.072);
+  const bed=g.station ? .046 : .09;
+  for(let i=0;i<Math.min(plates.length,3);i++)workpiece(g,plates[i],x+.033,y+.04,bed+i*.049,1.16);
+  for(let i=0;i<Math.min(shafts.length,3);i++)workpiece(g,shafts[i],x+.035,y+.08+i*.080,bed+Math.min(plates.length,3)*.049,1.02);
+  if(g.station)paintStationDetail(g.ctx,g.station,'tote-front',q.x,q.y,g.v.u);
+  else g.box(x,y+d-.025,w,.025,.08,'#457784','#83a5a4','#345361',.072);
 }
 
 function materials(g,s,incoming,shippingArt) {
@@ -749,8 +755,14 @@ function materials(g,s,incoming,shippingArt) {
   const plates=incoming.filter(p=>p.product==='plate'),shafts=incoming.filter(p=>p.product==='shaft');
   const plateLayers=Math.min(4,Math.ceil(plates.length/5));
   for(let i=0;i<plateLayers;i++){
-    box(.13,.18,.58,.45,.046,'#819b9b','#d1dbcd','#5c7b77',.16+i*.05);
-    line([[.15,.27,.209+i*.05],[.67,.27,.209+i*.05]],'#edf0da',.8);
+    const z=.17+i*.046;
+    if(g.station){
+      const q=g.p(.13,.18,z);
+      paintStationDetail(g.ctx,g.station,'raw-layer',q.x,q.y,g.v.u);
+    }else{
+      box(.13,.18,.58,.45,.046,'#819b9b','#d1dbcd','#5c7b77',z);
+      line([[.15,.27,z+.048],[.67,.27,z+.048]],'#edf0da',.8);
+    }
   }
   for(let i=0;i<Math.min(4,Math.ceil(shafts.length/4));i++)workpiece(g,shafts[0],.14,.2+i*.1,.17+plateLayers*.05,1.5);
   const dockY=s.height-.86;

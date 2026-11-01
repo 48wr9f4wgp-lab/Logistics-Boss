@@ -36,6 +36,29 @@ def part(s,product,stage):
     for x in (.281,.291,.301,.311,.321):
         s.torus((x,.07,.046),(1,0,0),.026,.002,'iron')
 
+def containers(s,key):
+    b=s.box
+    if key=='raw-layer':
+        # Mill scale remains on the faces; sheared edges expose brighter metal.
+        b(.003,.004,0,.573,.441,.042,'millscale',.006)
+        b(.004,.440,.004,.57,.006,.019,'stock',.002)
+        b(.573,.008,.005,.005,.428,.017,'steel',.001)
+        b(.074,.016,.042,.003,.415,.001,'steel',0)
+        return
+    if key=='tote-back':
+        b(.008,.009,.008,.422,.315,.031,'press',.009)
+        b(.012,.015,.04,.414,.299,.005,'shade',.002)
+        b(0,0,.01,.44,.030,.125,'press',.008)
+        b(0,.025,.01,.022,.28,.124,'press',.005)
+        return
+    # Side mouths and front label hide just the lower portion of the contents.
+    b(.418,.024,.01,.022,.30,.123,'press',.006)
+    b(0,.307,.01,.44,.025,.089,'press',.006)
+    for x in (0,.290):b(x,.307,.085,.15,.025,.046,'press',.005)
+    b(0,.305,.120,.44,.031,.018,'cover',.006)
+    for x in (.022,.12,.30,.40):b(x,.332,.023,.014,.009,.063,'cover',.003)
+    b(.176,.333,.036,.087,.004,.043,'paper',.002)
+
 def station(s,kind):
     if kind=='inspect': # Its articulated green lamp already belongs to the bench.
         # Caliper case open, behind the measuring surface. Dark felt cradles the spare tools.
@@ -86,6 +109,10 @@ def build(work,dest,scene,render,pack,crew):
             s=scene();part(s,product,stage)
             im,world=render(s,work,key,185,120,268,63,41,0,8,10)
             entries.append((key,im,world))
+    for key in ('raw-layer','tote-back','tote-front'):
+        s=scene();containers(s,key)
+        im,world=render(s,work,key,310,205,239,128,41,0,8,8)
+        entries.append((key,im,world))
     for facing in range(4):
         for working in (0,1):
             key=f'shadow-{facing}-{working}';s=scene()

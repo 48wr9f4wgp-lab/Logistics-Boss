@@ -44,7 +44,7 @@ test('finished plate holes and turned shaft profiles follow their actual saved s
     assert.equal(new Set(keys).size,3);
     for(const key of keys)assert.ok(stationFrames[key]);
   }
-  for(const kind of ['cut','drill','lathe','inspect'])assert.ok(stationFrames[kind]);
+  for(const kind of ['cut','drill','lathe','inspect','tote-back','tote-front','raw-layer'])assert.ok(stationFrames[kind]);
   for(const [index,[x,y]] of [[1,0],[0,1],[-1,0],[0,-1]].entries()){
     assert.equal(crewFacing(x,y),index);
     for(const working of [0,1])assert.ok(stationFrames['shadow-'+index+'-'+working]);
