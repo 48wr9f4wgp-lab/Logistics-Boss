@@ -73,12 +73,12 @@ export function deliveryGuide(s,report=s.results?.[0]) {
   }
 
   if(report.orderId===s.results?.[0]?.orderId&&report.offerId==='first'){
-    if(repeatOffer(s))return {
+    if(s.delivered===1&&repeatOffer(s))return {
       ...summary,title:'同じ12個、次はどう作る？',
       body:'ボール盤の置き場所か加工速度を変えて、もう一度この注文を作れます。',
       primary:panel('improve','工場の改善を選ぶ'),secondary:panel('growth','成長目標へ進む')
     };
-    if(s.delivered===2&&M.previousResult(s,report)&&M.offerStatus(s,'rush').available)return {
+    if(report.repeatCost!==undefined&&M.previousResult(s,report)&&M.offerStatus(s,'rush').available)return {
       ...summary,title:'短納期プレートを受けられます',
       body:'次は28個を200秒で納品する仕事です。条件を見て受注を決められます。',
       primary:growth('rush','短納期の注文を見る'),secondary:panel('growth','ほかの成長目標を見る')

@@ -32,15 +32,16 @@ function update(){
   $('#cash').textContent=money(s.cash);
   $('#ticketLabel').textContent=ticket.label;
   const active=M.frontOrder(s);
-  const shownReport=recentShipment||(!active&&!s.goalOffer?s.results?.[0]:null);
+  const latest=s.results?.[0];
+  const shownReport=recentShipment||(!active&&(!s.goalOffer||latest?.repeatCost!==undefined)?latest:null);
   const comparison=active?'':comparisonLine(s,shownReport);
   $('#orderComparison').textContent=comparison;
   $('#orderComparison').hidden=!comparison;
-  if(recentShipment||comparison){
+  if(recentShipment||(comparison&&!s.goalOffer)){
     const profit=M.resultProfit(shownReport);
     $('#ticketLabel').textContent='出荷完了 · '+(profit===null?'入金 '+money(shownReport.payout):'受注利益 '+signedMoney(profit)+(shownReport.repeatCost?' · 改良費 '+money(shownReport.repeatCost):''));
   }
-  $('#orderTitle').textContent=comparison?shownReport.label+' '+shownReport.qty+'個を出荷':ticket.title;
+  $('#orderTitle').textContent=comparison&&(recentShipment||!s.goalOffer)?shownReport.label+' '+shownReport.qty+'個を出荷':ticket.title;
   $('#orderHint').textContent=ticket.hint;
   $('#orderHint').hidden=!ticket.hint;
   button.textContent=ticket.action.label;
@@ -212,6 +213,7 @@ if(tab==='orders'){
   const recommended=openingOffer(s);
   html+=recommended?'<p>まずは一件、受注 → 完成まで進める → 出荷。詳細画面を開いている間は時間が止まります。</p>':'<p>同時受注は2件。受注時に材料を購入します。詳細画面を開いている間は時間が止まります。</p>';
   if(recommended)html+=offerCard(recommended,true);
+  else if(repeatOffer(s))html+='<button class="wide" data-next="improve">前回の12個で改善を試す</button>';
   html+='<button class="wide growth-entry" data-next="growth">成長案件 · 投資で次の仕事へ ↗</button>';
   if(recommended)html+='<h3 class="other-offers">ほかの注文</h3>';
   for(const o of M.OFFERS.filter(o=>!o.growth&&o.id!==recommended?.id))html+=offerCard(o);

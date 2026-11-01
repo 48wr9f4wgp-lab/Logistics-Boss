@@ -3,8 +3,9 @@
 import * as M from './model.mjs?v=0.18';
 
 export function repeatOffer(s){
-  const report=s.results?.[0];
-  if(s.delivered!==1||s.goalOffer||M.frontOrder(s)||report?.offerId!=='first'||report.seconds==null)return null;
+  if(M.frontOrder(s))return null;
+  const report=s.results?.find(r=>r.offerId==='first'&&r.seconds!=null);
+  if(!report)return null;
   const offer=M.OFFERS.find(o=>o.id===report.offerId);
   if(!M.offerStatus(s,offer.id).available)return null;
   const drill=s.machines.find(m=>m.kind==='drill');

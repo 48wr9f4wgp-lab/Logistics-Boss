@@ -53,7 +53,7 @@ for(const [choice,investment] of [['move',0],['upgrade',1500]]){
     assert.match(comparison,/短縮.*移動.*減/);
     assert.equal(comparison,comparisonLine(restored,other));
     assert.equal(deliveryGuide(s).primary.type,choice==='upgrade'?'growth':'panel');
-    assert.equal(repeatOffer(s),null);
+    assert.equal(repeatOffer(s).report.orderId,r.orderId);
   });
 }
 test('an occupied or unchanged tile, insufficient combined funds and an invalid choice spend nothing',()=>{
@@ -73,10 +73,10 @@ test('existing higher-level tools use their actual price and highest level canno
   const cash=s.cash;assert.equal(startRepeat(s,'upgrade'),null);assert.equal(s.cash,cash-3600);
   assert.equal(M.frontOrder(s).repeatCost,3000);
 });
-test('a current commitment, selected goal, legacy report or relief job does not start the improvement flow',()=>{
+test('a current commitment, missing funds, legacy report or relief job alone does not start the improvement flow',()=>{
   const s=firstShipment();
   for(const alter of [
-    k=>M.accept(k,'relief'),k=>M.setGoal(k,'master'),k=>{k.cash=599;},k=>{delete k.results;}
+    k=>M.accept(k,'relief'),k=>{k.cash=599;},k=>{delete k.results;}
   ]){
     const k=structuredClone(s);alter(k);const before=JSON.stringify(k);
     assert.equal(repeatOffer(k),null);assert.ok(startRepeat(k,'upgrade'));assert.equal(JSON.stringify(k),before);
@@ -101,4 +101,19 @@ test('repeat expenses are optional on old saves and invalid attributions are rej
   M.accept(s,'relief');let order=M.frontOrder(s);order.repeatCost=1500;assert.equal(M.validate(s),false);
   delete order.repeatCost;finish(s);s.results[0].repeatCost=0;assert.equal(M.validate(s),false);
   delete s.results[0].repeatCost;s.results[1].repeatCost=-600;assert.equal(M.validate(s),false);
+});
+
+test('a returning factory can explicitly repeat its last retained 12-piece order while keeping its growth goal',()=>{
+  const s=firstShipment(),first=s.results[0];
+  M.accept(s,'relief');finish(s);
+  assert.equal(floorTicket(s).action.panel,'growth');
+  M.setGoal(s,'master');
+  const next=floorTicket(s).action;
+  assert.notEqual(next.panel,'improve');
+  assert.equal(repeatOffer(s).report.orderId,first.orderId);
+  assert.equal(startRepeat(s,'move',{x:3,y:1}),null);
+  const r=finish(s);
+  assert.equal(M.previousResult(s,r).orderId,first.orderId);
+  assert.equal(s.goalOffer,'master');
+  assert.notEqual(floorTicket(s).action.panel,'improve');
 });
