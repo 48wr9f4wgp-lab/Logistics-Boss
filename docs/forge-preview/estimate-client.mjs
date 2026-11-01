@@ -1,6 +1,6 @@
 // Keep continuous touch input responsive. At most one snapshot runs and only
 // the most recently requested view can receive a result.
-export function createEstimator(makeWorker=()=>new Worker(new URL('./estimate-worker.mjs?v=0.20',import.meta.url),{type:'module'})){
+export function createEstimator(makeWorker=()=>new Worker(new URL('./estimate-worker.mjs?v=0.21',import.meta.url),{type:'module'})){
   let worker=null,pending=null,active=null,version=0;
   function cancel(){
     version++;pending=null;active=null;

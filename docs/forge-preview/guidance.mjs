@@ -1,6 +1,6 @@
-import * as M from './model.mjs?v=0.20';
-import {shaftEntryCost} from './precision.mjs?v=0.20';
-import {repeatOffer} from './improvement.mjs?v=0.20';
+import * as M from './model.mjs?v=0.21';
+import {shaftEntryCost} from './precision.mjs?v=0.21';
+import {repeatOffer} from './improvement.mjs?v=0.21';
 
 // Guidance describes existing state. It never accepts work, spends money or adds save fields.
 const money=value=>'¥'+Math.ceil(value).toLocaleString('ja-JP');
