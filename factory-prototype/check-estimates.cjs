@@ -19,6 +19,7 @@ async function checkEstimates(browser,url,term){
     await context.addInitScript(seed=>{
       if(!localStorage.getItem('forge.factory.v1'))localStorage.setItem('forge.factory.v1',JSON.stringify({revision:'terms',state:seed}));
     },s);
+    if(term==='offline')await context.addInitScript(()=>{window.Worker=undefined;});
     const page=await context.newPage(),errors=[];
     page.on('pageerror',e=>errors.push(e.message));
     const btn=name=>page.getByRole('button',{name,exact:true});
@@ -26,9 +27,20 @@ async function checkEstimates(browser,url,term){
     const screen=k=>page.screenshot({path:path.join(process.env.RUNNER_TEMP||'.','factory-floor-screens',engine+'-'+width+'-estimate-'+k+'.jpg'),quality:90});
     await page.goto(url,{waitUntil:'load'});await btn('短納期の注文を見る').click();
     const picker=page.locator('#termPicker'),rush=picker.locator('[data-estimate="rush"]');
+    if(term==='offline'){
+      await rush.filter({hasText:'見積を表示できません'}).waitFor();
+      await page.locator('#acceptTerm').click();
+      const order=M.frontOrder(await read());
+      assert.equal(order.offerId,'rush');assert.equal(order.quote,undefined);
+      assert.deepEqual(errors,[]);
+      console.log(engine+' unavailable estimator: normal acceptance without a fabricated estimate.');
+      return;
+    }
     await rush.filter({hasText:/超過/}).waitFor();
     assert.match(await picker.locator('[data-estimate="bulk"]').innerText(),/利益 ¥4,457/);
     assert.match(await rush.innerText(),/利益 ¥4,177/);
+    const action=await page.locator('#acceptTerm').boundingBox();
+    assert.ok(action.y>=0&&action.y+action.height<=height,'both terms and acceptance fit before scrolling');
     await picker.locator('input[value="'+term+'"]').check();
     await picker.scrollIntoViewIfNeeded();await screen('terms');
     const openLayout=async()=>{

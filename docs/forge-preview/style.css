@@ -285,3 +285,9 @@ dialog[data-panel="improve"] .sheet-head{padding-block:5px}
 #placementBar[data-estimating="true"] #placeStatus{line-height:1.4;min-height:2.8em}
 #layoutEstimate{min-height:2.8em}
 #layoutEstimate.empty-estimate{visibility:hidden}
+
+dialog:has(.freight-focus){max-height:95svh}
+dialog:has(.freight-focus) .sheet-head{padding-block:5px}
+.freight-focus>p{margin:4px 0 8px}
+.freight-focus #termPicker{margin-top:4px}
+.freight-focus .estimate-note{font-size:11px}

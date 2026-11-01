@@ -245,7 +245,7 @@ function setupPanelEstimate(){
   };
 }
 
-function freightTerms(s){
+function freightTerms(s,focused=false){
   const canRush=M.offerStatus(s,'rush').available;
   const selected=canRush&&freightSelection!=='bulk'?'rush':'bulk';
   const rows=['bulk','rush'].map(id=>{
@@ -255,7 +255,7 @@ function freightTerms(s){
   const offer=M.OFFERS.find(o=>o.id===selected);
   const machines=s.machines.filter(m=>m.kind!=='lathe').map(m=>`<option value="${escape(m.id)}">${M.MACHINES[m.kind].name}（${m.x+1}列${m.y+1}段）</option>`).join('');
   const layout=M.frontOrder(s)?'':`<details class="term-layout"><summary>設備の配置を試す</summary><label>移す設備 <select id="estimateMachine">${machines}</select></label><button id="testLayout" class="wide">床で配置を試す</button></details>`;
-  return `<fieldset id="termPicker"><legend>同じ28個の受注見積</legend>${rows}</fieldset><small class="estimate-note">今の人員・配置で追加受注せず、各注文を完成時に出荷する見積。利益は材料・人件費を引いた額です。</small><button id="acceptTerm" class="wide primary" ${!writer||saveBlocked?'disabled':''}>受注して生産開始 · 材料 ${money(offer.cost)}</button>${layout}`;
+  return `<fieldset id="termPicker"><legend>${focused?'納品条件を選ぶ':'同じ28個の受注見積'}</legend>${rows}</fieldset><small class="estimate-note">今の人員・配置で追加受注せず、各注文を完成時に出荷する見積。利益は材料・人件費を引いた額です。</small><button id="acceptTerm" class="wide primary" ${!writer||saveBlocked?'disabled':''}>受注して生産開始 · 材料 ${money(offer.cost)}</button>${layout}`;
 }
 
 function renderPanel(){const body=$('#sheetBody');$('#sheetTitle').textContent=({manage:'工場の管理',orders:'受注と出荷',growth:'成長案件',machines:'設備と配置',workers:'職人を育てる',finance:'経営と拡張',save:'保存と設定',result:'出荷結果',improve:'工場の改善'})[tab];let html='';
@@ -277,7 +277,15 @@ if(tab==='orders'){
   if(recommended)html+='<h3 class="other-offers">ほかの注文</h3>';
   for(const o of M.OFFERS.filter(o=>!o.growth&&o.id!==recommended?.id))html+=offerCard(o);
 }
-if(tab==='growth'){html='<p>目標を選ぶと工場画面で追えます。量産・精密はいつでも切替でき、両方を伸ばせます。</p>'+M.OFFERS.filter(o=>o.growth).sort((a,b)=>Number(b.id===(growthFocus||s.goalOffer))-Number(a.id===(growthFocus||s.goalOffer))).map(growthCard).join('')+'<button class="wide" data-next="orders">通常の注文を見る</button>';}
+if(tab==='growth'){
+  const offers=M.OFFERS.filter(o=>o.growth),rush=M.growthPlan(s,'rush');
+  if(growthFocus==='rush'&&canCompareFreight(rush)){
+    $('#sheetTitle').textContent='28個の受注見積';
+    html=growthCard(rush.offer,true)+'<button class="wide" id="allGrowth">ほかの成長目標を見る</button>';
+  }else{
+    html='<p>目標を選ぶと工場画面で追えます。量産・精密はいつでも切替でき、両方を伸ばせます。</p>'+offers.sort((a,b)=>Number(b.id===(growthFocus||s.goalOffer))-Number(a.id===(growthFocus||s.goalOffer))).map(o=>growthCard(o)).join('')+'<button class="wide" data-next="orders">通常の注文を見る</button>';
+  }
+}
 if(tab==='machines'){
   html='<p>改良の効果は次の作業割当から。表示は加工だけの時間で、注文全体は配置や職人の担当でも変わります。移動では今の工程を仕上げて停止し、配置後は直前の再生速度に戻ります。</p>';
   for(const m of [...s.machines].sort((a,b)=>Number(b.id===selected)-Number(a.id===selected))){
@@ -296,6 +304,7 @@ if(tab==='finance'){html=card('工場の状況','<div class="row"><span>出荷�
 if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② 完成まで進めるで待ち時間をスキップ（人件費・納期も進む）<br>③ 完成した注文を出荷して入金<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.19</small>');}
 body.innerHTML=html;
 setupPanelEstimate();
+if($('#allGrowth'))$('#allGrowth').onclick=()=>open('growth');
 if(tab==='improve'){
   const trial=repeatOffer(s);
   if(trial){
@@ -320,15 +329,19 @@ function runPlan(id){
   else if(n.type==='floor'){close();speed=speed||1;update();}
   else open('orders');
 }
-function growthCard(o){
+function canCompareFreight(plan){
+  return plan.phase==='ready'||(['prepare','funds'].includes(plan.phase)&&
+    (growthFocus==='rush'||s.goalOffer==='rush')&&M.offerStatus(s,'bulk').available);
+}
+function growthCard(o,focused=false){
   const p=M.growthPlan(s,o.id),chosen=s.goalOffer===o.id,n=p.next;
   const phaseLabel={prepare:'設備・職人を準備',funds:'資金を準備',slots:'受注枠を空ける',ready:'受注できる',producing:'生産中',ship:'出荷待ち'}[p.phase];
   const action=n.label+(n.cost!==undefined?' · '+money(n.cost):n.type==='accept'?' · 材料 '+money(o.cost):n.type==='ship'?' · '+money(M.shipmentQuote(s,p.order).pay):'');
   const budget=p.order?`<p class="goal-progress">${p.order.done} / ${p.order.qty}個 完成${M.shipmentQuote(s,p.order).late?' · 納期超過（報酬15%減）':''}</p><progress value="${p.order.done}" max="${p.order.qty}"></progress>`:`<ul class="offer-requirements">${p.status.requirements.map(r=>`<li class="${r.met?'met':''}">${r.met?'✓':'○'} ${r.label}</li>`).join('')}</ul><dl class="plan-budget"><div><dt>残りの準備費</dt><dd>${money(p.investment)}</dd></div><div><dt>受注時の材料費</dt><dd>${money(o.cost)}</dd></div><div class="budget-total"><dt>合わせて必要</dt><dd>${money(p.required)}</dd></div></dl>${p.preparations.length?`<p class="plan-detail">${p.preparations.map(v=>escape(v.label)+(v.type==='train'?' → 技能3まで':'')+' '+money(v.total)).join(' ／ ')}${p.preparations.some(v=>v.type==='train')?'<br>研修を使う場合の費用。実務で成長すると減ります。':''}</p>`:''}<p class="plan-funds ${p.shortage?'short':''}">${p.shortage?`手元 ${money(s.cash)} · あと ${money(p.shortage)}`:'準備費と材料費を確保できる資金があります'}</p><small class="plan-note">人件費・追加の効率化費は別。受注条件の達成だけでは納期は保証されません。</small>`;
-  const showTerms=o.id==='rush'&&(p.phase==='ready'||(['prepare','funds'].includes(p.phase)&&
-    (growthFocus==='rush'||s.goalOffer==='rush')&&M.offerStatus(s,'bulk').available));
+  const showTerms=o.id==='rush'&&canCompareFreight(p);
   const planButton=`<strong class="plan-next">${phaseLabel}</strong><button class="wide primary" data-plan-action="${o.id}">${escape(action)}</button>`;
-  const decision=showTerms?freightTerms(s)+(p.phase==='ready'?'':planButton):planButton;
+  const decision=showTerms?freightTerms(s,focused)+(p.phase==='ready'?'':planButton):planButton;
+  if(focused)return `<section class="freight-focus"><p>取付プレート28個 · 材料費は受注時に支払います。</p>${decision}<details class="growth-details"><summary>成長目標と費用の内訳</summary>${budget}<button data-goal="${o.id}" ${chosen?'disabled':''}>${chosen?'目標に設定中':'この目標を追う'}</button></details></section>`;
   return `<article class="card growth-card ${chosen?'chosen-goal':''}"><div class="plan-heading"><small>${o.growth}</small><button data-goal="${o.id}" ${chosen?'disabled':''}>${chosen?'✓ 目標に設定中':'この目標を追う'}</button></div><h3>${o.label}</h3><small>${o.qty}個 · 品質${o.quality} · 納期${o.due}秒 · 納品${money(o.pay)}</small><ol class="plan-steps" aria-label="目標の進み方"><li class="${p.order||p.phase==='ready'?'done':'current'}">1 準備</li><li class="${p.phase==='producing'?'current':p.phase==='ship'?'done':''}">2 生産</li><li class="${p.phase==='ship'?'current':''}">3 出荷</li></ol><details class="growth-details"><summary>条件と費用の内訳</summary>${budget}</details>${decision}</article>`;
 }
 

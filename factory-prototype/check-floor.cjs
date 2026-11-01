@@ -165,6 +165,7 @@ async function checkExpandedArt(browser,url,offlineArt=false){
     for(const [width,height] of sizes)await check(browser,process.argv[2],width,height);
     for(const choice of ['move','upgrade'])await checkImprovement(browser,process.argv[2],choice);
     for(const term of ['bulk','rush'])await checkEstimates(browser,process.argv[2],term);
+    if(process.argv[3]!=='webkit')await checkEstimates(browser,process.argv[2],'offline');
     await checkFloorControls(browser,process.argv[2]);
     await checkShift(browser,process.argv[2]);
     await checkExpandedArt(browser,process.argv[2]);
