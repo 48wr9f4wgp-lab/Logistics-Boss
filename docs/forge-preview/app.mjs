@@ -1,3 +1,4 @@
+import {writerSession} from './writer-session.mjs?v=0.26';
 import {SPECIALTIES,restoreSpecialties} from './specialties.mjs?v=0.25';
 import {BRIEFS,briefTarget,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.25';
 import {layoutEditor} from './layout-editor.mjs?v=0.25';
@@ -22,19 +23,80 @@ const $=s=>document.querySelector(s),KEY='forge.factory.v1',canvas=$('#world'),c
 let s=M.fresh(),speed=1,last=0,zoom=1,pan={x:0,y:0},placing=null,selected=null,tab=null,toastUntil=0,revision=null,writer=false,saveBlocked=false,paintTime=0,placementCells=[],resumeSpeed=1,skipping=null,tickRemainder=0,showLabels=false,lastDraw=-Infinity;
 let freightSelection=null,growthFocus=null, recentShipment=null, departure=null;
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
-try{const raw=localStorage.getItem(KEY);if(raw){const env=JSON.parse(raw);if(!M.validate(env.state))throw Error('invalid');s=env.state;restoreSpecialties(s);restoreWorkMode();revision=env.revision;}}catch{saveBlocked=true;speed=0;}
+function readFactory(refresh=false){
+  const raw=localStorage.getItem(KEY),env=raw===null?null:JSON.parse(raw);
+  if(raw!==null&&(!env||!M.validate(env.state)))throw Error('invalid save');
+  if(refresh&&!saveBlocked&&(env?.revision??null)===revision)return;
+  if(refresh){
+    if(tab)close();
+    selected=null;
+    if(placing)endPlacement();
+    recentShipment=null;departure=null;skipping=null;freightSelection=null;growthFocus=null;
+    speed=1;$('#toast').style.display='none';
+  }
+  s=env?env.state:M.fresh();saveBlocked=false;restoreSpecialties(s);restoreWorkMode();revision=env?.revision??null;
+  if(s.orders.some(o=>!o.shipped&&o.done===o.qty))speed=0;
+}
+try{readFactory();}catch{saveBlocked=true;speed=0;}
 function restoreWorkMode(){
   // Previously accepted jobs retain their original manual shipping agreement.
   if(s.autoWork===undefined&&!M.frontOrder(s))s.autoWork=true;
 }
-// A completed saved order remains safe to dispatch after reopening the page.
-if(s.orders.some(o=>!o.shipped&&o.done===o.qty))speed=0;
 function toast(t){if(tab){$('#sheetNotice').textContent=t;$('#sheetNotice').hidden=false;}$('#toast').textContent=t;$('#toast').style.display='block';toastUntil=performance.now()+4200;}
-function save(){if(!writer||saveBlocked)return;try{const previous=localStorage.getItem(KEY);if(previous&&JSON.parse(previous).revision!==revision){writer=false;speed=0;toast('別の画面で保存されました。再読み込みしてください');return;}revision=crypto.randomUUID?.()||String(Date.now()+Math.random());localStorage.setItem(KEY,JSON.stringify({revision,state:s}));}catch{saveBlocked=true;toast('保存できません。設定から進行を書き出せます');}}
-if(navigator.locks){navigator.locks.request(KEY,{ifAvailable:true},async lock=>{if(!lock){toast('別のタブで起動中です。この画面は閲覧専用');return;}writer=true;update();if(saveBlocked)toast('保存データを読み込めません。上書きせず停止しました');await new Promise(resolve=>window.addEventListener('pagehide',()=>{save();resolve();},{once:true}));});}else{writer=true;}
-window.addEventListener('storage',e=>{if(e.key===KEY){writer=false;speed=0;toast('別画面の更新を検出。再読み込みしてください');}});
-window.addEventListener('pageshow',e=>{if(e.persisted){writer=false;speed=0;toast('復帰しました。続けるには再読み込みしてください');}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){departure=null;stopSkip();}save();last=0;tickRemainder=0;});window.addEventListener('pagehide',save);setInterval(save,5000);
+let pageActive=true,waitingForWriter=false,pausedPanel=null;
+const seat=writerSession(navigator.locks,KEY,()=>{
+  try{readFactory(true);}catch{saveBlocked=true;speed=0;}
+  writer=true;waitingForWriter=false;last=0;tickRemainder=0;
+  update();
+  if(tab){
+    if($('#sheetBody').firstElementChild===pausedPanel)setupPanelEstimate();
+    else renderPanel();
+  }
+  pausedPanel=null;
+  if(placing?.editor)placing.editor.resume();
+  else if(placing)placementTicket();
+  if(saveBlocked)toast('保存に問題があります。設定から進行を確認してください');
+},()=>{
+  waitingForWriter=false;writer=false;speed=0;update();
+  toast('工場の保存権を取得できません。ページを開き直してください');
+});
+function loseWriter(){
+  writer=false;waitingForWriter=false;seat.leave();last=0;tickRemainder=0;
+  toast('別の画面で進行が更新されました。工場に戻ると最新の記録を読み込みます');
+  update();
+}
+function save(){
+  if(!writer||saveBlocked)return;
+  try{
+    const previous=JSON.parse(localStorage.getItem(KEY)||'null');
+    if((previous?.revision??null)!==revision){loseWriter();return;}
+    const next=crypto.randomUUID?.()||String(Date.now()+Math.random());
+    localStorage.setItem(KEY,JSON.stringify({revision:next,state:s}));revision=next;
+  }catch{saveBlocked=true;toast('保存できません。設定から進行を書き出せます');}
+}
+function syncSession(){
+  last=0;tickRemainder=0;
+  if(pageActive&&!document.hidden){
+    if(!writer)waitingForWriter=true;
+    seat.enter();
+  }else{
+    if(writer)pausedPanel=tab?$('#sheetBody').firstElementChild:null;
+    departure=null;estimator.cancel();placing?.editor?.suspend();
+    if(skipping)stopSkip('工場を離れたため早送りを止めました',false);
+    else save();
+    writer=false;waitingForWriter=false;seat.leave();
+  }
+}
+window.addEventListener('storage',e=>{
+  if(!writer||e.storageArea!==localStorage||(e.key!==KEY&&e.key!==null))return;
+  // Events from the previous writer may arrive after this page acquired the lock.
+  try{if((JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null)!==revision)loseWriter();}
+  catch{loseWriter();}
+});
+window.addEventListener('pagehide',()=>{pageActive=false;syncSession();});
+window.addEventListener('pageshow',()=>{pageActive=true;syncSession();});
+document.addEventListener('visibilitychange',syncSession);
+setInterval(save,5000);
 function act(fn,announce=true){if(!writer||saveBlocked){toast(saveBlocked?'保存に問題があります。設定を開いてください':'別画面で起動中です。再読み込みしてください');return;}stopSkip();const before=new Set(M.OFFERS.filter(o=>o.growth&&M.offerStatus(s,o.id).qualified).map(o=>o.id));const error=fn();if(error)toast(error);else{const unlocked=M.OFFERS.filter(o=>o.growth&&!before.has(o.id)&&M.offerStatus(s,o.id).qualified);if(unlocked.length)M.note(s,`受注条件を達成：${unlocked.map(o=>o.label).join('・')}`);recentShipment=null;save();if(announce)toast(s.log[0]);}update();if(tab)renderPanel();return !error;}
 const money=v=>'¥'+Math.floor(v).toLocaleString('ja-JP');
 function update(){
@@ -109,6 +171,10 @@ function update(){
   $('#skipDelegated').hidden=!delegated||!!decision;
   $('#autoMode').classList.toggle('active',s.autoWork===true);
   $('#autoMode').setAttribute('aria-pressed',String(s.autoWork===true));
+  if(waitingForWriter&&!writer){
+    $('#ticketLabel').textContent='工場の進行を確認中';
+    floorHint='ほかのタブで工場が開いていれば、その画面を離れるとこちらで続けられます。';
+  }
   $('#orderHint').textContent=floorHint;
   $('#orderHint').hidden=!floorHint;
   button.textContent=action.label;
@@ -403,7 +469,7 @@ if(tab==='workers'){
 }
 if(tab==='result'){const r=s.results?.[0];html=r?receipt(r,true):'<p>まだ出荷記録がありません。</p>';}
 if(tab==='finance'){html=workshopRecord()+card('工場の状況','<div class="row"><span>出荷実績</span><b>'+s.delivered+'件</b></div><div class="row"><span>工場時間</span><b>'+Math.floor(s.clock/60)+'分'+Math.floor(s.clock%60)+'秒</b></div>')+card('収支',`<div class="row"><span>累計売上</span><b>${money(s.revenue)}</b></div><div class="row"><span>材料・投資・人件費</span><b>${money(s.expense)}</b></div><p>加工する部品がある間、人件費は毎秒¥0.7。画面を閉じている間の生産・請求はありません。</p>`)+'<h3>出荷の振り返り</h3><p>直近12件を保存。利益は設備・研修・増築費を引く前の金額です。</p>'+(s.results?.length?'<button class="wide" data-next="result">直近の出荷結果を開く</button>'+s.results.map(r=>`<details class="result-history"><summary>${escape(r.label)} × ${r.qty}<b>${M.resultProfit(r)===null?'記録なし':signedMoney(M.resultProfit(r))}</b></summary>${receipt(r,false)}</details>`).join(''):'<p>出荷すると結果をここで見返せます。</p>')+card('工場を広げる',`<p>床面積を8×6から10×8へ。追加設備と動線のための余白を作ります。</p><button class="primary wide" id="expand" ${s.width===10?'disabled':''}>${s.width===10?'拡張済み':'増築する · ¥3,500'}</button>`)+card('生産の記録',`<p>完了工程 ${s.stats.processed}回<br>品質調整 ${s.stats.rework}回<br>運搬・移動距離 ${Math.floor(s.stats.walk)}マス</p>`)+card('工場日誌',s.log.map(t=>`<p>${escape(t)}</p>`).join(''));}
-if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② おまかせで運搬・製作・出荷まで進行。小口の相談では止まります<br>③ 操作から手動の等速・3倍速や早送りも選べます<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.25</small>');}
+if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'ほかのタブからの引き継ぎを待っています。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② おまかせで運搬・製作・出荷まで進行。小口の相談では止まります<br>③ 操作から手動の等速・3倍速や早送りも選べます<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.26</small>');}
 body.innerHTML=html;
 setupPanelEstimate();
 if($('#allGrowth'))$('#allGrowth').onclick=()=>open('growth');
@@ -418,7 +484,7 @@ if(tab==='improve'){
     };
   }
 }
-body.querySelectorAll('[data-result-action]').forEach(b=>b.onclick=()=>runResultAction(b.dataset.resultAction));body.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{if(act(()=>M.setGoal(s,b.dataset.goal))){growthFocus=null;renderPanel();$('#sheet').scrollTop=0;}});body.querySelectorAll('[data-plan-action]').forEach(b=>b.onclick=()=>runPlan(b.dataset.planAction));body.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>open(b.dataset.next));body.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>{if(!tab||!b.isConnected)return;if(act(()=>M.accept(s,b.dataset.order))){close();speed=speed||1;update();}});body.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>ship(+b.dataset.ship));body.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>place({kind:b.dataset.buy}));body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>place({id:b.dataset.move,kind:s.machines.find(m=>m.id===b.dataset.move).kind}));body.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>act(()=>M.upgrade(s,b.dataset.upgrade)));body.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>act(()=>M.sell(s,b.dataset.sell)));body.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>act(()=>M.train(s,+b.dataset.train)));body.querySelectorAll('[data-role]').forEach(b=>b.onchange=()=>act(()=>{s.workers.find(w=>w.id===+b.dataset.role).role=b.value;M.note(s,'担当の優先順位を変更');}));body.querySelectorAll('[data-mentor]').forEach(b=>b.onclick=()=>act(()=>{const w=s.workers.find(w=>w.id===+b.dataset.mentor);w.mentor=!w.mentor;M.note(s,`${w.name}の指導役を変更`);}));if($('#expand'))$('#expand').onclick=()=>act(()=>M.expand(s));if($('#export'))$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({revision,state:s})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='machikoba-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};if($('#reload'))$('#reload').onclick=()=>location.reload();if($('#import'))$('#import').onchange=async e=>{try{const f=e.target.files[0];if(!f||f.size>200000)throw Error();const data=JSON.parse(await f.text());if(!M.validate(data.state))throw Error();if(!writer){toast('別のタブを閉じて再読み込みしてください');return;}if(!confirm('現在の進行を、選んだセーブに置き換えますか？'))return;s=data.state;restoreSpecialties(s);restoreWorkMode();recentShipment=null;departure=null;saveBlocked=false;revision=JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null;save();update();renderPanel();toast('セーブを読み込みました');}catch{toast('対応する正常なセーブではありません。進行は変更していません');}};}
+body.querySelectorAll('[data-result-action]').forEach(b=>b.onclick=()=>runResultAction(b.dataset.resultAction));body.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{if(act(()=>M.setGoal(s,b.dataset.goal))){growthFocus=null;renderPanel();$('#sheet').scrollTop=0;}});body.querySelectorAll('[data-plan-action]').forEach(b=>b.onclick=()=>runPlan(b.dataset.planAction));body.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>open(b.dataset.next));body.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>{if(!tab||!b.isConnected)return;if(act(()=>M.accept(s,b.dataset.order))){close();speed=speed||1;update();}});body.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>ship(+b.dataset.ship));body.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>place({kind:b.dataset.buy}));body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>place({id:b.dataset.move,kind:s.machines.find(m=>m.id===b.dataset.move).kind}));body.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>act(()=>M.upgrade(s,b.dataset.upgrade)));body.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>act(()=>M.sell(s,b.dataset.sell)));body.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>act(()=>M.train(s,+b.dataset.train)));body.querySelectorAll('[data-role]').forEach(b=>b.onchange=()=>act(()=>{s.workers.find(w=>w.id===+b.dataset.role).role=b.value;M.note(s,'担当の優先順位を変更');}));body.querySelectorAll('[data-mentor]').forEach(b=>b.onclick=()=>act(()=>{const w=s.workers.find(w=>w.id===+b.dataset.mentor);w.mentor=!w.mentor;M.note(s,`${w.name}の指導役を変更`);}));if($('#expand'))$('#expand').onclick=()=>act(()=>M.expand(s));if($('#export'))$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({revision,state:s})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='machikoba-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};if($('#reload'))$('#reload').onclick=()=>location.reload();if($('#import'))$('#import').onchange=async e=>{try{const f=e.target.files[0];if(!f||f.size>200000)throw Error();const data=JSON.parse(await f.text());if(!M.validate(data.state))throw Error();if(!writer){toast('工場を使用中のタブを離れてください');return;}if(!confirm('現在の進行を、選んだセーブに置き換えますか？'))return;s=data.state;restoreSpecialties(s);restoreWorkMode();recentShipment=null;departure=null;saveBlocked=false;revision=JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null;save();update();renderPanel();toast('セーブを読み込みました');}catch{toast('対応する正常なセーブではありません。進行は変更していません');}};}
 
 
 function runPlan(id){
@@ -698,7 +764,7 @@ function stopSkip(message='早送りを停止しました',announce=true){
   skipping=null;speed=0;tickRemainder=0;last=0;M.note(s,message);save();if(announce)toast(message);update();
 }
 function frame(t){
-  const playable=writer&&!saveBlocked&&!document.hidden&&!tab;
+  const playable=writer&&!saveBlocked&&pageActive&&!document.hidden&&!tab;
   if(skipping){
     if(!playable||placing)stopSkip();
     else{
@@ -733,12 +799,5 @@ function frame(t){
   }else tickRemainder=0;
   last=t;if(!document.hidden&&t-lastDraw>=1000/30){draw(t);lastDraw=t;}if(t-paintTime>250){update();paintTime=t;}if(t>toastUntil)$('#toast').style.display='none';requestAnimationFrame(frame);
 }
-document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){estimator.cancel();placing?.editor?.suspend();}
-  else if(placing?.editor)placing.editor.resume();
-  else if(placing)placementTicket();
-  else if(tab)setupPanelEstimate();
-});
-window.addEventListener('pagehide',()=>estimator.cancel());
-update();requestAnimationFrame(frame);
+syncSession();update();requestAnimationFrame(frame);
 

@@ -8,6 +8,7 @@ const {checkEstimates}=require('./check-estimates.cjs');
 const {checkImprovement}=require('./check-improvement.cjs');
 const {checkFloorControls}=require('./check-floor-controls.cjs');
 const {checkLayout}=require('./check-layout.cjs');
+const {checkResume}=require('./check-resume.cjs');
 const {checkAutoWork}=require('./check-auto-work.cjs');
 const {checkBrief}=require('./check-brief.cjs');
 const { chromium, webkit } = require('playwright-core');
@@ -165,7 +166,7 @@ async function checkExpandedArt(browser,url,offlineArt=false){
   }finally{await context.close();}
 }
 (async()=>{
-  const browser=process.argv[3]==='webkit'?await webkit.launch():await chromium.launch({channel:'chrome',args:['--no-sandbox']});
+  const browser=process.argv[3]==='webkit'?await webkit.launch():await chromium.launch({channel:'chrome',args:['--no-sandbox'],ignoreDefaultArgs:['--disable-back-forward-cache']});
   try {
     const sizes=process.argv[3]==='webkit'?[[390,844]]:[[390,844],[320,568]];
     for(const [width,height] of sizes)await check(browser,process.argv[2],width,height);
@@ -178,6 +179,7 @@ async function checkExpandedArt(browser,url,offlineArt=false){
     await checkLayout(browser,process.argv[2]);
     await checkBrief(browser,process.argv[2]);
     await checkAutoWork(browser,process.argv[2]);
+    await checkResume(browser,process.argv[2]);
     await checkShift(browser,process.argv[2]);
     await checkExpandedArt(browser,process.argv[2]);
     if(process.argv[3]!=='webkit')await checkExpandedArt(browser,process.argv[2],true);
