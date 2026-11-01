@@ -104,3 +104,18 @@ test('missing, stale or corrupt links are rejected, and initial orders keep thei
   e.pair.priority='primary';p.pair.peer={id:e.id,profit:10,late:false};assert.equal(M.validate(s),false);
   delete p.pair.peer;s.orders=s.orders.filter(o=>o.id!==e.id);assert.equal(M.validate(s),false);
 });
+
+test('finishing one side releases the slot without granting the old priority to an unrelated third job',()=>{
+  const s=factory('master'),id=M.frontOrder(s).id,solo=forecast(s,id,'solo').primary;
+  decideInquiry(s,id,'extra',solo);
+  const small=finish(s);assert.equal(small.offerId,'relief');
+  assert.equal(M.accept(s,'bulk'),null);assert.equal(inquiryContext(s),null);
+  const comparison=structuredClone(s);
+  // Remove only the association on the comparison copy. Work must schedule identically.
+  for(const o of comparison.orders)delete o.pair;for(const r of comparison.results)delete r.pair;
+  for(let i=0;i<400;i++){M.step(s,M.TICK);M.step(comparison,M.TICK);}
+  assert.deepEqual(s.workers,comparison.workers);assert.deepEqual(s.parts,comparison.parts);
+  const reports=[finish(s),finish(s)],parent=reports.find(r=>r.orderId===id);
+  assert.equal(pairResult(parent).profit,M.resultProfit(small)+M.resultProfit(parent));
+  assert.equal(reports.find(r=>r.offerId==='bulk').pair,undefined);
+});

@@ -52,7 +52,7 @@ async function checkInquiry(browser,url,flow){
       return;
     }
     if(flow==='hold'){
-      await btn('先約14個まで進めて再検討').click();
+      await btn('先約14個まで進める').click();
       await page.locator('.inquiry-desk>p').filter({hasText:/14\/28個完成/}).waitFor();
       const half=await read();assert.equal(half.orders.filter(o=>!o.shipped).length,1);
       assert.ok(half.cash<s.cash);await impact('primary').filter({hasText:/2件利益/}).waitFor();
@@ -76,9 +76,10 @@ async function checkInquiry(browser,url,flow){
     state=await read();assert.ok(M.validate(state));
     const result=pairResult(state.results[0]);assert.ok(result);
     assert.deepEqual(result,pairResult(state.results[1]));
-    assert.match(await page.locator('#orderComparison').innerText(),/2件利益.*先約単独比/);
+    assert.match(await page.locator('#orderTitle').innerText(),/2件の受注利益/);
+    assert.match(await page.locator('#orderComparison').innerText(),/先約単独比/);
     await capture('result');await page.reload();
-    assert.match(await page.locator('#orderComparison').innerText(),/2件利益/);
+    assert.match(await page.locator('#orderComparison').innerText(),/先約単独比/);
     await btn('管理').click();await btn('経営と出荷記録').click();await btn('直近の出荷結果を開く').click();
     assert.match(await page.locator('#sheetBody').innerText(),/2件利益.*先約単独比/);
     assert.deepEqual(errors,[]);

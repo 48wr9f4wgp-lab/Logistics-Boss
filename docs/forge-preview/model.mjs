@@ -135,7 +135,7 @@ function validAccounting(s){
   if(!Array.isArray(s.results)||s.results.length>12||s.results.length>s.delivered)return false;
   const ids=new Set();let lastTime=Infinity;
   for(const r of s.results){
-    if(!r||!validPairRecord(r,r.orderId)||(r.pair&&r.wages===null)||!validGrowth(r,r.growth)||!validCrewChoice(r)||((r.quote||r.qualitySpend!==undefined)&&r.wages===null)||!validRepeatCost(r)||!validQuote(r.offerId,r.quote)||!Number.isInteger(r.orderId)||r.orderId<1||ids.has(r.orderId)||typeof r.label!=='string'||r.label.length>100||!Number.isInteger(r.qty)||r.qty<1||r.qty>28||typeof r.late!=='boolean'||![r.payout,r.material,r.shippedAt].every(nonnegative)||r.shippedAt>s.clock||r.shippedAt>lastTime)return false;
+    if(!r||!validPairRecord(r,r.orderId)||((r.pair||r.declinedExtra)&&r.wages===null)||!validGrowth(r,r.growth)||!validCrewChoice(r)||((r.quote||r.qualitySpend!==undefined)&&r.wages===null)||!validRepeatCost(r)||!validQuote(r.offerId,r.quote)||!Number.isInteger(r.orderId)||r.orderId<1||ids.has(r.orderId)||typeof r.label!=='string'||r.label.length>100||!Number.isInteger(r.qty)||r.qty<1||r.qty>28||typeof r.late!=='boolean'||![r.payout,r.material,r.shippedAt].every(nonnegative)||r.shippedAt>s.clock||r.shippedAt>lastTime)return false;
     ids.add(r.orderId);lastTime=r.shippedAt;
     const values=[r.wages,r.seconds,r.walk,r.rework];
     if(!values.every(v=>v===null)&&!(values.every(nonnegative)&&Number.isInteger(r.rework)&&r.rework<=r.qty&&r.seconds<=r.shippedAt))return false;

@@ -10,7 +10,7 @@ import {createEstimator} from './estimate-client.mjs?v=0.21';
 import {acceptPrecision,installStarterLathe} from './precision.mjs?v=0.21';
 import {precisionDesk,bindPrecisionDesk} from './precision-view.mjs?v=0.21';
 import {advanceToReview,decideInquiry,inquiryContext} from './inquiry.mjs?v=0.21';
-import {pairResult} from './pairing.mjs?v=0.21';
+import {pairResult,yenGain} from './pairing.mjs?v=0.21';
 import {bindInquiry,inquirySheet} from './inquiry-view.mjs?v=0.21';
 const workshopArt=createArtLoader(),estimator=createEstimator();
 const shaftChoice={offer:'fine',inspector:null,investment:'none',benchId:null};
@@ -45,15 +45,16 @@ function update(){
   const latest=s.results?.[0];
   const shownReport=recentShipment||(!active&&(!s.goalOffer||latest?.repeatCost!==undefined||latest?.qualitySpend!==undefined||latest?.pair||latest?.declinedExtra)?latest:null);
   const result=!active&&pairResult(shownReport);
-  const comparison=result?pairLine(result):active?'':shownReport?.declinedExtra?declineLine(shownReport):comparisonLine(s,shownReport);
+  const comparison=result?pairLine(result,false):active?'':shownReport?.declinedExtra?declineLine(shownReport):comparisonLine(s,shownReport);
   $('#orderComparison').textContent=comparison;
   $('#orderComparison').hidden=!comparison;
-  if(recentShipment||(comparison&&!s.goalOffer)){
+  if(result)$('#ticketLabel').textContent='出荷完了 · 先約＋小口';
+  else if(recentShipment||(comparison&&!s.goalOffer)){
     const profit=M.resultProfit(shownReport);
     if(shownReport.qualitySpend!==undefined)$('#ticketLabel').textContent='出荷完了 · 手残り '+signedMoney(profit-shownReport.qualitySpend);
     else $('#ticketLabel').textContent='出荷完了 · '+(profit===null?'入金 '+money(shownReport.payout):'受注利益 '+signedMoney(profit)+(shownReport.repeatCost?' · 改良費 '+money(shownReport.repeatCost):''));
   }
-  $('#orderTitle').textContent=active?.pair?(active.id===active.pair.primary?'先約 · ':'小口 · ')+ticket.title:result?'2件の出荷完了':comparison&&(recentShipment||!s.goalOffer)?shownReport.label+' '+shownReport.qty+(M.OFFERS.find(o=>o.id===shownReport.offerId)?.product==='shaft'?'本':'個')+'を出荷':ticket.title;
+  $('#orderTitle').textContent=active?.pair?(active.id===active.pair.primary?'先約 · ':'小口 · ')+ticket.title:result?'2件の受注利益 '+roundedCash(result.profit):comparison&&(recentShipment||!s.goalOffer)?shownReport.label+' '+shownReport.qty+(M.OFFERS.find(o=>o.id===shownReport.offerId)?.product==='shaft'?'本':'個')+'を出荷':ticket.title;
   let floorHint=ticket.hint;
   if(skipping?.review)floorHint='先約の半分で止まり、小口の相談に戻ります。';
   else if(consult?.extra)floorHint=(consult.primary.pair.priority==='primary'?'先約優先':'小口優先')+' · 追加の6個は '+consult.extra.done+'/6個完成。';
@@ -417,10 +418,10 @@ function resultNext(guide){
   const button=(action,which)=>action?`<button class="wide ${which==='primary'?'primary':''}" data-result-action="${which}" ${['ship','skip'].includes(action.type)&&(!writer||saveBlocked)?'disabled':''}>${escape(action.label)}</button>`:'';
   return `<section class="result-next" aria-label="出荷後の次の行動"><small>次の一手</small><h4>${escape(guide.title)}</h4><p>${escape(guide.body)}</p>${button(guide.primary,'primary')}${button(guide.secondary,'secondary')}</section>`;
 }
-function pairLine(result){
+function pairLine(result,includeTotal=true){
   const deadlines=result.primaryLate||result.extraLate?
     (result.primaryLate?'先約超過':'先約納期内')+'・'+(result.extraLate?'小口超過':'小口納期内'):'両方納期内';
-  return deadlines+' · 2件利益 '+roundedCash(result.profit)+(result.delta===null?'':'（先約単独比 '+signedMoney(result.delta)+'）');
+  return deadlines+(includeTotal?' · 2件利益 '+roundedCash(result.profit):'')+(result.soloProfit===null?'':' · 先約単独比 '+signedMoney(yenGain(result.profit,result.soloProfit)));
 }
 function declineLine(r){
   const solo=r.declinedExtra.solo;

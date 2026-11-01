@@ -1,4 +1,5 @@
 import {OFFERS} from './model.mjs?v=0.21';
+import {yenGain} from './pairing.mjs?v=0.21';
 import {inquiryContext} from './inquiry.mjs?v=0.21';
 
 const cash=value=>(value<0?'−':'')+'¥'+Math.round(Math.abs(value)).toLocaleString('ja-JP');
@@ -14,8 +15,8 @@ export function inquirySheet(s,canWrite){
     <div class="inquiry-base" id="inquirySolo">先約単独の見積中…</div>
     <fieldset id="inquiryPicker"><legend>次の空き工程をどちらに回す？</legend>${options}</fieldset>
     <button class="wide primary" id="inquiryConfirm" ${!canWrite?'disabled':''}>${extra?'この優先順で続ける':'6個を引き受ける · 材料費 ¥0'}</button>
-    ${!extra?`<div class="inquiry-alternatives">${primary.done<half?`<button id="inquiryHold" ${!canWrite?'disabled':''}>先約${half}${primary.product==='shaft'?'本':'個'}まで進めて再検討</button>`:''}<button id="inquiryDecline" ${!canWrite?'disabled':''}>今回は見送る</button></div>`:''}
-    <small class="inquiry-note">着手済みの作業と検品担当は維持します。見積は各注文を完成時に出荷した場合です。${!extra&&primary.done<half?'半分まで進める間も賃金・納期は進みます。':''}</small></section>`;
+    ${!extra?`<div class="inquiry-alternatives">${primary.done<half?`<button id="inquiryHold" ${!canWrite?'disabled':''}>先約${half}${primary.product==='shaft'?'本':'個'}まで進める</button>`:''}<button id="inquiryDecline" ${!canWrite?'disabled':''}>今回は見送る</button></div>`:''}
+    <small class="inquiry-note">着手済みの作業と検品担当は維持します。見積は各注文を完成時に出荷した場合です。${!extra&&primary.done<half?'半数まで進めると相談に戻ります。賃金・納期も進みます。':''}</small></section>`;
 }
 
 export function bindInquiry(root,s,estimator,canWrite,decide,hold){
@@ -25,7 +26,7 @@ export function bindInquiry(root,s,estimator,canWrite,decide,hold){
   const ids={primaryId:primary.id,extraId:extra?.id??null};
   let solo=extra?.pair.solo||null;
   function paintSolo(){
-    find('inquirySolo').textContent=solo?'先約だけなら '+cash(solo.profit)+' · '+(solo.late?'納期超過':'納期内'):'先約単独の見積はありません';
+    find('inquirySolo').textContent=solo?'先約だけなら '+cash(solo.profit)+' · '+margin({margin:primary.due-solo.seconds,late:solo.late}):'先約単独の見積はありません';
   }
   if(extra)paintSolo();
   const scenarios=(extra?['primary','extra']:['solo','primary','extra']).map(priority=>({inquiry:{...ids,priority}}));
@@ -34,8 +35,13 @@ export function bindInquiry(root,s,estimator,canWrite,decide,hold){
     paintSolo();
     ['primary','extra'].forEach((key,i)=>{
       const el=root.querySelector('[data-impact="'+key+'"]'),q=rows?.[i+(extra?0:1)];
-      el.textContent=q?.extra?'先約 '+margin(q.primary)+' ／ 小口 '+margin(q.extra)+'\n2件利益 '+cash(q.profit)+(solo?'（単独比 '+diff(q.profit-solo.profit)+'）':''):
-        q?.error||'見積を表示できません';
+      if(!q?.extra){el.textContent=q?.error||'見積を表示できません';return;}
+      const deadline=(name,r)=>{
+        const span=document.createElement('span');span.className=r.late?'inquiry-late':'';
+        span.textContent=name+' '+margin(r);return span;
+      };
+      el.replaceChildren(deadline('先約',q.primary),' ／ ',deadline('小口',q.extra),document.createElement('br'),
+        '2件利益 '+cash(q.profit)+(solo?'（単独比 '+diff(yenGain(q.profit,solo.profit))+'）':''));
     });
   });
   find('inquiryConfirm').onclick=()=>{if(canWrite&&find('inquiryConfirm')?.isConnected)

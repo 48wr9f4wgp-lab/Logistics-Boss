@@ -319,3 +319,5 @@ dialog[data-panel="inquiry"] .sheet-head{padding-block:5px}
 .inquiry-alternatives{display:flex;align-items:center;gap:4px;margin-top:5px}
 .inquiry-alternatives button{flex:auto;min-height:44px;font-size:12px}
 .inquiry-note{display:block;margin:6px 0;color:var(--muted);font-size:11px;line-height:1.4}
+
+#inquiryPicker .inquiry-late{color:#ffb99b}

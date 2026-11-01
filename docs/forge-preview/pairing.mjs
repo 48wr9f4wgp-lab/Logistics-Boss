@@ -32,7 +32,7 @@ export function pairResult(r){
   const profit=actual(r).profit+p.peer.profit;
   const primaryLate=r.orderId===p.primary?r.late:p.peer.late;
   const extraLate=r.orderId===p.extra?r.late:p.peer.late;
-  return {profit,delta:p.solo?profit-p.solo.profit:null,primaryLate,extraLate};
+  return {profit,soloProfit:p.solo?.profit??null,delta:p.solo?profit-p.solo.profit:null,primaryLate,extraLate};
 }
 
 function validSolo(solo){
@@ -66,3 +66,6 @@ export function validPairLinks(s){
       (x.orderId===undefined||r.pair.peer?.profit===actual(x).profit&&r.pair.peer?.late===x.late));
   });
 }
+
+// Display the difference between the same whole-yen amounts the player sees.
+export const yenGain=(total,baseline)=>Math.round(total)-Math.round(baseline);
