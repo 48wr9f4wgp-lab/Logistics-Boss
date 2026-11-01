@@ -302,3 +302,20 @@ dialog[data-panel="precision"] .sheet-head{padding-block:5px}
 .shaft-estimate small{color:#ead3a6}
 .shaft-detail summary{padding:12px 0;min-height:44px;cursor:pointer}
 .shaft-detail small{color:var(--muted)}
+
+.ticket-heading{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.order-strip #inquiryEntry{min-height:44px;padding:4px 9px;background:transparent;border:1px solid #788365;color:#e5d4a7;font-size:12px}
+dialog[data-panel="inquiry"]{max-height:95svh}
+dialog[data-panel="inquiry"] .sheet-head{padding-block:5px}
+.inquiry-desk>p{margin:3px 0 6px;font-size:13px;line-height:1.4}
+.inquiry-base{background:#263a31;border-inline-start:3px solid #dabc77;padding:6px 9px;font-size:13px}
+#inquiryPicker{margin:7px 0 0;padding:0;border:0;min-width:0}
+#inquiryPicker legend{font-weight:700;font-size:13px}
+#inquiryPicker label{display:flex;align-items:center;gap:7px;min-height:52px;margin-top:4px;padding:5px 8px;border:1px solid #566952;border-radius:6px;cursor:pointer}
+#inquiryPicker label:has(:checked){background:#344635;border-color:#d9b472}
+#inquiryPicker input{accent-color:#e4bd79}
+#inquiryPicker strong,#inquiryPicker small{display:block}
+#inquiryPicker small{white-space:pre-line;line-height:1.4;color:#e6d5ac;font-variant-numeric:tabular-nums}
+.inquiry-alternatives{display:flex;align-items:center;gap:4px;margin-top:5px}
+.inquiry-alternatives button{flex:auto;min-height:44px;font-size:12px}
+.inquiry-note{display:block;margin:6px 0;color:var(--muted);font-size:11px;line-height:1.4}
