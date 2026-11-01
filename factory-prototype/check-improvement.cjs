@@ -72,6 +72,13 @@ async function checkImprovement(browser,url,choice){
       await button('直近の出荷結果を開く').click();assert.match(await page.locator('.result-profit').innerText(),/改良費 ¥1,500 を引くと \+¥/);
     }
     if(choice==='move'){
+      await next.click();
+      const picker=page.locator('#termPicker');
+      assert.equal(await picker.locator('input:checked').inputValue(),'bulk');
+      assert.equal(await picker.locator('input[value="rush"]').isDisabled(),true);
+      await picker.locator('[data-estimate="bulk"]').filter({hasText:/利益/}).waitFor();
+      await button('受注して生産開始 · 材料 ¥1,300').waitFor();
+      await button('工場へ戻る').click();
       await button('管理').click();await button('注文一覧').click();
       await button('前回の12個で改善を試す').click();
       assert.match(await page.locator('.trial-baseline').innerText(),new RegExp('前回 '+state.results[0].seconds.toFixed(1)+'秒'));
