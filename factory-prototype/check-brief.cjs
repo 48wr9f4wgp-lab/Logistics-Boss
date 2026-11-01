@@ -44,6 +44,12 @@ async function checkBrief(browser,url){
       const discarded=await read();assert.equal(discarded.cash,s.cash);assert.deepEqual(discarded.machines,s.machines);
       assert.equal(M.frontOrder(discarded),null);
       await open();assert.equal(await picker.inputValue(),'');
+      const optionFits=await picker.evaluate(select=>{
+        const context=document.createElement('canvas').getContext('2d'),style=getComputedStyle(select);
+        context.font=style.fontSize+' '+style.fontFamily;
+        return [...select.options].every(option=>context.measureText(option.text+(option.value?' 済':'')).width<=select.clientWidth-26);
+      });
+      assert.ok(optionFits,'the native picker must show the entire reward even when a condition is marked as earned');
       const originalHeight=(await world.boundingBox()).height;
       if(met){
         await page.locator('#layoutMachine').selectOption({label:'検品台'});

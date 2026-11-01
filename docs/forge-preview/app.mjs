@@ -51,6 +51,7 @@ function update(){
   const briefId=!active&&shownReport?.briefId;
   const comparison=briefId?BRIEFS[briefId].label+' '+briefOutcomeText(briefId,shownReport):result?pairLine(result,false):active?'':shownReport?.declinedExtra?declineLine(shownReport):comparisonLine(s,shownReport);
   $('#orderComparison').textContent=comparison;
+  $('#orderComparison').classList.toggle('brief-outcome',!!briefId);
   $('#orderComparison').hidden=!comparison;
   if(result)$('#ticketLabel').textContent='出荷完了 · 先約＋小口';
   else if(recentShipment||(comparison&&!s.goalOffer)){

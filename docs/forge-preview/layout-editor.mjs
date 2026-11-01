@@ -24,7 +24,7 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
     brief.replaceChildren(new Option('追加条件なし（通常報酬）',''));
     const earned=earnedBriefs(s);
     for(const [id,condition] of Object.entries(BRIEFS)){
-      const label=condition.label+' '+condition.limit+condition.unit+'以内 ＋¥'+condition.bonus;
+      const label=condition.label+' '+condition.limit+condition.unit+' +¥'+condition.bonus;
       brief.add(new Option(earned.includes(id)?label+' 済':label,id));
     }
     brief.value=p.briefId||'';
@@ -42,9 +42,9 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
   const canConfirm=()=>(moves.length>0||(!!p.trial&&(picked||explicitBrief)))&&!invalid&&canWrite();
   function showForecast(){
     if(!p.trial)return;
-    if(!p.briefId){forecast.textContent='任意の追加条件を達成して出荷すると＋¥'+BRIEFS.speed.bonus+'。未達は通常報酬。';return;}
+    if(!p.briefId){forecast.textContent='条件達成で＋¥'+BRIEFS.speed.bonus+'。未達でも通常報酬。';return;}
     forecast.textContent=measured===undefined?'この配置で追加条件を達成できるか見積中…':
-      measured===null?'見積を取得できません。追加条件は出荷時に判定します。':
+      measured===null?'見積なし · 追加条件は出荷時に判定します。':
       briefOutcomeText(p.briefId,measured,true);
   }
   function buttons(){
