@@ -39,3 +39,5 @@ v0.16: Finish the visual loop at dispatch with order-specific packed cargo and a
 v0.17: Refine the approved daylight miniature at normal phone scale and close range. Frame the physical plinth and preserve the size of the crew and tools. Stage-specific workpieces, local work lights and material wear carry the visual story through production. See CHANGE_PACKET_v017.md.
 
 v0.18: Turn the first paid shipment into an optional repeat order. Contrast a free layout change with a paid drill upgrade, show the actual service-cell trip in placement, and measure the next delivery against the player’s own previous receipt. The growth contracts remain directly accessible.
+
+v0.19: Compare physical transfer distance with whole-order time, and compare the two 28-piece contracts before spending. Simulate the current factory on a disposable copy, support layout what-ifs, and carry the accepted estimate into the receipt for review.

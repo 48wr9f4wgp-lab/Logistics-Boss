@@ -32,6 +32,7 @@ async function checkImprovement(browser,url,choice){
     await screen('choices');
     await button('置き場所を試す').click();
     assert.match(await page.locator('#placeStatus').innerText(),/3 → 1マス/);
+    await page.locator('#layoutEstimate').filter({hasText:/117.4秒.*98.6秒/}).waitFor();
     await button('取消').click();
     assert.equal((await saved()).cash,s.cash);
     assert.deepEqual((await saved()).machines,s.machines);
@@ -55,7 +56,7 @@ async function checkImprovement(browser,url,choice){
     const drill=state.machines.find(m=>m.id==='m2');
     assert.deepEqual([drill.x,drill.level],choice==='move'?[3,1]:[5,2]);
     await page.reload();await button('完成まで進める').click();await button('出荷する').click();
-    const next=button(choice==='move'?'次の成長目標を選ぶ':'短納期の注文を見る');
+    const next=button(choice==='move'?'28個の注文を比べる':'短納期の注文を見る');
     await next.waitFor();state=await saved();
     assert.equal(state.delivered,2);assert.equal(state.results[0].repeatCost,order.repeatCost);
     const comparison=comparisonLine(state,state.results[0]);

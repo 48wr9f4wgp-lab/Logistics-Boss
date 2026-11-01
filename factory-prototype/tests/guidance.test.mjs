@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.18';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.19';
 import {openingOffer,deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs';
 
 function ready(s) {
@@ -125,8 +125,9 @@ test('late growth delivery identifies the deduction and offers a review before r
   assert.equal(guide.heading,'成長案件を納品！');
   assert.equal(guide.status,'納期超過 · 報酬15%減');
   assert.equal(guide.tone,'late');
-  assert.deepEqual(guide.primary,{type:'panel',panel:'machines',label:'設備・動線を見直す'});
-  assert.deepEqual(guide.secondary,{type:'growth',id:'rush',label:'同じ案件に再挑戦'});
+  assert.deepEqual(guide.primary,{type:'growth',id:'rush',label:'納期と配置を見直す'});
+  assert.match(guide.body,/製作が納期を.+秒超え/);
+  assert.equal(guide.secondary.panel,'machines');
   assert.equal(s.goalOffer,undefined,'report guidance does not select a goal');
   assert.equal(M.accept(s,'relief'),null);
   const remaining=deliveryGuide(s);
@@ -215,7 +216,7 @@ test('a late shipment keeps its review action on the floor until another decisio
   const s=M.fresh();M.upgrade(s,'m2');M.setGoal(s,'rush');
   const report=deliver(s,'rush');
   assert.equal(report.late,true);
-  assert.equal(floorTicket(s,{shipment:report}).action.panel,'machines');
+  assert.equal(floorTicket(s,{shipment:report}).action.label,'納期と配置を見直す');
   assert.equal(floorTicket(s).action.id,'rush');
   M.accept(s,'relief');
   assert.equal(floorTicket(s,{shipment:report}).action.type,'skip');

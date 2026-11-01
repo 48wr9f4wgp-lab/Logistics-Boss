@@ -1,5 +1,5 @@
-import * as M from './model.mjs?v=0.18';
-import {repeatOffer} from './improvement.mjs?v=0.18';
+import * as M from './model.mjs?v=0.19';
+import {repeatOffer} from './improvement.mjs?v=0.19';
 
 // Guidance describes existing state. It never accepts work, spends money or adds save fields.
 const money=value=>'¥'+Math.ceil(value).toLocaleString('ja-JP');
@@ -40,6 +40,13 @@ export function deliveryGuide(s,report=s.results?.[0]) {
   }
 
   if(isGrowth){
+    if(report.late&&offer.id==='rush'&&report.seconds!=null&&M.offerStatus(s,'bulk').available){
+      const over=report.seconds-offer.due;
+      const reason=over>0?'製作が納期を'+over.toFixed(1)+'秒超えました。':
+        '製作は納期内。完成から出荷するまでに期限を過ぎました。';
+      return {...summary,title:'28個の納期を見直そう',body:reason,
+        primary:growth('rush','納期と配置を見直す'),secondary:panel('machines','設備を確認する')};
+    }
     if(report.late)return {
       ...summary,title:'次は、納期内の出荷を目指そう',
       body:'設備の加工時間や配置を見直して、次の注文に備えよう。受注条件の達成だけでは納期は保証されません。',
@@ -83,6 +90,10 @@ export function deliveryGuide(s,report=s.results?.[0]) {
       body:'次は28個を200秒で納品する仕事です。条件を見て受注を決められます。',
       primary:growth('rush','短納期の注文を見る'),secondary:panel('growth','ほかの成長目標を見る')
     };
+    if(report.repeatCost!==undefined&&M.previousResult(s,report)&&M.offerStatus(s,'bulk').available)return {
+      ...summary,title:'次は28個の注文を検討できます',body:'今の工場で通常便の完成見込と利益を確認できます。',
+      primary:growth('rush','28個の注文を比べる'),secondary:panel('growth','ほかの成長目標を見る')
+    };
   }
 
   return {
@@ -118,7 +129,7 @@ export function floorTicket(s,{skipping=false,paused=false,shipment=null}={}) {
   if(shipment){
     const guide=deliveryGuide(s,shipment);
     const title=guide.primary.panel==='growth'?'量産と精密、どちらを伸ばそう？':guide.title;
-    return {label:'次の仕事',title,hint:'',action:guide.primary};
+    return {label:'次の仕事',title,hint:shipment.late&&guide.primary.id==='rush'?guide.body:'',action:guide.primary};
   }
   const plan=M.growthPlan(s,s.goalOffer);
   if(plan)return {

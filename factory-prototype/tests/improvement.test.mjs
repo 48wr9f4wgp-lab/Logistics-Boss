@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.18';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.19';
 import {deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs';
 import {repeatOffer,startRepeat,transferPath,neighboringCell,comparisonLine} from '../../docs/forge-preview/improvement.mjs';
 
@@ -52,7 +52,7 @@ for(const [choice,investment] of [['move',0],['upgrade',1500]]){
     const comparison=comparisonLine(s,r);
     assert.match(comparison,/短縮.*移動.*減/);
     assert.equal(comparison,comparisonLine(restored,other));
-    assert.equal(deliveryGuide(s).primary.type,choice==='upgrade'?'growth':'panel');
+    assert.equal(deliveryGuide(s).primary.id,'rush');
     assert.equal(repeatOffer(s).report.orderId,r.orderId);
   });
 }
