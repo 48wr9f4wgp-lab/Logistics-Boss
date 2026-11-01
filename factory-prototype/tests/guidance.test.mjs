@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.19';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.20';
 import {openingOffer,deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs';
 
 function ready(s) {
@@ -63,29 +63,31 @@ test('first plate delivery offers a workshop improvement while keeping growth ac
   assert.equal(deliveryGuide(s).heading,'出荷完了！');
 });
 
-test('the actual funding shortfall of a selected goal precedes spending advice',()=>{
+test('funds for the standard shaft route are distinct from the full high-precision budget',()=>{
   const s=M.fresh();deliver(s);M.setGoal(s,'master');
   let guide=deliveryGuide(s);
+  assert.equal(guide.primary.panel,'precision');
+  assert.equal(M.growthPlan(s,'master').shortage,2781);
+  s.cash=7199.9;guide=deliveryGuide(s);
   assert.equal(guide.primary.panel,'orders');
   assert.deepEqual(guide.secondary,{type:'growth',id:'master',label:'準備費を確認'});
   assert.match(guide.body,/¥8,200/);
   assert.match(guide.body,/¥2,200/);
-  assert.match(guide.body,/¥2,781/);
-  s.cash=10399.9;guide=deliveryGuide(s);
-  assert.match(guide.body,/あと ¥1 /,'fractional shortfall must round up');
+  assert.match(guide.body,/¥3,201/);
+  s.cash=10399.9;assert.equal(M.growthPlan(s,'master').shortage,1);
   assert.match(guide.body,/人件費は別/);
 });
 
 test('selected-goal guidance follows actual purchases and training without accepting the contract',()=>{
   const s=M.fresh();deliver(s);M.setGoal(s,'master');s.cash=10400;
   let guide=deliveryGuide(s);
-  assert.equal(guide.primary.type,'growth');assert.equal(guide.primary.id,'master');
+  assert.equal(guide.primary.panel,'precision');
   assert.match(guide.title,/旋盤を設置/);
   assert.equal(M.purchase(s,'lathe',4,3),null);
   assert.equal(M.train(s,0),null);assert.equal(M.train(s,0),null);
   guide=deliveryGuide(s);
   assert.equal(M.growthPlan(s,'master').phase,'ready');
-  assert.match(guide.title,/受注できる/);
+  assert.match(guide.title,/受注できます/);
   assert.match(guide.body,/¥2,200/);
   assert.equal(s.orders.filter(o=>!o.shipped).length,0);
   assert.equal(s.cash,2200);
@@ -200,14 +202,14 @@ test('zero-cost entry, concurrent orders, funding and legacy progress use the sa
   const relief=floorTicket(s);
   assert.equal(relief.action.id,'relief');assert.match(relief.action.label,/¥0/);
   s.cash=5500;deliver(s);M.setGoal(s,'master');
-  assert.equal(floorTicket(s).action.panel,'orders');
+  assert.equal(floorTicket(s).action.panel,'precision');
   M.accept(s,'first');const first=ready(s);M.accept(s,'relief');s.orders.reverse();
   assert.equal(floorTicket(s).action.id,first.id);
   M.dispatch(s,first.id);
   assert.equal(floorTicket(s).action.type,'skip');
   M.dispatch(s,ready(s).id);
   s.cash=25000;
-  assert.equal(floorTicket(s).action.id,'master');
+  assert.equal(floorTicket(s).action.panel,'precision');
   delete s.goalOffer;delete s.results;
   assert.equal(floorTicket(s).action.panel,'growth');
 });

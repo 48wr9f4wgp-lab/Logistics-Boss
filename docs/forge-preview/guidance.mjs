@@ -1,5 +1,6 @@
-import * as M from './model.mjs?v=0.19';
-import {repeatOffer} from './improvement.mjs?v=0.19';
+import * as M from './model.mjs?v=0.20';
+import {shaftEntryCost} from './precision.mjs?v=0.20';
+import {repeatOffer} from './improvement.mjs?v=0.20';
 
 // Guidance describes existing state. It never accepts work, spends money or adds save fields.
 const money=value=>'¥'+Math.ceil(value).toLocaleString('ja-JP');
@@ -34,11 +35,20 @@ export function deliveryGuide(s,report=s.results?.[0]) {
     };
     return {
       ...summary,title:'残りの注文を仕上げよう',
-      body:`「${active.label}」は${active.done} / ${active.qty}個が完成。完成まで進めると、人件費・納期も進みます。`,
+      body:`「${active.label}」は${active.done} / ${active.qty}${active.product==='shaft'?'本':'個'}が完成。完成まで進めると、人件費・納期も進みます。`,
       primary:{type:'skip',id:active.id,label:'残りを完成まで進める'}
     };
   }
 
+  if((report.qualitySpend!==undefined||(!isGrowth&&s.goalOffer==='master'))&&(!s.goalOffer||s.goalOffer==='master')&&s.cash>=shaftEntryCost(s)){
+    const trained=report.growth?.filter(e=>e.worker===report.inspectorId).at(-1)||report.growth?.at(-1),worker=s.workers.find(w=>w.id===trained?.worker);
+    const premium=M.offerStatus(s,'master').available;
+    const timing=report.late&&report.seconds!=null&&offer?(report.seconds>offer.due?'製作が納期を'+(report.seconds-offer.due).toFixed(1)+'秒超えました。':'製作は納期内で、完成後の出荷待ちで期限を過ぎました。'):'';
+    return {...summary,title:report.late&&report.qualitySpend!==undefined?'次の10本の納期を見直そう':worker?worker.name+'が実務で技能'+trained.skill+'に成長':premium?'高精度シャフトを受注できます':
+      s.machines.some(m=>m.kind==='lathe')?'次の10本の段取りを決めよう':'旋盤を設置して標準品から始めよう',
+      body:report.qualitySpend!==undefined?timing+'品質調整 '+report.rework+'/'+report.qty+'本。次の担当と準備を選べます。':premium?'高精度10本の材料費は ¥2,200。担当と品質調整の見込を確認できます。':'標準品の材料費は ¥1,400。旋盤を導入して実務で職人を育てられます。',
+      primary:panel('precision','シャフト10本の段取りへ'),secondary:panel('growth','成長目標を見る')};
+  }
   if(isGrowth){
     if(report.late&&offer.id==='rush'&&report.seconds!=null&&M.offerStatus(s,'bulk').available){
       const over=report.seconds-offer.due;
@@ -110,13 +120,15 @@ export function floorTicket(s,{skipping=false,paused=false,shipment=null}={}) {
   if(order){
     const ready=order.done===order.qty;
     const label=skipping?'早送り中':ready?'出荷待ち':paused?'一時停止中':'製作中';
-    const title=order.label+'　'+order.done+' / '+order.qty+'個';
+    const title=order.label+'　'+order.done+' / '+order.qty+(order.product==='shaft'?'本':'個');
     const last=order.repeatCost!==undefined?s.results?.find(r=>r.offerId===order.offerId&&r.seconds!==null):null;
     const hint=ready?'納品して '+money(M.shipmentQuote(s,order).pay)+' を受け取れます':
       skipping?'注文が完成すると止まります。':(last?'前回の完成は '+last.seconds.toFixed(1)+'秒。':'職人が運搬・加工します。')+'早送り中も人件費と納期は進みます。';
     const action=skipping?{type:'stop',label:'早送りを止める'}:
       ready?{type:'ship',id:order.id,label:'出荷する'}:{type:'skip',id:order.id,label:'完成まで進める'};
-    return {label,title,hint,action,progress:order.done/order.qty};
+    const inspector=s.workers.find(w=>w.id===order.inspectorId);
+    const workHint=inspector&&!ready&&!skipping?inspector.name+'が検品を担当 · 品質調整 '+(order.accounting?.rework||0)+'本。':hint;
+    return {label,title,hint:workHint,action,progress:order.done/order.qty};
   }
   const starter=openingOffer(s);
   if(starter)return {
@@ -129,9 +141,13 @@ export function floorTicket(s,{skipping=false,paused=false,shipment=null}={}) {
   if(shipment){
     const guide=deliveryGuide(s,shipment);
     const title=guide.primary.panel==='growth'?'量産と精密、どちらを伸ばそう？':guide.title;
-    return {label:'次の仕事',title,hint:shipment.late&&guide.primary.id==='rush'?guide.body:'',action:guide.primary};
+    return {label:'次の仕事',title,hint:(shipment.late&&guide.primary.id==='rush')||shipment.qualitySpend!==undefined?guide.body:'',action:guide.primary};
   }
   const plan=M.growthPlan(s,s.goalOffer);
+  if(plan?.offer.id==='master'&&s.cash>=shaftEntryCost(s))return {
+    label:'工場の目標',title:'精密加工の仕事',hint:'担当と準備を選んで、シャフト10本の見積を確認できます。',
+    action:panel('precision','シャフト10本の段取りへ')
+  };
   if(plan)return {
     label:'工場の目標',title:plan.offer.label,
     hint:plan.phase==='funds'?'次の投資と材料費まで、あと '+money(plan.shortage)+'。':
@@ -139,6 +155,6 @@ export function floorTicket(s,{skipping=false,paused=false,shipment=null}={}) {
     action:plan.phase==='funds'?panel('orders','資金を作る注文を選ぶ'):growth(plan.offer.id,'目標の計画を見る')
   };
   const guide=deliveryGuide(s);
-  return guide?{label:'次の仕事',title:guide.title,hint:'',action:guide.primary}:
+  return guide?{label:'次の仕事',title:guide.title,hint:guide.primary.panel==='precision'?guide.body:'',action:guide.primary}:
     {label:'次の仕事',title:'工場を育てよう',hint:'設備や職人を育てると、新しい仕事を受けられます。',action:panel('growth','成長目標を選ぶ')};
 }

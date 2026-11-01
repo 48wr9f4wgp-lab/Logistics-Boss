@@ -1,4 +1,4 @@
-# マチコバ！ — v0.19
+# マチコバ！ — v0.20
 
 **小さな工場、大きな夢。**
 
@@ -21,6 +21,10 @@ Management sheets pause time. The floor controls and direct selection allow work
 ## Implemented
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
+
+## シャフト10本の段取り（v0.20）
+
+成長目標の精密ルートから、旋盤の仮置き、標準品での育成、高精度品への挑戦を進められる。仕事ごとに検品担当を指名し、現状・研修・検品台改良の見込と準備費を確認する。出荷記録には、その仕事で生じた品質調整と職人の昇級が残る。[実測例・確認範囲](CHANGE_PACKET_v020.md)
 
 ## 受注する前の見積（v0.19）
 
