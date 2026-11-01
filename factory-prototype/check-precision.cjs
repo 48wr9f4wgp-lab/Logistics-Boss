@@ -65,6 +65,7 @@ async function checkPrecision(browser,url,route){
     const r=await acceptAndShip(spec);
     assert.equal(r.qualitySpend,route==='entry'?2400:1500);
     await btn('管理').click();await btn('経営と出荷記録').click();await btn('直近の出荷結果を開く').click();
+    assert.equal(await page.locator('.result-profit strong').textContent(),'+¥'+Math.round(M.resultProfit(r)-r.qualitySpend).toLocaleString('ja-JP'));
     assert.match(await page.locator('#sheetBody').innerText(),/検品 森 · 品質調整 0\/10本（見積 0本）/);
     if(r.growth.length)assert.match(await page.locator('#sheetBody').innerText(),/実務で成長/);
     await capture('receipt');assert.deepEqual(errors,[]);

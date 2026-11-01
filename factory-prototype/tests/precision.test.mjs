@@ -91,3 +91,21 @@ test('saved precision fields reject wrong roles or corrupt quality history while
   finish(s);s.results[0].quote={seconds:100,profit:100,rework:11};assert.equal(M.validate(s),false);
   delete s.results[0].quote;s.results[1].inspectorId=0;assert.equal(M.validate(s),false);
 });
+
+test('quality orders report a delayed dispatch accurately even when no piece needed adjustment',()=>{
+  const s=afterPlates(3);acceptPrecision(s,{offer:'master',inspector:1,investment:'train'});
+  let q;do{q=M.advanceToReady(s,200);}while(q.status==='producing');
+  const o=M.frontOrder(s);while(s.clock<=o.start+o.due+.1)M.step(s,M.TICK);
+  M.dispatch(s,o.id);const r=s.results[0];assert.equal(r.rework,0);assert.equal(r.late,true);
+  assert.match(floorTicket(s,{shipment:r}).hint,/出荷待ち.*品質調整 0\/10本/);
+});
+
+test('the chosen inspection bench alone is upgraded and charged, including an expanded factory',()=>{
+  const s=afterPlates(3);s.cash=30000;M.expand(s);M.purchase(s,'inspect',7,2);
+  const original=s.machines.find(m=>m.id==='m3'),second=s.machines.at(-1);
+  const spec={offer:'fine',inspector:2,investment:'bench',benchId:second.id},cash=s.cash;
+  assert.equal(acceptPrecision(s,spec),null);
+  assert.equal(s.machines.find(m=>m.id===original.id).level,1);
+  assert.equal(s.machines.find(m=>m.id===second.id).level,2);
+  assert.equal(s.cash,cash-2900);assert.ok(M.validate(s));
+});

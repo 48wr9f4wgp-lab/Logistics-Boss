@@ -14,7 +14,7 @@ export function precisionDesk(s,choice,canWrite,escape){
   const workers=s.workers.map(w=>`<option value="${w.id}" ${choice.inspector===w.id?'selected':''}>${escape(w.name)} · 技能${w.skill}</option>`).join('');
   return `<section class="shaft-desk"><label>仕事<select id="shaftOffer"><option value="fine">標準10本 · 品質2／240秒</option><option value="master" ${choice.offer==='master'?'selected':''}>高精度10本 · 品質3／150秒</option></select></label>
     <label>検品担当<select id="shaftInspector"><option value="">おまかせ</option>${workers}</select></label>
-    <label>今回の準備<select id="shaftInvestment"><option value="none">投資しない</option><option value="train" ${choice.investment==='train'?'selected':''}>指名した職人を研修</option><option value="bench" ${choice.investment==='bench'?'selected':''}>検品台を改良</option></select></label>
+    <label>準備<select id="shaftInvestment"><option value="none">投資しない</option><option value="train" ${choice.investment==='train'?'selected':''}>指名した職人を研修</option><option value="bench" ${choice.investment==='bench'?'selected':''}>検品台を改良</option></select></label>
     ${benches.length>1?`<label id="benchPick">改良する台<select id="shaftBench">${benchOptions}</select></label>`:''}
     <p id="shaftCost"></p><div class="shaft-estimate" aria-live="polite"><strong id="shaftForecast"></strong><small id="shaftNet"></small></div>
     <button id="shaftStart" class="wide primary"></button>
@@ -25,11 +25,11 @@ export function bindPrecisionDesk(root,s,choice,estimator,canWrite,install,accep
   const find=id=>root.querySelector('#'+id);
   if(find('shaftInstall')){estimator.cancel();find('shaftInstall').onclick=install;return;}
   let seenQuote=null;
-  const shownNext=s.next;
+  const shownNext=s.next,benches=s.machines.filter(m=>m.kind==='inspect');
   const sync=()=>{
     const inspector=find('shaftInspector').value;
     Object.assign(choice,{offer:find('shaftOffer').value,inspector:inspector===''?null:Number(inspector),
-      investment:find('shaftInvestment').value,benchId:find('shaftBench')?.value??null});
+      investment:find('shaftInvestment').value,benchId:benches[find('shaftBench')?.selectedIndex]?.id??null});
     if(find('benchPick'))find('benchPick').hidden=choice.investment!=='bench';
     seenQuote=null;
     const plan=precisionPlan(s,choice),button=find('shaftStart');
@@ -48,7 +48,7 @@ export function bindPrecisionDesk(root,s,choice,estimator,canWrite,install,accep
       if(!q||q.error){forecast.textContent=q?.error||'見積を表示できません';return;}
       seenQuote=q;
       forecast.textContent='品質調整 '+q.rework+'/10本 · '+q.seconds.toFixed(1)+'秒で完成';
-      net.textContent='納期'+Math.abs(q.margin).toFixed(1)+'秒'+(q.late?'超過':'余裕')+' · 準備費後 '+yen(q.net);
+      net.textContent='納期'+Math.abs(q.margin).toFixed(1)+'秒'+(q.late?'超過':'余裕')+' · 手残り '+yen(q.net);
       baseline.textContent=base?(base.error?'準備なしでは受注条件を満たせません。':'準備なし・おまかせなら '+base.rework+'/10本を調整、'+base.seconds.toFixed(1)+'秒。'):'現在は準備なし・おまかせで見積もっています。';
     });
   };

@@ -35,17 +35,18 @@ export function deliveryGuide(s,report=s.results?.[0]) {
     };
     return {
       ...summary,title:'残りの注文を仕上げよう',
-      body:`「${active.label}」は${active.done} / ${active.qty}個が完成。完成まで進めると、人件費・納期も進みます。`,
+      body:`「${active.label}」は${active.done} / ${active.qty}${active.product==='shaft'?'本':'個'}が完成。完成まで進めると、人件費・納期も進みます。`,
       primary:{type:'skip',id:active.id,label:'残りを完成まで進める'}
     };
   }
 
   if((report.qualitySpend!==undefined||(!isGrowth&&s.goalOffer==='master'))&&(!s.goalOffer||s.goalOffer==='master')&&s.cash>=shaftEntryCost(s)){
-    const trained=report.growth?.at(-1),worker=s.workers.find(w=>w.id===trained?.worker);
+    const trained=report.growth?.filter(e=>e.worker===report.inspectorId).at(-1)||report.growth?.at(-1),worker=s.workers.find(w=>w.id===trained?.worker);
     const premium=M.offerStatus(s,'master').available;
-    return {...summary,title:worker?worker.name+'が実務で技能'+trained.skill+'に成長':premium?'高精度シャフトを受注できます':
+    const timing=report.late&&report.seconds!=null&&offer?(report.seconds>offer.due?'製作が納期を'+(report.seconds-offer.due).toFixed(1)+'秒超えました。':'製作は納期内で、完成後の出荷待ちで期限を過ぎました。'):'';
+    return {...summary,title:report.late&&report.qualitySpend!==undefined?'次の10本の納期を見直そう':worker?worker.name+'が実務で技能'+trained.skill+'に成長':premium?'高精度シャフトを受注できます':
       s.machines.some(m=>m.kind==='lathe')?'次の10本の段取りを決めよう':'旋盤を設置して標準品から始めよう',
-      body:report.qualitySpend!==undefined?'品質調整 '+report.rework+'/'+report.qty+'本。次の担当と準備を選べます。':premium?'高精度10本の材料費は ¥2,200。担当と品質調整の見込を確認できます。':'標準品の材料費は ¥1,400。旋盤を導入して実務で職人を育てられます。',
+      body:report.qualitySpend!==undefined?timing+'品質調整 '+report.rework+'/'+report.qty+'本。次の担当と準備を選べます。':premium?'高精度10本の材料費は ¥2,200。担当と品質調整の見込を確認できます。':'標準品の材料費は ¥1,400。旋盤を導入して実務で職人を育てられます。',
       primary:panel('precision','シャフト10本の段取りへ'),secondary:panel('growth','成長目標を見る')};
   }
   if(isGrowth){
@@ -119,7 +120,7 @@ export function floorTicket(s,{skipping=false,paused=false,shipment=null}={}) {
   if(order){
     const ready=order.done===order.qty;
     const label=skipping?'早送り中':ready?'出荷待ち':paused?'一時停止中':'製作中';
-    const title=order.label+'　'+order.done+' / '+order.qty+'個';
+    const title=order.label+'　'+order.done+' / '+order.qty+(order.product==='shaft'?'本':'個');
     const last=order.repeatCost!==undefined?s.results?.find(r=>r.offerId===order.offerId&&r.seconds!==null):null;
     const hint=ready?'納品して '+money(M.shipmentQuote(s,order).pay)+' を受け取れます':
       skipping?'注文が完成すると止まります。':(last?'前回の完成は '+last.seconds.toFixed(1)+'秒。':'職人が運搬・加工します。')+'早送り中も人件費と納期は進みます。';
