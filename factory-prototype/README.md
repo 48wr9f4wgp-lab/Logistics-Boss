@@ -1,4 +1,4 @@
-# マチコバ！ — v0.17
+# マチコバ！ — v0.18
 
 **小さな工場、大きな夢。**
 
@@ -12,7 +12,7 @@ Existing development Pages: `/Logistics-Boss/forge-preview/`.
 
 1. The ticket beneath the workshop shows the first job (12 plates), the payout and the material cost on the accept button. It starts the job here. If funds are short, the ticket offers the existing zero-material recovery job.
 2. Watch the workers, or tap 完成まで進める to advance real work, wages and deadlines. The skip stops at the first completed order. Tap 出荷する on the same ticket to collect payment.
-3. Shipment pauses playback and shows the actual profit and next step on the ticket. A second unfinished order takes priority. 管理 → 経営と出荷記録 retains the detailed receipt, including legacy reports.
+3. Shipment pauses playback and shows the actual profit and next step on the ticket. After the first measured 12-plate delivery, try a new drill location or upgrade it and accept the same job again. The ticket compares actual time and travel after dispatch. A second unfinished order takes priority. 管理 → 経営と出荷記録 retains the detailed receipt, including legacy reports.
 4. 管理 holds the order list, both growth paths, investments, training, finances and save tools. 操作 opens floor controls for playback, zoom, labels and stage selection. A machine can also be selected by tapping the floor directly. For a move, finish the current stages, tap a highlighted tile to preview the actual equipment, and confirm with the bottom button or cancel.
 5. In a growth plan open 条件と費用の内訳 for the full budget and requirements. Both routes remain available.
 
@@ -21,6 +21,10 @@ Management sheets pause time. The floor controls and direct selection allow work
 ## Implemented
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
+
+## 初出荷後の工夫（v0.18）
+
+最初の取付プレート12個を出荷したら「工場の改善を選ぶ」。ボール盤を仮置きして切断からの片道を見たり、改良で1個の加工時間を縮めたりできる。再受注時には材料費と選んだ投資をまとめて確認する。出荷票には前回の同じ注文との時間・移動差を表示する。[実測例と確認範囲](CHANGE_PACKET_v018.md)
 
 ## 工場の昼光と加工の手元（v0.17）
 

@@ -7,7 +7,7 @@
   <meta name="description" content="マチコバ！ — 小さな工場、大きな夢。職人と設備を育てる町工場経営ゲーム。">
   <meta name="application-name" content="マチコバ！">
   <title>マチコバ！ — 小さな工場、大きな夢。</title>
-  <link rel="stylesheet" href="style.css?v=0.17">
+  <link rel="stylesheet" href="style.css?v=0.18">
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -45,14 +45,14 @@
       <div class="placement-actions"><button id="cancelPlace">取消</button><button id="confirmPlace" disabled>場所を選んでください</button></div>
     </section>
     <section class="order-strip" aria-label="次の行動">
-      <div class="ticket-copy"><small id="ticketLabel">最初の注文</small><strong id="orderTitle"></strong><small id="orderHint"></small></div>
+      <div class="ticket-copy"><small id="ticketLabel">最初の注文</small><strong id="orderTitle"></strong><small id="orderHint"></small><small id="orderComparison" hidden></small></div>
       <button id="orderAction" aria-describedby="orderTitle orderHint">受注する</button>
       <div id="orderProgress" aria-hidden="true"></div>
     </section>
     <div id="toast" role="status" aria-live="polite"></div>
   </main>
   <dialog id="sheet" aria-labelledby="sheetTitle"><div class="sheet-head"><button id="sheetBack" aria-label="前の画面へ戻る" hidden>‹ 戻る</button><h2 id="sheetTitle" tabindex="-1"></h2><button id="close" aria-label="工場へ戻る">工場へ戻る</button></div><div id="sheetNotice" role="status" hidden></div><div id="sheetBody"></div></dialog>
-  <script type="module" src="app.mjs?v=0.17"></script>
+  <script type="module" src="app.mjs?v=0.18"></script>
 </body>
 </html>
 

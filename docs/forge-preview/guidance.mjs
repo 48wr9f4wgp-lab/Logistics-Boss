@@ -1,4 +1,5 @@
-import * as M from './model.mjs';
+import * as M from './model.mjs?v=0.18';
+import {repeatOffer} from './improvement.mjs?v=0.18';
 
 // Guidance describes existing state. It never accepts work, spends money or adds save fields.
 const money=value=>'¥'+Math.ceil(value).toLocaleString('ja-JP');
@@ -71,6 +72,19 @@ export function deliveryGuide(s,report=s.results?.[0]) {
     };
   }
 
+  if(report.orderId===s.results?.[0]?.orderId&&report.offerId==='first'){
+    if(repeatOffer(s))return {
+      ...summary,title:'同じ12個、次はどう作る？',
+      body:'ボール盤の置き場所か加工速度を変えて、もう一度この注文を作れます。',
+      primary:panel('improve','工場の改善を選ぶ'),secondary:panel('growth','成長目標へ進む')
+    };
+    if(s.delivered===2&&M.previousResult(s,report)&&M.offerStatus(s,'rush').available)return {
+      ...summary,title:'短納期プレートを受けられます',
+      body:'次は28個を200秒で納品する仕事です。条件を見て受注を決められます。',
+      primary:growth('rush','短納期の注文を見る'),secondary:panel('growth','ほかの成長目標を見る')
+    };
+  }
+
   return {
     ...summary,title:'次は、工場の成長目標を選ぼう',
     body:'設備や職人を育てて、次の仕事へ。必要な投資と材料費を比べて目標を選べます。',
@@ -86,8 +100,9 @@ export function floorTicket(s,{skipping=false,paused=false,shipment=null}={}) {
     const ready=order.done===order.qty;
     const label=skipping?'早送り中':ready?'出荷待ち':paused?'一時停止中':'製作中';
     const title=order.label+'　'+order.done+' / '+order.qty+'個';
+    const last=order.repeatCost!==undefined?s.results?.find(r=>r.offerId===order.offerId&&r.seconds!==null):null;
     const hint=ready?'納品して '+money(M.shipmentQuote(s,order).pay)+' を受け取れます':
-      skipping?'注文が完成すると止まります。':'職人が運搬・加工します。早送り中も人件費と納期は進みます。';
+      skipping?'注文が完成すると止まります。':(last?'前回の完成は '+last.seconds.toFixed(1)+'秒。':'職人が運搬・加工します。')+'早送り中も人件費と納期は進みます。';
     const action=skipping?{type:'stop',label:'早送りを止める'}:
       ready?{type:'ship',id:order.id,label:'出荷する'}:{type:'skip',id:order.id,label:'完成まで進める'};
     return {label,title,hint,action,progress:order.done/order.qty};

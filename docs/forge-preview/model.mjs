@@ -17,6 +17,7 @@ export function accept(s,id){const o=OFFERS.find(o=>o.id===id),status=offerStatu
 export function dispatch(s,id){const o=s.orders.find(o=>o.id===id);if(!o||o.shipped||o.done!==o.qty)return 'まだ出荷できません';const {late,pay}=shipmentQuote(s,o);s.cash+=pay;s.revenue+=pay;s.delivered++;
 const a=o.accounting,measured=!!a&&a.completedAt!==null;
 const report={orderId:o.id,offerId:o.offerId??null,label:o.label,qty:o.qty,payout:pay,material:o.cost,late,shippedAt:s.clock,wages:measured?a.wages:null,seconds:measured?a.completedAt-o.start:null,walk:measured?a.walk:null,rework:measured?a.rework:null};
+if(o.repeatCost!==undefined)report.repeatCost=o.repeatCost;
 s.results=[report,...(s.results||[])].slice(0,12);o.shipped=true;s.parts=s.parts.filter(p=>p.order!==id);s.orders=s.orders.filter(q=>!q.shipped||q.id===id);note(s,`出荷完了！ +¥${pay.toLocaleString()}${late?'（納期超過15%減額）':''}`);return null;}
 export function purchase(s,kind,x,y){if(!canPlace(s,kind,x,y))return '作業中は配置変更できません。通路と作業面も空けてください';const cost=MACHINES[kind].cost;if(s.cash<cost)return '資金が足りません';s.cash-=cost;s.expense+=cost;s.machines.push({id:`m${s.next++ +10}`,kind,x,y,level:1});note(s,`${MACHINES[kind].name}を導入`);return null;}
 export function move(s,id,x,y){const m=s.machines.find(m=>m.id===id);if(!m||!canPlace(s,m.kind,x,y,id))return '作業中は移動できません。空いた床を選んでください';m.x=x;m.y=y;note(s,'設備を移動しました');return null;}
@@ -75,8 +76,13 @@ export function advanceToReady(s,maxTicks=100){
 
 // Optional accounting keeps pre-v0.3 saves playable without inventing history.
 const nonnegative=n=>Number.isFinite(n)&&n>=0;
+// Optional cost of the improvement bundled with this repeat; paid once, before production.
+function validRepeatCost(record){
+  return record.repeatCost===undefined||(record.offerId==='first'&&[0,1500,3000].includes(record.repeatCost));
+}
 function validAccounting(s){
   for(const o of s.orders){
+    if(!validRepeatCost(o))return false;
     if(o.accounting===undefined&&o.offerId===undefined)continue;
     const offer=OFFERS.find(v=>v.id===o.offerId),a=o.accounting;
     if(!offer||!a||!['product','qty','cost','pay','quality'].every(k=>o[k]===offer[k])||![a.wages,a.walk,a.rework].every(nonnegative)||!Number.isInteger(a.rework)||a.rework>o.qty)return false;
@@ -87,7 +93,7 @@ function validAccounting(s){
   if(!Array.isArray(s.results)||s.results.length>12||s.results.length>s.delivered)return false;
   const ids=new Set();let lastTime=Infinity;
   for(const r of s.results){
-    if(!r||!Number.isInteger(r.orderId)||r.orderId<1||ids.has(r.orderId)||typeof r.label!=='string'||r.label.length>100||!Number.isInteger(r.qty)||r.qty<1||r.qty>28||typeof r.late!=='boolean'||![r.payout,r.material,r.shippedAt].every(nonnegative)||r.shippedAt>s.clock||r.shippedAt>lastTime)return false;
+    if(!r||!validRepeatCost(r)||!Number.isInteger(r.orderId)||r.orderId<1||ids.has(r.orderId)||typeof r.label!=='string'||r.label.length>100||!Number.isInteger(r.qty)||r.qty<1||r.qty>28||typeof r.late!=='boolean'||![r.payout,r.material,r.shippedAt].every(nonnegative)||r.shippedAt>s.clock||r.shippedAt>lastTime)return false;
     ids.add(r.orderId);lastTime=r.shippedAt;
     const values=[r.wages,r.seconds,r.walk,r.rework];
     if(!values.every(v=>v===null)&&!(values.every(nonnegative)&&Number.isInteger(r.rework)&&r.rework<=r.qty&&r.seconds<=r.shippedAt))return false;

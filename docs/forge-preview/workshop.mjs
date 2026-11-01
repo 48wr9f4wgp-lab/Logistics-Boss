@@ -838,6 +838,11 @@ function floorSelection(g,s,opt) {
     for(const {x,y} of opt.placementCells||[]){
       face([[x+.06,y+.06,.015],[x+.94,y+.06,.015],[x+.94,y+.94,.015],[x+.06,y+.94,.015]],'#badb9252','#d8e6ba',.80);
     }
+    if(opt.placing.route){
+      const steps=opt.placing.route.map(cell=>[cell.x+.45,cell.y+.45,.025]);
+      line(steps,'#29483f',Math.max(3,g.v.u*.17));
+      line(steps,'#ffdc88',Math.max(1.5,g.v.u*.075));
+    }
     const c=opt.placing.candidate;
     if(c){
       const x=c.x,y=c.y;

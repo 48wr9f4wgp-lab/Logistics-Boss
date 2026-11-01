@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.18';
 import {openingOffer,deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs';
 
 function ready(s) {
@@ -51,14 +51,14 @@ test('missing or explicitly absent history has no invented delivery guide',()=>{
   assert.equal(deliveryGuide(s,null),null);
 });
 
-test('first ordinary delivery points to growth while keeping ordinary orders available',()=>{
+test('first plate delivery offers a workshop improvement while keeping growth accessible',()=>{
   const s=M.fresh();deliver(s);
   const guide=deliveryGuide(s);
   assert.equal(guide.heading,'はじめての出荷完了！');
   assert.equal(guide.status,'納期内に納品');
   assert.equal(guide.tone,'success');
-  assert.deepEqual(guide.primary,{type:'panel',panel:'growth',label:'次の成長目標を選ぶ'});
-  assert.equal(guide.secondary.panel,'orders');
+  assert.deepEqual(guide.primary,{type:'panel',panel:'improve',label:'工場の改善を選ぶ'});
+  assert.equal(guide.secondary.panel,'growth');
   deliver(s,'relief');
   assert.equal(deliveryGuide(s).heading,'出荷完了！');
 });
@@ -191,7 +191,7 @@ test('the floor ticket follows the opening through shipment, including paused an
   ticket=floorTicket(s);assert.equal(ticket.progress,1);assert.equal(ticket.action.id,order.id);
   assert.equal(ticket.action.type,'ship');assert.match(ticket.hint,/2,800/);
   M.dispatch(s,order.id);
-  assert.equal(floorTicket(s).action.panel,'growth');
+  assert.equal(floorTicket(s).action.panel,'improve');
 });
 
 test('zero-cost entry, concurrent orders, funding and legacy progress use the same ticket',()=>{
