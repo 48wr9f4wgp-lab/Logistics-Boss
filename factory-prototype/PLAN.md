@@ -63,3 +63,5 @@ v0.22: Let the player compose and undo several moves or swaps before charging fo
 v0.23: Turn time and travel into two distinct repeat-order commitments. Settle each against the real receipt. Completing both earns a continuing customer referral for the existing rush job, offering a layout-based alternative to equipment investment.
 
 v0.24: Record the first on-time dispatch of each specialty and show the first as the ending. Both routes and the existing factory continue after the ending. Human and physical-device acceptance gates remain open.
+
+v0.25: Address the reported tap-through loop. In delegated mode an accepted order plays through production and dispatch, stopping for a real inquiry or a new contract. No automatic purchasing, ordering or changes to production rules. Physical iPhone and first-time human tests remain open.

@@ -359,3 +359,6 @@ dialog[data-panel="inquiry"] .sheet-head{padding-block:5px}
 .shop-sign p{margin:0;font-size:13px;line-height:1.5;color:#ece1cb}
 .order-strip.earned-sign{border-top:2px solid #d8b87d;background:#243c31}
 .order-strip.earned-sign #ticketLabel{color:#f2d495}
+
+#autoMode{font-size:11px;min-width:0;padding-inline:6px}
+#skipDelegated{width:100%;min-height:44px}

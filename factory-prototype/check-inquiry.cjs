@@ -6,7 +6,7 @@ async function checkInquiry(browser,url,flow){
   const {startRepeat}=await import('../docs/forge-preview/improvement.mjs');
   const {acceptPrecision}=await import('../docs/forge-preview/precision.mjs');
   const {pairResult}=await import('../docs/forge-preview/pairing.mjs');
-  const s=M.fresh();
+  const s=M.fresh();s.autoWork=false;
   function finish(){
     let q;do{q=M.advanceToReady(s,200);}while(q.status==='producing');M.dispatch(s,q.orderId);
   }

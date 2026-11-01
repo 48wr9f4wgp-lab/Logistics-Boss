@@ -1,4 +1,4 @@
-# マチコバ！ — v0.24
+# マチコバ！ — v0.25
 
 **小さな工場、大きな夢。**
 
@@ -11,7 +11,7 @@ New title-local gameplay prototype, approved 2026-10-29. Current task replaces t
 Existing development Pages: `/Logistics-Boss/forge-preview/`.
 
 1. The ticket beneath the workshop shows the first job (12 plates), the payout and the material cost on the accept button. It starts the job here. If funds are short, the ticket offers the existing zero-material recovery job.
-2. Watch the workers, or tap 完成まで進める to advance real work, wages and deadlines. The skip stops at the first completed order. Tap 出荷する on the same ticket to collect payment.
+2. New factories use おまかせ. Accept a job once and watch the workers produce and ship it. The floor ticket shows waiting parts, and the factory pauses for a six-piece inquiry. Optional 出荷まで早送り is under 操作. 等速 or 3倍速 selects manual playback and manual shipping. An unfinished or unshipped job in an older save retains manual control; after those jobs ship, subsequent jobs default to おまかせ.
 3. Shipment pauses playback and shows the actual profit and next step on the ticket. After the first measured 12-plate delivery, rearrange any installed machines or upgrade the drill and accept the same job again. The ticket compares actual time and travel after dispatch. A second unfinished order takes priority. 管理 → 経営と出荷記録 retains the detailed receipt, including legacy reports.
 4. 管理 holds the order list, both growth paths, investments, training, finances and save tools. 操作 opens floor controls for playback, zoom, labels and stage selection. A machine can also be selected by tapping the floor directly. For a move, finish the current stages, tap a highlighted tile to preview the actual equipment, and confirm with the bottom button or cancel.
 5. In a growth plan open 条件と費用の内訳 for the full budget and requirements. Both routes remain available.

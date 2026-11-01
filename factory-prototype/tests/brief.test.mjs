@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.24';
-import {assessBrief,briefTarget,briefOutcomeText,earnedBriefs} from '../../docs/forge-preview/brief.mjs?v=0.24';
-import {startRepeat} from '../../docs/forge-preview/improvement.mjs?v=0.24';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.25';
+import {assessBrief,briefTarget,briefOutcomeText,earnedBriefs} from '../../docs/forge-preview/brief.mjs?v=0.25';
+import {startRepeat} from '../../docs/forge-preview/improvement.mjs?v=0.25';
 
 function complete(s){
   let ready;

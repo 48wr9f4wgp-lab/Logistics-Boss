@@ -6,7 +6,7 @@ async function checkLayout(browser,url){
   const M=await import('../docs/forge-preview/model.mjs');
   const {estimateOrder}=await import('../docs/forge-preview/estimate.mjs');
   const {frameWorkshop,project}=await import('../docs/forge-preview/view.mjs');
-  const s=M.fresh();M.accept(s,'first');
+  const s=M.fresh();s.autoWork=false;M.accept(s,'first');
   let ready;do{ready=M.advanceToReady(s,200);}while(ready.status==='producing');M.dispatch(s,ready.orderId);
   const engine=browser.browserType().name(),width=engine==='webkit'?390:320,height=width===320?568:844;
   const context=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true});

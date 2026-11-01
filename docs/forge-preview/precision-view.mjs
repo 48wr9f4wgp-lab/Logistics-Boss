@@ -1,5 +1,5 @@
-import * as M from './model.mjs?v=0.24';
-import {precisionPlan,shaftEntryCost} from './precision.mjs?v=0.24';
+import * as M from './model.mjs?v=0.25';
+import {precisionPlan,shaftEntryCost} from './precision.mjs?v=0.25';
 
 const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
 

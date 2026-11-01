@@ -1,12 +1,12 @@
-import {layoutCandidate,layoutPlan} from './layout.mjs?v=0.24';
+import {layoutCandidate,layoutPlan} from './layout.mjs?v=0.25';
 // Run an offered order on a copy, including shared labor, paths, experience,
 // payroll and deadlines. Existing orders ship as soon as they are ready.
-import * as M from './model.mjs?v=0.24';
-import {startRepeat} from './improvement.mjs?v=0.24';
+import * as M from './model.mjs?v=0.25';
+import {startRepeat} from './improvement.mjs?v=0.25';
 
-import {acceptPrecision,installStarterLathe} from './precision.mjs?v=0.24';
+import {acceptPrecision,installStarterLathe} from './precision.mjs?v=0.25';
 
-import {inquiryContext,decideInquiry} from './inquiry.mjs?v=0.24';
+import {inquiryContext,decideInquiry} from './inquiry.mjs?v=0.25';
 
 export function estimateOrder(state,scenario,maxTicks=24000){
   const s=structuredClone(state);

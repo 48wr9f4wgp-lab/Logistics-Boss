@@ -1,28 +1,32 @@
-import {SPECIALTIES,restoreSpecialties} from './specialties.mjs?v=0.24';
-import {BRIEFS,briefTarget,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.24';
-import {layoutEditor} from './layout-editor.mjs?v=0.24';
-import {applyLayout} from './layout.mjs?v=0.24';
+import {SPECIALTIES,restoreSpecialties} from './specialties.mjs?v=0.25';
+import {BRIEFS,briefTarget,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.25';
+import {layoutEditor} from './layout-editor.mjs?v=0.25';
+import {applyLayout} from './layout.mjs?v=0.25';
 import {floorGesture,changeCamera} from './floor-input.mjs?v=0.16';
 import {departureDuration} from './shipping.mjs?v=0.16';
-import * as M from './model.mjs?v=0.24';
-import {openingOffer,deliveryGuide,floorTicket} from './guidance.mjs?v=0.24';
-import {repeatOffer,startRepeat,comparisonLine} from './improvement.mjs?v=0.24';
+import * as M from './model.mjs?v=0.25';
+import {openingOffer,deliveryGuide,floorTicket} from './guidance.mjs?v=0.25';
+import {repeatOffer,startRepeat,comparisonLine} from './improvement.mjs?v=0.25';
 import {frameWorkshop,project,pickMachine} from './view.mjs?v=0.17';
-import {drawWorkshop} from './workshop.mjs?v=0.24';
+import {drawWorkshop} from './workshop.mjs?v=0.25';
 import {createArtLoader} from './miniature-art.mjs?v=0.17';
-import {createEstimator} from './estimate-client.mjs?v=0.24';
-import {acceptPrecision,installStarterLathe} from './precision.mjs?v=0.24';
-import {precisionDesk,bindPrecisionDesk} from './precision-view.mjs?v=0.24';
-import {advanceToReview,decideInquiry,inquiryContext} from './inquiry.mjs?v=0.24';
-import {pairResult,yenGain} from './pairing.mjs?v=0.24';
-import {bindInquiry,inquirySheet} from './inquiry-view.mjs?v=0.24';
+import {createEstimator} from './estimate-client.mjs?v=0.25';
+import {acceptPrecision,installStarterLathe} from './precision.mjs?v=0.25';
+import {precisionDesk,bindPrecisionDesk} from './precision-view.mjs?v=0.25';
+import {advanceToReview,decideInquiry,inquiryContext} from './inquiry.mjs?v=0.25';
+import {pairResult,yenGain} from './pairing.mjs?v=0.25';
+import {bindInquiry,inquirySheet} from './inquiry-view.mjs?v=0.25';
 const workshopArt=createArtLoader(),estimator=createEstimator();
 const shaftChoice={offer:'fine',inspector:null,investment:'none',benchId:null};
 const $=s=>document.querySelector(s),KEY='forge.factory.v1',canvas=$('#world'),ctx=canvas.getContext('2d');
 let s=M.fresh(),speed=1,last=0,zoom=1,pan={x:0,y:0},placing=null,selected=null,tab=null,toastUntil=0,revision=null,writer=false,saveBlocked=false,paintTime=0,placementCells=[],resumeSpeed=1,skipping=null,tickRemainder=0,showLabels=false,lastDraw=-Infinity;
 let freightSelection=null,growthFocus=null, recentShipment=null, departure=null;
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
-try{const raw=localStorage.getItem(KEY);if(raw){const env=JSON.parse(raw);if(!M.validate(env.state))throw Error('invalid');s=env.state;restoreSpecialties(s);revision=env.revision;}}catch{saveBlocked=true;speed=0;}
+try{const raw=localStorage.getItem(KEY);if(raw){const env=JSON.parse(raw);if(!M.validate(env.state))throw Error('invalid');s=env.state;restoreSpecialties(s);restoreWorkMode();revision=env.revision;}}catch{saveBlocked=true;speed=0;}
+function restoreWorkMode(){
+  // Previously accepted jobs retain their original manual shipping agreement.
+  if(s.autoWork===undefined&&!M.frontOrder(s))s.autoWork=true;
+}
 // A completed saved order remains safe to dispatch after reopening the page.
 if(s.orders.some(o=>!o.shipped&&o.done===o.qty))speed=0;
 function toast(t){if(tab){$('#sheetNotice').textContent=t;$('#sheetNotice').hidden=false;}$('#toast').textContent=t;$('#toast').style.display='block';toastUntil=performance.now()+4200;}
@@ -46,6 +50,9 @@ function update(){
   entry.hidden=!consult;entry.disabled=!writer||saveBlocked;
   if(consult)entry.textContent=consult.extra?'作業順の見直し':'＋6個の相談';
   const active=M.frontOrder(s);
+  const delegated=!!(s.autoWork&&active&&!placing&&!skipping);
+  const decision=delegated&&consult&&!consult.extra;
+  if(decision)entry.hidden=true;
   const latest=s.results?.[0];
   const shownReport=recentShipment||(!active&&(!s.goalOffer||latest?.repeatCost!==undefined||latest?.qualitySpend!==undefined||latest?.pair||latest?.declinedExtra)?latest:null);
   const result=!active&&pairResult(shownReport);
@@ -67,6 +74,9 @@ function update(){
   let floorHint=ticket.hint,action=ticket.action;
   if(skipping?.review)floorHint='先約の半分で止まり、小口の相談に戻ります。';
   else if(consult?.extra)floorHint=(consult.primary.pair.priority==='primary'?'先約優先':'小口優先')+' · 追加の6個は '+consult.extra.done+'/6個完成。';
+  if(!active&&latest?.offerId==='first'&&s.delivered===1&&action.panel==='improve'&&Number.isFinite(latest.walk)){
+    floorHint='12個で職人が'+Math.round(latest.walk)+'マス移動。次は配置を変えるか、ボール盤に投資するか。';
+  }
   const stamp=(recentShipment||!s.goalOffer||s.goalOffer===latest?.offerId)&&!active&&s.specialties?.find(e=>e.orderId===latest?.orderId);
   $('.order-strip').classList.toggle('earned-sign',!!stamp&&!result);
   if(stamp){
@@ -82,6 +92,23 @@ function update(){
   }else if(active&&!skipping&&Object.hasOwn(SPECIALTIES,active.offerId)&&!s.specialties?.some(e=>e.offerId===active.offerId)){
     $('#ticketLabel').textContent=ticket.label+' · '+SPECIALTIES[active.offerId]+'に挑戦';
   }
+  if(delegated){
+    if(decision){
+      $('#ticketLabel').textContent='製作を一時停止 · 小口の打診';
+      floorHint='同じ職人で、支給材の6個も作るか決めてください。';
+      action={type:'panel',panel:'inquiry',label:'小口6個の条件を見る'};
+    }else{
+      $('#ticketLabel').textContent='おまかせ製作 · 完成時に出荷';
+      const queues=M.production(s,active.id).stages;
+      const waiting=M.route(active.product).filter(k=>queues[k].waiting>0).sort((a,b)=>queues[b].waiting-queues[a].waiting)[0];
+      if(!active.briefId)floorHint=waiting?M.MACHINES[waiting].name+'の前で'+queues[waiting].waiting+(active.product==='shaft'?'本':'個')+'が順番待ち。':'職人が残りの運搬・加工を進めています。';
+    }
+  }else if(active&&s.autoWork===undefined&&!skipping)floorHint='この注文は手動出荷。「操作 → おまかせ」で今から任せられます。';
+  else if(s.autoWork&&action.type==='accept')floorHint='受注すると職人が製作し、完成時に出荷します。';
+  button.hidden=delegated&&!decision;
+  $('#skipDelegated').hidden=!delegated||!!decision;
+  $('#autoMode').classList.toggle('active',s.autoWork===true);
+  $('#autoMode').setAttribute('aria-pressed',String(s.autoWork===true));
   $('#orderHint').textContent=floorHint;
   $('#orderHint').hidden=!floorHint;
   button.textContent=action.label;
@@ -93,7 +120,7 @@ function update(){
   $('#activity').textContent='第一工場 '+s.width+'×'+s.height+' · '+busy+'/'+s.workers.length+'人作業中';
   updateSelection();
   document.querySelectorAll('[data-speed]').forEach(b=>{
-    const current=+b.dataset.speed===speed;
+    const current=!s.autoWork&&+b.dataset.speed===speed;
     b.classList.toggle('active',current);
     b.setAttribute('aria-pressed',String(current));
     b.disabled=!!placing;
@@ -148,10 +175,16 @@ $('#sheet').addEventListener('cancel',()=>{estimator.cancel();tab=null;sheetTrai
 $('#menu').onclick=()=>open('manage');
 $('#controls').addEventListener('toggle',()=>{if($('#controls').open){selected=null;updateSelection();}});
 document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{
-  stopSkip();speed=+b.dataset.speed;
+  if(!writer||saveBlocked)return;
+  stopSkip();s.autoWork=false;speed=+b.dataset.speed;save();
   if(speed===0)draw();
   update();
 });
+$('#autoMode').onclick=()=>{
+  if(!writer||saveBlocked)return;
+  stopSkip();s.autoWork=true;speed=1;last=0;tickRemainder=0;save();update();
+};
+$('#skipDelegated').onclick=()=>{$('#controls').open=false;startSkip();};
 function zoomButton(delta){
   const center={x:canvas.clientWidth/2,y:canvas.clientHeight/2};
   applyCamera(center,center,(zoom+delta)/zoom);
@@ -339,7 +372,7 @@ if(tab==='orders'){
     html+=card(escape(o.label),`<small>生産中 · ${o.qty}個 / 品質 ${o.quality}</small><p>${o.done}個完成 · ${!quote.late?'納期まで '+remain+'秒':'納期超過：基本報酬15%減額'}${o.briefId?'<br>改善依頼 · '+briefTarget(o.briefId):''}</p><progress value="${o.done}" max="${o.qty}"></progress><button class="primary wide" data-ship="${o.id}" ${o.done<o.qty?'disabled':''}>出荷して ${money(quote.pay)} を受け取る</button>`);
   }
   const recommended=openingOffer(s);
-  html+=recommended?'<p>まずは一件、受注 → 完成まで進める → 出荷。詳細画面を開いている間は時間が止まります。</p>':'<p>同時受注は2件。受注時に材料を購入します。詳細画面を開いている間は時間が止まります。</p>';
+  html+=recommended?'<p>まずは一件、材料費を確認して受注。おまかせ運転中は職人が完成時に出荷します。詳細画面を開くと時間が止まります。</p>':'<p>同時受注は2件。受注時に材料を購入します。詳細画面を開いている間は時間が止まります。</p>';
   if(recommended)html+=offerCard(recommended,true);
   else if(repeatOffer(s))html+='<button class="wide" data-next="improve">前回の12個で改善を試す</button>';
   html+='<button class="wide growth-entry" data-next="growth">成長案件 · 投資で次の仕事へ ↗</button>';
@@ -370,7 +403,7 @@ if(tab==='workers'){
 }
 if(tab==='result'){const r=s.results?.[0];html=r?receipt(r,true):'<p>まだ出荷記録がありません。</p>';}
 if(tab==='finance'){html=workshopRecord()+card('工場の状況','<div class="row"><span>出荷実績</span><b>'+s.delivered+'件</b></div><div class="row"><span>工場時間</span><b>'+Math.floor(s.clock/60)+'分'+Math.floor(s.clock%60)+'秒</b></div>')+card('収支',`<div class="row"><span>累計売上</span><b>${money(s.revenue)}</b></div><div class="row"><span>材料・投資・人件費</span><b>${money(s.expense)}</b></div><p>加工する部品がある間、人件費は毎秒¥0.7。画面を閉じている間の生産・請求はありません。</p>`)+'<h3>出荷の振り返り</h3><p>直近12件を保存。利益は設備・研修・増築費を引く前の金額です。</p>'+(s.results?.length?'<button class="wide" data-next="result">直近の出荷結果を開く</button>'+s.results.map(r=>`<details class="result-history"><summary>${escape(r.label)} × ${r.qty}<b>${M.resultProfit(r)===null?'記録なし':signedMoney(M.resultProfit(r))}</b></summary>${receipt(r,false)}</details>`).join(''):'<p>出荷すると結果をここで見返せます。</p>')+card('工場を広げる',`<p>床面積を8×6から10×8へ。追加設備と動線のための余白を作ります。</p><button class="primary wide" id="expand" ${s.width===10?'disabled':''}>${s.width===10?'拡張済み':'増築する · ¥3,500'}</button>`)+card('生産の記録',`<p>完了工程 ${s.stats.processed}回<br>品質調整 ${s.stats.rework}回<br>運搬・移動距離 ${Math.floor(s.stats.walk)}マス</p>`)+card('工場日誌',s.log.map(t=>`<p>${escape(t)}</p>`).join(''));}
-if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② 完成まで進めるで待ち時間をスキップ（人件費・納期も進む）<br>③ 完成した注文を出荷して入金<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.24</small>');}
+if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② おまかせで運搬・製作・出荷まで進行。小口の相談では止まります<br>③ 操作から手動の等速・3倍速や早送りも選べます<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.25</small>');}
 body.innerHTML=html;
 setupPanelEstimate();
 if($('#allGrowth'))$('#allGrowth').onclick=()=>open('growth');
@@ -385,7 +418,7 @@ if(tab==='improve'){
     };
   }
 }
-body.querySelectorAll('[data-result-action]').forEach(b=>b.onclick=()=>runResultAction(b.dataset.resultAction));body.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{if(act(()=>M.setGoal(s,b.dataset.goal))){growthFocus=null;renderPanel();$('#sheet').scrollTop=0;}});body.querySelectorAll('[data-plan-action]').forEach(b=>b.onclick=()=>runPlan(b.dataset.planAction));body.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>open(b.dataset.next));body.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>{if(!tab||!b.isConnected)return;if(act(()=>M.accept(s,b.dataset.order))){close();speed=speed||1;update();}});body.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>ship(+b.dataset.ship));body.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>place({kind:b.dataset.buy}));body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>place({id:b.dataset.move,kind:s.machines.find(m=>m.id===b.dataset.move).kind}));body.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>act(()=>M.upgrade(s,b.dataset.upgrade)));body.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>act(()=>M.sell(s,b.dataset.sell)));body.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>act(()=>M.train(s,+b.dataset.train)));body.querySelectorAll('[data-role]').forEach(b=>b.onchange=()=>act(()=>{s.workers.find(w=>w.id===+b.dataset.role).role=b.value;M.note(s,'担当の優先順位を変更');}));body.querySelectorAll('[data-mentor]').forEach(b=>b.onclick=()=>act(()=>{const w=s.workers.find(w=>w.id===+b.dataset.mentor);w.mentor=!w.mentor;M.note(s,`${w.name}の指導役を変更`);}));if($('#expand'))$('#expand').onclick=()=>act(()=>M.expand(s));if($('#export'))$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({revision,state:s})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='machikoba-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};if($('#reload'))$('#reload').onclick=()=>location.reload();if($('#import'))$('#import').onchange=async e=>{try{const f=e.target.files[0];if(!f||f.size>200000)throw Error();const data=JSON.parse(await f.text());if(!M.validate(data.state))throw Error();if(!writer){toast('別のタブを閉じて再読み込みしてください');return;}if(!confirm('現在の進行を、選んだセーブに置き換えますか？'))return;s=data.state;restoreSpecialties(s);recentShipment=null;departure=null;saveBlocked=false;revision=JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null;save();update();renderPanel();toast('セーブを読み込みました');}catch{toast('対応する正常なセーブではありません。進行は変更していません');}};}
+body.querySelectorAll('[data-result-action]').forEach(b=>b.onclick=()=>runResultAction(b.dataset.resultAction));body.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{if(act(()=>M.setGoal(s,b.dataset.goal))){growthFocus=null;renderPanel();$('#sheet').scrollTop=0;}});body.querySelectorAll('[data-plan-action]').forEach(b=>b.onclick=()=>runPlan(b.dataset.planAction));body.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>open(b.dataset.next));body.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>{if(!tab||!b.isConnected)return;if(act(()=>M.accept(s,b.dataset.order))){close();speed=speed||1;update();}});body.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>ship(+b.dataset.ship));body.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>place({kind:b.dataset.buy}));body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>place({id:b.dataset.move,kind:s.machines.find(m=>m.id===b.dataset.move).kind}));body.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>act(()=>M.upgrade(s,b.dataset.upgrade)));body.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>act(()=>M.sell(s,b.dataset.sell)));body.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>act(()=>M.train(s,+b.dataset.train)));body.querySelectorAll('[data-role]').forEach(b=>b.onchange=()=>act(()=>{s.workers.find(w=>w.id===+b.dataset.role).role=b.value;M.note(s,'担当の優先順位を変更');}));body.querySelectorAll('[data-mentor]').forEach(b=>b.onclick=()=>act(()=>{const w=s.workers.find(w=>w.id===+b.dataset.mentor);w.mentor=!w.mentor;M.note(s,`${w.name}の指導役を変更`);}));if($('#expand'))$('#expand').onclick=()=>act(()=>M.expand(s));if($('#export'))$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({revision,state:s})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='machikoba-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};if($('#reload'))$('#reload').onclick=()=>location.reload();if($('#import'))$('#import').onchange=async e=>{try{const f=e.target.files[0];if(!f||f.size>200000)throw Error();const data=JSON.parse(await f.text());if(!M.validate(data.state))throw Error();if(!writer){toast('別のタブを閉じて再読み込みしてください');return;}if(!confirm('現在の進行を、選んだセーブに置き換えますか？'))return;s=data.state;restoreSpecialties(s);restoreWorkMode();recentShipment=null;departure=null;saveBlocked=false;revision=JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null;save();update();renderPanel();toast('セーブを読み込みました');}catch{toast('対応する正常なセーブではありません。進行は変更していません');}};}
 
 
 function runPlan(id){
@@ -427,7 +460,11 @@ const resultMoney=v=>'¥'+v.toLocaleString('ja-JP',{minimumFractionDigits:1,maxi
 const duration=v=>v.toFixed(1)+'秒';
 function ship(id){
   const order=s.orders.find(o=>o.id===id);
-  if(!act(()=>M.dispatch(s,id),false))return;
+  if(!act(()=>{
+    const error=M.dispatch(s,id);
+    if(!error)restoreWorkMode();
+    return error;
+  },false))return;
   recentShipment=s.results[0];speed=0;
   departure={product:order.product,qty:order.qty,start:performance.now()};
   if(tab)close();
@@ -609,7 +646,7 @@ function draw(t=performance.now()){
   }
   ctx.setTransform(dpr,0,0,dpr,0,0);
   viewport=frameWorkshop(W,H,s.width,zoom,pan);
-  const running=writer&&!saveBlocked&&!document.hidden&&!tab&&(speed>0||!!skipping)&&(!placing||placing.draining);
+  const running=writer&&!saveBlocked&&!document.hidden&&!tab&&(speed>0||!!skipping||s.autoWork)&&(!placing||placing.draining)&&!(s.autoWork&&!skipping&&inquiryContext(s)?.extra===null);
   const art=workshopArt(s.width);
   const artMode=art.machines&&art.crew&&art.truck&&art.room&&art.shipping&&art.station?'ready':'partial';
   if(canvas.dataset.artwork!==artMode)canvas.dataset.artwork=artMode;
@@ -671,9 +708,21 @@ function frame(t){
       if(result.status==='review'){
         stopSkip('先約の半分が完成。小口はまだ引き受けていません',false);open('inquiry');
       }
+      else if(result.status==='ready'&&s.autoWork&&!review){stopSkip('完成時に出荷',false);ship(result.orderId);}
       else if(result.status==='ready')stopSkip(`生産完了 · 工場時間 +${Math.round(s.clock-skipping.clock)}秒 / 人件費 ${money(skipping.cash-s.cash)}。出荷できます`,false);
       else if(result.status==='idle')stopSkip('進める注文がありません');
       else if(skipping.ticks>=24000)stopSkip('いったん停止しました。設備と工程待ちを確認してください');
+    }
+  }else if(s.autoWork&&playable&&!placing){
+    const live=M.frontOrder(s),inquiry=live&&inquiryContext(s);
+    if(!live||(inquiry&&!inquiry.extra))tickRemainder=0;
+    else{
+      // Show the shift on the floor, progressing in the same fixed ticks as manual play.
+      if(last)tickRemainder+=Math.min((t-last)/1000,.25)*16;
+      const ticks=Math.floor(tickRemainder/M.TICK);
+      const result=M.advanceToReady(s,ticks);
+      tickRemainder-=result.ticks*M.TICK;
+      if(result.status==='ready'){tickRemainder=0;ship(result.orderId);}
     }
   }else if(last&&playable&&(!placing||placing.draining)&&speed){
     tickRemainder+=Math.min((t-last)/1000,.25)*speed;
