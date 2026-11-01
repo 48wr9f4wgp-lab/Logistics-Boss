@@ -1,3 +1,12 @@
+import {roomFrames} from './art/room-frames-v017.mjs';
+
+// Keep the entire plinth in the overview, including the road and roof fixtures.
+export function frameWorkshop(w,h,roomWidth,zoom=1,pan={x:0,y:0}){
+  const [left,top,width,height]=roomFrames['room-'+roomWidth];
+  const u=Math.max(0,Math.min((w-12)/width,(h-50)/height))*zoom;
+  return {w,h,u,ox:w/2-(left+width/2)*u+pan.x,oy:h/2-(top+height/2)*u+pan.y};
+}
+
 // Canvas geometry shared by painting and picking; all coordinates are CSS pixels.
 export function project(view, x, y, z = 0) {
   return {x: view.ox + (x-y)*view.u, y: view.oy + (x+y)*view.u*.5-z*view.u};

@@ -1,4 +1,4 @@
-import {paintCrewBust} from './miniature-art.mjs?v=0.16';
+import {crewFacing,paintCrewBust,paintStationDetail,partFrame} from './miniature-art.mjs?v=0.17';
 // Screen-space figure painting in a local, ground-facing frame. Units are tile units.
 const TAU=Math.PI*2;
 const uniforms=[
@@ -15,6 +15,12 @@ function facing(w,visual) {
   if(length>.001)return [dx/length,dy/length];
   if(visual.machine)return [0,-1]; // All stations are operated from their +y side.
   return w.id===1?[0,1]:[1,0];
+}
+
+export function castCrewShadow(g,w,visual,image){
+  const [dx,dy]=facing(w,visual),working=visual.phase==='work',lean=working ? .24 : 0;
+  const origin=g.p(w.x+.45+lean*dx,w.y+.45+lean*dy);
+  paintStationDetail(g.ctx,image,'shadow-'+crewFacing(dx,dy)+'-'+Number(working),origin.x,origin.y,g.v.u);
 }
 
 export function drawCrewMember(g,w,visual,opt,contact) {
@@ -122,6 +128,14 @@ export function drawCrewMember(g,w,visual,opt,contact) {
   }
   function carriedPart(){
     const a=getHand(-1),b=getHand(1),mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2-.02;
+    if(opt.art?.station){
+      // Anchor the physical stock's midpoint between the hands at either heading.
+      const size=visual.part.product==='shaft'?1.65:1.36;
+      ctx.save();ctx.translate(mx,my);ctx.scale(look,1);
+      const shaft=visual.part.product==='shaft';
+      paintStationDetail(ctx,opt.art.station,partFrame(visual.part),-(shaft ? .10 : .06)*size,-.09*size,size);
+      ctx.restore();return;
+    }
     // Keep a broad three-quarter silhouette at either isometric heading.
     const d=look*.20,outline=[[mx-.25,my-d*.39],[mx+.12,my-d*.70],[mx+.25,my+d*.39],[mx-.12,my+d*.70]];
     if(visual.part.product==='shaft'){
@@ -137,7 +151,7 @@ export function drawCrewMember(g,w,visual,opt,contact) {
       if(visual.part.stage>=2)for(const side of [-1,1])ellipse(mx+side*.12,my+side*d*.19,.024,.015,'#415f69');
     }
   }
-  g.softShadow(w.x+.49+stance*dx,w.y+.45+stance*dy,.31,.14,.40);
+  if(!opt.art?.station)g.softShadow(w.x+.49+stance*dx,w.y+.45+stance*dy,.31,.14,.40);
   ctx.save();ctx.translate(foot.x,foot.y);ctx.scale(u,u);
   footfall(-near);footfall(near);leg(-near);leg(near);
   arm(-near);

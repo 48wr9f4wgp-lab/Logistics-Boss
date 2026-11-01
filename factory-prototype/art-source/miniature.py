@@ -41,6 +41,25 @@ material('canvas','a8764f',.02,.73,1)
 material('twill','558576',.02,.70,1)
 material('wheel','535962',.34,.75,4)
 
+# Architectural materials are isolated from the existing moving atlases.
+material('oxide','ad412d',.27,.37,14)
+material('safety','eda02e',.21,.31,14)
+material('press','287b80',.33,.33,14)
+material('toolblue','3c6281',.29,.35,14)
+material('cover','477f72',.26,.33,14)
+material('indigo','335b72',.01,.79,15)
+material('duck','946846',.015,.76,15)
+material('seagreen','3f7d70',.015,.76,15)
+material('stock','c0cdd0',.87,.23,2)
+material('millscale','617781',.66,.52,2)
+material('walkway','527d70',.025,.68,13)
+material('wired','a6bbb6',.12,.38,9)
+material('zinc','477673',.42,.48,10)
+material('concrete','aaa48e',.02,.77,11)
+material('brickwork','965e46',.02,.83,12)
+material('apron','515b5d',.01,.88,11)
+material('enamel','e6cd91',.22,.32,1)
+
 EYE=np.eye(3)
 class Scene:
     def __init__(self): self.rows=[]
@@ -93,14 +112,14 @@ def cabinet(s,x,y,z,w,d,h,mat,level):
     badge(s,x+w*.44,y+d+.027,z+.064,w*.38,level)
 def saw(s,l,t,active):
     B=s.box;R=s.rod;foot(s)
-    cabinet(s,.14,.15,.11,.68,.60,.43,'red',l)
+    cabinet(s,.14,.15,.11,.68,.60,.43,'oxide',l)
     B(.087,.12,.54,.82,.68,.09,'dark',.027);B(.10,.135,.624,.79,.66,.039,'steel',.009)
     for y in (.29,.48,.67):B(.12,y,.662,.75,.016,.003,'dark',0)
     B(.24,.60,.668,.31,.071,.11,'iron',.015,1);B(.24,.31,.668,.31,.055,.10,'iron',.012)
     R((.38,.62,.725),(.38,.84,.725),.021,'chrome',1);wheel(s,(.38,.84,.725),(0,1,0),.066,0,'dark',1)
-    B(.65,.125,.66,.17,.16,.30,'ochre',.035)
+    B(.65,.125,.66,.17,.16,.30,'safety',.035)
     R((.585,.195,.92),(.82,.195,.92),.072,'iron')
-    s.chain([(.66,.20,.92),(.56,.31,1.02),(.51,.46,.96)],.073,'ochre',2)
+    s.chain([(.66,.20,.92),(.56,.31,1.02),(.51,.46,.96)],.073,'safety',2)
     B(.19,.23,.67,.115,.35,.053,'iron')
     feed=(1+math.sin(t))*.065 if active else 0
     c=(.59,.46,.96-feed)
@@ -110,7 +129,17 @@ def saw(s,l,t,active):
     s.torus((.608,.46,c[2]),(1,0,0),.263,.006,'steel',2)
     for i in range(4):
         a=i*TAU/4+t; R((.608,.46+.14*math.cos(a),c[2]+.14*math.sin(a)),(.611,.46+.21*math.cos(a),c[2]+.21*math.sin(a)),.012,'dark',2)
-    s.guard((.588,.46,c[2]),(1,0,0),.306,.186,.14,'ochre',2)
+    s.guard((.588,.46,c[2]),(1,0,0),.306,.186,.14,'safety',2)
+    # The rolled guard lip and fasteners turn with the head's plunge.
+    for rad,mat,thick in ((.291,'safety',.010),(.223,'iron',.007)):
+        arc=[(.663,.46+rad*math.cos(a),c[2]+rad*math.sin(a)) for a in np.linspace(.12,math.pi-.12,11)]
+        s.chain(arc,thick,mat,2)
+    for a in (.32,1.56,2.82):
+        yy=.46+.257*math.cos(a);zz=c[2]+.257*math.sin(a)
+        R((.66,yy,zz),(.674,yy,zz),.018,'steel',2)
+    B(.833,.26,.21,.018,.31,.16,'dark',.009)
+    for j in range(4):B(.85,.28+j*.070,.235,.009,.040,.115,'oxide',.006)
+    B(.835,.47,.416,.013,.16,.059,'enamel',.004)
     R((.60,.46,c[2]),(.66,.46,c[2]),.064,'chrome',2)
     s.chain([(.60,.46,1.22-feed),(.60,.68,1.27-feed),(.66,.95,1.06-feed)],.029,'dark',2)
     R((.633,.82,1.16-feed),(.66,.95,1.06-feed),.038,'rubber',2)
@@ -120,16 +149,23 @@ def saw(s,l,t,active):
         B(.75,.35,.67,.11,.21,.30,'cream');B(.766,.559,.82,.08,.009,.10,'shade');s.ball((.80,.57,.75),.023,'red')
 def drill(s,l,t,active):
     B=s.box;R=s.rod;foot(s)
-    B(.18,.17,.115,.59,.52,.073,'turq',.029)
-    R((.43,.285,.17),(.43,.285,.37),.145,'turq');R((.43,.285,.29),(.43,.285,1.22),.080,'chrome')
+    B(.18,.17,.115,.59,.52,.073,'press',.029)
+    R((.43,.285,.17),(.43,.285,.37),.145,'press');R((.43,.285,.29),(.43,.285,1.22),.080,'chrome')
     R((.43,.285,.48),(.43,.285,.62),.113,'iron')
-    B(.25,.30,.52,.40,.29,.09,'turq',.023)
+    B(.25,.30,.52,.40,.29,.09,'press',.023)
     B(.18,.31,.575,.57,.46,.066,'steel',.017)
     for x in (.25,.38,.51,.64):B(x,.36,.641,.020,.365,.004,'dark',0)
     B(.21,.68,.645,.19,.061,.09,'iron',.009,1);R((.25,.70,.718),(.25,.76,.76),.023,'dark',1)
-    B(.25,.18,1.02,.40,.36,.21,'turq',.063,1)
-    R((.43,.26,1.17),(.43,.26,1.245),.202,'turq',1)
-    B(.16,.04,1.185,.54,.61,.19,'turq',.072,1);B(.197,.059,1.36,.47,.56,.039,'mint',.015,1)
+    B(.25,.18,1.02,.40,.36,.21,'press',.063,1)
+    R((.43,.26,1.17),(.43,.26,1.245),.202,'press',1)
+    B(.16,.04,1.185,.54,.61,.19,'press',.072,1);B(.197,.059,1.36,.47,.56,.039,'mint',.015,1)
+    # A stepped motor cowl, fastened badge and ribbed belt housing.
+    R((.43,.23,1.383),(.43,.23,1.433),.184,'press',1)
+    R((.43,.23,1.422),(.43,.23,1.454),.153,'cover',1)
+    for yy in (.17,.22,.27):B(.319,yy,1.452,.22,.018,.009,'shade',.004,1)
+    B(.691,.24,1.227,.015,.232,.074,'enamel',.006,1)
+    B(.707,.266,1.258,.003,.143,.010,'shade',.001,1)
+    for yb in (.25,.457):s.ball((.709,yb,1.261),.009,'brass',1)
     for i in range(6):B(.207+i*.063,.626,1.245,.033,.016,.052,'shade',.012,1)
     R((.43,.145,.91),(.43,.145,1.18),.122,'dark')
     for z in (.95,1,1.05,1.1):s.torus((.43,.145,z),(0,0,1),.121,.013,'iron')
@@ -152,7 +188,7 @@ def drill(s,l,t,active):
         B(.15,.11,.72,.18,.12,.28,'navy');B(.17,.228,.84,.14,.012,.12,'glass')
 def lathe(s,l,t,active):
     B=s.box;R=s.rod;foot(s)
-    cabinet(s,.10,.15,.11,.81,.60,.42,'blue',l)
+    cabinet(s,.10,.15,.11,.81,.60,.42,'toolblue',l)
     B(.085,.13,.53,.85,.65,.078,'dark',.025);B(.11,.17,.608,.79,.53,.044,'steel',.009)
     for y in (.31,.53):B(.18,y,.648,.66,.055,.038,'chrome',.01)
     R((.16,.727,.627),(.86,.727,.627),.022,'chrome')
@@ -160,13 +196,13 @@ def lathe(s,l,t,active):
     for xx,zz in ((.152,.88),(.251,.91),(.20,.76)):
         R((xx,.647,zz),(xx,.672,zz),.029,'brass');s.ball((xx,.677,zz),.018,'dark')
     
-    B(.09,.16,.64,.25,.49,.38,'blue',.047);B(.11,.19,1.01,.21,.43,.047,'navy',.018)
+    B(.09,.16,.64,.25,.49,.38,'toolblue',.047);B(.11,.19,1.01,.21,.43,.047,'navy',.018)
     R((.32,.43,.86),(.385,.43,.86),.146,'steel',2)
     for i in range(3):
         a=t*5+i*TAU/3;tip=(.389,.43+.115*math.cos(a),.86+.115*math.sin(a))
         R((.389,.43+.035*math.cos(a),.86+.035*math.sin(a)),tip,.026,'dark',2)
-    B(.72,.25,.669,.15,.30,.17,'blue',.026);R((.70,.43,.86),(.80,.43,.86),.052,'chrome',1)
-    B(.76,.32,.76,.09,.18,.15,'blue',.027)
+    B(.72,.25,.669,.15,.30,.17,'toolblue',.026);R((.70,.43,.86),(.80,.43,.86),.052,'chrome',1)
+    B(.76,.32,.76,.09,.18,.15,'toolblue',.027)
     wheel(s,(.864,.43,.86),(1,0,0),.084,.45,'dark',1)
     slide=math.sin(t)*.08 if active else 0
     B(.44+slide,.52,.66,.21,.14,.11,'iron',.016,2)
@@ -174,6 +210,11 @@ def lathe(s,l,t,active):
     wheel(s,(.58+slide,.715,.74),(0,1,0),.104,math.pi-t,'dark',2,True)
     R((.20,.72,.65),(.30,.81,.72),.019,'chrome',1);s.ball((.30,.81,.72),.029,'rubber',1)
     R((.13,.65,.83),(.31,.65,.83),.018,'brass',1)
+    # Splash tray below the ways and a glass level gauge in the bed casting.
+    B(.35,.18,.659,.34,.068,.098,'cover',.010)
+    B(.911,.36,.215,.019,.195,.116,'dark',.015)
+    B(.930,.379,.231,.009,.154,.083,'paper',.010)
+    B(.939,.38,.244,.004,.152,.030,'brass',.005)
     if l>1:B(.16,.14,.65,.57,.065,.37,'mint',.025)
     if l>2:
         B(.76,.12,.84,.16,.11,.25,'cream');B(.77,.232,.95,.14,.008,.12,'shade')
@@ -182,8 +223,10 @@ def bench(s,l,t,active):
     for x in (.13,.76):
         for y in (.14,.68):B(x,y,.12,.073,.072,.60,'green',.012)
     B(.13,.14,.246,.68,.55,.042,'green',.009)
-    B(.16,.24,.29,.29,.34,.18,'turq',.016);B(.18,.59,.33,.22,.025,.081,'navy')
-    B(.13,.16,.51,.7,.53,.15,'green',.018)
+    B(.16,.24,.29,.29,.34,.18,'press',.016);B(.18,.59,.33,.22,.025,.081,'navy')
+    B(.495,.20,.293,.26,.39,.15,'oxide',.014)
+    B(.50,.578,.388,.25,.019,.026,'cream',.004)
+    B(.13,.16,.51,.7,.53,.15,'cover',.018)
     R((.39,.708,.58),(.57,.708,.58),.017,'chrome')
     B(.095,.10,.665,.80,.70,.112,'oak',.017)
     B(.21,.28,.777,.42,.386,.014,'green',.009);B(.65,.34,.78,.155,.231,.013,'paper',.003)
@@ -224,14 +267,14 @@ def render(scene,work,key,w,h,u,ox,oy,mode=0,samples=4,rays=6):
 
 def crew(s,person,facing,work):
     # Sculpt in shoulder/forward coordinates and rotate the entire bust to its path heading.
-    coat=('denim','canvas','twill')[person]; cap=('yellow','cream','yellow')[person]
+    coat=('indigo','duck','seagreen')[person]; cap=('yellow','cream','yellow')[person]
     lean=.13 if work else .025;neck=.85-(.025 if work else 0)
     def egg(c,h,mat,half=False):s.add(7 if half else 6,mat,c,h)
     slope=np.array([0.,lean,.37]);slope/=np.linalg.norm(slope)
     jacket_axes=[[1,0,0],[0,slope[2],-slope[1]],slope]
     s.add(8,coat,(0,lean*.5,.533),(.186,.121,.194),.058,jacket_axes)
     # A reinforced yoke, center seam and rear belt are visible while leaning into the machine.
-    yoke=('denim','canvas','twill')[person]
+    yoke=coat
     s.chain([(-.119,lean*.84-.091,.655),(0,lean*.84-.121,.625),(.119,lean*.84-.091,.655)],.007,yoke)
     s.chain([(0,lean*.84-.135,.624),(0,lean*.50-.125,.53),(0,lean*.18-.115,.424)],.006,coat)
     s.chain([(-.083,lean*.3-.103,.462),(-.053,lean*.3-.115,.448)],.008,coat)
@@ -243,6 +286,19 @@ def crew(s,person,facing,work):
     s.box(.042,lean+.103,.548,.073,.018,.075,coat,.008)
     s.box(.04,lean+.120,.60,.078,.012,.014,'mint',.003)
     for z in (.46,.53,.60):s.ball((0,lean*.68+.125,z),.008,'brass')
+    # Distinct workwear at overview scale, including the back seen at a machine.
+    if person==0:
+        for side in (-1,1):
+            pts=[(side*.115,lean+.015,.711),(side*.108,lean-.080,.683),
+                 (side*.065,lean*.82-.121,.601),(-side*.098,lean*.35-.117,.438)]
+            s.chain(pts,.016,'canvas')
+            s.box(side*.102-.018,lean*.35-.137,.43,.035,.014,.028,'brass',.004)
+    if person==1:
+        s.chain([(-.151,lean*.91-.048,.66),(0,lean*.84-.126,.596),(.151,lean*.91-.048,.66)],.014,'walnut')
+        s.box(.089,lean*.31-.106,.418,.085,.042,.085,'walnut',.015)
+    if person==2:
+        s.torus((0,lean,.739),(0,0,1),.084,.021,'red')
+        s.chain([(.034,lean-.083,.741),(.085,lean-.124,.690),(.072,lean-.127,.647)],.022,'red')
     head=lean+(.052 if work else .009)
     egg((0,head,neck),(.117,.111,.137),'skin')
     egg((0,head-.043,neck+.063),(.116,.090,.087),'hair')
@@ -254,6 +310,12 @@ def crew(s,person,facing,work):
     egg((0,head+.004,neck+.123),(.151,.142,.105),cap,True)
     egg((0,head+.024,neck+.115),(.159,.156,.019),cap)
     s.chain([(0,head-.092,neck+.183),(0,head-.028,neck+.227),(0,head+.072,neck+.208)],.012,cap)
+    if person==1:
+        egg((0,head+.087,neck+.116),(.146,.123,.017),'cream')
+    else:
+        # Helmet numeral plate and adjustable band at the nape.
+        s.box(-.034,head+.131,neck+.127,.068,.012,.036,'green',.008)
+        s.chain([(-.104,head-.095,neck+.106),(0,head-.141,neck+.103),(.104,head-.095,neck+.106)],.010,'walnut')
     dx,dy=((1,0),(0,1),(-1,0),(0,-1))[facing]
     orientation=np.array([[-dy,dx,0],[dx,dy,0],[0,0,1]])
     rotated=[]
@@ -285,7 +347,7 @@ def portraits(work,dest):
                 s=Scene();crew(s,person,facing,pose)
                 im,world=render(s,work,f'crew-{person}-{facing}-{pose}',120,165,128,60,147,0,8,9)
                 entries.append((len(entries),im,world))
-    pack(entries,512,dest,'crew-v015.webp','crew-frames-v015.mjs','crewFrames',indexed=True)
+    pack(entries,512,dest,'crew-v017.webp','crew-frames-v017.mjs','crewFrames',indexed=True)
 
 MODELS={'cut':saw,'drill':drill,'lathe':lathe,'inspect':bench}
 def equipment(work,dest):
@@ -303,7 +365,7 @@ def equipment(work,dest):
             im,world=render(s,work,key,270,310,112,135,175,1)
             sprites.append((key,im,world))
         print('Baked',kind,flush=True)
-    pack(sprites,1152,dest,'machines-v015.webp','machine-frames-v015.mjs','frames')
+    pack(sprites,1152,dest,'machines-v017.webp','machine-frames-v017.mjs','frames')
 
 def surroundings(work,dest):
     from building import room,vehicle
@@ -314,12 +376,12 @@ def surroundings(work,dest):
         width=ox+math.ceil((w+1.67)*u);height=oy+math.ceil(((w+h+2.7)*.5+.70)*u)
         key=f'room-{w}'
         pic,world=render(s,work,key,width,height,u,ox,oy,0,8,9)
-        pic.save(dest/f'{key}-v015.webp',quality=90,method=6,exact=True);info[key]=[round(n,6) for n in world]
+        pic.save(dest/f'{key}-v017.webp',quality=90,method=6,exact=True);info[key]=[round(n,6) for n in world]
         print('Baked room',w,h,flush=True)
     s=Scene();vehicle(s)
     pic,world=render(s,work,'truck',440,380,130,120,160,0,6,8)
     pic.save(dest/'truck-v015.webp',quality=91,method=6,exact=True);info['truck']=[round(n,6) for n in world]
-    (dest/'room-frames-v015.mjs').write_text('export const roomFrames = '+json.dumps(info)+';\n')
+    (dest/'room-frames-v017.mjs').write_text('export const roomFrames = '+json.dumps(info)+';\n')
 
 def shipping(work,dest):
     from shipping import build
@@ -338,3 +400,6 @@ if __name__=='__main__':
     if len(sys.argv)<4 or sys.argv[3]=='rooms':surroundings(work,dest)
     if len(sys.argv)<4 or sys.argv[3]=='crew':portraits(work,dest)
     if len(sys.argv)<4 or sys.argv[3]=='shipping':shipping(work,dest)
+    if len(sys.argv)<4 or sys.argv[3]=='station':
+        from station import build
+        build(work,dest,Scene,render,pack,crew)

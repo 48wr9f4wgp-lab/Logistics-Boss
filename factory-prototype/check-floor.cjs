@@ -41,6 +41,7 @@ async function check(browser, url, width, height) {
     await ticket.click();
     await shown(button('完成まで進める'));
     await page.reload();
+    await page.locator('#world[data-artwork="ready"]').waitFor();
     await shown(button('完成まで進める'));
     await page.waitForFunction(()=>!document.querySelector('#orderAction').disabled);
     await capture('work');
@@ -57,12 +58,9 @@ async function check(browser, url, width, height) {
     await page.waitForFunction(ref=>document.querySelector('#world').toDataURL()===ref,paused);
     await page.locator('#controls summary').click();
     // Press the head of the initial drill as rendered on the factory floor.
-    const hit=await world.evaluate(c=>{
-      const {width:w,height:h}=c.getBoundingClientRect();
-      const u=Math.min(w/16.45,(h-62)/10.7);
-      const ox=w*.5-u+.22*u,oy=h*.5-14*u*.21;
-      return {x:ox+4*u,y:oy+3.5*u-1.22*u};
-    });
+    const {frameWorkshop,project}=await import('../docs/forge-preview/view.mjs');
+    const rect=await world.boundingBox();
+    const hit=project(frameWorkshop(rect.width,rect.height,8),5.5,1.5,1.22);
     await world.click({position:hit});
     await shown(page.getByText('ボール盤 · Lv.1',{exact:true}));
     await button('設備の選択を解除').click();
@@ -137,7 +135,7 @@ async function checkExpandedArt(browser,url,offlineArt=false){
   const engine=browser.browserType().name();
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
   try{
-    if(offlineArt)await context.route(/\/art\/[^/]+-v01[56]\.webp(?:\?.*)?$/,r=>r.abort());
+    if(offlineArt)await context.route(/\/art\/[^/]+-v01[567]\.webp(?:\?.*)?$/,r=>r.abort());
     await context.addInitScript(state=>localStorage.setItem('forge.factory.v1',JSON.stringify({revision:'expanded-art',state})),s);
     const page=await context.newPage(),errors=[];
     page.on('pageerror',e=>errors.push(e.message));
@@ -147,8 +145,8 @@ async function checkExpandedArt(browser,url,offlineArt=false){
     if(!offlineArt){
       await page.screenshot({path:path.join(process.env.RUNNER_TEMP||'.','factory-floor-screens',engine+'-expanded.jpg'),quality:90});
       const assets=await page.evaluate(()=>performance.getEntriesByType('resource').map(r=>r.name));
-      assert.ok(assets.some(f=>f.includes('room-10-v015.webp')));
-      assert.ok(!assets.some(f=>f.includes('room-8-v015.webp')));
+      assert.ok(assets.some(f=>f.includes('room-10-v017.webp')));
+      assert.ok(!assets.some(f=>f.includes('room-8-v017.webp')));
     }
     await page.getByRole('button',{name:'完成まで進める',exact:true}).click();
     await page.getByRole('button',{name:'出荷する',exact:true}).click();

@@ -51,7 +51,14 @@ struct Solid{
       return (cbrtf(q.x*q.x*q.x+q.y*q.y*q.y+q.z*q.z*q.z)-1)*min(h.y,h.z)*.72f;
     }
     V q=absV(p)-half+V{bevel,bevel,bevel};
-    return length(high(q,V{}))+min(max(q.x,max(q.y,q.z)),0.f)-bevel;
+    float box=length(high(q,V{}))+min(max(q.x,max(q.y,q.z)),0.f)-bevel;
+    if(kind==9){
+      // Twin drilled holes with a small countersink lip on the top face.
+      float radial=hypotf(fabsf(p.x)-.085f,p.y);
+      float radius=.030f+max(0.f,p.z-(h.z-.008f))*.75f;
+      return max(box,radius-radial);
+    }
+    return box;
   }
   bool hit(V o,V d,float limit,float& t)const{
     V p=local(o-c),v=local(d),extent=h;
@@ -85,7 +92,7 @@ int trace(V origin,V dir,float& far,bool shadow=false){
     if(!slab(n.box,origin,inv,far,a,b))continue;
     if(n.left>=0){stack[size++]=n.left;stack[size++]=n.right;continue;}
     for(int i=n.start;i<n.end;i++){int j=order[i];const Solid& s=shapes[j];
-      if(shadow&&materials[s.mat].texture==5)continue;
+      if(shadow&&(materials[s.mat].texture==5||materials[s.mat].texture==9))continue;
       if(!slab(s.world,origin,inv,far,a,b))continue;
       float t;if(s.hit(origin,dir,far,t)){far=t;hit=j;if(shadow)return j;}
     }
@@ -102,6 +109,31 @@ float smoothNoise(V p,float scale){
   for(int i=0;i<8;i++){int x=i&1,y=(i>>1)&1,z=(i>>2)&1;
     value+=noise(cell+V{float(x),float(y),float(z)},1)*(x?f.x:1-f.x)*(y?f.y:1-f.y)*(z?f.z:1-f.z);
   }return value;
+}
+float fract(float v){return v-floorf(v);}
+float smooth(float a,float b,float x){float t=sat((x-a)/(b-a));return t*t*(3-2*t);}
+V mix(V a,V b,float f){return a*(1-f)+b*f;}
+// One continuous view across all the sash lights. Obscure glass softens the
+// distant town, leaving the lamp brackets and metal glazing bars in focus.
+V townGlass(V p,V n){
+  float side=fabsf(n.x)>.65f?1.f:0.f;
+  float u=(side?p.y:p.x)+3.4f*side,z=p.z;
+  float reed=sinf(u*120.f),ripple=.021f*reed+.027f*sinf(u*4.2f+z*8);
+  float h=z+ripple;
+  V sky=mix({1.24f,.93f,.56f},{.35f,.62f,.74f},smooth(.63f,2.45f,h));
+  float hills=1.24f+.22f*sinf(u*1.48f+.5f)+.086f*sinf(u*3.7f);
+  sky=mix(sky,{.40f,.52f,.47f},.68f*(1-smooth(hills-.04f,hills+.04f,h)));
+  float bay=floorf((u+.27f)/1.23f),across=fract((u+.27f)/1.23f);
+  float roof=.90f+.17f*noise({bay,0,3},1)+.20f*(1-fabsf(across*2-1));
+  V tin=mix({.28f,.36f,.36f},{.48f,.44f,.34f},noise({bay,2,1},1));
+  sky=mix(sky,tin,.88f*(1-smooth(roof-.018f,roof+.018f,h)));
+  float pole=fabsf(fract((u+.44f)/3.7f)-.5f)*3.7f;
+  float sag=1.48f+.13f*powf(fabsf(fract((u+.44f)/3.7f+.5f)-.5f)*2,2);
+  float wires=(1-smooth(.006f,.020f,fabsf(h-sag)))+(1-smooth(.004f,.015f,fabsf(h-sag-.066f)));
+  sky=mix(sky,{.21f,.28f,.28f},.43f*sat(wires+(1-smooth(.018f,.041f,pole))*(1-smooth(1.64f,1.68f,h))));
+  float sun=expf(-.52f*powf(u-1.58f,2)-1.45f*powf(h-1.34f,2));
+  float haze=smoothNoise({u*.6f,z,0},4);
+  return sky*(.93f+.06f*reed+.07f*haze)+V{.61f,.30f,.075f}*sun;
 }
 const V sunlight=unit({-1.85f,-1.55f,1.60f});
 V tangent(V n){return unit(cross(n,fabsf(n.z)>.85?V{0,1,0}:V{0,0,1}));}
@@ -124,6 +156,44 @@ V shade(int id,V p,V eye,uint32_t& seed,int rays){
   if(m.texture==4){
     float grain=smoothNoise(p,1.9f)*.22f+smoothNoise(p,12)*.11f+.12f*micro;
     rgb=rgb*(.84f+grain);
+  }
+  if(m.texture==14){
+    // Broken paint on the actual rounded edges, over a fine sand-cast skin.
+    V normal=absV(obj.local(n));
+    float bend=1-max(normal.x,max(normal.y,normal.z));
+    float nick=smooth(.032f,.19f,bend)*smooth(.34f,.68f,smoothNoise(p,30));
+    rgb=mix(rgb*(.94f+.16f*micro),{.43f,.41f,.32f},nick*.77f);
+  }
+  if(m.texture==15){ // Matte woven cotton with a soft light-facing shoulder.
+    float weave=sinf(p.x*421)*sinf(p.z*365);
+    rgb=rgb*(.93f+.09f*weave+.14f*micro+.12f*max(0.f,n.z));
+  }
+  if(m.texture==9)return townGlass(p,n);
+  if(m.texture==10){ // Galvanized sheets, rain marks and oxidized lap seams.
+    float rib=sinf((p.x*.29f+p.y)*122.f),run=smoothNoise({p.x*1.2f,p.y*6.f,p.z},5);
+    rgb=rgb*(.80f+.28f*run+.09f*rib+.12f*micro);
+    float patina=smooth(.54f,.83f,smoothNoise({p.x*1.5f,p.y*4.5f,p.z},1.7f));
+    rgb=mix(rgb,{.23f,.13f,.068f},patina*.44f);
+  }
+  if(m.texture==11){ // Burnished aggregate and faint double wheel tracks.
+    float grain=.17f*smoothNoise(p,1.7f)+.1f*smoothNoise(p,14)+.12f*micro;
+    float track=fabsf(fabsf(p.x-(.42f+.024f*p.y*p.y))-.27f);
+    float wear=(1-smooth(.018f,.072f,track))*(.28f+.72f*smoothNoise(p,3));
+    float joint=fabsf(fract(p.y*.5f+.025f)-.5f);
+    rgb=rgb*(.86f+grain-.15f*wear-.035f*(1-smooth(0,.017f,joint)));
+  }
+  if(m.texture==13){
+    float bare=smoothNoise({p.x*2.3f,p.y*.8f,0},3.2f)*.7f+.3f*noise(p,76);
+    float edge=smooth(.31f,.47f,fabsf(p.x-.49f));
+    float wear=smooth(.54f,.76f,bare+.09f*edge);
+    rgb=mix(rgb,{.37f,.33f,.26f},.86f*wear)*(.91f+.16f*micro);
+  }
+  if(m.texture==12){ // Mortared half-bond brick with recessed-looking joints.
+    float row=floorf(p.z/.152f),along=fabsf(n.x)>.75f?p.y:p.x;
+    float ux=(along/.368f)+row*.5f,uy=p.z/.152f;
+    float edge=min(min(fract(ux),1-fract(ux))*.368f,min(fract(uy),1-fract(uy))*.152f);
+    rgb=rgb*(.80f+.36f*noise({floorf(ux),row,2},1)+.16f*micro);
+    rgb=mix({.26f,.237f,.192f},rgb,smooth(.003f,.010f,edge));
   }
   if(m.texture==5){
     float warm=sat(.28f+.39f*p.z+.28f*sinf(p.x*1.7f+p.y*2.1f));
