@@ -28,6 +28,7 @@ if(o.repeatCost!==undefined)report.repeatCost=o.repeatCost;
 if(o.quote)report.quote={...o.quote};
 if(o.inspectorId!==undefined)report.inspectorId=o.inspectorId;
 if(o.qualitySpend!==undefined){report.qualitySpend=o.qualitySpend;report.growth=a.growth||[];}
+if(o.declinedExtra)report.declinedExtra={...o.declinedExtra};
 recordPair(s,o,report);
 s.results=[report,...(s.results||[])].slice(0,12);o.shipped=true;s.parts=s.parts.filter(p=>p.order!==id);s.orders=s.orders.filter(q=>!q.shipped||q.id===id);note(s,`出荷完了！ +¥${pay.toLocaleString()}${late?'（納期超過15%減額）':''}`);return null;}
 export function purchase(s,kind,x,y){if(!canPlace(s,kind,x,y))return '作業中は配置変更できません。通路と作業面も空けてください';const cost=MACHINES[kind].cost;if(s.cash<cost)return '資金が足りません';s.cash-=cost;s.expense+=cost;s.machines.push({id:`m${s.next++ +10}`,kind,x,y,level:1});note(s,`${MACHINES[kind].name}を導入`);return null;}

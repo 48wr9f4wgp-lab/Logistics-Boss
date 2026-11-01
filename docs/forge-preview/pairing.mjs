@@ -35,13 +35,19 @@ export function pairResult(r){
   return {profit,delta:p.solo?profit-p.solo.profit:null,primaryLate,extraLate};
 }
 
+function validSolo(solo){
+  return solo===null||(solo&&Number.isFinite(solo.profit)&&Number.isFinite(solo.seconds)&&solo.seconds>=0&&typeof solo.late==='boolean');
+}
+export function soloSnapshot(solo){
+  return solo&&validSolo(solo)?{profit:solo.profit,seconds:solo.seconds,late:solo.late}:null;
+}
 export function validPairRecord(record,id){
   const p=record.pair;
-  if(record.declinedExtra!==undefined&&(record.declinedExtra!==true||!eligiblePrimary(record.offerId)||p))return false;
+  if(record.declinedExtra!==undefined&&(!record.declinedExtra||!validSolo(record.declinedExtra.solo)||!eligiblePrimary(record.offerId)||p))return false;
   if(p===undefined)return true;
   if(!p||!Number.isInteger(p.primary)||p.primary<1||!Number.isInteger(p.extra)||p.extra<=p.primary||!validPriority(p.priority))return false;
   if(id===p.primary?!eligiblePrimary(record.offerId):id!==p.extra||record.offerId!=='relief')return false;
-  if(p.solo!==null&&(!p.solo||!Number.isFinite(p.solo.profit)||!Number.isFinite(p.solo.seconds)||p.solo.seconds<0||typeof p.solo.late!=='boolean'))return false;
+  if(!validSolo(p.solo))return false;
   return !('peer' in p)||(p.peer&&p.peer.id===peerId(p,id)&&Number.isFinite(p.peer.profit)&&typeof p.peer.late==='boolean');
 }
 

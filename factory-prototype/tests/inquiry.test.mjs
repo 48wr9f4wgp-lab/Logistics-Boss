@@ -65,10 +65,11 @@ test('halfway defers the actual offer, pays real payroll and brings both deadlin
 test('an explicit decline persists, but opening or cancelling a quote never declines or advances production',()=>{
   const s=factory(),id=M.frontOrder(s).id,prior=JSON.stringify(s);
   forecast(s,id,'primary');forecast(s,id,'extra');assert.equal(JSON.stringify(s),prior);
-  assert.equal(decideInquiry(s,id,'decline'),null);
+  const solo=forecast(s,id,'solo').primary;
+  assert.equal(decideInquiry(s,id,'decline',solo),null);
   assert.equal(s.cash,JSON.parse(prior).cash);assert.equal(inquiryContext(JSON.parse(JSON.stringify(s))),null);
   assert.ok(decideInquiry(s,id,'extra'));assert.equal(advanceToReview(s,id,14,100).ticks,0);
-  const r=finish(s);assert.equal(r.pair,undefined);
+  const r=finish(s);assert.equal(r.pair,undefined);assert.equal(r.declinedExtra.solo.profit,M.resultProfit(r));
 });
 test('switching priority preserves current assignments, both order clocks, money and the original baseline',()=>{
   const s=factory('master'),id=M.frontOrder(s).id,solo=forecast(s,id,'solo').primary;

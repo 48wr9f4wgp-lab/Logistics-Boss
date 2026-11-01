@@ -1,5 +1,5 @@
 import * as M from './model.mjs?v=0.21';
-import {eligiblePrimary,validPriority} from './pairing.mjs?v=0.21';
+import {eligiblePrimary,validPriority,soloSnapshot} from './pairing.mjs?v=0.21';
 
 export function inquiryContext(s){
   if(s.delivered<2)return null;
@@ -17,7 +17,7 @@ export function decideInquiry(s,primaryId,priority,solo=null,expectedExtra=null)
   if(!context||context.primary.id!==primaryId||(context.extra?.id??null)!==expectedExtra)return '受注状況が変わりました。工場に戻ってください';
   const {primary,extra}=context;
   if(priority==='decline'&&!extra){
-    primary.declinedExtra=true;M.note(s,'小口の打診を見送り、先約の製作を続けます');return null;
+    primary.declinedExtra={solo:soloSnapshot(solo)};M.note(s,'小口の打診を見送り、先約の製作を続けます');return null;
   }
   if(!validPriority(priority))return '優先する注文を選んでください';
   if(extra){
@@ -27,9 +27,7 @@ export function decideInquiry(s,primaryId,priority,solo=null,expectedExtra=null)
   const error=M.accept(s,'relief');
   if(error)return error;
   const added=s.orders.at(-1);
-  const base=solo&&Number.isFinite(solo.profit)&&Number.isFinite(solo.seconds)&&solo.seconds>=0&&typeof solo.late==='boolean'?
-    {profit:solo.profit,seconds:solo.seconds,late:solo.late}:null;
-  const pair={primary:primary.id,extra:added.id,priority,solo:base};
+  const pair={primary:primary.id,extra:added.id,priority,solo:soloSnapshot(solo)};
   primary.pair={...pair};added.pair={...pair};
   M.note(s,'支給材6個を追加受注 · '+(priority==='primary'?'先約':'小口')+'を優先');
   return null;

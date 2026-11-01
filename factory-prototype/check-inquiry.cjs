@@ -47,7 +47,8 @@ async function checkInquiry(browser,url,flow){
       assert.equal(await btn('＋6個の相談').count(),0);
       assert.ok(M.frontOrder(await read()).declinedExtra);
       await btn('完成まで進める').click();await btn('出荷する').click();
-      const state=await read();assert.equal(state.results[0].pair,undefined);assert.ok(M.validate(state));
+      const state=await read();assert.equal(state.results[0].pair,undefined);assert.ok(state.results[0].declinedExtra.solo);assert.ok(M.validate(state));
+      assert.match(await page.locator('#orderComparison').innerText(),/小口を見送り.*見積/);
       return;
     }
     if(flow==='hold'){

@@ -40,6 +40,6 @@ export function bindInquiry(root,s,estimator,canWrite,decide,hold){
   });
   find('inquiryConfirm').onclick=()=>{if(canWrite&&find('inquiryConfirm')?.isConnected)
     decide(ids,root.querySelector('input[name="shopPriority"]:checked').value,solo);};
-  if(find('inquiryDecline'))find('inquiryDecline').onclick=()=>decide(ids,'decline',null);
+  if(find('inquiryDecline'))find('inquiryDecline').onclick=()=>decide(ids,'decline',solo);
   if(find('inquiryHold'))find('inquiryHold').onclick=()=>hold(ids.primaryId,Math.ceil(primary.qty/2));
 }

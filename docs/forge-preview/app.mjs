@@ -43,9 +43,9 @@ function update(){
   if(consult)entry.textContent=consult.extra?'作業順の見直し':'＋6個の相談';
   const active=M.frontOrder(s);
   const latest=s.results?.[0];
-  const shownReport=recentShipment||(!active&&(!s.goalOffer||latest?.repeatCost!==undefined||latest?.qualitySpend!==undefined||latest?.pair)?latest:null);
+  const shownReport=recentShipment||(!active&&(!s.goalOffer||latest?.repeatCost!==undefined||latest?.qualitySpend!==undefined||latest?.pair||latest?.declinedExtra)?latest:null);
   const result=!active&&pairResult(shownReport);
-  const comparison=result?pairLine(result):active?'':comparisonLine(s,shownReport);
+  const comparison=result?pairLine(result):active?'':shownReport?.declinedExtra?declineLine(shownReport):comparisonLine(s,shownReport);
   $('#orderComparison').textContent=comparison;
   $('#orderComparison').hidden=!comparison;
   if(recentShipment||(comparison&&!s.goalOffer)){
@@ -422,6 +422,10 @@ function pairLine(result){
     (result.primaryLate?'先約超過':'先約納期内')+'・'+(result.extraLate?'小口超過':'小口納期内'):'両方納期内';
   return deadlines+' · 2件利益 '+roundedCash(result.profit)+(result.delta===null?'':'（先約単独比 '+signedMoney(result.delta)+'）');
 }
+function declineLine(r){
+  const solo=r.declinedExtra.solo;
+  return '小口を見送り · 先約'+(r.late?'超過':'納期内')+' · 受注利益 '+roundedCash(M.resultProfit(r))+(solo?'（見積 '+roundedCash(solo.profit)+'）':'');
+}
 function receipt(r,expanded){
   const profit=M.resultProfit(r),prev=M.previousResult(s,r),guide=expanded?deliveryGuide(s,r):null;
   let comparison='';
@@ -436,7 +440,7 @@ function receipt(r,expanded){
   const name=id=>escape(s.workers.find(w=>w.id===id)?.name||'職人');
   const quality=r.qualitySpend===undefined?'':`<p class="result-brief">検品 ${r.inspectorId===undefined?'おまかせ':name(r.inspectorId)} · 品質調整 ${r.rework}/${r.qty}本${r.quote?.rework!==undefined?'（見積 '+r.quote.rework+'本）':''}${r.growth?.length?'<br>実務で成長　'+r.growth.map(g=>name(g.worker)+' 技能'+g.skill).join('・'):''}</p>`;
   const paired=pairResult(r);
-  const pairReport=r.pair?`<p class="result-brief">${paired?pairLine(paired):'もう1件を出荷すると2件の実績がそろいます。'}</p>`:'';
+  const pairReport=r.declinedExtra?`<p class="result-brief">${declineLine(r)}</p>`:r.pair?`<p class="result-brief">${paired?pairLine(paired):'もう1件を出荷すると2件の実績がそろいます。'}</p>`:'';
   const ledger=`<dl class="result-ledger"><div><dt>入金${r.late?'（15%減額）':''}</dt><dd>${resultMoney(r.payout)}</dd></div><div><dt>材料費</dt><dd>−${resultMoney(r.material)}</dd></div><div><dt>人件費</dt><dd>${r.wages===null?'記録なし':'−'+resultMoney(r.wages)}</dd></div></dl>`;
   const measured=profit===null?'<p>更新前に受けた注文のため、時間・人件費は未計測です。次の受注から記録します。</p>':`<div class="result-stats"><div><small>生産時間</small><b>${duration(r.seconds)}</b></div><div><small>移動距離</small><b>${Math.round(r.walk)}マス</b></div><div><small>品質調整</small><b>${r.rework}回</b></div></div>${comparison}<p class="accounting-note">人件費は未完成の注文で均等配分。生産時間は受注から完成まで（出荷待ちを除く）。金額は表示時に丸めています。</p>`;
   return `<article class="card receipt">${heading}${summary}${brief}${quote}${quality}${pairReport}${resultNext(guide)}${expanded?`<details class="receipt-details"><summary>収支の内訳・前回との比較</summary>${ledger}${measured}</details>`:ledger+measured}</article>`;
