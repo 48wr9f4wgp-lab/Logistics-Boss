@@ -32,6 +32,7 @@ async function checkImprovement(browser,url,choice){
     await screen('choices');
     await button('置き場所を試す').click();
     assert.match(await page.locator('#placeStatus').innerText(),/3 → 1マス/);
+    await page.locator('#layoutEstimate').filter({hasText:/117.4秒.*98.6秒/}).waitFor();
     await button('取消').click();
     assert.equal((await saved()).cash,s.cash);
     assert.deepEqual((await saved()).machines,s.machines);
@@ -41,6 +42,7 @@ async function checkImprovement(browser,url,choice){
       const v=frameWorkshop(rect.width,rect.height,s.width);
       await world.tap({position:project(v,2.5,1.5)});
       assert.equal(await page.locator('#confirmPlace').isEnabled(),false);
+      assert.equal((await world.boundingBox()).height,rect.height,'invalid tiles must not shift the floor');
       await world.tap({position:project(v,3.5,1.5)});
       await screen('route');
       await button('移動して受注 · ¥600').click();
@@ -55,7 +57,7 @@ async function checkImprovement(browser,url,choice){
     const drill=state.machines.find(m=>m.id==='m2');
     assert.deepEqual([drill.x,drill.level],choice==='move'?[3,1]:[5,2]);
     await page.reload();await button('完成まで進める').click();await button('出荷する').click();
-    const next=button(choice==='move'?'次の成長目標を選ぶ':'短納期の注文を見る');
+    const next=button(choice==='move'?'28個の注文を比べる':'短納期の注文を見る');
     await next.waitFor();state=await saved();
     assert.equal(state.delivered,2);assert.equal(state.results[0].repeatCost,order.repeatCost);
     const comparison=comparisonLine(state,state.results[0]);
@@ -70,6 +72,13 @@ async function checkImprovement(browser,url,choice){
       await button('直近の出荷結果を開く').click();assert.match(await page.locator('.result-profit').innerText(),/改良費 ¥1,500 を引くと \+¥/);
     }
     if(choice==='move'){
+      await next.click();
+      const picker=page.locator('#termPicker');
+      assert.equal(await picker.locator('input:checked').inputValue(),'bulk');
+      assert.equal(await picker.locator('input[value="rush"]').isDisabled(),true);
+      await picker.locator('[data-estimate="bulk"]').filter({hasText:/利益/}).waitFor();
+      await button('受注して生産開始 · 材料 ¥1,300').waitFor();
+      await button('工場へ戻る').click();
       await button('管理').click();await button('注文一覧').click();
       await button('前回の12個で改善を試す').click();
       assert.match(await page.locator('.trial-baseline').innerText(),new RegExp('前回 '+state.results[0].seconds.toFixed(1)+'秒'));

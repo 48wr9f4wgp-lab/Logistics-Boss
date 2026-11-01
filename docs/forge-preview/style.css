@@ -266,3 +266,28 @@ dialog[data-panel="improve"] .sheet-head{padding-block:5px}
 .trial-choice .wide{margin-top:0}
 .trial-choice small,#orderComparison{color:#ecd29b}
 #orderComparison{display:block;font-size:12px;margin-top:3px;line-height:1.5;font-variant-numeric:tabular-nums}
+
+#upgradeEstimate,#layoutEstimate{display:block;color:#e9ce95;font-size:12px;line-height:1.4;margin:3px 0}
+#termPicker{border:0;margin:10px 0 3px;padding:0;min-width:0}
+#termPicker legend{font-size:14px;font-weight:700;margin-bottom:4px}
+#termPicker label{min-height:48px;display:flex;align-items:center;gap:9px;border:1px solid #576c59;border-radius:7px;padding:6px 9px;margin-top:4px;cursor:pointer}
+#termPicker label:has(:checked){border-color:#dab672;background:#324637}
+#termPicker input{accent-color:#eac47c}
+#termPicker strong,#termPicker small{display:block}
+#termPicker small{line-height:1.4;color:#dfd8be;font-variant-numeric:tabular-nums}
+.estimate-note{display:block;line-height:1.5;color:var(--muted)}
+.term-layout>summary{min-height:44px;padding-top:12px;cursor:pointer}
+.term-layout select{min-height:44px;max-width:100%}
+#layoutEstimate{font-variant-numeric:tabular-nums}
+
+/* A result must never move the floor under the player's next tap. Reserve the
+   same lines for an empty, loading or measured destination. */
+#placementBar[data-estimating="true"] #placeStatus{line-height:1.4;min-height:2.8em}
+#layoutEstimate{min-height:2.8em}
+#layoutEstimate.empty-estimate{visibility:hidden}
+
+dialog:has(.freight-focus){max-height:95svh}
+dialog:has(.freight-focus) .sheet-head{padding-block:5px}
+.freight-focus>p{margin:4px 0 8px}
+.freight-focus #termPicker{margin-top:4px}
+.freight-focus .estimate-note{font-size:11px}

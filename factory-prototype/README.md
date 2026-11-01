@@ -1,4 +1,4 @@
-# マチコバ！ — v0.18
+# マチコバ！ — v0.19
 
 **小さな工場、大きな夢。**
 
@@ -21,6 +21,10 @@ Management sheets pause time. The floor controls and direct selection allow work
 ## Implemented
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
+
+## 受注する前の見積（v0.19）
+
+仮置きしたボール盤で、片道と12個全体の所要時間・移動を別々に見られる。28個の仕事は同じ工場から通常便と短納期便を見積もり、納期余裕と受注利益を比べて受ける。見積画面から移設を試して、確定後も受注条件を選び直せる。[実測例・計算条件](CHANGE_PACKET_v019.md)
 
 ## 初出荷後の工夫（v0.18）
 

@@ -1,15 +1,16 @@
 import {floorGesture,changeCamera} from './floor-input.mjs?v=0.16';
 import {departureDuration} from './shipping.mjs?v=0.16';
-import * as M from './model.mjs?v=0.18';
-import {openingOffer,deliveryGuide,floorTicket} from './guidance.mjs?v=0.18';
-import {repeatOffer,startRepeat,transferPath,neighboringCell,comparisonLine} from './improvement.mjs?v=0.18';
+import * as M from './model.mjs?v=0.19';
+import {openingOffer,deliveryGuide,floorTicket} from './guidance.mjs?v=0.19';
+import {repeatOffer,startRepeat,transferPath,neighboringCell,comparisonLine} from './improvement.mjs?v=0.19';
 import {frameWorkshop,project,pickMachine} from './view.mjs?v=0.17';
 import {drawWorkshop} from './workshop.mjs?v=0.18';
 import {createArtLoader} from './miniature-art.mjs?v=0.17';
-const workshopArt=createArtLoader();
+import {createEstimator} from './estimate-client.mjs?v=0.19';
+const workshopArt=createArtLoader(),estimator=createEstimator();
 const $=s=>document.querySelector(s),KEY='forge.factory.v1',canvas=$('#world'),ctx=canvas.getContext('2d');
 let s=M.fresh(),speed=1,last=0,zoom=1,pan={x:0,y:0},placing=null,selected=null,tab=null,toastUntil=0,revision=null,writer=false,saveBlocked=false,paintTime=0,placementCells=[],resumeSpeed=1,skipping=null,tickRemainder=0,showLabels=false,lastDraw=-Infinity;
-let growthFocus=null, recentShipment=null, departure=null;
+let freightSelection=null,growthFocus=null, recentShipment=null, departure=null;
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 try{const raw=localStorage.getItem(KEY);if(raw){const env=JSON.parse(raw);if(!M.validate(env.state))throw Error('invalid');s=env.state;revision=env.revision;}}catch{saveBlocked=true;speed=0;}
 // A completed saved order remains safe to dispatch after reopening the page.
@@ -70,7 +71,8 @@ function runFloorAction(action){
   else if(action.type==='panel')open(action.panel);
 }
 const sheetTrail=[];
-function open(panel,focusId=null,restoring=false){
+function open(panel,focusId=null,restoring=false,term=null){
+  freightSelection=term;
   const sheet=$('#sheet');
   if(!tab)sheetTrail.length=0;
   else if(!restoring&&tab!==panel){
@@ -95,9 +97,9 @@ $('#sheetBack').onclick=()=>{
   control?.focus({preventScroll:true});
   $('#sheet').scrollTop=previous.scroll;
 };
-function close(){tab=null;sheetTrail.length=0;$('#sheet').close();updateSelection();}
+function close(){estimator.cancel();tab=null;sheetTrail.length=0;$('#sheet').close();updateSelection();}
 $('#close').onclick=close;
-$('#sheet').addEventListener('cancel',()=>{tab=null;sheetTrail.length=0;updateSelection();});
+$('#sheet').addEventListener('cancel',()=>{estimator.cancel();tab=null;sheetTrail.length=0;updateSelection();});
 $('#menu').onclick=()=>open('manage');
 $('#controls').addEventListener('toggle',()=>{if($('#controls').open){selected=null;updateSelection();}});
 document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{
@@ -195,8 +197,65 @@ function improvementSheet(){
   const shortage=total!==null&&s.cash<total?'あと '+money(Math.ceil(total-s.cash))+' 必要':'';
   return `<p class="trial-baseline"><strong>取付プレート ${offer.qty}個 · 再注文</strong>前回 ${seconds(report.seconds)} · 移動 ${Math.round(report.walk)}マス<br>今回の材料費 ${money(material)}</p>
     <article class="card trial-choice"><div><h3>ボール盤を移す</h3><small>移設 ¥0</small></div><p>切断から穴あけまで${path?'片道'+(path.length-1)+'マス':''}。床で仮置きして比較できます。</p><button class="wide" id="trialMove" ${!writer||saveBlocked?'disabled':''}>置き場所を試す</button></article>
-    <article class="card trial-choice"><div><h3>ボール盤を改良する</h3><small>${upgradeCost===null?'最高レベル':'改良 '+money(upgradeCost)}</small></div><p>${upgradeText}</p><button class="wide" id="trialUpgrade" ${disabled?'disabled':''}>${total===null?'改良済み':'改良して受注 · '+money(total)}</button>${shortage?'<small>'+shortage+'</small>':''}</article>
+    <article class="card trial-choice"><div><h3>ボール盤を改良する</h3><small>${upgradeCost===null?'最高レベル':'改良 '+money(upgradeCost)}</small></div><p>${upgradeText}</p>${!disabled?'<small id="upgradeEstimate">12個の見積中…</small>':''}<button class="wide" id="trialUpgrade" ${disabled?'disabled':''}>${total===null?'改良済み':'改良して受注 · '+money(total)}</button>${shortage?'<small>'+shortage+'</small>':''}</article>
     <button class="wide" data-next="growth">改善はあとで · 成長目標へ</button>`;
+}
+
+function deadlineText(row){
+  return Math.abs(row.margin).toFixed(1)+'秒'+(row.late?'超過':'余裕');
+}
+function roundedCash(value){
+  return '¥'+Math.round(value).toLocaleString('ja-JP');
+}
+function setupPanelEstimate(){
+  const output=$('#upgradeEstimate');
+  if(output){
+    estimator.request(s,[{repeat:'upgrade'}],rows=>{
+      const quote=rows?.[0];
+      output.textContent=quote&&!quote.error?'12個の見積 '+seconds(quote.seconds)+' · 改良費を引くと '+signedMoney(quote.net):'見積を表示できません';
+    });
+    return;
+  }
+  const picker=$('#termPicker');
+  if(!picker){estimator.cancel();return;}
+  const accept=$('#acceptTerm');
+  const quotes=new Map();
+  accept.onclick=()=>{
+    if(!tab||!accept.isConnected)return;
+    const id=picker.querySelector('input:checked').value;
+    if(act(()=>M.accept(s,id,quotes.get(id)))){close();speed=speed||1;update();}
+  };
+  picker.onchange=()=>{
+    const id=picker.querySelector('input:checked').value;freightSelection=id;
+    const o=M.OFFERS.find(o=>o.id===id);
+    accept.textContent='受注して生産開始 · 材料 '+money(o.cost);
+  };
+  const terms=['bulk','rush'];
+  estimator.request(s,terms.map(offer=>({offer})),rows=>{
+    terms.forEach((id,i)=>{
+      const el=picker.querySelector('[data-estimate="'+id+'"]'),q=rows?.[i];
+      if(q&&!q.error)quotes.set(id,q);
+      el.textContent=q&&!q.error?seconds(q.seconds)+'で完成 · '+deadlineText(q)+' ／ 利益 '+roundedCash(q.profit):q?.error||'見積を表示できません';
+    });
+  });
+  const select=$('#estimateMachine');
+  if(select)$('#testLayout').onclick=()=>{
+    const machine=s.machines.find(m=>m.id===select.value);
+    if(machine&&!M.frontOrder(s))place({id:machine.id,kind:machine.kind,estimateOffer:picker.querySelector('input:checked').value});
+  };
+}
+
+function freightTerms(s,focused=false){
+  const canRush=M.offerStatus(s,'rush').available;
+  const selected=canRush&&freightSelection!=='bulk'?'rush':'bulk';
+  const rows=['bulk','rush'].map(id=>{
+    const o=M.OFFERS.find(o=>o.id===id);
+    return `<label><input type="radio" name="freightTerm" value="${id}" ${id===selected?'checked':''} ${id==='rush'&&!canRush?'disabled':''}><span><strong>${id==='rush'?'短納期便':'通常便'} · 納期${o.due}秒</strong><small data-estimate="${id}">見積中…</small></span></label>`;
+  }).join('');
+  const offer=M.OFFERS.find(o=>o.id===selected);
+  const machines=s.machines.filter(m=>m.kind!=='lathe').map(m=>`<option value="${escape(m.id)}">${M.MACHINES[m.kind].name}（${m.x+1}列${m.y+1}段）</option>`).join('');
+  const layout=M.frontOrder(s)?'':`<details class="term-layout"><summary>設備の配置を試す</summary><label>移す設備 <select id="estimateMachine">${machines}</select></label><button id="testLayout" class="wide">床で配置を試す</button></details>`;
+  return `<fieldset id="termPicker"><legend>${focused?'納品条件を選ぶ':'同じ28個の受注見積'}</legend>${rows}</fieldset><small class="estimate-note">今の人員・配置で追加受注せず、各注文を完成時に出荷する見積。利益は材料・人件費を引いた額です。</small><button id="acceptTerm" class="wide primary" ${!writer||saveBlocked?'disabled':''}>受注して生産開始 · 材料 ${money(offer.cost)}</button>${layout}`;
 }
 
 function renderPanel(){const body=$('#sheetBody');$('#sheetTitle').textContent=({manage:'工場の管理',orders:'受注と出荷',growth:'成長案件',machines:'設備と配置',workers:'職人を育てる',finance:'経営と拡張',save:'保存と設定',result:'出荷結果',improve:'工場の改善'})[tab];let html='';
@@ -218,7 +277,15 @@ if(tab==='orders'){
   if(recommended)html+='<h3 class="other-offers">ほかの注文</h3>';
   for(const o of M.OFFERS.filter(o=>!o.growth&&o.id!==recommended?.id))html+=offerCard(o);
 }
-if(tab==='growth'){html='<p>目標を選ぶと工場画面で追えます。量産・精密はいつでも切替でき、両方を伸ばせます。</p>'+M.OFFERS.filter(o=>o.growth).sort((a,b)=>Number(b.id===(growthFocus||s.goalOffer))-Number(a.id===(growthFocus||s.goalOffer))).map(growthCard).join('')+'<button class="wide" data-next="orders">通常の注文を見る</button>';}
+if(tab==='growth'){
+  const offers=M.OFFERS.filter(o=>o.growth),rush=M.growthPlan(s,'rush');
+  if(growthFocus==='rush'&&canCompareFreight(rush)){
+    $('#sheetTitle').textContent='28個の受注見積';
+    html=growthCard(rush.offer,true)+'<button class="wide" id="allGrowth">ほかの成長目標を見る</button>';
+  }else{
+    html='<p>目標を選ぶと工場画面で追えます。量産・精密はいつでも切替でき、両方を伸ばせます。</p>'+offers.sort((a,b)=>Number(b.id===(growthFocus||s.goalOffer))-Number(a.id===(growthFocus||s.goalOffer))).map(o=>growthCard(o)).join('')+'<button class="wide" data-next="orders">通常の注文を見る</button>';
+  }
+}
 if(tab==='machines'){
   html='<p>改良の効果は次の作業割当から。表示は加工だけの時間で、注文全体は配置や職人の担当でも変わります。移動では今の工程を仕上げて停止し、配置後は直前の再生速度に戻ります。</p>';
   for(const m of [...s.machines].sort((a,b)=>Number(b.id===selected)-Number(a.id===selected))){
@@ -234,8 +301,10 @@ if(tab==='workers'){
 }
 if(tab==='result'){const r=s.results?.[0];html=r?receipt(r,true):'<p>まだ出荷記録がありません。</p>';}
 if(tab==='finance'){html=card('工場の状況','<div class="row"><span>出荷実績</span><b>'+s.delivered+'件</b></div><div class="row"><span>工場時間</span><b>'+Math.floor(s.clock/60)+'分'+Math.floor(s.clock%60)+'秒</b></div>')+card('収支',`<div class="row"><span>累計売上</span><b>${money(s.revenue)}</b></div><div class="row"><span>材料・投資・人件費</span><b>${money(s.expense)}</b></div><p>加工する部品がある間、人件費は毎秒¥0.7。画面を閉じている間の生産・請求はありません。</p>`)+'<h3>出荷の振り返り</h3><p>直近12件を保存。利益は設備・研修・増築費を引く前の金額です。</p>'+(s.results?.length?'<button class="wide" data-next="result">直近の出荷結果を開く</button>'+s.results.map(r=>`<details class="result-history"><summary>${escape(r.label)} × ${r.qty}<b>${M.resultProfit(r)===null?'記録なし':signedMoney(M.resultProfit(r))}</b></summary>${receipt(r,false)}</details>`).join(''):'<p>出荷すると結果をここで見返せます。</p>')+card('工場を広げる',`<p>床面積を8×6から10×8へ。追加設備と動線のための余白を作ります。</p><button class="primary wide" id="expand" ${s.width===10?'disabled':''}>${s.width===10?'拡張済み':'増築する · ¥3,500'}</button>`)+card('生産の記録',`<p>完了工程 ${s.stats.processed}回<br>品質調整 ${s.stats.rework}回<br>運搬・移動距離 ${Math.floor(s.stats.walk)}マス</p>`)+card('工場日誌',s.log.map(t=>`<p>${escape(t)}</p>`).join(''));}
-if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② 完成まで進めるで待ち時間をスキップ（人件費・納期も進む）<br>③ 完成した注文を出荷して入金<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.18</small>');}
+if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② 完成まで進めるで待ち時間をスキップ（人件費・納期も進む）<br>③ 完成した注文を出荷して入金<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.19</small>');}
 body.innerHTML=html;
+setupPanelEstimate();
+if($('#allGrowth'))$('#allGrowth').onclick=()=>open('growth');
 if(tab==='improve'){
   const trial=repeatOffer(s);
   if(trial){
@@ -247,7 +316,7 @@ if(tab==='improve'){
     };
   }
 }
-body.querySelectorAll('[data-result-action]').forEach(b=>b.onclick=()=>runResultAction(b.dataset.resultAction));body.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{if(act(()=>M.setGoal(s,b.dataset.goal))){growthFocus=null;renderPanel();$('#sheet').scrollTop=0;}});body.querySelectorAll('[data-plan-action]').forEach(b=>b.onclick=()=>runPlan(b.dataset.planAction));body.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>open(b.dataset.next));body.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>{if(act(()=>M.accept(s,b.dataset.order))){close();speed=speed||1;update();}});body.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>ship(+b.dataset.ship));body.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>place({kind:b.dataset.buy}));body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>place({id:b.dataset.move,kind:s.machines.find(m=>m.id===b.dataset.move).kind}));body.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>act(()=>M.upgrade(s,b.dataset.upgrade)));body.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>act(()=>M.sell(s,b.dataset.sell)));body.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>act(()=>M.train(s,+b.dataset.train)));body.querySelectorAll('[data-role]').forEach(b=>b.onchange=()=>act(()=>{s.workers.find(w=>w.id===+b.dataset.role).role=b.value;M.note(s,'担当の優先順位を変更');}));body.querySelectorAll('[data-mentor]').forEach(b=>b.onclick=()=>act(()=>{const w=s.workers.find(w=>w.id===+b.dataset.mentor);w.mentor=!w.mentor;M.note(s,`${w.name}の指導役を変更`);}));if($('#expand'))$('#expand').onclick=()=>act(()=>M.expand(s));if($('#export'))$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({revision,state:s})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='machikoba-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};if($('#reload'))$('#reload').onclick=()=>location.reload();if($('#import'))$('#import').onchange=async e=>{try{const f=e.target.files[0];if(!f||f.size>200000)throw Error();const data=JSON.parse(await f.text());if(!M.validate(data.state))throw Error();if(!writer){toast('別のタブを閉じて再読み込みしてください');return;}if(!confirm('現在の進行を、選んだセーブに置き換えますか？'))return;s=data.state;recentShipment=null;departure=null;saveBlocked=false;revision=JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null;save();update();renderPanel();toast('セーブを読み込みました');}catch{toast('対応する正常なセーブではありません。進行は変更していません');}};}
+body.querySelectorAll('[data-result-action]').forEach(b=>b.onclick=()=>runResultAction(b.dataset.resultAction));body.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{if(act(()=>M.setGoal(s,b.dataset.goal))){growthFocus=null;renderPanel();$('#sheet').scrollTop=0;}});body.querySelectorAll('[data-plan-action]').forEach(b=>b.onclick=()=>runPlan(b.dataset.planAction));body.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>open(b.dataset.next));body.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>{if(!tab||!b.isConnected)return;if(act(()=>M.accept(s,b.dataset.order))){close();speed=speed||1;update();}});body.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>ship(+b.dataset.ship));body.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>place({kind:b.dataset.buy}));body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>place({id:b.dataset.move,kind:s.machines.find(m=>m.id===b.dataset.move).kind}));body.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>act(()=>M.upgrade(s,b.dataset.upgrade)));body.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>act(()=>M.sell(s,b.dataset.sell)));body.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>act(()=>M.train(s,+b.dataset.train)));body.querySelectorAll('[data-role]').forEach(b=>b.onchange=()=>act(()=>{s.workers.find(w=>w.id===+b.dataset.role).role=b.value;M.note(s,'担当の優先順位を変更');}));body.querySelectorAll('[data-mentor]').forEach(b=>b.onclick=()=>act(()=>{const w=s.workers.find(w=>w.id===+b.dataset.mentor);w.mentor=!w.mentor;M.note(s,`${w.name}の指導役を変更`);}));if($('#expand'))$('#expand').onclick=()=>act(()=>M.expand(s));if($('#export'))$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({revision,state:s})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='machikoba-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};if($('#reload'))$('#reload').onclick=()=>location.reload();if($('#import'))$('#import').onchange=async e=>{try{const f=e.target.files[0];if(!f||f.size>200000)throw Error();const data=JSON.parse(await f.text());if(!M.validate(data.state))throw Error();if(!writer){toast('別のタブを閉じて再読み込みしてください');return;}if(!confirm('現在の進行を、選んだセーブに置き換えますか？'))return;s=data.state;recentShipment=null;departure=null;saveBlocked=false;revision=JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null;save();update();renderPanel();toast('セーブを読み込みました');}catch{toast('対応する正常なセーブではありません。進行は変更していません');}};}
 
 
 function runPlan(id){
@@ -260,12 +329,20 @@ function runPlan(id){
   else if(n.type==='floor'){close();speed=speed||1;update();}
   else open('orders');
 }
-function growthCard(o){
+function canCompareFreight(plan){
+  return plan.phase==='ready'||(['prepare','funds'].includes(plan.phase)&&
+    (growthFocus==='rush'||s.goalOffer==='rush')&&M.offerStatus(s,'bulk').available);
+}
+function growthCard(o,focused=false){
   const p=M.growthPlan(s,o.id),chosen=s.goalOffer===o.id,n=p.next;
   const phaseLabel={prepare:'設備・職人を準備',funds:'資金を準備',slots:'受注枠を空ける',ready:'受注できる',producing:'生産中',ship:'出荷待ち'}[p.phase];
   const action=n.label+(n.cost!==undefined?' · '+money(n.cost):n.type==='accept'?' · 材料 '+money(o.cost):n.type==='ship'?' · '+money(M.shipmentQuote(s,p.order).pay):'');
   const budget=p.order?`<p class="goal-progress">${p.order.done} / ${p.order.qty}個 完成${M.shipmentQuote(s,p.order).late?' · 納期超過（報酬15%減）':''}</p><progress value="${p.order.done}" max="${p.order.qty}"></progress>`:`<ul class="offer-requirements">${p.status.requirements.map(r=>`<li class="${r.met?'met':''}">${r.met?'✓':'○'} ${r.label}</li>`).join('')}</ul><dl class="plan-budget"><div><dt>残りの準備費</dt><dd>${money(p.investment)}</dd></div><div><dt>受注時の材料費</dt><dd>${money(o.cost)}</dd></div><div class="budget-total"><dt>合わせて必要</dt><dd>${money(p.required)}</dd></div></dl>${p.preparations.length?`<p class="plan-detail">${p.preparations.map(v=>escape(v.label)+(v.type==='train'?' → 技能3まで':'')+' '+money(v.total)).join(' ／ ')}${p.preparations.some(v=>v.type==='train')?'<br>研修を使う場合の費用。実務で成長すると減ります。':''}</p>`:''}<p class="plan-funds ${p.shortage?'short':''}">${p.shortage?`手元 ${money(s.cash)} · あと ${money(p.shortage)}`:'準備費と材料費を確保できる資金があります'}</p><small class="plan-note">人件費・追加の効率化費は別。受注条件の達成だけでは納期は保証されません。</small>`;
-  return `<article class="card growth-card ${chosen?'chosen-goal':''}"><div class="plan-heading"><small>${o.growth}</small><button data-goal="${o.id}" ${chosen?'disabled':''}>${chosen?'✓ 目標に設定中':'この目標を追う'}</button></div><h3>${o.label}</h3><small>${o.qty}個 · 品質${o.quality} · 納期${o.due}秒 · 納品${money(o.pay)}</small><ol class="plan-steps" aria-label="目標の進み方"><li class="${p.order||p.phase==='ready'?'done':'current'}">1 準備</li><li class="${p.phase==='producing'?'current':p.phase==='ship'?'done':''}">2 生産</li><li class="${p.phase==='ship'?'current':''}">3 出荷</li></ol><details class="growth-details"><summary>条件と費用の内訳</summary>${budget}</details><strong class="plan-next">${phaseLabel}</strong><button class="wide primary" data-plan-action="${o.id}">${escape(action)}</button></article>`;
+  const showTerms=o.id==='rush'&&canCompareFreight(p);
+  const planButton=`<strong class="plan-next">${phaseLabel}</strong><button class="wide primary" data-plan-action="${o.id}">${escape(action)}</button>`;
+  const decision=showTerms?freightTerms(s,focused)+(p.phase==='ready'?'':planButton):planButton;
+  if(focused)return `<section class="freight-focus"><p>取付プレート28個 · 材料費は受注時に支払います。</p>${decision}<details class="growth-details"><summary>成長目標と費用の内訳</summary>${budget}<button data-goal="${o.id}" ${chosen?'disabled':''}>${chosen?'目標に設定中':'この目標を追う'}</button></details></section>`;
+  return `<article class="card growth-card ${chosen?'chosen-goal':''}"><div class="plan-heading"><small>${o.growth}</small><button data-goal="${o.id}" ${chosen?'disabled':''}>${chosen?'✓ 目標に設定中':'この目標を追う'}</button></div><h3>${o.label}</h3><small>${o.qty}個 · 品質${o.quality} · 納期${o.due}秒 · 納品${money(o.pay)}</small><ol class="plan-steps" aria-label="目標の進み方"><li class="${p.order||p.phase==='ready'?'done':'current'}">1 準備</li><li class="${p.phase==='producing'?'current':p.phase==='ship'?'done':''}">2 生産</li><li class="${p.phase==='ship'?'current':''}">3 出荷</li></ol><details class="growth-details"><summary>条件と費用の内訳</summary>${budget}</details>${decision}</article>`;
 }
 
 function offerCard(o,recommended=false){
@@ -308,9 +385,10 @@ function receipt(r,expanded){
   const heading=guide?`<div class="receipt-heading"><span class="receipt-check ${guide.tone}" aria-hidden="true">✓</span><div><small>${escape(r.label)} × ${r.qty}</small><h3>${escape(guide.heading)}</h3></div></div><p class="receipt-status ${guide.tone}">${escape(guide.status)}</p>`:`<small>${escape(r.label)} × ${r.qty}${r.late?' · 納期超過':''}</small>`;
   const summary=`<div class="result-profit"><span>今回の受注利益</span><strong>${profit===null?'記録なし':signedMoney(profit)}</strong><small>${r.repeatCost?'今回の改良費 '+money(r.repeatCost)+' を引くと '+signedMoney(profit-r.repeatCost):'設備・研修・増築費を引く前'}</small></div>`;
   const brief=expanded&&prev?`<p class="result-brief">${comparisonLine(s,r)}</p>`:'';
+  const quote=r.quote?`<p class="result-brief">受注時の見積 ${seconds(r.quote.seconds)}・利益 ${roundedCash(r.quote.profit)}<br>今回の実績 ${seconds(r.seconds)}・利益 ${roundedCash(profit)}</p>`:'';
   const ledger=`<dl class="result-ledger"><div><dt>入金${r.late?'（15%減額）':''}</dt><dd>${resultMoney(r.payout)}</dd></div><div><dt>材料費</dt><dd>−${resultMoney(r.material)}</dd></div><div><dt>人件費</dt><dd>${r.wages===null?'記録なし':'−'+resultMoney(r.wages)}</dd></div></dl>`;
   const measured=profit===null?'<p>更新前に受けた注文のため、時間・人件費は未計測です。次の受注から記録します。</p>':`<div class="result-stats"><div><small>生産時間</small><b>${duration(r.seconds)}</b></div><div><small>移動距離</small><b>${Math.round(r.walk)}マス</b></div><div><small>品質調整</small><b>${r.rework}回</b></div></div>${comparison}<p class="accounting-note">人件費は未完成の注文で均等配分。生産時間は受注から完成まで（出荷待ちを除く）。金額は表示時に丸めています。</p>`;
-  return `<article class="card receipt">${heading}${summary}${brief}${resultNext(guide)}${expanded?`<details class="receipt-details"><summary>収支の内訳・前回との比較</summary>${ledger}${measured}</details>`:ledger+measured}</article>`;
+  return `<article class="card receipt">${heading}${summary}${brief}${quote}${resultNext(guide)}${expanded?`<details class="receipt-details"><summary>収支の内訳・前回との比較</summary>${ledger}${measured}</details>`:ledger+measured}</article>`;
 }
 function change(now,before,unit,lowerBetter){const diff=now-before;if(Math.abs(diff)<.05)return '変化なし';return `${Math.abs(diff).toFixed(1)}${unit}${diff<0?(lowerBetter?'短縮':'減'):(lowerBetter?'増加':'増')}`;}
 function escape(t){return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -352,9 +430,32 @@ function placementTicket(message){
     if(!message&&p.route&&p.beforePath)$('#placeStatus').textContent='仮置き · 切断→穴あけの片道 '+(p.beforePath.length-1)+' → '+(p.route.length-1)+'マス。床を押すと変更できます。';
     button.textContent=trial?'移動して受注 · '+money(trial.offer.cost):'受注できません';
     button.disabled=button.disabled||!trial;
+  }else if(p.estimateOffer){
+    $('#placeTitle').textContent=m.name+'の配置を試す';
+    button.textContent='移動して見積に戻る';
   }else button.textContent=p.id?'ここに移動':'ここに設置 · '+money(m.cost);
+  placementEstimate(p,c);
+}
+function placementEstimate(p,cell){
+  const el=$('#layoutEstimate');
+  const estimating=!!(p.trial||p.estimateOffer);
+  $('#placementBar').dataset.estimating=String(estimating);
+  el.hidden=!estimating;
+  el.classList.toggle('empty-estimate',!cell);
+  if(!estimating||!cell){el.textContent='';estimator.cancel();return;}
+  el.textContent='今の配置と仮置きで見積中…';
+  const offer=p.estimateOffer||'first';
+  const variant=p.trial?{repeat:'move',cell}:{offer,move:{id:p.id,...cell}};
+  estimator.request(s,[{offer},variant],rows=>{
+    const [before,after]=rows||[];
+    if(!before||!after||before.error||after.error){el.textContent='見積を表示できません';return;}
+    const duration='現状 '+seconds(before.seconds)+' → 仮置き '+seconds(after.seconds);
+    el.textContent=p.trial?'12個の見積　'+duration+' ／ 総移動 '+Math.round(before.walk)+' → '+Math.round(after.walk)+'マス':
+      (offer==='rush'?'短納期':'通常便')+'28個　'+duration+' ／ '+deadlineText(after);
+  });
 }
 function endPlacement(){
+  estimator.cancel();$('#layoutEstimate').hidden=true;
   placing=null;placementCells=[];speed=resumeSpeed;
   canvas.removeAttribute('tabindex');canvas.removeAttribute('aria-describedby');
   update();if(selected)selectMachine(selected,true);
@@ -362,10 +463,11 @@ function endPlacement(){
   if(!tab)next.focus({preventScroll:true});
 }
 function cancelPlacement(){
-  const trial=placing?.trial;
-  if(trial)selected=null;
+  const trial=placing?.trial,freight=placing?.estimateOffer;
+  if(trial||freight)selected=null;
   endPlacement();
   if(trial)open('improve');
+  else if(freight)open('growth','rush',false,freight);
 }
 $('#cancelPlace').onclick=cancelPlacement;
 $('#confirmPlace').onclick=()=>{
@@ -374,9 +476,11 @@ $('#confirmPlace').onclick=()=>{
   const ok=p.trial?act(()=>startRepeat(s,'move',c),false):
     act(()=>p.id?M.move(s,p.id,c.x,c.y):M.purchase(s,p.kind,c.x,c.y));
   if(ok){
-    if(p.trial){selected=null;resumeSpeed=resumeSpeed||1;}
+    if(p.estimateOffer)selected=null;
+    else if(p.trial){selected=null;resumeSpeed=resumeSpeed||1;}
     else selected=p.id||s.machines.find(m=>m.x===c.x&&m.y===c.y)?.id||null;
     endPlacement();
+    if(p.estimateOffer)open('growth','rush',false,p.estimateOffer);
   }else if(placing){p.candidate=null;showPlacement();}
 };
 canvas.addEventListener('keydown',event=>{
@@ -471,5 +575,11 @@ function frame(t){
   }else tickRemainder=0;
   last=t;if(!document.hidden&&t-lastDraw>=1000/30){draw(t);lastDraw=t;}if(t-paintTime>250){update();paintTime=t;}if(t>toastUntil)$('#toast').style.display='none';requestAnimationFrame(frame);
 }
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)estimator.cancel();
+  else if(placing)placementTicket();
+  else if(tab)setupPanelEstimate();
+});
+window.addEventListener('pagehide',()=>estimator.cancel());
 update();requestAnimationFrame(frame);
 

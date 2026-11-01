@@ -2,6 +2,7 @@
 const assert = require('node:assert/strict');
 const { mkdir } = require('node:fs/promises');
 const path = require('node:path');
+const {checkEstimates}=require('./check-estimates.cjs');
 const {checkImprovement}=require('./check-improvement.cjs');
 const {checkFloorControls}=require('./check-floor-controls.cjs');
 const { chromium, webkit } = require('playwright-core');
@@ -163,6 +164,8 @@ async function checkExpandedArt(browser,url,offlineArt=false){
     const sizes=process.argv[3]==='webkit'?[[390,844]]:[[390,844],[320,568]];
     for(const [width,height] of sizes)await check(browser,process.argv[2],width,height);
     for(const choice of ['move','upgrade'])await checkImprovement(browser,process.argv[2],choice);
+    for(const term of ['bulk','rush'])await checkEstimates(browser,process.argv[2],term);
+    if(process.argv[3]!=='webkit')await checkEstimates(browser,process.argv[2],'offline');
     await checkFloorControls(browser,process.argv[2]);
     await checkShift(browser,process.argv[2]);
     await checkExpandedArt(browser,process.argv[2]);

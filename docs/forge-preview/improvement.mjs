@@ -1,6 +1,6 @@
 // First repeat order. The saved shipment, route planner and normal work orders
 // are the source of truth. There is no tutorial cursor or simulated reward.
-import * as M from './model.mjs?v=0.18';
+import * as M from './model.mjs?v=0.19';
 
 export function repeatOffer(s){
   if(M.frontOrder(s))return null;
