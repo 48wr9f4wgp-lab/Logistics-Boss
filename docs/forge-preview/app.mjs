@@ -64,7 +64,7 @@ function update(){
   if(briefId&&!s.goalOffer&&shownReport.briefBonus){
     $('#orderTitle').textContent=earnedBriefs(s).length===2?'金物店の紹介 · 28個の短納期便':'金物店の紹介まであと1種類';
   }
-  let floorHint=ticket.hint;
+  let floorHint=ticket.hint,action=ticket.action;
   if(skipping?.review)floorHint='先約の半分で止まり、小口の相談に戻ります。';
   else if(consult?.extra)floorHint=(consult.primary.pair.priority==='primary'?'先約優先':'小口優先')+' · 追加の6個は '+consult.extra.done+'/6個完成。';
   const stamp=(recentShipment||!s.goalOffer||s.goalOffer===latest?.offerId)&&!active&&s.specialties?.find(e=>e.orderId===latest?.orderId);
@@ -73,6 +73,10 @@ function update(){
     if(!result){
       $('#ticketLabel').textContent=stampCaption(stamp);
       $('#orderTitle').textContent=SPECIALTIES[stamp.offerId];
+      if(s.specialties.length===1){
+        const next=stamp.offerId==='rush'?'master':'rush';
+        action={type:'growth',id:next,label:(next==='master'?'精密':'量産')+'の仕事を見る'};
+      }else action={type:'panel',panel:'growth',label:'この工場で続ける'};
     }
     floorHint=(result?SPECIALTIES[stamp.offerId]+' · ':'')+stampDetail(stamp);
   }else if(active&&!skipping&&Object.hasOwn(SPECIALTIES,active.offerId)&&!s.specialties?.some(e=>e.offerId===active.offerId)){
@@ -80,9 +84,9 @@ function update(){
   }
   $('#orderHint').textContent=floorHint;
   $('#orderHint').hidden=!floorHint;
-  button.textContent=ticket.action.label;
+  button.textContent=action.label;
   button.disabled=!!placing||!writer||saveBlocked;
-  button.onclick=()=>runFloorAction(ticket.action);
+  button.onclick=()=>runFloorAction(action);
   $('#orderProgress').hidden=!ticket.progress;
   $('#orderProgress').style.width=(ticket.progress||0)*100+'%';
   const busy=s.workers.filter(w=>w.job).length;

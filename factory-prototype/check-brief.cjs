@@ -155,6 +155,10 @@ async function checkBrief(browser,url){
         const title=page.locator('#orderTitle');await title.filter({hasText:'量産の町工場'}).waitFor();
         assert.match(await page.locator('#orderHint').innerText(),/納期に.*秒の余裕/);
         await screenshot('ending');await page.reload();await title.filter({hasText:'量産の町工場'}).waitFor();
+        await button('精密の仕事を見る').click();
+        await button('シャフト10本の段取りへ').waitFor();
+        assert.equal(M.frontOrder(await read()),null);
+        await button('工場へ戻る').click();
         await button('管理').click();await button('経営と出荷記録').click();
         await page.locator('.shop-sign').first().filter({hasText:'量産の町工場'}).waitFor();
         await button('直近の出荷結果を開く').click();assert.match(await page.locator('.receipt .shop-sign').innerText(),/最初のエンディング/);

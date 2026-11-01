@@ -69,6 +69,8 @@ async function checkPrecision(browser,url,route){
       assert.match(await page.locator('#orderHint').innerText(),/検品 森.*品質調整0本/);
       await capture('ending');await page.reload();
       await page.locator('#orderTitle').filter({hasText:'精密の町工場'}).waitFor();
+      await btn('量産の仕事を見る').click();await page.locator('#termPicker').waitFor();
+      assert.equal(M.frontOrder(await saved()),null);await btn('工場へ戻る').click();
     }
     await btn('管理').click();await btn('経営と出荷記録').click();
     if(route==='entry')await page.locator('.shop-sign').first().filter({hasText:'精密の町工場'}).waitFor();
