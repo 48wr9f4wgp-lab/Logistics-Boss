@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {frames} from '../../docs/forge-preview/art/machine-frames-v015.mjs';
-import {crewFrames} from '../../docs/forge-preview/art/crew-frames-v015.mjs';
-import {machinePose} from '../../docs/forge-preview/miniature-art.mjs';
+import {frames} from '../../docs/forge-preview/art/machine-frames-v017.mjs';
+import {crewFrames} from '../../docs/forge-preview/art/crew-frames-v017.mjs';
+import {stationFrames} from '../../docs/forge-preview/art/station-frames-v017.mjs';
+import {createArtLoader,crewFacing,machinePose,partFrame} from '../../docs/forge-preview/miniature-art.mjs';
 
 function bounds(file,rects){
   const bytes=readFileSync(new URL('../../docs/forge-preview/art/'+file,import.meta.url));
@@ -20,9 +21,9 @@ test('every machine variant, cast shadow, motion phase and crew bust lands insid
     for(let l=1;l<=3;l++)assert.ok(frames[k+'-L'+l]);
     assert.ok(frames[k+'-shadow']);
   }
-  bounds('machines-v015.webp',Object.values(frames));
+  bounds('machines-v017.webp',Object.values(frames));
   assert.equal(crewFrames.length,3*4*2);
-  bounds('crew-v015.webp',crewFrames);
+  bounds('crew-v017.webp',crewFrames);
 });
 test('hand and mechanism share one sample of the motion cycle, including across its wrap',()=>{
   for(const k of ['cut','drill','lathe','inspect']){
@@ -35,4 +36,37 @@ test('hand and mechanism share one sample of the motion cycle, including across 
     }
     assert.equal(seen.size,24);
   }
+});
+
+test('finished plate holes and turned shaft profiles follow their actual saved stage',()=>{
+  for(const product of ['plate','shaft']){
+    const keys=[0,1,2].map(stage=>partFrame(JSON.parse(JSON.stringify({product,stage}))));
+    assert.equal(new Set(keys).size,3);
+    for(const key of keys)assert.ok(stationFrames[key]);
+  }
+  for(const kind of ['cut','drill','lathe','inspect','tote-back','tote-front','raw-layer'])assert.ok(stationFrames[kind]);
+  for(const [index,[x,y]] of [[1,0],[0,1],[-1,0],[0,-1]].entries()){
+    assert.equal(crewFacing(x,y),index);
+    for(const working of [0,1])assert.ok(stationFrames['shadow-'+index+'-'+working]);
+  }
+  bounds('station-v017.webp',Object.values(stationFrames));
+});
+
+test('late room loads cannot overwrite an expanded factory and a missing station atlas is optional',async()=>{
+  const loads=new Map();
+  class Asset {
+    decode(){return new Promise((resolve,reject)=>loads.set(this.src.split('/').pop(),{image:this,resolve,reject}));}
+  }
+  const loader=createArtLoader(Asset),art=loader(8);
+  assert.equal(loader(10),art);
+  const expanded=loads.get('room-10-v017.webp');
+  expanded.resolve();
+  loads.get('room-8-v017.webp').resolve();
+  loads.get('station-v017.webp').reject(new Error('offline'));
+  loads.get('machines-v017.webp').resolve();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(art.roomWidth,10);
+  assert.equal(art.room,expanded.image);
+  assert.equal(art.station,null);
+  assert.equal(art.machines,loads.get('machines-v017.webp').image);
 });

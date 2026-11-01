@@ -1,4 +1,4 @@
-# マチコバ！ — v0.16
+# マチコバ！ — v0.17
 
 **小さな工場、大きな夢。**
 
@@ -21,6 +21,10 @@ Management sheets pause time. The floor controls and direct selection allow work
 ## Implemented
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
+
+## 工場の昼光と加工の手元（v0.17）
+
+工場の全景を台座まで表示する。穴あけ済みのプレートと段付きのシャフトは、トレーから手元に運んでも同じ形で追える。加工中の手元灯、窓越しの町並み、設備の鋳肌と職人の作業着を更新した。[同じ生産時刻の比較と確認範囲](CHANGE_PACKET_v017.md)
 
 ## Shipping and direct manipulation (v0.16)
 

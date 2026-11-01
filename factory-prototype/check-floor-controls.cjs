@@ -18,6 +18,7 @@ async function touchPinch(page,context){
 
 async function checkFloorControls(browser,url){
   const M=await import('../docs/forge-preview/model.mjs'),s=M.fresh(),engine=browser.browserType().name();
+  const {frameWorkshop,project}=await import('../docs/forge-preview/view.mjs');
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   try{
     await context.addInitScript(state=>localStorage.setItem('forge.factory.v1',JSON.stringify({revision:'edit-floor',state})),s);
@@ -28,10 +29,8 @@ async function checkFloorControls(browser,url){
     await page.locator('#world[data-artwork="ready"]').waitFor();
     const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('forge.factory.v1')).state);
     const tile=async(x,y)=>{
-      const hit=await world.evaluate((c,{x,y})=>{
-        const {width:w,height:h}=c.getBoundingClientRect(),u=Math.min(w/16.45,(h-62)/10.7);
-        return {x:w*.5-u+.22*u+(x-y)*u,y:h*.5-14*u*.21+(x+y+1)*u*.5};
-      },{x,y});
+      const {width,height}=await world.boundingBox();
+      const hit=project(frameWorkshop(width,height,s.width),x+.5,y+.5);
       await world.tap({position:hit});
     };
     const reset=async()=>{

@@ -1,3 +1,5 @@
+import {roomFrames} from '../../docs/forge-preview/art/room-frames-v017.mjs';
+import {frameWorkshop} from '../../docs/forge-preview/view.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {project,machineHull,pickMachine} from '../../docs/forge-preview/view.mjs';
@@ -46,3 +48,16 @@ test('visible nameplates select their machine above foreground machine bodies',(
   assert.equal(pickMachine({x:28,y:26},[back,front]),'front','last painted label wins');
 });
 
+
+test('the overview fits the physical plinth and rooftop in both rooms at phone sizes',()=>{
+  for(const room of [8,10])for(const [w,h] of [[320,305],[390,623],[844,190]]){
+    const v=frameWorkshop(w,h,room),[x,y,width,height]=roomFrames['room-'+room];
+    assert.ok(v.u>0);
+    assert.ok(v.ox+x*v.u>=5.99&&v.ox+(x+width)*v.u<=w-5.99);
+    assert.ok(v.oy+y*v.u>=24.99&&v.oy+(y+height)*v.u<=h-24.99);
+    const zoomed=frameWorkshop(w,h,room,2,{x:23,y:-14});
+    assert.equal(zoomed.u,2*v.u);
+    assert.ok(Math.abs(zoomed.ox-(w/2+2*(v.ox-w/2)+23))<1e-9);
+    assert.ok(Math.abs(zoomed.oy-(h/2+2*(v.oy-h/2)-14))<1e-9);
+  }
+});

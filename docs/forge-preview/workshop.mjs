@@ -1,11 +1,12 @@
 import {paintCargo,departurePose} from './shipping.mjs?v=0.16';
-import {paintRoom,paintEquipment,machinePose} from './miniature-art.mjs?v=0.16';
-import {drawCrewMember} from './crew.mjs?v=0.16';
-import {project, machineHull} from './view.mjs?v=0.13';
+import {paintRoom,paintEquipment,machinePose,paintStationDetail,partFrame} from './miniature-art.mjs?v=0.17';
+import {drawCrewMember,castCrewShadow} from './crew.mjs?v=0.17';
+import {project, machineHull} from './view.mjs?v=0.17';
 
 // Original, dependency-free workshop art. This layer only reads simulation state.
 // The static building is cached; all moving objects share one depth-sorted pass.
 const caches = new WeakMap();
+const machineScale=1.24,crewScale=1.27;
 const TAU = Math.PI * 2;
 const names = {cut:'切断機', drill:'ボール盤', lathe:'旋盤', inspect:'検品台'};
 const noise = n => { const f=Math.sin(n*127.1+311.7)*43758.5453; return f-Math.floor(f); };
@@ -23,7 +24,7 @@ export function workerVisualState(state,worker) {
   return {phase,part,machine};
 }
 
-function painter(ctx, v) {
+function painter(ctx, v, station=null) {
   const p=(x,y,z=0)=>project(v,x,y,z);
   function poly(points, fill, stroke=null, width=.6) {
     ctx.beginPath();
@@ -95,7 +96,7 @@ function painter(ctx, v) {
     const q=p(x,y,z);ctx.beginPath();ctx.arc(q.x,q.y,r*v.u,0,TAU);
     ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=.7;ctx.stroke();}
   }
-  return {ctx,v,p,poly,face,line,box,disk,shadow,softShadow,dot,wash,upright};
+  return {ctx,v,station,p,poly,face,line,box,disk,shadow,softShadow,dot,wash,upright};
 }
 
 function pallet(g,x,y,w=.82,d=.64,z=0) {
@@ -275,16 +276,36 @@ function building(g,s) {
   wallSign(g,w);
 }
 
+const signStrokes=[
+  [[[.08,.20],[.82,.20],[.48,.64]],[[.29,.49],[.60,.83]]],
+  [[[.22,.25],[.69,.10]],[[.06,.43],[.84,.43]],[[.50,.22],[.49,.56],[.31,.84]]],
+  [[[.10,.22],[.75,.22],[.75,.76],[.10,.76]]],
+  [[[.35,.32],[.23,.59],[.05,.80]],[[.57,.31],[.83,.74]],[[.63,.04],[.72,.17]],[[.79,.01],[.88,.13]]],
+  [[[.45,.13],[.43,.55]],[[.425,.765],[.425,.79]]]
+];
 function wallSign(g,w,baked=false) {
   const {ctx,v,p}=g;
-  const a=p(w*.51,.16,baked?1.69:1.82);
+  const a=p(w*.51,baked ? .20 : .16,baked?1.715:1.82);
   ctx.save();ctx.translate(a.x,a.y);ctx.transform(.89,.445,0,1,0,0);
-  if(!baked){
+  if(baked){
+    // Enamel sign lettering drawn in its own face plane, including the dakuten.
+    // The miniature stays legible on devices that have not loaded Japanese fonts.
+    ctx.scale(v.u*.44,v.u*.34);ctx.translate(-2.46,-.44);ctx.strokeStyle='#274f47';
+    ctx.lineWidth=.14;ctx.lineJoin='round';ctx.lineCap='square';
+    for(const [i,glyph] of signStrokes.entries()){
+      for(const stroke of glyph){
+        ctx.beginPath();
+        stroke.forEach(([x,y],j)=>j?ctx.lineTo(i+x,y):ctx.moveTo(i+x,y));
+        ctx.stroke();
+      }
+    }
+  }else{
     ctx.fillStyle='#233e33';ctx.fillRect(-v.u*1.15,-v.u*.32,v.u*2.3,v.u*.45);
     ctx.strokeStyle='#a6b18a';ctx.lineWidth=.65;ctx.strokeRect(-v.u*1.15,-v.u*.32,v.u*2.3,v.u*.45);
+    ctx.fillStyle='#f3dfad';ctx.font='700 '+Math.max(6,v.u*.30)+'px system-ui';ctx.textAlign='center';
+    ctx.fillText('マチコバ！',0,-v.u*.055,v.u*1.9);
   }
-  ctx.fillStyle='#f3dfad';ctx.font='700 '+Math.max(6,v.u*.30)+'px system-ui';ctx.textAlign='center';
-  ctx.fillText('マチコバ！',0,baked?v.u*.062:-v.u*.055,v.u*1.9);ctx.restore(); 
+  ctx.restore();
 }
 
 function toolWall(g) {
@@ -397,6 +418,11 @@ function details(g,m,palette) {
 
 function workpiece(g,part,x,y,z,scale=1) {
   if(!part)return;
+  if(g.station){
+    const q=g.p(x,y,z);
+    paintStationDetail(g.ctx,g.station,partFrame(part),q.x,q.y,g.v.u*scale);
+    return;
+  }
   const {box,line,disk}=g;
   if(part.product==='shaft'){
     line([[x,y+.07*scale,z+.04*scale],[x+.34*scale,y+.07*scale,z+.04*scale]],'#718d91',Math.max(1.8,g.v.u*.095*scale));
@@ -610,10 +636,37 @@ function inspection(g,m,active,t,part,grip) {
 const statusLamps={cut:[.69,.284,.912],drill:[.211,.55,1.053],lathe:[.255,.66,.967],inspect:[.63,.695,.595]};
 const partPosition={cut:[.20,.31,.668,1.45],drill:[.34,.47,.648,.83],lathe:[.36,.36,.820,1.1],inspect:[.265,.445,.799,1.03]};
 
+const litSurfaces={
+  cut:[.11,.15,.77,.62,.665],drill:[.19,.33,.54,.40,.644],
+  lathe:[.30,.38,.43,.13,.660],inspect:[.21,.28,.42,.38,.796]
+};
+function taskLight(g,m){
+  const [x,y,w,d,z]=litSurfaces[m.kind],x0=m.x+x,y0=m.y+y;
+  const center=g.p(x0+w*.55,y0+d*.52,z),radius=g.v.u*w*.91;
+  const ramp=g.ctx.createRadialGradient(center.x,center.y,0,center.x,center.y,radius);
+  ramp.addColorStop(0,'#ffda889b');ramp.addColorStop(.55,'#ffc6754c');ramp.addColorStop(1,'#ffe7af00');
+  g.face([[x0,y0,z],[x0+w,y0,z],[x0+w,y0+d,z],[x0,y0+d,z]],ramp);
+}
+
+// A drilling flute sheds short curls only on its downstroke. The lathe's chip
+// uncoils at the advancing tool post. Both read the same phase as the handle.
+function cuttingRibbon(g,m,grip,t){
+  const drilling=m.kind==='drill';
+  if(drilling&&grip.angle>-.18)return;
+  const x=m.x+(drilling ? .445:.55+grip.slide),y=m.y+(drilling ? .49:.44),z=drilling ? .68:.86;
+  const f=(t*.0012)%1,reach=(drilling ? .10:.17)*(.60+f),points=[];
+  for(let i=0;i<=12;i++){
+    const a=i/12,angle=a*Math.PI*4.7+f*2.1,coil=.025*(1-a*.50);
+    points.push([x+a*reach+Math.sin(angle)*coil,y+.036+a*.074,z+Math.cos(angle)*coil+.058*Math.sin(a*Math.PI)-.055*a]);
+  }
+  g.line(points,'#45616b',Math.max(.65,g.v.u*.037));
+  g.line(points.slice(4,8),'#e1e9dd',Math.max(.45,g.v.u*.020));
+}
+
 function machine(g,m,worker,opt,part) {
   const active=worker?.job?.phase==='work';
   const moving=active&&opt.running&&!opt.reducedMotion;
-  const t=moving?opt.time:0;
+  const t=opt.reducedMotion?0:opt.time;
   if(!opt.art?.machines)g.shadow(m.x+.11,m.y+.12,.86,.76,.24);
   if(m.kind!=='inspect'){
     // A little old oil and curled swarf anchor each machine to the floor.
@@ -627,8 +680,13 @@ function machine(g,m,worker,opt,part) {
   }
   const atlas=opt.art?.machines,grip=controls(m,active,t,!!atlas);
   if(atlas){
+    if(g.station){
+      const q=g.p(m.x,m.y);
+      paintStationDetail(g.ctx,g.station,m.kind,q.x,q.y,g.v.u);
+    }
     paintEquipment(g,m,atlas,'L'+m.level);
     if(active&&part){
+      if(g.station)taskLight(g,m);
       const [dx,dy,z,scale]=partPosition[m.kind];
       workpiece(g,part,m.x+dx,m.y+dy,z,scale);
     }
@@ -637,7 +695,8 @@ function machine(g,m,worker,opt,part) {
   // Status is truthful even while the user has paused the clock.
   const [lampX,lampY,lampZ]=statusLamps[m.kind];
   g.dot(m.x+lampX,m.y+lampY,lampZ,.029,active?'#c6df98':worker?'#eac37b':'#657564','#465449');
-  if(moving&&m.kind==='cut'&&grip.feed>.055){
+  if(moving&&part&&(m.kind==='lathe'||m.kind==='drill'))cuttingRibbon(g,m,grip,t);
+  if(moving&&part&&m.kind==='cut'&&grip.feed>.055){
     const x=m.x+.61,y=m.y+.57,z=.69;
     for(let n=0;n<6;n++){
       const f=(t*.0022+n*.173)%1,reach=.24+noise(n+31)*.32;
@@ -674,13 +733,19 @@ function waitingParts(g,stock) {
   // waiting parts get drawn; a second product is visible even in a full tote.
   const x=stock.x+.54,y=stock.y+.03,w=.44,d=.34;
   g.shadow(x,y,w,d,.14);
-  g.box(x,y,w,d,.077,'#3e6e7b','#708e8b','#304f5c');
-  g.box(x,y,w,.026,.085,'#668884','#88aaa2','#3c626d',.072);
+  const q=g.p(x,y);
+  if(g.station)paintStationDetail(g.ctx,g.station,'tote-back',q.x,q.y,g.v.u);
+  else{
+    g.box(x,y,w,d,.077,'#3e6e7b','#708e8b','#304f5c');
+    g.box(x,y,w,.026,.085,'#668884','#88aaa2','#3c626d',.072);
+  }
   const plates=stock.parts.filter(p=>p.product==='plate');
   const shafts=stock.parts.filter(p=>p.product==='shaft');
-  for(let i=0;i<Math.min(plates.length,3);i++)workpiece(g,plates[i],x+.033,y+.04,.09+i*.045,1.16);
-  for(let i=0;i<Math.min(shafts.length,3);i++)workpiece(g,shafts[i],x+.035,y+.10+i*.047,.106+Math.min(plates.length,3)*.045,1.02);
-  g.box(x,y+d-.025,w,.025,.08,'#457784','#83a5a4','#345361',.072);
+  const bed=g.station ? .046 : .09;
+  for(let i=0;i<Math.min(plates.length,3);i++)workpiece(g,plates[i],x+.033,y+.04,bed+i*.049,1.16);
+  for(let i=0;i<Math.min(shafts.length,3);i++)workpiece(g,shafts[i],x+.035,y+.08+i*.080,bed+Math.min(plates.length,3)*.049,1.02);
+  if(g.station)paintStationDetail(g.ctx,g.station,'tote-front',q.x,q.y,g.v.u);
+  else g.box(x,y+d-.025,w,.025,.08,'#457784','#83a5a4','#345361',.072);
 }
 
 function materials(g,s,incoming,shippingArt) {
@@ -690,8 +755,14 @@ function materials(g,s,incoming,shippingArt) {
   const plates=incoming.filter(p=>p.product==='plate'),shafts=incoming.filter(p=>p.product==='shaft');
   const plateLayers=Math.min(4,Math.ceil(plates.length/5));
   for(let i=0;i<plateLayers;i++){
-    box(.13,.18,.58,.45,.046,'#819b9b','#d1dbcd','#5c7b77',.16+i*.05);
-    line([[.15,.27,.209+i*.05],[.67,.27,.209+i*.05]],'#edf0da',.8);
+    const z=.17+i*.046;
+    if(g.station){
+      const q=g.p(.13,.18,z);
+      paintStationDetail(g.ctx,g.station,'raw-layer',q.x,q.y,g.v.u);
+    }else{
+      box(.13,.18,.58,.45,.046,'#819b9b','#d1dbcd','#5c7b77',z);
+      line([[.15,.27,z+.048],[.67,.27,z+.048]],'#edf0da',.8);
+    }
   }
   for(let i=0;i<Math.min(4,Math.ceil(shafts.length/4));i++)workpiece(g,shafts[0],.14,.2+i*.1,.17+plateLayers*.05,1.5);
   const dockY=s.height-.86;
@@ -799,7 +870,7 @@ export function drawWorkshop(ctx,state,viewport,options={}) {
   ctx.clearRect(0,0,viewport.w,viewport.h);
   const art=opt.art;
   staticScene(ctx,state,viewport,art?.roomWidth===state.width?art.room:null);
-  const g=painter(ctx,viewport);
+  const g=painter(ctx,viewport,art?.station);
   floorSelection(g,state,opt);
   const destination=opt.placing?.candidate;
   const source=destination?state.machines.find(m=>m.id===opt.placing.id):null;
@@ -808,10 +879,14 @@ export function drawWorkshop(ctx,state,viewport,options={}) {
   const stock=floorStock(state.parts,visuals);
   // Cast every machine shadow on the slab before painting stock or people.
   if(art?.machines)for(const m of state.machines){
-    const tool=painter(ctx,objectView(viewport,m.x+.5,m.y+.5,1.13));
+    const tool=painter(ctx,objectView(viewport,m.x+.5,m.y+.5,machineScale));
     ctx.save();if(m===source)ctx.globalAlpha*=.25;
     paintEquipment(tool,m,art.machines,'shadow');ctx.restore();
   }
+  if(art?.station)state.workers.forEach((w,i)=>{
+    const portrait=painter(ctx,objectView(viewport,w.x+.45,w.y+.45,crewScale));
+    castCrewShadow(portrait,w,visuals[i],art.station);
+  });
   materials(g,state,stock.incoming,art?.shipping);
   const entities=[
     ...state.machines.map(m=>({depth:m.x+m.y+.9,type:'machine',m})),
@@ -823,12 +898,12 @@ export function drawWorkshop(ctx,state,viewport,options={}) {
   for(const entity of entities){
     if(entity.type==='stock'){waitingParts(g,entity.bin);continue;}
     if(entity.type==='worker'){
-      const w=entity.w,portrait=painter(ctx,objectView(viewport,w.x+.45,w.y+.45,1.16));
+      const w=entity.w,portrait=painter(ctx,objectView(viewport,w.x+.45,w.y+.45,crewScale));
       const visual=entity.visual;
       let contact=null;
       if(visual.phase==='work'){
-        const m=visual.machine,tool=objectView(viewport,m.x+.5,m.y+.5,1.13);
-        const grip=controls(m,true,opt.running&&!opt.reducedMotion?opt.time:0,!!art?.machines);
+        const m=visual.machine,tool=objectView(viewport,m.x+.5,m.y+.5,machineScale);
+        const grip=controls(m,true,opt.reducedMotion?0:opt.time,!!art?.machines);
         contact={left:project(tool,...grip.left),right:project(tool,...grip.right)};
       }
       drawCrewMember(portrait,w,visual,opt,contact);
@@ -836,8 +911,8 @@ export function drawWorkshop(ctx,state,viewport,options={}) {
     else{
       const m=entity.m,w=state.workers.find(w=>w.job?.machine===m.id);
       const part=w?state.parts.find(p=>p.id===w.job.part):null;
-      const local=objectView(viewport,m.x+.5,m.y+.5,1.13);
-      const tool=painter(ctx,local);
+      const local=objectView(viewport,m.x+.5,m.y+.5,machineScale);
+      const tool=painter(ctx,local,art?.station);
       ctx.save();
       if(m===source)ctx.globalAlpha*=.28;
       if(entity.type==='preview')ctx.globalAlpha*=.83;
