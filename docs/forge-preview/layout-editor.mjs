@@ -1,7 +1,7 @@
-import {BRIEFS,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.23';
-import * as M from './model.mjs?v=0.23';
-import {layoutPlan,layoutCandidate,legalLayoutCells,movementReason} from './layout.mjs?v=0.23';
-import {createEstimator} from './estimate-client.mjs?v=0.23';
+import {BRIEFS,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.24';
+import * as M from './model.mjs?v=0.24';
+import {layoutPlan,layoutCandidate,legalLayoutCells,movementReason} from './layout.mjs?v=0.24';
+import {createEstimator} from './estimate-client.mjs?v=0.24';
 
 const el=id=>document.getElementById(id);
 const cellName=({x,y})=>(x+1)+'列'+(y+1)+'段';

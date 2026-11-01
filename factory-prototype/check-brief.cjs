@@ -150,6 +150,21 @@ async function checkBrief(browser,url){
         assert.ok(Math.abs(M.resultProfit(rushReceipt)-acceptedQuote.profit)<1e-5);
         assert.ok(Math.abs(delivered.cash-readyState.cash-rushReceipt.payout)<1e-5);
         assert.ok(Math.abs(delivered.revenue-readyState.revenue-rushReceipt.payout)<1e-5);
+        const earned=delivered.specialties[0];
+        assert.equal(earned.orderId,rushOrder.id);assert.equal(earned.offerId,'rush');
+        const title=page.locator('#orderTitle');await title.filter({hasText:'量産の町工場'}).waitFor();
+        assert.match(await page.locator('#orderHint').innerText(),/納期に.*秒の余裕/);
+        await screenshot('ending');await page.reload();await title.filter({hasText:'量産の町工場'}).waitFor();
+        await button('精密の仕事を見る').click();
+        await button('シャフト10本の段取りへ').waitFor();
+        assert.equal(M.frontOrder(await read()),null);
+        await button('工場へ戻る').click();
+        await button('管理').click();await button('経営と出荷記録').click();
+        await page.locator('.shop-sign').first().filter({hasText:'量産の町工場'}).waitFor();
+        await button('直近の出荷結果を開く').click();assert.match(await page.locator('.receipt .shop-sign').innerText(),/最初のエンディング/);
+        await button('工場へ戻る').click();await button('管理').click();await button('注文一覧').click();
+        await page.locator('[data-order="first"]').click();assert.ok(M.frontOrder(await read()));
+        assert.deepEqual((await read()).specialties,[earned]);
         console.log(engine+' referred rush shipped '+rushReceipt.qty+' pieces in '+rushReceipt.seconds.toFixed(1)+'s, on time with the quoted profit.');
       }
       assert.deepEqual(errors,[]);

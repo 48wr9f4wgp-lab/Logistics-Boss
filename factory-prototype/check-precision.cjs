@@ -64,7 +64,18 @@ async function checkPrecision(browser,url,route){
     await forecast.filter({hasText:/品質調整 0\/10本/}).waitFor();await capture('plan');
     const r=await acceptAndShip(spec);
     assert.equal(r.qualitySpend,route==='entry'?2400:1500);
-    await btn('管理').click();await btn('経営と出荷記録').click();await btn('直近の出荷結果を開く').click();
+    if(route==='entry'){
+      await page.locator('#orderTitle').filter({hasText:'精密の町工場'}).waitFor();
+      assert.match(await page.locator('#orderHint').innerText(),/検品 森.*品質調整0本/);
+      await capture('ending');await page.reload();
+      await page.locator('#orderTitle').filter({hasText:'精密の町工場'}).waitFor();
+      await btn('量産の仕事を見る').click();await page.locator('#termPicker').waitFor();
+      assert.equal(M.frontOrder(await saved()),null);await btn('工場へ戻る').click();
+    }
+    await btn('管理').click();await btn('経営と出荷記録').click();
+    if(route==='entry')await page.locator('.shop-sign').first().filter({hasText:'精密の町工場'}).waitFor();
+    await btn('直近の出荷結果を開く').click();
+    if(route==='entry')assert.match(await page.locator('.receipt .shop-sign').innerText(),/最初のエンディング/);
     assert.equal(await page.locator('.result-profit strong').textContent(),'+¥'+Math.round(M.resultProfit(r)-r.qualitySpend).toLocaleString('ja-JP'));
     assert.match(await page.locator('#sheetBody').innerText(),/検品 森 · 品質調整 0\/10本（見積 0本）/);
     if(r.growth.length)assert.match(await page.locator('#sheetBody').innerText(),/実務で成長/);

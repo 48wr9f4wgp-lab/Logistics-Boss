@@ -11,6 +11,18 @@ Acceptance: two simultaneous orders share finite machine capacity; routing/layou
 
 Initial slice: plates and precision shafts, cutter/drill/inspection and purchasable lathe, three workers, expandable floor. Quality rework is deterministic and explained. Training/mentoring included; external contracting, breakdowns, brands and multiple buildings deferred. Numbers are fictional balance parameters.
 
+## 第1版の完成条件（決定・2026-11-01）
+
+**ゲームのクリア**　短納期プレート28個を200秒以内、または高精度シャフト10本を150秒以内に実際に出荷したら最初のエンディング。受注や製作完了だけでは達成にならない。同じ工場で続行でき、他方の初達成はクリア後の目標。設備投資と紹介のどちらを使ってもよい。
+
+**開発の範囲**　第1版の機能範囲はここで締める。残工程を (1) 初達成の記録と出荷票、(2) 初見プレイとiPhone実機の確認、(3) そこで観測した迷い・待ち・操作ミスの修正と再確認、に限る。App Storeに向けた製品化は別の判断。
+
+| v1.0プレイアブルの判定項目 | 確認すること |
+|---|---|
+| 初達成 | 両ルートで最初の納期内出荷を保存。再起動、再受注、もう一方の達成、履歴12件超えでも最初の記録が残る |
+| 初見の人（未確認） | 口頭説明なしで初出荷。仮置きを自分で選び、選んだ理由を本人が説明できる |
+| iPhone実機（未確認） | 初出荷からいずれかの初達成まで。文字・床タップ・所要時間・早送り・中断復帰・資金と出荷記録を確認 |
+
 2026-10-30 / v0.4 extension: two growth contracts reuse the existing products and investment systems. Drill upgrade/addition opens short-deadline volume work; a lathe plus one skill-3 worker opens quality-3 shafts. Both routes stay available. Requirements, fictional parameters and save-rollback limitation are recorded in README.md and CHANGE_v04_2026-10-30.md. No native production or art-target decision.
 
 2026-10-31 / v0.6: selected growth contract, preparation/material budget, and state-based next action. See CHANGE_PACKET_v06.md. This completes the bounded guidance pass; before expanding content further, prioritize a short iPhone play session of accept → invest → deliver and collect concrete feedback on readability, decisions and waiting. No actual-device or fun greenlight yet.
@@ -49,3 +61,5 @@ v0.21: Make simultaneous orders a concrete dispatch decision. A customer offers 
 v0.22: Let the player compose and undo several moves or swaps before charging for the repeat order. Compare legal locations for one selected tool under the same contract and show when shorter walking and earlier delivery lead to different choices.
 
 v0.23: Turn time and travel into two distinct repeat-order commitments. Settle each against the real receipt. Completing both earns a continuing customer referral for the existing rush job, offering a layout-based alternative to equipment investment.
+
+v0.24: Record the first on-time dispatch of each specialty and show the first as the ending. Both routes and the existing factory continue after the ending. Human and physical-device acceptance gates remain open.
