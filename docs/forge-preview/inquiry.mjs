@@ -1,5 +1,5 @@
-import * as M from './model.mjs?v=0.22';
-import {eligiblePrimary,validPriority,soloSnapshot} from './pairing.mjs?v=0.22';
+import * as M from './model.mjs?v=0.23';
+import {eligiblePrimary,validPriority,soloSnapshot} from './pairing.mjs?v=0.23';
 
 export function inquiryContext(s){
   if(s.delivered<2)return null;

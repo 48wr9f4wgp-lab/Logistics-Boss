@@ -1,19 +1,20 @@
-import {layoutEditor} from './layout-editor.mjs?v=0.22';
-import {applyLayout} from './layout.mjs?v=0.22';
+import {BRIEFS,briefTarget,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.23';
+import {layoutEditor} from './layout-editor.mjs?v=0.23';
+import {applyLayout} from './layout.mjs?v=0.23';
 import {floorGesture,changeCamera} from './floor-input.mjs?v=0.16';
 import {departureDuration} from './shipping.mjs?v=0.16';
-import * as M from './model.mjs?v=0.22';
-import {openingOffer,deliveryGuide,floorTicket} from './guidance.mjs?v=0.22';
-import {repeatOffer,startRepeat,comparisonLine} from './improvement.mjs?v=0.22';
+import * as M from './model.mjs?v=0.23';
+import {openingOffer,deliveryGuide,floorTicket} from './guidance.mjs?v=0.23';
+import {repeatOffer,startRepeat,comparisonLine} from './improvement.mjs?v=0.23';
 import {frameWorkshop,project,pickMachine} from './view.mjs?v=0.17';
-import {drawWorkshop} from './workshop.mjs?v=0.22';
+import {drawWorkshop} from './workshop.mjs?v=0.23';
 import {createArtLoader} from './miniature-art.mjs?v=0.17';
-import {createEstimator} from './estimate-client.mjs?v=0.22';
-import {acceptPrecision,installStarterLathe} from './precision.mjs?v=0.22';
-import {precisionDesk,bindPrecisionDesk} from './precision-view.mjs?v=0.22';
-import {advanceToReview,decideInquiry,inquiryContext} from './inquiry.mjs?v=0.22';
-import {pairResult,yenGain} from './pairing.mjs?v=0.22';
-import {bindInquiry,inquirySheet} from './inquiry-view.mjs?v=0.22';
+import {createEstimator} from './estimate-client.mjs?v=0.23';
+import {acceptPrecision,installStarterLathe} from './precision.mjs?v=0.23';
+import {precisionDesk,bindPrecisionDesk} from './precision-view.mjs?v=0.23';
+import {advanceToReview,decideInquiry,inquiryContext} from './inquiry.mjs?v=0.23';
+import {pairResult,yenGain} from './pairing.mjs?v=0.23';
+import {bindInquiry,inquirySheet} from './inquiry-view.mjs?v=0.23';
 const workshopArt=createArtLoader(),estimator=createEstimator();
 const shaftChoice={offer:'fine',inspector:null,investment:'none',benchId:null};
 const $=s=>document.querySelector(s),KEY='forge.factory.v1',canvas=$('#world'),ctx=canvas.getContext('2d');
@@ -47,7 +48,8 @@ function update(){
   const latest=s.results?.[0];
   const shownReport=recentShipment||(!active&&(!s.goalOffer||latest?.repeatCost!==undefined||latest?.qualitySpend!==undefined||latest?.pair||latest?.declinedExtra)?latest:null);
   const result=!active&&pairResult(shownReport);
-  const comparison=result?pairLine(result,false):active?'':shownReport?.declinedExtra?declineLine(shownReport):comparisonLine(s,shownReport);
+  const briefId=!active&&shownReport?.briefId;
+  const comparison=briefId?BRIEFS[briefId].label+' '+briefOutcomeText(briefId,shownReport):result?pairLine(result,false):active?'':shownReport?.declinedExtra?declineLine(shownReport):comparisonLine(s,shownReport);
   $('#orderComparison').textContent=comparison;
   $('#orderComparison').hidden=!comparison;
   if(result)$('#ticketLabel').textContent='出荷完了 · 先約＋小口';
@@ -57,6 +59,9 @@ function update(){
     else $('#ticketLabel').textContent='出荷完了 · '+(profit===null?'入金 '+money(shownReport.payout):'受注利益 '+signedMoney(profit)+(shownReport.repeatCost?' · 改良費 '+money(shownReport.repeatCost):''));
   }
   $('#orderTitle').textContent=active?.pair?(active.id===active.pair.primary?'先約 · ':'小口 · ')+ticket.title:result?'2件の受注利益 '+roundedCash(result.profit):comparison&&(recentShipment||!s.goalOffer)?shownReport.label+' '+shownReport.qty+(M.OFFERS.find(o=>o.id===shownReport.offerId)?.product==='shaft'?'本':'個')+'を出荷':ticket.title;
+  if(briefId&&!s.goalOffer&&shownReport.briefBonus){
+    $('#orderTitle').textContent=earnedBriefs(s).length===2?'金物店の紹介 · 28個の短納期便':'金物店の紹介まであと1種類';
+  }
   let floorHint=ticket.hint;
   if(skipping?.review)floorHint='先約の半分で止まり、小口の相談に戻ります。';
   else if(consult?.extra)floorHint=(consult.primary.pair.priority==='primary'?'先約優先':'小口優先')+' · 追加の6個は '+consult.extra.done+'/6個完成。';
@@ -85,8 +90,13 @@ function runFloorAction(action){
   }else if(action.type==='stop')stopSkip();
   else if(action.type==='skip')startSkip();
   else if(action.type==='ship')ship(action.id);
+  else if(action.type==='briefRetry')retryBrief(action.id);
   else if(action.type==='growth')open('growth',action.id);
   else if(action.type==='panel')open(action.panel);
+}
+function retryBrief(id){
+  const trial=repeatOffer(s);
+  if(trial)place({id:trial.drill.id,kind:'drill',trial:true,briefId:id});
 }
 const sheetTrail=[];
 function open(panel,focusId=null,restoring=false,term=null){
@@ -215,7 +225,7 @@ function improvementSheet(){
   const disabled=total===null||s.cash<total||!writer||saveBlocked;
   const shortage=total!==null&&s.cash<total?'あと '+money(Math.ceil(total-s.cash))+' 必要':'';
   return `<p class="trial-baseline"><strong>取付プレート ${offer.qty}個 · 再注文</strong>前回 ${seconds(report.seconds)} · 移動 ${Math.round(report.walk)}マス<br>今回の材料費 ${money(material)}</p>
-    <article class="card trial-choice"><div><h3>設備の配置を組み直す</h3><small>移設 ¥0</small></div><p>切断機・ボール盤・検品台を動かして、12個の完成時間と職人の歩数を比べられます。</p><button class="wide" id="trialMove" ${!writer||saveBlocked?'disabled':''}>置き場所を試す</button></article>
+    <article class="card trial-choice"><div><h3>設備の配置を組み直す</h3><small>移設 ¥0</small></div><p>改善依頼の達成で＋¥400。早仕上げ・省運搬を両方達成すると、金物店が28個の短納期便を紹介してくれます。</p><button class="wide" id="trialMove" ${!writer||saveBlocked?'disabled':''}>置き場所を試す</button></article>
     <article class="card trial-choice"><div><h3>ボール盤を改良する</h3><small>${upgradeCost===null?'最高レベル':'改良 '+money(upgradeCost)}</small></div><p>${upgradeText}</p>${!disabled?'<small id="upgradeEstimate">12個の見積中…</small>':''}<button class="wide" id="trialUpgrade" ${disabled?'disabled':''}>${total===null?'改良済み':'改良して受注 · '+money(total)}</button>${shortage?'<small>'+shortage+'</small>':''}</article>
     <button class="wide" data-next="growth">改善はあとで · 成長目標へ</button>`;
 }
@@ -309,7 +319,7 @@ if(tab==='manage'){
 if(tab==='orders'){
   for(const o of s.orders.filter(o=>!o.shipped)){
     const remain=Math.ceil(o.start+o.due-s.clock),quote=M.shipmentQuote(s,o);
-    html+=card(escape(o.label),`<small>生産中 · ${o.qty}個 / 品質 ${o.quality}</small><p>${o.done}個完成 · ${!quote.late?'納期まで '+remain+'秒':'納期超過：報酬15%減額'}</p><progress value="${o.done}" max="${o.qty}"></progress><button class="primary wide" data-ship="${o.id}" ${o.done<o.qty?'disabled':''}>出荷して ${money(quote.pay)} を受け取る</button>`);
+    html+=card(escape(o.label),`<small>生産中 · ${o.qty}個 / 品質 ${o.quality}</small><p>${o.done}個完成 · ${!quote.late?'納期まで '+remain+'秒':'納期超過：基本報酬15%減額'}${o.briefId?'<br>改善依頼 · '+briefTarget(o.briefId):''}</p><progress value="${o.done}" max="${o.qty}"></progress><button class="primary wide" data-ship="${o.id}" ${o.done<o.qty?'disabled':''}>出荷して ${money(quote.pay)} を受け取る</button>`);
   }
   const recommended=openingOffer(s);
   html+=recommended?'<p>まずは一件、受注 → 完成まで進める → 出荷。詳細画面を開いている間は時間が止まります。</p>':'<p>同時受注は2件。受注時に材料を購入します。詳細画面を開いている間は時間が止まります。</p>';
@@ -343,7 +353,7 @@ if(tab==='workers'){
 }
 if(tab==='result'){const r=s.results?.[0];html=r?receipt(r,true):'<p>まだ出荷記録がありません。</p>';}
 if(tab==='finance'){html=card('工場の状況','<div class="row"><span>出荷実績</span><b>'+s.delivered+'件</b></div><div class="row"><span>工場時間</span><b>'+Math.floor(s.clock/60)+'分'+Math.floor(s.clock%60)+'秒</b></div>')+card('収支',`<div class="row"><span>累計売上</span><b>${money(s.revenue)}</b></div><div class="row"><span>材料・投資・人件費</span><b>${money(s.expense)}</b></div><p>加工する部品がある間、人件費は毎秒¥0.7。画面を閉じている間の生産・請求はありません。</p>`)+'<h3>出荷の振り返り</h3><p>直近12件を保存。利益は設備・研修・増築費を引く前の金額です。</p>'+(s.results?.length?'<button class="wide" data-next="result">直近の出荷結果を開く</button>'+s.results.map(r=>`<details class="result-history"><summary>${escape(r.label)} × ${r.qty}<b>${M.resultProfit(r)===null?'記録なし':signedMoney(M.resultProfit(r))}</b></summary>${receipt(r,false)}</details>`).join(''):'<p>出荷すると結果をここで見返せます。</p>')+card('工場を広げる',`<p>床面積を8×6から10×8へ。追加設備と動線のための余白を作ります。</p><button class="primary wide" id="expand" ${s.width===10?'disabled':''}>${s.width===10?'拡張済み':'増築する · ¥3,500'}</button>`)+card('生産の記録',`<p>完了工程 ${s.stats.processed}回<br>品質調整 ${s.stats.rework}回<br>運搬・移動距離 ${Math.floor(s.stats.walk)}マス</p>`)+card('工場日誌',s.log.map(t=>`<p>${escape(t)}</p>`).join(''));}
-if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② 完成まで進めるで待ち時間をスキップ（人件費・納期も進む）<br>③ 完成した注文を出荷して入金<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.22</small>');}
+if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'別のタブで起動中、または復帰後の閲覧状態です。再読み込みしてください。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② 完成まで進めるで待ち時間をスキップ（人件費・納期も進む）<br>③ 完成した注文を出荷して入金<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.23</small>');}
 body.innerHTML=html;
 setupPanelEstimate();
 if($('#allGrowth'))$('#allGrowth').onclick=()=>open('growth');
@@ -381,9 +391,10 @@ function growthCard(o,focused=false){
   const action=n.label+(n.cost!==undefined?' · '+money(n.cost):n.type==='accept'?' · 材料 '+money(o.cost):n.type==='ship'?' · '+money(M.shipmentQuote(s,p.order).pay):'');
   const budget=p.order?`<p class="goal-progress">${p.order.done} / ${p.order.qty}個 完成${M.shipmentQuote(s,p.order).late?' · 納期超過（報酬15%減）':''}</p><progress value="${p.order.done}" max="${p.order.qty}"></progress>`:`<ul class="offer-requirements">${p.status.requirements.map(r=>`<li class="${r.met?'met':''}">${r.met?'✓':'○'} ${r.label}</li>`).join('')}</ul><dl class="plan-budget"><div><dt>残りの準備費</dt><dd>${money(p.investment)}</dd></div><div><dt>受注時の材料費</dt><dd>${money(o.cost)}</dd></div><div class="budget-total"><dt>合わせて必要</dt><dd>${money(p.required)}</dd></div></dl>${p.preparations.length?`<p class="plan-detail">${p.preparations.map(v=>escape(v.label)+(v.type==='train'?' → 技能3まで':'')+' '+money(v.total)).join(' ／ ')}${p.preparations.some(v=>v.type==='train')?'<br>研修を使う場合の費用。実務で成長すると減ります。':''}</p>`:''}<p class="plan-funds ${p.shortage?'short':''}">${p.shortage?`手元 ${money(s.cash)} · あと ${money(p.shortage)}`:'準備費と材料費を確保できる資金があります'}</p><small class="plan-note">人件費・追加の効率化費は別。受注条件の達成だけでは納期は保証されません。</small>`;
   const showTerms=o.id==='rush'&&canCompareFreight(p);
+  const referral=o.id==='rush'&&!p.status.qualified&&repeatOffer(s)?'<button class="wide" data-next="improve">金物店の改善依頼から目指す（'+earnedBriefs(s).length+'/2達成）</button>':'';
   const planButton=`<strong class="plan-next">${phaseLabel}</strong><button class="wide primary" data-plan-action="${o.id}">${escape(action)}</button>`;
   const decision=o.id==='master'&&!p.order&&p.phase!=='slots'?'<button class="wide primary" data-next="precision">シャフト10本の段取りへ</button>':
-    showTerms?freightTerms(s,focused)+(p.phase==='ready'?'':planButton):planButton;
+    showTerms?freightTerms(s,focused)+(p.phase==='ready'?'':planButton+referral):planButton+referral;
   if(focused)return `<section class="freight-focus"><p>取付プレート28個 · 材料費は受注時に支払います。</p>${decision}<details class="growth-details"><summary>成長目標と費用の内訳</summary>${budget}<button data-goal="${o.id}" ${chosen?'disabled':''}>${chosen?'目標に設定中':'この目標を追う'}</button></details></section>`;
   return `<article class="card growth-card ${chosen?'chosen-goal':''}"><div class="plan-heading"><small>${o.growth}</small><button data-goal="${o.id}" ${chosen?'disabled':''}>${chosen?'✓ 目標に設定中':'この目標を追う'}</button></div><h3>${o.label}</h3><small>${o.qty}個 · 品質${o.quality} · 納期${o.due}秒 · 納品${money(o.pay)}</small><ol class="plan-steps" aria-label="目標の進み方"><li class="${p.order||p.phase==='ready'?'done':'current'}">1 準備</li><li class="${p.phase==='producing'?'current':p.phase==='ship'?'done':''}">2 生産</li><li class="${p.phase==='ship'?'current':''}">3 出荷</li></ol><details class="growth-details"><summary>条件と費用の内訳</summary>${budget}</details>${decision}</article>`;
 }
@@ -411,6 +422,7 @@ function runResultAction(which){
   if(!action)return;
   if(action.type==='ship')ship(action.id);
   else if(action.type==='skip'){close();startSkip();}
+  else if(action.type==='briefRetry')retryBrief(action.id);
   else if(action.type==='growth')open('growth',action.id);
   else if(action.type==='panel')open(action.panel);
 }
@@ -443,9 +455,10 @@ function receipt(r,expanded){
   const quality=r.qualitySpend===undefined?'':`<p class="result-brief">検品 ${r.inspectorId===undefined?'おまかせ':name(r.inspectorId)} · 品質調整 ${r.rework}/${r.qty}本${r.quote?.rework!==undefined?'（見積 '+r.quote.rework+'本）':''}${r.growth?.length?'<br>実務で成長　'+r.growth.map(g=>name(g.worker)+' 技能'+g.skill).join('・'):''}</p>`;
   const paired=pairResult(r);
   const pairReport=r.declinedExtra?`<p class="result-brief">${declineLine(r)}</p>`:r.pair?`<p class="result-brief">${paired?pairLine(paired):'もう1件を出荷すると2件の実績がそろいます。'}</p>`:'';
-  const ledger=`<dl class="result-ledger"><div><dt>入金${r.late?'（15%減額）':''}</dt><dd>${resultMoney(r.payout)}</dd></div><div><dt>材料費</dt><dd>−${resultMoney(r.material)}</dd></div><div><dt>人件費</dt><dd>${r.wages===null?'記録なし':'−'+resultMoney(r.wages)}</dd></div></dl>`;
+  const target=r.briefId?`<p class="result-brief brief-receipt"><strong>改善依頼 · ${BRIEFS[r.briefId].label}</strong><br>${briefOutcomeText(r.briefId,r)}<br>基本報酬 ${money(r.payout-r.briefBonus)} ＋ 改善協力金 ${money(r.briefBonus)} ＝ 入金 ${money(r.payout)}</p>`:'';
+  const ledger=`<dl class="result-ledger"><div><dt>入金${r.late?(r.briefId?'（基本報酬15%減）':'（15%減額）'):''}</dt><dd>${resultMoney(r.payout)}</dd></div><div><dt>材料費</dt><dd>−${resultMoney(r.material)}</dd></div><div><dt>人件費</dt><dd>${r.wages===null?'記録なし':'−'+resultMoney(r.wages)}</dd></div></dl>`;
   const measured=profit===null?'<p>更新前に受けた注文のため、時間・人件費は未計測です。次の受注から記録します。</p>':`<div class="result-stats"><div><small>生産時間</small><b>${duration(r.seconds)}</b></div><div><small>移動距離</small><b>${Math.round(r.walk)}マス</b></div><div><small>品質調整</small><b>${r.rework}回</b></div></div>${comparison}<p class="accounting-note">人件費は未完成の注文で均等配分。生産時間は受注から完成まで（出荷待ちを除く）。金額は表示時に丸めています。</p>`;
-  return `<article class="card receipt">${heading}${summary}${brief}${quote}${quality}${pairReport}${resultNext(guide)}${expanded?`<details class="receipt-details"><summary>収支の内訳・前回との比較</summary>${ledger}${measured}</details>`:ledger+measured}</article>`;
+  return `<article class="card receipt">${heading}${summary}${target}${brief}${quote}${quality}${pairReport}${resultNext(guide)}${expanded?`<details class="receipt-details"><summary>収支の内訳・前回との比較</summary>${ledger}${measured}</details>`:ledger+measured}</article>`;
 }
 function change(now,before,unit,lowerBetter){const diff=now-before;if(Math.abs(diff)<.05)return '変化なし';return `${Math.abs(diff).toFixed(1)}${unit}${diff<0?(lowerBetter?'短縮':'減'):(lowerBetter?'増加':'増')}`;}
 function escape(t){return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -522,7 +535,7 @@ $('#confirmPlace').onclick=()=>{
   if(!c||p.draining)return;
   if(p.editor){
     if(!p.editor.canConfirm())return;
-    const ok=act(()=>p.trial?startRepeat(s,'layout',p.editor.moves):applyLayout(s,p.editor.moves),false);
+    const ok=act(()=>p.trial?startRepeat(s,'layout',p.editor.moves,p.briefId??null):applyLayout(s,p.editor.moves),false);
     if(ok){
       if(p.trial)resumeSpeed=resumeSpeed||1;
       selected=null;endPlacement();

@@ -1,4 +1,4 @@
-import * as M from './model.mjs?v=0.22';
+import * as M from './model.mjs?v=0.23';
 
 export function layoutPlan(s,moves){
   if(!Array.isArray(moves)||moves.length>s.machines.length)return {error:'配置案を読み直してください'};

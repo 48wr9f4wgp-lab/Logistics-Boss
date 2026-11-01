@@ -1,4 +1,4 @@
-# マチコバ！ — v0.22
+# マチコバ！ — v0.23
 
 **小さな工場、大きな夢。**
 
@@ -21,6 +21,10 @@ Management sheets pause time. The floor controls and direct selection allow work
 ## Implemented
 
 Two products/three stages, shared finite machines, three persistent workers, routed movement, deterministic skill/quality adjustment, simultaneous contracts, material purchase, wages, dispatch, machine purchase/upgrade/move/sale, training/experience/mentoring, 8×6 → 10×8 expansion. Independent `forge.factory.v1` saves with validation, export/import and an exclusive Web Lock where supported. Fallback revision guard cannot provide atomic cross-tab guarantees on browsers without Web Locks.
+
+## 金物店の改善依頼と紹介（v0.23）
+
+初出荷後、「工場の改善を選ぶ → 置き場所を試す」で12個の再注文に条件を一つ付けられる。「早仕上げ」は完成108.0秒以内、「省運搬」は職人の総移動225マス以内。達成時の協力金は各回¥400。両方を達成した工場は、金物店の紹介で28個の短納期便を見積もれる。紹介後も設備の性能や納期は同じ。[実測と遊び方](CHANGE_PACKET_v023.md)
 
 ## 工場の配置を試す（v0.22）
 

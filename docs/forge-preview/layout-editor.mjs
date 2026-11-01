@@ -1,6 +1,7 @@
-import * as M from './model.mjs?v=0.22';
-import {layoutPlan,layoutCandidate,legalLayoutCells,movementReason} from './layout.mjs?v=0.22';
-import {createEstimator} from './estimate-client.mjs?v=0.22';
+import {BRIEFS,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.23';
+import * as M from './model.mjs?v=0.23';
+import {layoutPlan,layoutCandidate,legalLayoutCells,movementReason} from './layout.mjs?v=0.23';
+import {createEstimator} from './estimate-client.mjs?v=0.23';
 
 const el=id=>document.getElementById(id);
 const cellName=({x,y})=>(x+1)+'列'+(y+1)+'段';
@@ -15,6 +16,21 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
   const tools=el('layoutTools'),picker=el('layoutMachine'),suggestions=el('layoutSuggestions');
   let anchor=[],moves=[],selected=p.id,invalid=false,picked=false,rankingResult=null;
   const original=s.machines.find(m=>m.id===selected);
+  const brief=el('layoutBrief'),briefField=el('layoutBriefField'),forecast=el('layoutBriefForecast');
+  // Undefined is a pending estimate; null indicates the worker was unavailable.
+  let measured,explicitBrief=false;
+  briefField.hidden=forecast.hidden=!p.trial;
+  if(p.trial){
+    brief.replaceChildren(new Option('追加条件なし（通常報酬）',''));
+    const earned=earnedBriefs(s);
+    for(const [id,condition] of Object.entries(BRIEFS)){
+      const label=condition.label+' '+condition.limit+condition.unit+'以内 ＋¥'+condition.bonus;
+      brief.add(new Option(earned.includes(id)?label+' 済':label,id));
+    }
+    brief.value=p.briefId||'';
+    p.briefId=brief.value||null;
+    explicitBrief=!!p.briefId;
+  }
   tools.hidden=false;picker.replaceChildren();
   for(const m of s.machines){
     const option=document.createElement('option');
@@ -23,10 +39,17 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
   }
   const product=M.OFFERS.find(o=>o.id===offer),batch=product.qty+(product.product==='shaft'?'本':'個');
   const status=el('placeStatus'),estimate=el('layoutEstimate'),confirm=el('confirmPlace'),undo=el('layoutUndo');
-  const canConfirm=()=>(moves.length>0||(p.trial&&picked))&&!invalid&&canWrite();
+  const canConfirm=()=>(moves.length>0||(!!p.trial&&(picked||explicitBrief)))&&!invalid&&canWrite();
+  function showForecast(){
+    if(!p.trial)return;
+    if(!p.briefId){forecast.textContent='任意の追加条件を達成して出荷すると＋¥'+BRIEFS.speed.bonus+'。未達は通常報酬。';return;}
+    forecast.textContent=measured===undefined?'この配置で追加条件を達成できるか見積中…':
+      measured===null?'見積を取得できません。追加条件は出荷時に判定します。':
+      briefOutcomeText(p.briefId,measured,true);
+  }
   function buttons(){
     confirm.disabled=!canConfirm();
-    confirm.textContent=p.trial?(picked&&!moves.length?'現状で受注 · ¥':'この配置で受注 · ¥')+product.cost.toLocaleString('ja-JP'):p.estimateOffer?'配置を確定して見積へ':'配置を確定';
+    confirm.textContent=p.trial?((picked||explicitBrief)&&!moves.length?'現状で受注 · ¥':'この配置で受注 · ¥')+product.cost.toLocaleString('ja-JP'):p.estimateOffer?'配置を確定して見積へ':'配置を確定';
     undo.disabled=!history.length;
   }
   function drawPlan(){
@@ -43,10 +66,13 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
     buttons();
   }
   function measure(){
-    const input=[{offer,layout:[],trace:true},{offer,layout:moves,trace:true}];
+    measured=undefined;showForecast();
+    const input=[{offer,layout:[],trace:true}];
+    if(moves.length)input.push({offer,layout:moves,trace:true});
     estimate.hidden=false;estimate.classList.remove('empty-estimate');estimate.textContent='完成時間と職人の歩数を見積中…';
     preview.request(s,input,rows=>{
-      const [before,after]=rows||[];
+      const before=rows?.[0],after=moves.length?rows?.[1]:before;
+      measured=before&&!before.error&&after&&!after.error?after:null;showForecast();
       if(!before||!after||before.error||after.error){estimate.textContent=after?.error||before?.error||'この注文の見積を取得できません';return;}
 
       const term=p.estimateOffer?(offer==='rush'?'短納期':'通常便')+batch+'　':'';
@@ -88,7 +114,8 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
     selected=id;anchor=moves;invalid=false;picked=false;
     const cells=legalLayoutCells(s,anchor,id);
     onCells(cells);drawPlan();
-    status.textContent='光る床に仮置き。設備のある床では2台を入替。線は先頭の1個の運搬経路。';
+    status.textContent=p.trial&&p.briefId?'今の配置でも受注できます。ほかの床や追加条件も試せます。':
+      '光る床に仮置き。設備のある床では2台を入替。線は先頭の1個の運搬経路。';
     measure();rank();
   }
   function choose(cell){
@@ -107,10 +134,16 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
     if(!history.length)return;
     moves=history.pop();switchTool(selected);status.textContent='直前の変更を戻しました ／ 変更'+moves.length+'台';
   }
+  if(p.trial)brief.onchange=()=>{
+    p.briefId=brief.value||null;explicitBrief=!!p.briefId;
+    if(!invalid&&!moves.length)status.textContent=explicitBrief?'今の配置で受注するか、床を選んで仮案を試せます。':'光る床を選んで仮案を試せます。';
+    showForecast();buttons();
+  };
   picker.onchange=()=>switchTool(s.machines[Number(picker.value)].id);undo.onclick=back;
   switchTool(original.id);
   return {choose,canConfirm,suspend(){preview.cancel();ranking.cancel();},resume(){rank();measure();},get moves(){return moves;},close(){
     preview.cancel();ranking.cancel();tools.hidden=true;picker.onchange=null;undo.onclick=null;
+    briefField.hidden=forecast.hidden=true;brief.onchange=null;forecast.textContent='';
     suggestions.replaceChildren();p.marks=[];p.legs=[];
   }};
 }

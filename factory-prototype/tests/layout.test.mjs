@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.22';
-import {applyLayout,layoutCandidate,layoutPlan,legalLayoutCells,movementReason} from '../../docs/forge-preview/layout.mjs?v=0.22';
-import {estimateOrder} from '../../docs/forge-preview/estimate.mjs?v=0.22';
-import {startRepeat} from '../../docs/forge-preview/improvement.mjs?v=0.22';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.23';
+import {applyLayout,layoutCandidate,layoutPlan,legalLayoutCells,movementReason} from '../../docs/forge-preview/layout.mjs?v=0.23';
+import {estimateOrder} from '../../docs/forge-preview/estimate.mjs?v=0.23';
+import {startRepeat} from '../../docs/forge-preview/improvement.mjs?v=0.23';
 
 function ship(s){
   const o=M.frontOrder(s);

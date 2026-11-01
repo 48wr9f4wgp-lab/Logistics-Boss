@@ -1,7 +1,8 @@
-import {applyLayout} from './layout.mjs?v=0.22';
+import {isBriefId} from './brief.mjs?v=0.23';
+import {applyLayout} from './layout.mjs?v=0.23';
 // First repeat order. The saved shipment, route planner and normal work orders
 // are the source of truth. There is no tutorial cursor or simulated reward.
-import * as M from './model.mjs?v=0.22';
+import * as M from './model.mjs?v=0.23';
 
 export function repeatOffer(s){
   if(M.frontOrder(s))return null;
@@ -33,7 +34,8 @@ export function neighboringCell(s,drill,cells){
   return null;
 }
 
-export function startRepeat(s,choice,candidate=null){
+export function startRepeat(s,choice,candidate=null,briefId=null){
+  if(briefId!==null&&(choice!=='layout'||!isBriefId(briefId)))return '再注文の条件を選び直してください';
   const trial=repeatOffer(s);
   if(!trial)return 'この注文の条件が変わりました。受注画面を確認してください';
   const {offer,drill,upgradeCost}=trial;
@@ -53,7 +55,9 @@ export function startRepeat(s,choice,candidate=null){
   if(error)return error;
   const rejected=M.accept(draft,offer.id);
   if(rejected)return rejected;
-  M.frontOrder(draft).repeatCost=choice==='upgrade'?upgradeCost:0;
+  const order=M.frontOrder(draft);
+  order.repeatCost=choice==='upgrade'?upgradeCost:0;
+  if(briefId!==null)order.briefId=briefId;
   Object.assign(s,draft);
   return null;
 }
