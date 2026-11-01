@@ -13,7 +13,7 @@ export function layoutPlan(s,moves){
     if(!at||(at.x===m.x&&at.y===m.y))return m;
     const placed={...m,x:at.x,y:at.y};changed.push(placed);return placed;
   });
-  const error=M.floorIssue(s,machines,changed);
+  const error=changed.length?M.floorIssue(s,machines,changed):null;
   return error?{error}:{machines,moves:changed.map(({id,x,y})=>({id,x,y}))};
 }
 

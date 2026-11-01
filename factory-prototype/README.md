@@ -50,7 +50,7 @@ Two products/three stages, shared finite machines, three persistent workers, rou
 
 The dock shows separate packaging for plates and shafts. A successful shipment immediately updates the account and briefly shows that order on the departing truck. [Four-second shipping view](evidence/machikoba-v016-shipping.mp4).
 
-During placement you can try several cells before choosing ここに移動 or ここに設置. The original location and cash are retained until confirmation. The bottom strip includes cancel and price. A two-finger pinch never selects a machine or a destination. With the floor focused, arrow keys cycle permitted locations and Enter focuses the confirm button. Inside 管理, ‹ 戻る returns to the preceding sheet and 工場へ戻る closes it.
+During placement you can try several cells before confirming the arrangement or purchase. The original location and cash are retained until confirmation. The bottom strip includes cancel and price. A two-finger pinch never selects a machine or a destination. With the floor focused, arrow keys cycle permitted locations and Enter focuses the confirm button. Inside 管理, ‹ 戻る returns to the preceding sheet and 工場へ戻る closes it.
 
 ## Lit workshop models (v0.15)
 

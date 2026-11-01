@@ -19,7 +19,6 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
   for(const m of s.machines){
     const option=document.createElement('option');
     option.value=String(s.machines.indexOf(m));
-    option.textContent=M.MACHINES[m.kind].name+(s.machines.some(other=>other.id!==m.id&&other.kind===m.kind)?'（'+cellName(m)+'）':'');
     option.selected=m.id===selected;picker.append(option);
   }
   const product=M.OFFERS.find(o=>o.id===offer),batch=product.qty+(product.product==='shaft'?'本':'個');
@@ -35,6 +34,11 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
     p.planMachines=draft.machines;p.draftMoves=moves;
     const m=p.planMachines.find(m=>m.id===selected);
     p.id=selected;p.kind=m.kind;p.candidate=m;p.route=null;p.legs=[];
+    p.planMachines.forEach((tool,i)=>{
+      const label=M.MACHINES[tool.kind].name;
+      picker.options[i].textContent=p.planMachines.some(other=>other.id!==tool.id&&other.kind===tool.kind)?label+'（'+cellName(tool)+'）':label;
+    });
+    for(const b of suggestions.children)b.setAttribute('aria-pressed',String(+b.dataset.x===m.x&&+b.dataset.y===m.y));
     el('placeTitle').textContent=batch+'の配置案';
     buttons();
   }
@@ -43,7 +47,7 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
     estimate.hidden=false;estimate.classList.remove('empty-estimate');estimate.textContent='完成時間と職人の歩数を見積中…';
     preview.request(s,input,rows=>{
       const [before,after]=rows||[];
-      if(!before||!after||before.error||after.error){estimate.textContent='この注文の見積を取得できません';return;}
+      if(!before||!after||before.error||after.error){estimate.textContent=after?.error||before?.error||'この注文の見積を取得できません';return;}
 
       const role=movementReason(before,after);
       estimate.textContent=moves.length?'完成 '+time(before)+' → '+time(after)+' ／ 移動 '+steps(before)+' → '+steps(after)+'。'+role:
@@ -56,6 +60,8 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
     const button=document.createElement('button');button.type='button';
     const here=same(row,rankingResult.base);
     button.textContent=label+' · '+(here?'現在地':cellName(row))+'\n'+time(row.quote)+'／'+steps(row.quote);
+    button.dataset.x=row.x;button.dataset.y=row.y;
+    button.setAttribute('aria-pressed',String(same(row,p.candidate)));
     button.onclick=()=>choose(row);suggestions.append(button);
   }
   function rank(){
@@ -68,7 +74,7 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
       option(r.fastest,one?'◎ 速さ・歩数とも最良':'速 完成が最短');
       if(!one)option(r.shortest,'歩 歩数が最少');
       p.marks=one?[{...r.fastest,mark:'◎'}]:[{...r.fastest,mark:'速'},{...r.shortest,mark:'歩'}];
-      el('layoutCoverage').textContent='この設備の'+r.checked+'/'+r.legal+'か所を比較（現在地・入替含む）';
+      el('layoutCoverage').textContent=(r.checked===r.legal?'置ける'+r.legal+'か所を比較済み':'見積できた'+r.checked+'／'+r.legal+'か所で比較')+'（現在地・入替含む）';
     });
   }
   function switchTool(id){
