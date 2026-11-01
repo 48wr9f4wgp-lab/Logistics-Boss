@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.22';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.23';
+import {startRepeat} from '../../docs/forge-preview/improvement.mjs?v=0.23';
 import {openingOffer,deliveryGuide,floorTicket} from '../../docs/forge-preview/guidance.mjs';
 
 function ready(s) {
@@ -222,4 +223,20 @@ test('a late shipment keeps its review action on the floor until another decisio
   assert.equal(floorTicket(s).action.id,'rush');
   M.accept(s,'relief');
   assert.equal(floorTicket(s,{shipment:report}).action.type,'skip');
+});
+
+test('a missed brief offers a direct retry, but an active order or explicitly chosen goal takes priority',()=>{
+  const s=M.fresh();deliver(s);startRepeat(s,'layout',[],'speed');
+  assert.match(floorTicket(s).hint,/早仕上げ.*108.0秒以内/);
+  const order=ready(s);assert.match(floorTicket(s).hint,/未達.*入金/);
+  M.dispatch(s,order.id);
+  for(const shipment of [null,s.results[0]])assert.deepEqual(floorTicket(s,{shipment}).action,{type:'briefRetry',id:'speed',label:'配置を変えて再挑戦'});
+  M.setGoal(s,'rush');
+  for(const shipment of [null,s.results[0]])assert.equal(floorTicket(s,{shipment}).action.id,'rush');
+  M.accept(s,'relief');assert.equal(floorTicket(s).action.type,'skip');
+});
+test('after one endorsement the ticket keeps the missing condition selected for the next job',()=>{
+  const s=M.fresh();deliver(s);startRepeat(s,'layout',[{id:'m3',x:4,y:1}],'speed');M.dispatch(s,ready(s).id);
+  assert.equal(s.results[0].briefBonus,400);
+  for(const shipment of [null,s.results[0]])assert.deepEqual(floorTicket(s,{shipment}).action,{type:'briefRetry',id:'walk',label:'省運搬に挑む'});
 });

@@ -47,3 +47,5 @@ v0.20: Make the precision path accessible through its first standard shaft contr
 v0.21: Make simultaneous orders a concrete dispatch decision. A customer offers six supplied-material plates during a regular production run. Compare shared capacity, hold the decision until halfway, choose or revise the order of future tasks and assess both real shipments against the original single-order estimate.
 
 v0.22: Let the player compose and undo several moves or swaps before charging for the repeat order. Compare legal locations for one selected tool under the same contract and show when shorter walking and earlier delivery lead to different choices.
+
+v0.23: Turn time and travel into two distinct repeat-order commitments. Settle each against the real receipt. Completing both earns a continuing customer referral for the existing rush job, offering a layout-based alternative to equipment investment.

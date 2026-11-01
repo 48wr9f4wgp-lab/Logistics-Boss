@@ -342,3 +342,13 @@ dialog[data-panel="inquiry"] .sheet-head{padding-block:5px}
 #layoutSuggestions .candidate-heading small{font-size:11px;font-weight:500;color:#e4dfc6}
 #layoutSuggestions strong{display:block;margin-top:1px;font-size:13px;font-variant-numeric:tabular-nums}
 #placementBar:has(#layoutTools:not([hidden])) #layoutEstimate{white-space:pre-line}
+
+/* Keep the trial's optional condition on the title row. Switching the goal or
+   replacing a pending result must not change the tap coordinates of the floor. */
+.placement-heading:has(#layoutBriefField:not([hidden])){display:flex;align-items:center;justify-content:space-between;gap:6px}
+#layoutBriefField{display:block;flex:1;min-width:0}
+.placement-heading:has(#layoutBriefField:not([hidden])) #placeTitle{font-size:15px}
+#layoutBrief{width:100%;min-width:0;height:44px;padding:0 4px;border-radius:7px;border:1px solid #9a936d;background:#374636;color:#fff1ce;font-size:12px}
+#layoutBriefForecast{display:block;min-height:1.4em;line-height:1.35;font-size:12px;color:#f3d99f;font-variant-numeric:tabular-nums}
+
+#orderComparison.brief-outcome{word-break:keep-all;overflow-wrap:anywhere}

@@ -1,6 +1,6 @@
-import {OFFERS} from './model.mjs?v=0.22';
-import {yenGain} from './pairing.mjs?v=0.22';
-import {inquiryContext} from './inquiry.mjs?v=0.22';
+import {OFFERS} from './model.mjs?v=0.23';
+import {yenGain} from './pairing.mjs?v=0.23';
+import {inquiryContext} from './inquiry.mjs?v=0.23';
 
 const cash=value=>(value<0?'−':'')+'¥'+Math.round(Math.abs(value)).toLocaleString('ja-JP');
 const diff=value=>(value<0?'':'+')+cash(value);

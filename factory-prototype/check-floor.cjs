@@ -8,6 +8,7 @@ const {checkEstimates}=require('./check-estimates.cjs');
 const {checkImprovement}=require('./check-improvement.cjs');
 const {checkFloorControls}=require('./check-floor-controls.cjs');
 const {checkLayout}=require('./check-layout.cjs');
+const {checkBrief}=require('./check-brief.cjs');
 const { chromium, webkit } = require('playwright-core');
 
 async function check(browser, url, width, height) {
@@ -173,6 +174,7 @@ async function checkExpandedArt(browser,url,offlineArt=false){
     for(const flow of ['hold','switch',...(process.argv[3]==='webkit'?[]:['decline','offline'])])await checkInquiry(browser,process.argv[2],flow);
     await checkFloorControls(browser,process.argv[2]);
     await checkLayout(browser,process.argv[2]);
+    await checkBrief(browser,process.argv[2]);
     await checkShift(browser,process.argv[2]);
     await checkExpandedArt(browser,process.argv[2]);
     if(process.argv[3]!=='webkit')await checkExpandedArt(browser,process.argv[2],true);

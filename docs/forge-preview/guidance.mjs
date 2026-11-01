@@ -1,6 +1,7 @@
-import * as M from './model.mjs?v=0.22';
-import {shaftEntryCost} from './precision.mjs?v=0.22';
-import {repeatOffer} from './improvement.mjs?v=0.22';
+import {BRIEFS,briefTarget,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.23';
+import * as M from './model.mjs?v=0.23';
+import {shaftEntryCost} from './precision.mjs?v=0.23';
+import {repeatOffer} from './improvement.mjs?v=0.23';
 
 // Guidance describes existing state. It never accepts work, spends money or adds save fields.
 const money=value=>'¥'+Math.ceil(value).toLocaleString('ja-JP');
@@ -21,7 +22,7 @@ export function deliveryGuide(s,report=s.results?.[0]) {
   const isGrowth=!!offer?.growth;
   const summary={
     heading:isGrowth?'成長案件を納品！':s.delivered===1?'はじめての出荷完了！':'出荷完了！',
-    status:report.late?'納期超過 · 報酬15%減':'納期内に納品',
+    status:report.late?(report.briefId?'納期超過 · 基本報酬15%減':'納期超過 · 報酬15%減'):'納期内に納品',
     tone:report.late?'late':'success'
   };
 
@@ -40,6 +41,20 @@ export function deliveryGuide(s,report=s.results?.[0]) {
     };
   }
 
+  if(!s.goalOffer&&report.orderId===s.results?.[0]?.orderId&&report.briefId){
+    const credits=earnedBriefs(s),missing=Object.keys(BRIEFS).find(id=>!credits.includes(id));
+    if(report.briefBonus===0&&repeatOffer(s))return {...summary,title:'同じ条件で配置を見直せます',
+      body:BRIEFS[report.briefId].label+' '+briefOutcomeText(report.briefId,report),
+      primary:{type:'briefRetry',id:report.briefId,label:'配置を変えて再挑戦'},
+      secondary:panel('growth','成長目標へ進む')};
+    if(missing&&repeatOffer(s))return {...summary,title:'金物店の紹介まであと1件',
+      body:'次は「'+BRIEFS[missing].label+'」。2種類とも達成すれば、28個の短納期便を紹介してもらえます。',
+      primary:{type:'briefRetry',id:missing,label:BRIEFS[missing].label+'に挑む'},
+      secondary:panel('growth','成長目標へ進む')};
+    if(!missing&&M.offerStatus(s,'rush').available)return {...summary,title:'金物店から建設現場の紹介',
+      body:'短納期便は28個・納期200秒。今の工場で間に合うか、受注前に見積もれます。',
+      primary:growth('rush','紹介された28個の見積へ'),secondary:panel('growth','ほかの成長目標を見る')};
+  }
   if((report.qualitySpend!==undefined||(!isGrowth&&s.goalOffer==='master'))&&(!s.goalOffer||s.goalOffer==='master')&&s.cash>=shaftEntryCost(s)){
     const trained=report.growth?.filter(e=>e.worker===report.inspectorId).at(-1)||report.growth?.at(-1),worker=s.workers.find(w=>w.id===trained?.worker);
     const premium=M.offerStatus(s,'master').available;
@@ -92,7 +107,7 @@ export function deliveryGuide(s,report=s.results?.[0]) {
   if(report.orderId===s.results?.[0]?.orderId&&report.offerId==='first'){
     if(s.delivered===1&&repeatOffer(s))return {
       ...summary,title:'同じ12個、次はどう作る？',
-      body:'ボール盤の置き場所か加工速度を変えて、もう一度この注文を作れます。',
+      body:'設備を配置し直すか、加工速度を上げて、もう一度12個を作れます。配置では改善条件も選べます。',
       primary:panel('improve','工場の改善を選ぶ'),secondary:panel('growth','成長目標へ進む')
     };
     if(report.repeatCost!==undefined&&M.previousResult(s,report)&&M.offerStatus(s,'rush').available)return {
@@ -128,6 +143,13 @@ export function floorTicket(s,{skipping=false,paused=false,shipment=null}={}) {
       ready?{type:'ship',id:order.id,label:'出荷する'}:{type:'skip',id:order.id,label:'完成まで進める'};
     const inspector=s.workers.find(w=>w.id===order.inspectorId);
     const workHint=inspector&&!ready&&!skipping?inspector.name+'が検品を担当 · 品質調整 '+(order.accounting?.rework||0)+'本。':hint;
+    if(order.briefId){
+      const elapsed=(order.accounting.completedAt??s.clock)-order.start;
+      const metrics={seconds:elapsed,walk:order.accounting.walk};
+      const progress=order.briefId==='speed'?elapsed.toFixed(1)+'秒':Math.round(metrics.walk)+'マス';
+      const hint=BRIEFS[order.briefId].label+' · '+(ready?briefOutcomeText(order.briefId,metrics)+' ／ 入金 '+money(M.shipmentQuote(s,order).pay):briefTarget(order.briefId)+' ／ 現在 '+progress);
+      return {label,title,hint,action,progress:order.done/order.qty};
+    }
     return {label,title,hint:workHint,action,progress:order.done/order.qty};
   }
   const starter=openingOffer(s);
@@ -142,6 +164,11 @@ export function floorTicket(s,{skipping=false,paused=false,shipment=null}={}) {
     const guide=deliveryGuide(s,shipment);
     const title=guide.primary.panel==='growth'?'量産と精密、どちらを伸ばそう？':guide.title;
     return {label:'次の仕事',title,hint:(shipment.late&&guide.primary.id==='rush')||shipment.qualitySpend!==undefined?guide.body:'',action:guide.primary};
+  }
+  const last=s.results?.[0];
+  if(last?.briefId&&!s.goalOffer){
+    const guide=deliveryGuide(s,last);
+    return {label:'改善依頼',title:guide.title,hint:'',action:guide.primary};
   }
   const plan=M.growthPlan(s,s.goalOffer);
   if(plan?.offer.id==='master'&&s.cash>=shaftEntryCost(s))return {
