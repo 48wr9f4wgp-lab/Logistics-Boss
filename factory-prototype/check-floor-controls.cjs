@@ -53,10 +53,10 @@ async function checkFloorControls(browser,url){
     }
     await tile(3,1);
     assert.ok(await confirm.isEnabled());assert.deepEqual((await saved()).machines,s.machines);
-    await tile(5,1);assert.equal(await confirm.isEnabled(),false,'occupied cell disarms the previous destination');
+    await tile(0,1);assert.equal(await confirm.isEnabled(),false,'material aisle disarms the previous destination');
     await tile(4,2);
     await page.screenshot({path:path.join(process.env.RUNNER_TEMP||'.','factory-floor-screens',engine+'-390-placement.jpg'),quality:91});
-    await btn('ここに移動').tap();
+    await btn('配置を確定').tap();
     let state=await saved(),machine=state.machines.find(m=>m.id==='m1');
     assert.deepEqual([machine.x,machine.y],[4,2]);assert.equal(state.cash,s.cash);
     await reset();

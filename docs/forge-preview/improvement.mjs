@@ -1,6 +1,7 @@
+import {applyLayout} from './layout.mjs?v=0.22';
 // First repeat order. The saved shipment, route planner and normal work orders
 // are the source of truth. There is no tutorial cursor or simulated reward.
-import * as M from './model.mjs?v=0.21';
+import * as M from './model.mjs?v=0.22';
 
 export function repeatOffer(s){
   if(M.frontOrder(s))return null;
@@ -39,6 +40,8 @@ export function startRepeat(s,choice,candidate=null){
   if(choice==='upgrade'){
     if(upgradeCost===null)return 'このボール盤は最高レベルです';
     if(s.cash<upgradeCost+offer.cost)return '改良費と材料費を合わせた資金が必要です';
+  }else if(choice==='layout'){
+    if(!Array.isArray(candidate))return '配置案を選んでください';
   }else if(choice==='move'){
     if(!candidate||(candidate.x===drill.x&&candidate.y===drill.y))return '別の設置場所を選んでください';
   }else return '改善方法を選んでください';
@@ -46,7 +49,7 @@ export function startRepeat(s,choice,candidate=null){
   // Apply both existing operations to a draft. Insufficient funds, an occupied
   // tile or a retried confirmation cannot leave a moved tool or partial charge.
   const draft=structuredClone(s);
-  const error=choice==='upgrade'?M.upgrade(draft,drill.id):M.move(draft,drill.id,candidate.x,candidate.y);
+  const error=choice==='upgrade'?M.upgrade(draft,drill.id):choice==='layout'?(candidate.length?applyLayout(draft,candidate):null):M.move(draft,drill.id,candidate.x,candidate.y);
   if(error)return error;
   const rejected=M.accept(draft,offer.id);
   if(rejected)return rejected;

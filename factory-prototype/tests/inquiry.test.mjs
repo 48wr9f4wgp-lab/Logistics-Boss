@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.21';
-import {startRepeat} from '../../docs/forge-preview/improvement.mjs?v=0.21';
-import {acceptPrecision} from '../../docs/forge-preview/precision.mjs?v=0.21';
-import {estimateOrder} from '../../docs/forge-preview/estimate.mjs?v=0.21';
-import {decideInquiry,inquiryContext,advanceToReview} from '../../docs/forge-preview/inquiry.mjs?v=0.21';
-import {pairResult} from '../../docs/forge-preview/pairing.mjs?v=0.21';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.22';
+import {startRepeat} from '../../docs/forge-preview/improvement.mjs?v=0.22';
+import {acceptPrecision} from '../../docs/forge-preview/precision.mjs?v=0.22';
+import {estimateOrder} from '../../docs/forge-preview/estimate.mjs?v=0.22';
+import {decideInquiry,inquiryContext,advanceToReview} from '../../docs/forge-preview/inquiry.mjs?v=0.22';
+import {pairResult} from '../../docs/forge-preview/pairing.mjs?v=0.22';
 
 function finish(s){
   let q;do{q=M.advanceToReady(s,200);}while(q.status==='producing');

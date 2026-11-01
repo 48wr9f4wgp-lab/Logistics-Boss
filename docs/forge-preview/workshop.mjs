@@ -838,6 +838,11 @@ function floorSelection(g,s,opt) {
     for(const {x,y} of opt.placementCells||[]){
       face([[x+.06,y+.06,.015],[x+.94,y+.06,.015],[x+.94,y+.94,.015],[x+.06,y+.94,.015]],'#badb9252','#d8e6ba',.80);
     }
+    for(const leg of opt.placing.legs||[]){
+      const points=leg.path.map(q=>[q.x+.5,q.y+.5,.035]);
+      line(points,'#283b34',Math.max(2.8,g.v.u*.16));
+      line(points,{cut:'#ffcf77',drill:'#88dbe2',lathe:'#a8c9ee',inspect:'#d7ed99'}[leg.kind],Math.max(1.3,g.v.u*.075));
+    }
     if(opt.placing.route){
       const steps=opt.placing.route.map(cell=>[cell.x+.45,cell.y+.45,.025]);
       line(steps,'#29483f',Math.max(3,g.v.u*.17));
@@ -847,6 +852,10 @@ function floorSelection(g,s,opt) {
     if(c){
       const x=c.x,y=c.y;
       const corners=[[x+.02,y+.02,.02],[x+.98,y+.02,.02],[x+.98,y+.98,.02],[x+.02,y+.98,.02]];
+      if(opt.placing.planMachines){
+        const front=corners.map(([a,b,z])=>[a,b+1,z]);
+        line([...front,front[0]],'#ffe0a2',Math.max(1.2,g.v.u*.07),[3,2]);
+      }
       face(corners,'#f8c56380','#4c412d',Math.max(2.8,g.v.u*.12));
       line([...corners,corners[0]],'#ffdb86',Math.max(1.5,g.v.u*.075));
     }
@@ -877,7 +886,7 @@ export function drawWorkshop(ctx,state,viewport,options={}) {
   staticScene(ctx,state,viewport,art?.roomWidth===state.width?art.room:null);
   const g=painter(ctx,viewport,art?.station);
   floorSelection(g,state,opt);
-  const destination=opt.placing?.candidate;
+  const destination=opt.placing?.planMachines?null:opt.placing?.candidate;
   const source=destination?state.machines.find(m=>m.id===opt.placing.id):null;
   const preview=destination?{id:null,kind:opt.placing.kind,level:source?.level||1,...destination}:null;
   const visuals=state.workers.map(w=>workerVisualState(state,w));
@@ -939,6 +948,15 @@ export function drawWorkshop(ctx,state,viewport,options={}) {
   ctx.restore();
   // Nameplates are an intentional optional overlay; the machinery stays visible.
   for(const {target,m,w,tool} of labels)target.label=badge(tool,m,w,m.id===opt.selected);
+  // Place recommendation seals last so a legal swap is also visible on an occupied tile.
+  for(const mark of opt.placing?.marks||[]){
+    const q=g.p(mark.x+.5,mark.y+.5,.03),radius=Math.max(7,Math.min(12,viewport.u*.38));
+    ctx.beginPath();ctx.arc(q.x,q.y,radius,0,Math.PI*2);
+    ctx.fillStyle=mark.mark==='歩'?'#284a49':'#614c28';ctx.fill();
+    ctx.strokeStyle=mark.mark==='歩'?'#b3e1d4':'#ffdf9b';ctx.lineWidth=1.3;ctx.stroke();
+    ctx.fillStyle='#fff4cd';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='bold '+Math.round(radius*1.35)+'px system-ui';ctx.fillText(mark.mark,q.x,q.y+.3);
+  }
   ctx.restore();
   return targets;
 }

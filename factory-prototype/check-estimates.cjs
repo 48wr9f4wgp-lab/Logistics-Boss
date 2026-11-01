@@ -56,14 +56,15 @@ async function checkEstimates(browser,url,term){
     await preview.filter({hasText:/196\.8秒/}).waitFor();
     assert.match(await preview.innerText(),term==='rush'?/短納期28個/:/通常便28個/);
     await screen('preview');
-    await tile(2,1);assert.equal(await preview.isVisible(),false);
+    await tile(0,1);assert.match(await page.locator('#placeStatus').innerText(),/材料を運ぶ通路/);
+    assert.match(await preview.innerText(),/196\.8秒/);
     assert.equal(await page.locator('#confirmPlace').isEnabled(),false);
     await btn('取消').click();
     assert.equal(await picker.locator('input:checked').inputValue(),term);
     let state=await read();assert.deepEqual(state.machines,s.machines);assert.equal(state.cash,s.cash);
     if(term==='rush'){
       await openLayout();await tile(1,1);await preview.filter({hasText:/196\.8秒/}).waitFor();
-      await btn('移動して見積に戻る').click();
+      await btn('配置を確定して見積へ').click();
       await rush.filter({hasText:/余裕/}).waitFor();assert.match(await rush.innerText(),/利益 ¥5,262/);
       state=await read();assert.equal(state.cash,s.cash);assert.equal(M.frontOrder(state),null);
     }else await rush.filter({hasText:/超過/}).waitFor();
