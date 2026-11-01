@@ -7,7 +7,7 @@ async function checkEstimates(browser,url,term){
   const {estimateOrder}=await import('../docs/forge-preview/estimate.mjs');
   const {startRepeat}=await import('../docs/forge-preview/improvement.mjs');
   const {frameWorkshop,project}=await import('../docs/forge-preview/view.mjs');
-  const s=M.fresh();
+  const s=M.fresh();s.autoWork=false;
   function finish(){
     let r;do{r=M.advanceToReady(s,200);}while(r.status==='producing');M.dispatch(s,r.orderId);
   }

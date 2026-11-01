@@ -8,6 +8,7 @@ const {checkEstimates}=require('./check-estimates.cjs');
 const {checkImprovement}=require('./check-improvement.cjs');
 const {checkFloorControls}=require('./check-floor-controls.cjs');
 const {checkLayout}=require('./check-layout.cjs');
+const {checkAutoWork}=require('./check-auto-work.cjs');
 const {checkBrief}=require('./check-brief.cjs');
 const { chromium, webkit } = require('playwright-core');
 
@@ -40,6 +41,7 @@ async function check(browser, url, width, height) {
     assert.ok(bounds && bounds.height >= 44 && bounds.y + bounds.height <= height);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth), true);
     await capture('opening');
+    await page.locator('#controls summary').click();await button('等速').click();await page.locator('#controls summary').click();
     await button('管理').click();
     await button('注文一覧').click();
     await shown(button('この12個を受注して始める'));
@@ -109,7 +111,7 @@ async function check(browser, url, width, height) {
 // Restore a busy shift through the same save path that a returning player uses.
 async function checkShift(browser,url) {
   const M=await import('../docs/forge-preview/model.mjs');
-  const s=M.fresh();
+  const s=M.fresh();s.autoWork=false;
   M.accept(s,'first');
   for(let i=0;i<744;i++)M.step(s,M.TICK);
   assert.ok(M.validate(s));
@@ -133,7 +135,7 @@ async function checkShift(browser,url) {
   } finally {await context.close();}
 }
 async function checkExpandedArt(browser,url,offlineArt=false){
-  const M=await import('../docs/forge-preview/model.mjs'),s=M.fresh();
+  const M=await import('../docs/forge-preview/model.mjs'),s=M.fresh();s.autoWork=false;
   s.cash=50000;M.expand(s);M.purchase(s,'lathe',4,3);
   for(const m of s.machines){M.upgrade(s,m.id);M.upgrade(s,m.id);}
   M.accept(s,'fine');
@@ -175,6 +177,7 @@ async function checkExpandedArt(browser,url,offlineArt=false){
     await checkFloorControls(browser,process.argv[2]);
     await checkLayout(browser,process.argv[2]);
     await checkBrief(browser,process.argv[2]);
+    await checkAutoWork(browser,process.argv[2]);
     await checkShift(browser,process.argv[2]);
     await checkExpandedArt(browser,process.argv[2]);
     if(process.argv[3]!=='webkit')await checkExpandedArt(browser,process.argv[2],true);

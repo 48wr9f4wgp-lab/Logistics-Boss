@@ -1,7 +1,7 @@
-import {BRIEFS,briefTarget,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.24';
-import * as M from './model.mjs?v=0.24';
-import {shaftEntryCost} from './precision.mjs?v=0.24';
-import {repeatOffer} from './improvement.mjs?v=0.24';
+import {BRIEFS,briefTarget,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.25';
+import * as M from './model.mjs?v=0.25';
+import {shaftEntryCost} from './precision.mjs?v=0.25';
+import {repeatOffer} from './improvement.mjs?v=0.25';
 
 // Guidance describes existing state. It never accepts work, spends money or adds save fields.
 const money=value=>'¥'+Math.ceil(value).toLocaleString('ja-JP');

@@ -6,7 +6,7 @@ async function checkPrecision(browser,url,route){
   const {frameWorkshop,project}=await import('../docs/forge-preview/view.mjs');
   const {installStarterLathe}=await import('../docs/forge-preview/precision.mjs');
   const {estimateOrder}=await import('../docs/forge-preview/estimate.mjs');
-  const s=M.fresh();
+  const s=M.fresh();s.autoWork=false;
   function finish(){
     let q;do{q=M.advanceToReady(s,200);}while(q.status==='producing');M.dispatch(s,q.orderId);
   }

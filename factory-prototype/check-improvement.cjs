@@ -7,7 +7,7 @@ async function checkImprovement(browser,url,choice){
   const M=await import('../docs/forge-preview/model.mjs');
   const {frameWorkshop,project}=await import('../docs/forge-preview/view.mjs');
   const {comparisonLine}=await import('../docs/forge-preview/improvement.mjs');
-  const s=M.fresh();M.accept(s,'first');
+  const s=M.fresh();s.autoWork=false;M.accept(s,'first');
   let ready;
   do{ready=M.advanceToReady(s,200);}while(ready.status==='producing');
   M.dispatch(s,ready.orderId);

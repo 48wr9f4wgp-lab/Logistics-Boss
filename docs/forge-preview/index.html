@@ -7,7 +7,7 @@
   <meta name="description" content="マチコバ！ — 小さな工場、大きな夢。職人と設備を育てる町工場経営ゲーム。">
   <meta name="application-name" content="マチコバ！">
   <title>マチコバ！ — 小さな工場、大きな夢。</title>
-  <link rel="stylesheet" href="style.css?v=0.24">
+  <link rel="stylesheet" href="style.css?v=0.25">
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -28,8 +28,9 @@
       <canvas id="world" aria-label="町工場の設備と職人。操作の工程待ちからも設備を選べます"></canvas>
       <details id="controls"><summary>操作</summary>
         <div class="toolbox">
-          <div class="tool-row"><span>再生速度</span><div class="speeds" role="group" aria-label="再生速度"><button data-speed="0" aria-label="一時停止">Ⅱ</button><button data-speed="1" aria-label="等速">1×</button><button data-speed="3" aria-label="3倍速">3×</button></div></div>
+          <div class="tool-row"><span>再生速度</span><div class="speeds" role="group" aria-label="再生速度"><button id="autoMode" aria-label="おまかせ運転" aria-pressed="false">おまかせ</button><button data-speed="0" aria-label="一時停止">Ⅱ</button><button data-speed="1" aria-label="等速">1×</button><button data-speed="3" aria-label="3倍速">3×</button></div></div>
           <div class="tool-row"><span>表示</span><div><button id="minus" aria-label="縮小">−</button><button id="plus" aria-label="拡大">＋</button><button id="viewReset">全景</button><button id="labels" aria-pressed="false">設備名</button></div></div>
+          <button id="skipDelegated" hidden>出荷まで早送り</button>
           <div id="flow" role="group" aria-label="工程待ち。押すと設備を選択"><small>工程待ち</small></div>
           <small id="activity"></small><small class="gesture-tip">指で移動 · 二本指で拡大・縮小</small>
         </div>
@@ -57,7 +58,7 @@
     <div id="toast" role="status" aria-live="polite"></div>
   </main>
   <dialog id="sheet" aria-labelledby="sheetTitle"><div class="sheet-head"><button id="sheetBack" aria-label="前の画面へ戻る" hidden>‹ 戻る</button><h2 id="sheetTitle" tabindex="-1"></h2><button id="close" aria-label="工場へ戻る">工場へ戻る</button></div><div id="sheetNotice" role="status" hidden></div><div id="sheetBody"></div></dialog>
-  <script type="module" src="app.mjs?v=0.24"></script>
+  <script type="module" src="app.mjs?v=0.25"></script>
 </body>
 </html>
 

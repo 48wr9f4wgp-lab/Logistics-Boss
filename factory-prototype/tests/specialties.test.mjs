@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as M from '../../docs/forge-preview/model.mjs?v=0.24';
-import {restoreSpecialties} from '../../docs/forge-preview/specialties.mjs?v=0.24';
-import {acceptPrecision} from '../../docs/forge-preview/precision.mjs?v=0.24';
+import * as M from '../../docs/forge-preview/model.mjs?v=0.25';
+import {restoreSpecialties} from '../../docs/forge-preview/specialties.mjs?v=0.25';
+import {acceptPrecision} from '../../docs/forge-preview/precision.mjs?v=0.25';
 
 function shop(){
   const s=M.fresh();s.cash=40000;M.upgrade(s,'m2');M.purchase(s,'lathe',4,3);
