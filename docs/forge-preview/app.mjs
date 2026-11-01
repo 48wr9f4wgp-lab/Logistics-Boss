@@ -70,6 +70,8 @@ function save(){
   try{
     const previous=JSON.parse(localStorage.getItem(KEY)||'null');
     if((previous?.revision??null)!==revision){loseWriter();return;}
+    // Merely visiting an idle factory in a second tab must not invalidate a draft.
+    if(previous&&JSON.stringify(previous.state)===JSON.stringify(s))return;
     const next=crypto.randomUUID?.()||String(Date.now()+Math.random());
     localStorage.setItem(KEY,JSON.stringify({revision:next,state:s}));revision=next;
   }catch{saveBlocked=true;toast('保存できません。設定から進行を書き出せます');}
@@ -97,7 +99,7 @@ window.addEventListener('pagehide',()=>{pageActive=false;syncSession();});
 window.addEventListener('pageshow',()=>{pageActive=true;syncSession();});
 document.addEventListener('visibilitychange',syncSession);
 setInterval(save,5000);
-function act(fn,announce=true){if(!writer||saveBlocked){toast(saveBlocked?'保存に問題があります。設定を開いてください':'別画面で起動中です。再読み込みしてください');return;}stopSkip();const before=new Set(M.OFFERS.filter(o=>o.growth&&M.offerStatus(s,o.id).qualified).map(o=>o.id));const error=fn();if(error)toast(error);else{const unlocked=M.OFFERS.filter(o=>o.growth&&!before.has(o.id)&&M.offerStatus(s,o.id).qualified);if(unlocked.length)M.note(s,`受注条件を達成：${unlocked.map(o=>o.label).join('・')}`);recentShipment=null;save();if(announce)toast(s.log[0]);}update();if(tab)renderPanel();return !error;}
+function act(fn,announce=true){if(!writer||saveBlocked){toast(saveBlocked?'保存に問題があります。設定を開いてください':'工場を使用中のタブを離れると、こちらで続けられます');return;}stopSkip();const before=new Set(M.OFFERS.filter(o=>o.growth&&M.offerStatus(s,o.id).qualified).map(o=>o.id));const error=fn();if(error)toast(error);else{const unlocked=M.OFFERS.filter(o=>o.growth&&!before.has(o.id)&&M.offerStatus(s,o.id).qualified);if(unlocked.length)M.note(s,`受注条件を達成：${unlocked.map(o=>o.label).join('・')}`);recentShipment=null;save();if(announce)toast(s.log[0]);}update();if(tab)renderPanel();return !error;}
 const money=v=>'¥'+Math.floor(v).toLocaleString('ja-JP');
 function update(){
   const ticket=floorTicket(s,{skipping:!!skipping,paused:speed===0,shipment:recentShipment});

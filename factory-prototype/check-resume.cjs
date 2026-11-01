@@ -36,7 +36,14 @@ async function checkResume(browser,url){
     const world=page.locator('#world'),box=await world.boundingBox();
     await world.tap({position:project(frameWorkshop(box.width,box.height,8),1.5,1.5)});
     await page.locator('#layoutEstimate').filter({hasText:'196.8秒'}).waitFor();
-    await life(page,'pagehide');await life(page,'pageshow');
+    await life(page,'pagehide');
+    const draftCheckpoint=await snapshot(ctx);
+    const visitor=await ctx.newPage();await visitor.goto(url);
+    await visitor.getByRole('button',{name:'短納期の注文を見る',exact:true}).waitFor();
+    await visitor.waitForFunction(()=>!document.querySelector('#orderAction').disabled);
+    await visitor.close();
+    assert.deepEqual(await snapshot(ctx),draftCheckpoint,'visiting a paused factory cannot replace the draft revision');
+    await page.bringToFront();await life(page,'pageshow');
     await page.locator('#layoutEstimate').filter({hasText:'196.8秒'}).waitFor();
     await btn('配置を確定して見積へ').click();
     await page.locator('[data-estimate="rush"]').filter({hasText:/余裕/}).waitFor();
