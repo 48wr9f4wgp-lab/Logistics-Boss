@@ -190,13 +190,13 @@ function improvementSheet(){
   const unlock=!M.offerStatus(s,'rush').qualified;
   const path=transferPath(s,drill);
   const upgradeText=upgradeCost===null?'このボール盤は最高レベルです。':
-    `穴あけ1個 ${seconds(before)} → ${seconds(next)}（技能1）。${unlock?'短納期プレートも受注可能になります。':''}`;
+    `技能1の穴あけ ${seconds(before)} → ${seconds(next)}／個。${unlock?'短納期の注文も開きます。':''}`;
   const disabled=total===null||s.cash<total||!writer||saveBlocked;
   const shortage=total!==null&&s.cash<total?'あと '+money(Math.ceil(total-s.cash))+' 必要':'';
-  return `<p class="trial-baseline"><small>町の金物店から再注文</small><strong>取付プレート ${offer.qty}個</strong>前回 ${seconds(report.seconds)} · 職人の移動 ${Math.round(report.walk)}マス</p>
-    <article class="card trial-choice"><small>投資 ¥0</small><h3>機械の間を近づける</h3><p>切断から穴あけまで${path?'片道'+(path.length-1)+'マス':''}。床で置き場所を試せます。</p><button class="wide" id="trialMove" ${!writer||saveBlocked?'disabled':''}>置き場所を試す</button></article>
-    <article class="card trial-choice"><small>${upgradeCost===null?'最高レベル':'設備投資 '+money(upgradeCost)}</small><h3>ボール盤の加工を速くする</h3><p>${upgradeText}</p><button class="wide" id="trialUpgrade" ${disabled?'disabled':''}>${total===null?'改良済み':'改良して受注 · '+money(total)}</button>${shortage?'<small>'+shortage+'</small>':''}</article>
-    <small class="trial-cost">どちらも材料費 ${money(material)}。改良して受注する金額には材料費を含みます。</small><button class="wide" data-next="growth">改善はあとで · 成長目標へ</button>`;
+  return `<p class="trial-baseline"><strong>取付プレート ${offer.qty}個 · 再注文</strong>前回 ${seconds(report.seconds)} · 移動 ${Math.round(report.walk)}マス<br>今回の材料費 ${money(material)}</p>
+    <article class="card trial-choice"><div><h3>ボール盤を移す</h3><small>移設 ¥0</small></div><p>切断から穴あけまで${path?'片道'+(path.length-1)+'マス':''}。床で仮置きして比較できます。</p><button class="wide" id="trialMove" ${!writer||saveBlocked?'disabled':''}>置き場所を試す</button></article>
+    <article class="card trial-choice"><div><h3>ボール盤を改良する</h3><small>${upgradeCost===null?'最高レベル':'改良 '+money(upgradeCost)}</small></div><p>${upgradeText}</p><button class="wide" id="trialUpgrade" ${disabled?'disabled':''}>${total===null?'改良済み':'改良して受注 · '+money(total)}</button>${shortage?'<small>'+shortage+'</small>':''}</article>
+    <button class="wide" data-next="growth">改善はあとで · 成長目標へ</button>`;
 }
 
 function renderPanel(){const body=$('#sheetBody');$('#sheetTitle').textContent=({manage:'工場の管理',orders:'受注と出荷',growth:'成長案件',machines:'設備と配置',workers:'職人を育てる',finance:'経営と拡張',save:'保存と設定',result:'出荷結果',improve:'工場の改善'})[tab];let html='';

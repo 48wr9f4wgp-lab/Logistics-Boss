@@ -25,7 +25,11 @@ async function checkImprovement(browser,url,choice){
     await page.goto(url,{waitUntil:'load'});
     await page.locator('#world[data-artwork="ready"]').waitFor();
     const choose=button('工場の改善を選ぶ');
-    await choose.click();await screen('choices');
+    await choose.click();
+    const drillButton=await page.locator('#trialUpgrade').boundingBox(),moveButton=await page.locator('#trialMove').boundingBox();
+    assert.ok(moveButton&&drillButton&&moveButton.height>=44&&drillButton.height>=44);
+    assert.ok(drillButton.y+drillButton.height<=height,'both choices must fit on the initial phone screen');
+    await screen('choices');
     await button('置き場所を試す').click();
     assert.match(await page.locator('#placeStatus').innerText(),/3 → 1マス/);
     await button('取消').click();
