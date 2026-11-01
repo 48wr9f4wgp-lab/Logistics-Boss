@@ -42,6 +42,7 @@ async function checkImprovement(browser,url,choice){
       const v=frameWorkshop(rect.width,rect.height,s.width);
       await world.tap({position:project(v,2.5,1.5)});
       assert.equal(await page.locator('#confirmPlace').isEnabled(),false);
+      assert.equal((await world.boundingBox()).height,rect.height,'invalid tiles must not shift the floor');
       await world.tap({position:project(v,3.5,1.5)});
       await screen('route');
       await button('移動して受注 · ¥600').click();

@@ -279,3 +279,9 @@ dialog[data-panel="improve"] .sheet-head{padding-block:5px}
 .term-layout>summary{min-height:44px;padding-top:12px;cursor:pointer}
 .term-layout select{min-height:44px;max-width:100%}
 #layoutEstimate{font-variant-numeric:tabular-nums}
+
+/* A result must never move the floor under the player's next tap. Reserve the
+   same lines for an empty, loading or measured destination. */
+#placementBar[data-estimating="true"] #placeStatus{line-height:1.4;min-height:2.8em}
+#layoutEstimate{min-height:2.8em}
+#layoutEstimate.empty-estimate{visibility:hidden}

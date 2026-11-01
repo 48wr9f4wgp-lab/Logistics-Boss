@@ -255,7 +255,7 @@ function freightTerms(s){
   const offer=M.OFFERS.find(o=>o.id===selected);
   const machines=s.machines.filter(m=>m.kind!=='lathe').map(m=>`<option value="${escape(m.id)}">${M.MACHINES[m.kind].name}（${m.x+1}列${m.y+1}段）</option>`).join('');
   const layout=M.frontOrder(s)?'':`<details class="term-layout"><summary>設備の配置を試す</summary><label>移す設備 <select id="estimateMachine">${machines}</select></label><button id="testLayout" class="wide">床で配置を試す</button></details>`;
-  return `<fieldset id="termPicker"><legend>同じ28個の受注見積</legend>${rows}</fieldset><small class="estimate-note">今の人員・設備で、完成時に出荷する見積。利益は材料・人件費を差し引いた額です。</small><button id="acceptTerm" class="wide primary" ${!writer||saveBlocked?'disabled':''}>受注して生産開始 · 材料 ${money(offer.cost)}</button>${layout}`;
+  return `<fieldset id="termPicker"><legend>同じ28個の受注見積</legend>${rows}</fieldset><small class="estimate-note">今の人員・配置で追加受注せず、各注文を完成時に出荷する見積。利益は材料・人件費を引いた額です。</small><button id="acceptTerm" class="wide primary" ${!writer||saveBlocked?'disabled':''}>受注して生産開始 · 材料 ${money(offer.cost)}</button>${layout}`;
 }
 
 function renderPanel(){const body=$('#sheetBody');$('#sheetTitle').textContent=({manage:'工場の管理',orders:'受注と出荷',growth:'成長案件',machines:'設備と配置',workers:'職人を育てる',finance:'経営と拡張',save:'保存と設定',result:'出荷結果',improve:'工場の改善'})[tab];let html='';
@@ -425,8 +425,11 @@ function placementTicket(message){
 }
 function placementEstimate(p,cell){
   const el=$('#layoutEstimate');
-  el.hidden=!cell||(!p.trial&&!p.estimateOffer);
-  if(el.hidden){estimator.cancel();return;}
+  const estimating=!!(p.trial||p.estimateOffer);
+  $('#placementBar').dataset.estimating=String(estimating);
+  el.hidden=!estimating;
+  el.classList.toggle('empty-estimate',!cell);
+  if(!estimating||!cell){el.textContent='';estimator.cancel();return;}
   el.textContent='今の配置と仮置きで見積中…';
   const offer=p.estimateOffer||'first';
   const variant=p.trial?{repeat:'move',cell}:{offer,move:{id:p.id,...cell}};
