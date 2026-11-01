@@ -14,13 +14,19 @@ export function note(s,t){s.log.unshift(t);s.log=s.log.slice(0,12);}
 export function path(s,a,b,ms=s.machines){const block=new Set(ms.map(m=>`${m.x},${m.y}`));const key=p=>`${p.x},${p.y}`;let queue=[{x:Math.round(a.x),y:Math.round(a.y),p:[]}],seen=new Set();while(queue.length){const n=queue.shift(),k=key(n);if(seen.has(k))continue;seen.add(k);if(n.x===b.x&&n.y===b.y)return n.p;for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const q={x:n.x+dx,y:n.y+dy};if(q.x<0||q.y<0||q.x>=s.width||q.y>=s.height||block.has(key(q)))continue;queue.push({...q,p:[...n.p,q]});}}return null;}
 export function canPlace(s,kind,x,y,ignore=null){if(!MACHINES[kind]||!Number.isInteger(x)||!Number.isInteger(y)||x<1||y<0||x>=s.width||y>=s.height-1)return false;if(s.machines.some(m=>m.id!==ignore&&m.x===x&&m.y===y))return false;const ms=[...s.machines.filter(m=>m.id!==ignore),{id:ignore||'new',kind,x,y}];if(s.workers.some(w=>w.job||Math.round(w.x)===x&&Math.round(w.y)===y))return false;if(s.parts.some(p=>!p.done&&p.x===x&&p.y===y))return false;const starts=[...s.workers,...s.parts.filter(p=>!p.done)];return ms.every(m=>path(s,{x:0,y:0},{x:m.x,y:m.y+1},ms)!==null)&&starts.every(p=>path(s,{x:0,y:0},{x:Math.round(p.x),y:Math.round(p.y)},ms)!==null);}
 export function accept(s,id,quote){const o=OFFERS.find(o=>o.id===id),status=offerStatus(s,id);if(!status.available)return status.reason;const n={...o,id:s.next++,start:s.clock,done:0,shipped:false,offerId:o.id,accounting:{wages:0,walk:0,rework:0,completedAt:null}};
-if(quote&&validQuote(id,quote))n.quote={seconds:quote.seconds,profit:quote.profit};
+if(quote){
+  const recorded={seconds:quote.seconds,profit:quote.profit};
+  if(o.product==='shaft'&&quote.rework!==undefined)recorded.rework=quote.rework;
+  if(validQuote(id,recorded))n.quote=recorded;
+}
 s.cash-=o.cost;s.expense+=o.cost;s.orders.push(n);for(let i=0;i<o.qty;i++)s.parts.push({id:`${n.id}-${i}`,order:n.id,product:o.product,stage:0,x:0,y:0,busy:false,done:false});note(s,`${o.label} ${o.qty}個を受注`);return null;}
 export function dispatch(s,id){const o=s.orders.find(o=>o.id===id);if(!o||o.shipped||o.done!==o.qty)return 'まだ出荷できません';const {late,pay}=shipmentQuote(s,o);s.cash+=pay;s.revenue+=pay;s.delivered++;
 const a=o.accounting,measured=!!a&&a.completedAt!==null;
 const report={orderId:o.id,offerId:o.offerId??null,label:o.label,qty:o.qty,payout:pay,material:o.cost,late,shippedAt:s.clock,wages:measured?a.wages:null,seconds:measured?a.completedAt-o.start:null,walk:measured?a.walk:null,rework:measured?a.rework:null};
 if(o.repeatCost!==undefined)report.repeatCost=o.repeatCost;
 if(o.quote)report.quote={...o.quote};
+if(o.inspectorId!==undefined)report.inspectorId=o.inspectorId;
+if(o.qualitySpend!==undefined){report.qualitySpend=o.qualitySpend;report.growth=a.growth||[];}
 s.results=[report,...(s.results||[])].slice(0,12);o.shipped=true;s.parts=s.parts.filter(p=>p.order!==id);s.orders=s.orders.filter(q=>!q.shipped||q.id===id);note(s,`出荷完了！ +¥${pay.toLocaleString()}${late?'（納期超過15%減額）':''}`);return null;}
 export function purchase(s,kind,x,y){if(!canPlace(s,kind,x,y))return '作業中は配置変更できません。通路と作業面も空けてください';const cost=MACHINES[kind].cost;if(s.cash<cost)return '資金が足りません';s.cash-=cost;s.expense+=cost;s.machines.push({id:`m${s.next++ +10}`,kind,x,y,level:1});note(s,`${MACHINES[kind].name}を導入`);return null;}
 export function move(s,id,x,y){const m=s.machines.find(m=>m.id===id);if(!m||!canPlace(s,m.kind,x,y,id))return '作業中は移動できません。空いた床を選んでください';m.x=x;m.y=y;note(s,'設備を移動しました');return null;}
@@ -28,19 +34,31 @@ export function upgrade(s,id){const m=s.machines.find(m=>m.id===id);if(!m||m.lev
 export function train(s,id){const w=s.workers.find(w=>w.id===id);if(!w||w.skill>=4)return '最高技能です';const cost=800*w.skill;if(s.cash<cost)return '資金が足りません';s.cash-=cost;s.expense+=cost;w.skill++;note(s,`${w.name}の技能が ${w.skill} に向上`);return null;}
 export function expand(s){if(s.width===10)return '敷地は拡張済みです';if(s.cash<3500)return '拡張には¥3,500必要です';s.cash-=3500;s.expense+=3500;s.width=10;s.height=8;note(s,'工場を拡張しました');return null;}
 export function sell(s,id){if(s.workers.some(w=>w.job))return '作業終了後に売却できます';const m=s.machines.find(m=>m.id===id);if(!m)return '設備が見つかりません';if(['cut','drill','inspect'].includes(m.kind)&&s.machines.filter(x=>x.kind===m.kind).length===1)return '立て直しに必要な最後の基本設備は残します';if(m.kind==='lathe'&&s.orders.some(o=>!o.shipped&&o.product==='shaft'))return 'シャフトを出荷してから売却できます';const refund=Math.floor(MACHINES[m.kind].cost*.65);s.cash+=refund;s.machines=s.machines.filter(x=>x!==m);note(s,`設備売却 +¥${refund}`);return null;}
-function assign(s,w){const candidates=s.parts.filter(p=>!p.done&&!p.busy).sort((a,b)=>{const k=p=>route(p.product)[p.stage];const priority=p=>w.role==='inspect'?(k(p)==='inspect'?0:1):w.role==='machine'?(k(p)!=='inspect'?0:1):0;return priority(a)-priority(b)||b.stage-a.stage;});for(const p of candidates){const kind=route(p.product)[p.stage];const ms=s.machines.filter(m=>m.kind===kind&&!s.workers.some(v=>v.job?.machine===m.id));for(const m of ms){const a=path(s,w,p),b=path(s,p,{x:m.x,y:m.y+1});if(a===null||b===null)continue;const order=s.orders.find(o=>o.id===p.order);const rework=kind==='inspect'&&w.skill+m.level-1<order.quality;w.job={part:p.id,machine:m.id,path:[...a,...b],remaining:processingTime(kind,{skill:w.skill,level:m.level,mentor:w.mentor,quality:order.quality}),phase:'walk',rework};p.busy=true;return;}}}
+function assign(s,w){
+  const named=new Map(s.orders.filter(o=>!o.shipped&&o.inspectorId!==undefined).map(o=>[o.id,o.inspectorId]));
+  const inspector=p=>p.stage===2?named.get(p.order):undefined;
+  const priority=p=>{
+    if(inspector(p)===w.id)return -1;
+    const kind=route(p.product)[p.stage];
+    return w.role==='inspect'?(kind==='inspect'?0:1):w.role==='machine'?(kind!=='inspect'?0:1):0;
+  };
+  const candidates=s.parts.filter(p=>!p.done&&!p.busy&&(inspector(p)===undefined||inspector(p)===w.id))
+    .sort((a,b)=>priority(a)-priority(b)||b.stage-a.stage);
+  for(const p of candidates){const kind=route(p.product)[p.stage];const ms=s.machines.filter(m=>m.kind===kind&&!s.workers.some(v=>v.job?.machine===m.id));for(const m of ms){const a=path(s,w,p),b=path(s,p,{x:m.x,y:m.y+1});if(a===null||b===null)continue;const order=s.orders.find(o=>o.id===p.order);const rework=kind==='inspect'&&w.skill+m.level-1<order.quality;w.job={part:p.id,machine:m.id,path:[...a,...b],remaining:processingTime(kind,{skill:w.skill,level:m.level,mentor:w.mentor,quality:order.quality}),phase:'walk',rework};p.busy=true;return;}}}
 export function step(s,dt,{assignNew=true}={}){if(!Number.isFinite(dt)||dt<=0)return;dt=Math.min(dt,.25);s.clock+=dt;const active=s.parts.some(p=>!p.done);if(active){const wage=Math.min(s.cash,dt*.7);s.cash-=wage;s.expense+=wage;
 // Allocate the actual payroll once, including idle staff, among unfinished orders.
 const producing=s.orders.filter(o=>!o.shipped&&o.done<o.qty);
 for(const o of producing)if(o.accounting)o.accounting.wages+=wage/producing.length;
-}for(const w of s.workers){if(!w.job&&assignNew)assign(s,w);const j=w.job;if(!j)continue;const p=s.parts.find(p=>p.id===j.part);if(!p){w.job=null;continue;}if(j.path.length){const target=j.path[0],dist=Math.hypot(target.x-w.x,target.y-w.y),d=dt*2.2;if(dist<=d){w.x=target.x;w.y=target.y;j.path.shift();}else{w.x+=(target.x-w.x)*d/dist;w.y+=(target.y-w.y)*d/dist;}const distance=Math.min(dist,d);s.stats.walk+=distance;const a=s.orders.find(o=>o.id===p.order).accounting;if(a)a.walk+=distance;j.phase='walk';}else{j.phase='work';j.remaining-=dt;if(j.remaining<=0){const m=s.machines.find(m=>m.id===j.machine);p.x=m.x;p.y=m.y+1;p.stage++;p.busy=false;p.done=p.stage===route(p.product).length;const order=s.orders.find(o=>o.id===p.order);if(p.done){order.done++;if(order.accounting&&order.done===order.qty)order.accounting.completedAt=s.clock;}if(j.rework){s.stats.rework++;if(order.accounting)order.accounting.rework++;}s.stats.processed++;w.xp+=1+(s.workers.some(v=>v.id!==w.id&&v.mentor)?0.4:0);if(w.xp>=30&&w.skill<4){w.skill++;w.xp-=30;note(s,`${w.name}が実務で成長しました`);}w.job=null;}}}}
+}for(const w of s.workers){if(!w.job&&assignNew)assign(s,w);const j=w.job;if(!j)continue;const p=s.parts.find(p=>p.id===j.part);if(!p){w.job=null;continue;}if(j.path.length){const target=j.path[0],dist=Math.hypot(target.x-w.x,target.y-w.y),d=dt*2.2;if(dist<=d){w.x=target.x;w.y=target.y;j.path.shift();}else{w.x+=(target.x-w.x)*d/dist;w.y+=(target.y-w.y)*d/dist;}const distance=Math.min(dist,d);s.stats.walk+=distance;const a=s.orders.find(o=>o.id===p.order).accounting;if(a)a.walk+=distance;j.phase='walk';}else{j.phase='work';j.remaining-=dt;if(j.remaining<=0){const m=s.machines.find(m=>m.id===j.machine);p.x=m.x;p.y=m.y+1;p.stage++;p.busy=false;p.done=p.stage===route(p.product).length;const order=s.orders.find(o=>o.id===p.order);if(p.done){order.done++;if(order.accounting&&order.done===order.qty)order.accounting.completedAt=s.clock;}if(j.rework){s.stats.rework++;if(order.accounting)order.accounting.rework++;}s.stats.processed++;w.xp+=1+(s.workers.some(v=>v.id!==w.id&&v.mentor)?0.4:0);if(w.xp>=30&&w.skill<4){w.skill++;w.xp-=30;order.accounting?.growth?.push({worker:w.id,skill:w.skill});note(s,`${w.name}が実務で成長しました`);}w.job=null;}}}}
 function validState(s){if(!s||s.version!==VERSION||![s.cash,s.clock,s.revenue,s.expense].every(n=>Number.isFinite(n)&&n>=0)||![[8,6],[10,8]].some(([w,h])=>s.width===w&&s.height===h)||!Number.isInteger(s.next)||s.next<1||!Number.isInteger(s.delivered)||!s.stats||!Object.values(s.stats).every(Number.isFinite))return false;if(!Array.isArray(s.machines)||s.machines.length>70||!Array.isArray(s.workers)||s.workers.length!==3||!Array.isArray(s.orders)||s.orders.length>3||!Array.isArray(s.parts)||s.parts.length>60||!Array.isArray(s.log))return false;const ids=new Set(),cells=new Set();for(const m of s.machines){if(!MACHINES[m.kind]||!Number.isInteger(m.level)||m.level<1||m.level>3||!Number.isInteger(m.x)||!Number.isInteger(m.y)||m.x<1||m.y<0||m.x>=s.width||m.y>=s.height-1||ids.has(m.id)||cells.has(`${m.x},${m.y}`))return false;ids.add(m.id);cells.add(`${m.x},${m.y}`);}if(!['cut','drill','inspect'].every(k=>s.machines.some(m=>m.kind===k)))return false;if(!s.machines.every(m=>path(s,{x:0,y:0},{x:m.x,y:m.y+1})!==null))return false;for(const o of s.orders){if(!['plate','shaft'].includes(o.product)||![o.qty,o.cost,o.pay,o.start,o.done,o.due,o.quality].every(n=>Number.isFinite(n)&&n>=0)||o.qty>28||o.done>o.qty||!Number.isInteger(o.id))return false;}const partIds=new Set();for(const p of s.parts){if(partIds.has(p.id)||!s.orders.some(o=>o.id===p.order)||!['plate','shaft'].includes(p.product)||!Number.isInteger(p.stage)||p.stage<0||p.stage>3||![p.x,p.y].every(Number.isFinite))return false;partIds.add(p.id);}for(const w of s.workers){if(!Number.isInteger(w.id)||typeof w.name!=='string'||![w.x,w.y,w.skill,w.xp].every(Number.isFinite)||w.skill<1||w.skill>4||!['auto','machine','inspect'].includes(w.role))return false;if(w.job&&(!partIds.has(w.job.part)||!ids.has(w.job.machine)||!Number.isFinite(w.job.remaining)||!Array.isArray(w.job.path)||!w.job.path.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y))))return false;}return true;}
 
 export function validate(s){try {if(!validState(s)||!validAccounting(s))return false;
  if(s.goalOffer!==undefined&&s.goalOffer!==null&&!OFFERS.some(o=>o.id===s.goalOffer&&o.growth))return false;
  const orders=new Map(s.orders.map(o=>[o.id,o]));if(orders.size!==s.orders.length)return false;
  if(new Set(s.workers.map(w=>w.id)).size!==3||!s.workers.every(w=>w.id>=0&&w.id<3&&w.x>=0&&w.y>=0&&w.x<s.width&&w.y<s.height&&w.xp>=0&&typeof w.mentor==='boolean'))return false;
- const assigned=new Set(),occupied=new Set();for(const w of s.workers){const j=w.job;if(!j)continue;if(assigned.has(j.part)||occupied.has(j.machine)||!['walk','work'].includes(j.phase)||!j.path.every(p=>Number.isInteger(p.x)&&Number.isInteger(p.y)&&p.x>=0&&p.y>=0&&p.x<s.width&&p.y<s.height))return false;assigned.add(j.part);occupied.add(j.machine);}
+ const assigned=new Set(),occupied=new Set();for(const w of s.workers){const j=w.job;if(!j)continue;if(assigned.has(j.part)||occupied.has(j.machine)||!['walk','work'].includes(j.phase)||!j.path.every(p=>Number.isInteger(p.x)&&Number.isInteger(p.y)&&p.x>=0&&p.y>=0&&p.x<s.width&&p.y<s.height))return false;const part=s.parts.find(p=>p.id===j.part),order=orders.get(part?.order);
+ if(part?.stage===2&&order?.inspectorId!==undefined&&order.inspectorId!==w.id)return false;
+ assigned.add(j.part);occupied.add(j.machine);}
  for(const p of s.parts){const o=orders.get(p.order);if(p.product!==o.product||o.shipped||typeof p.done!=='boolean'||p.done!==(p.stage===3)||p.busy!==assigned.has(p.id)||p.done&&p.busy||!Number.isInteger(p.x)||!Number.isInteger(p.y)||p.x<0||p.y<0||p.x>=s.width||p.y>=s.height)return false;}
  for(const o of s.orders){if(typeof o.label!=='string'||typeof o.shipped!=='boolean'||!Number.isInteger(o.qty)||!Number.isInteger(o.done)||![1,2,3].includes(o.quality))return false;const parts=s.parts.filter(p=>p.order===o.id);if(!o.shipped&&(parts.length!==o.qty||parts.filter(p=>p.done).length!==o.done))return false;}
  return s.log.every(t=>typeof t==='string'&&t.length<500);
@@ -84,11 +102,25 @@ function validRepeatCost(record){
   return record.repeatCost===undefined||(record.offerId==='first'&&[0,1500,3000].includes(record.repeatCost));
 }
 function validQuote(id,q){
-  return q===undefined||((id==='rush'||id==='bulk')&&q&&nonnegative(q.seconds)&&Number.isFinite(q.profit));
+  if(q===undefined)return true;
+  if(!q||!nonnegative(q.seconds)||!Number.isFinite(q.profit))return false;
+  if(id==='fine'||id==='master')return q.rework===undefined||(Number.isInteger(q.rework)&&q.rework>=0&&q.rework<=10);
+  return (id==='bulk'||id==='rush')&&q.rework===undefined;
+}
+function validCrewChoice(record){
+  if(record.inspectorId===undefined&&record.qualitySpend===undefined)return true;
+  return (record.offerId==='fine'||record.offerId==='master')&&[0,800,1500,1600,2400,3000].includes(record.qualitySpend)&&
+    (record.inspectorId===undefined||[0,1,2].includes(record.inspectorId));
+}
+function validGrowth(record,events){
+  if(events===undefined)return true;
+  return record.qualitySpend!==undefined&&Array.isArray(events)&&events.length<=9&&
+    events.every(e=>e&&[0,1,2].includes(e.worker)&&[2,3,4].includes(e.skill))&&
+    new Set(events.map(e=>e.worker+','+e.skill)).size===events.length;
 }
 function validAccounting(s){
   for(const o of s.orders){
-    if(!validRepeatCost(o)||!validQuote(o.offerId,o.quote))return false;
+    if(!validGrowth(o,o.accounting?.growth)||!validCrewChoice(o)||!validRepeatCost(o)||!validQuote(o.offerId,o.quote))return false;
     if(o.accounting===undefined&&o.offerId===undefined)continue;
     const offer=OFFERS.find(v=>v.id===o.offerId),a=o.accounting;
     if(!offer||!a||!['product','qty','cost','pay','quality'].every(k=>o[k]===offer[k])||![a.wages,a.walk,a.rework].every(nonnegative)||!Number.isInteger(a.rework)||a.rework>o.qty)return false;
@@ -99,7 +131,7 @@ function validAccounting(s){
   if(!Array.isArray(s.results)||s.results.length>12||s.results.length>s.delivered)return false;
   const ids=new Set();let lastTime=Infinity;
   for(const r of s.results){
-    if(!r||(r.quote&&r.wages===null)||!validRepeatCost(r)||!validQuote(r.offerId,r.quote)||!Number.isInteger(r.orderId)||r.orderId<1||ids.has(r.orderId)||typeof r.label!=='string'||r.label.length>100||!Number.isInteger(r.qty)||r.qty<1||r.qty>28||typeof r.late!=='boolean'||![r.payout,r.material,r.shippedAt].every(nonnegative)||r.shippedAt>s.clock||r.shippedAt>lastTime)return false;
+    if(!r||!validGrowth(r,r.growth)||!validCrewChoice(r)||((r.quote||r.qualitySpend!==undefined)&&r.wages===null)||!validRepeatCost(r)||!validQuote(r.offerId,r.quote)||!Number.isInteger(r.orderId)||r.orderId<1||ids.has(r.orderId)||typeof r.label!=='string'||r.label.length>100||!Number.isInteger(r.qty)||r.qty<1||r.qty>28||typeof r.late!=='boolean'||![r.payout,r.material,r.shippedAt].every(nonnegative)||r.shippedAt>s.clock||r.shippedAt>lastTime)return false;
     ids.add(r.orderId);lastTime=r.shippedAt;
     const values=[r.wages,r.seconds,r.walk,r.rework];
     if(!values.every(v=>v===null)&&!(values.every(nonnegative)&&Number.isInteger(r.rework)&&r.rework<=r.qty&&r.seconds<=r.shippedAt))return false;

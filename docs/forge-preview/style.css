@@ -291,3 +291,14 @@ dialog:has(.freight-focus) .sheet-head{padding-block:5px}
 .freight-focus>p{margin:4px 0 8px}
 .freight-focus #termPicker{margin-top:4px}
 .freight-focus .estimate-note{font-size:11px}
+
+dialog[data-panel="precision"]{max-height:95svh}
+dialog[data-panel="precision"] .sheet-head{padding-block:5px}
+.shaft-desk>label{display:grid;grid-template-columns:5em minmax(0,1fr);align-items:center;gap:6px;margin:4px 0;font-size:13px}
+.shaft-desk select{min-width:0;width:100%;min-height:44px;padding:4px;border-radius:6px}
+.shaft-desk>p{margin:8px 0;line-height:1.45}
+.shaft-estimate{min-height:3.5em;padding:6px 9px;border-inline-start:3px solid #dac08a;background:#263b30;font-size:13px}
+.shaft-estimate strong,.shaft-estimate small{display:block;line-height:1.45}
+.shaft-estimate small{color:#ead3a6}
+.shaft-detail summary{padding:12px 0;min-height:44px;cursor:pointer}
+.shaft-detail small{color:var(--muted)}

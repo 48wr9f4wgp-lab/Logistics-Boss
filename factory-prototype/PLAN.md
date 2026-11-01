@@ -41,3 +41,5 @@ v0.17: Refine the approved daylight miniature at normal phone scale and close ra
 v0.18: Turn the first paid shipment into an optional repeat order. Contrast a free layout change with a paid drill upgrade, show the actual service-cell trip in placement, and measure the next delivery against the player’s own previous receipt. The growth contracts remain directly accessible.
 
 v0.19: Compare physical transfer distance with whole-order time, and compare the two 28-piece contracts before spending. Simulate the current factory on a disposable copy, support layout what-ifs, and carry the accepted estimate into the receipt for review.
+
+v0.20: Make the precision path accessible through its first standard shaft contract. Let a factory name the inspector for one order, invest in training or inspection capacity, and check actual adjustments, earnings and skill growth at dispatch.

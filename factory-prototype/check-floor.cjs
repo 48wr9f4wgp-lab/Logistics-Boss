@@ -2,6 +2,7 @@
 const assert = require('node:assert/strict');
 const { mkdir } = require('node:fs/promises');
 const path = require('node:path');
+const {checkPrecision}=require('./check-precision.cjs');
 const {checkEstimates}=require('./check-estimates.cjs');
 const {checkImprovement}=require('./check-improvement.cjs');
 const {checkFloorControls}=require('./check-floor-controls.cjs');
@@ -166,6 +167,7 @@ async function checkExpandedArt(browser,url,offlineArt=false){
     for(const choice of ['move','upgrade'])await checkImprovement(browser,process.argv[2],choice);
     for(const term of ['bulk','rush'])await checkEstimates(browser,process.argv[2],term);
     if(process.argv[3]!=='webkit')await checkEstimates(browser,process.argv[2],'offline');
+    for(const route of ['entry','bench'])await checkPrecision(browser,process.argv[2],route);
     await checkFloorControls(browser,process.argv[2]);
     await checkShift(browser,process.argv[2]);
     await checkExpandedArt(browser,process.argv[2]);
