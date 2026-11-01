@@ -128,9 +128,26 @@ async function checkBrief(browser,url){
         await page.locator('[data-estimate="rush"]').filter({hasText:'利益'}).waitFor();
         await page.locator('#acceptTerm').click();
         const rushOrder=M.frontOrder(await read());assert.equal(rushOrder.offerId,'rush');assert.equal(rushOrder.qty,28);
+        const acceptedQuote=rushOrder.quote;
+        assert.ok(acceptedQuote&&acceptedQuote.seconds<rushOrder.due,'the referred layout should finish the quoted rush before its deadline');
+        await page.reload();await button('完成まで進める').click();await button('出荷する').waitFor();
+        const readyState=await read(),readyRush=M.frontOrder(readyState);
+        assert.equal(readyRush.id,rushOrder.id);assert.equal(readyRush.done,28);
+        assert.equal(readyState.orders.filter(o=>!o.shipped).length,1,'the optional six-piece inquiry was not accepted');
+        await button('出荷する').click();
+        const delivered=await read(),rushReceipt=delivered.results[0];
+        assert.ok(M.validate(delivered));assert.equal(delivered.delivered,4);
+        assert.equal(rushReceipt.orderId,rushOrder.id);assert.equal(rushReceipt.offerId,'rush');
+        assert.deepEqual(rushReceipt.quote,acceptedQuote);
+        assert.equal(rushReceipt.late,false);assert.equal(rushReceipt.payout,rushOrder.pay);
+        assert.ok(Math.abs(rushReceipt.seconds-acceptedQuote.seconds)<1e-5);
+        assert.ok(Math.abs(M.resultProfit(rushReceipt)-acceptedQuote.profit)<1e-5);
+        assert.ok(Math.abs(delivered.cash-readyState.cash-rushReceipt.payout)<1e-5);
+        assert.ok(Math.abs(delivered.revenue-readyState.revenue-rushReceipt.payout)<1e-5);
+        console.log(engine+' referred rush shipped '+rushReceipt.qty+' pieces in '+rushReceipt.seconds.toFixed(1)+'s, on time with the quoted profit.');
       }
       assert.deepEqual(errors,[]);
-      console.log(engine+' repeat brief '+id+' '+(met?'met':'missed')+': preview, reload, actual payout, persistent receipt'+(met?', second brief and referral rush at Lv.1':', retained retry')+'.');
+      console.log(engine+' repeat brief '+id+' '+(met?'met':'missed')+': preview, reload, actual payout, persistent receipt'+(met?', second brief and on-time referral shipment at Lv.1':', retained retry')+'.');
     }finally{await context.close();}
   }
 }
