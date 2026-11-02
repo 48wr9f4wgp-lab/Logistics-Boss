@@ -65,3 +65,5 @@ v0.23: Turn time and travel into two distinct repeat-order commitments. Settle e
 v0.24: Record the first on-time dispatch of each specialty and show the first as the ending. Both routes and the existing factory continue after the ending. Human and physical-device acceptance gates remain open.
 
 v0.25: Address the reported tap-through loop. In delegated mode an accepted order plays through production and dispatch, stopping for a real inquiry or a new contract. No automatic purchasing, ordering or changes to production rules. Physical iPhone and first-time human tests remain open.
+
+v0.26: Repair cached-page resume and transfer the writer lock when leaving or returning. Verify navigation/back during actual production, review and unconfirmed layout, another tab shipping while away, and a fresh automatic first-ending run. Physical iPhone and first-time human testing remain pending.

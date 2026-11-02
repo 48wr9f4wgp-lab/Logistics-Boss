@@ -1,10 +1,14 @@
-# マチコバ！ — v0.25
+# マチコバ！ — v0.26
 
 **小さな工場、大きな夢。**
 
 Official title **マチコバ！** and tagline **小さな工場、大きな夢。** confirmed by the user on 2026-10-31. See `NAMING_DECISION_2026-10-31.md`. FORGE / 町工場 were working titles; historical files and technical identifiers retain their previous names for continuity.
 
 New title-local gameplay prototype, approved 2026-10-29. Current task replaces the FLOTRA concept; historical FLOTRA code and saves remain untouched. Production target remains iPhone/iOS. This browser build is an engineering preview, not a native release or production-engine decision.
+
+## 中断・復帰（v0.26）
+
+工場を離れるとその時点を保存して製作を止める。履歴の「戻る」で工場に復帰すると、最新の保存状態で進行を再開する。同じ画面が保持されている場合は、同じセーブの仮配置や未確定の相談をそのまま続けられる。別タブで進んでいれば、そちらの出荷記録を引き継ぐ。アプリを再起動した場合は確定済みの状態から再開する。ブラウザでの中断検証と、iPhone実機・初見の人による確認は区別する。
 
 ## Play
 
