@@ -7,6 +7,83 @@ async function snapshot(context){
   const saved=await context.storageState();
   return JSON.parse(saved.origins.flatMap(o=>o.localStorage).find(item=>item.name===key).value);
 }
+
+async function exportFactory(page){
+  await page.getByRole('button',{name:'管理',exact:true}).click();
+  await page.getByRole('button',{name:'保存と設定',exact:true}).click();
+  const [download]=await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button',{name:'セーブを書き出す',exact:true}).click()
+  ]);
+  const chunks=[];
+  for await(const chunk of await download.createReadStream())chunks.push(chunk);
+  return JSON.parse(Buffer.concat(chunks).toString('utf8')).state;
+}
+
+async function checkFailedWrite(browser,url,options,M,persistent){
+  const context=await browser.newContext(options);
+  try{
+    const page=await context.newPage();
+    await page.goto(url);
+    const controls=page.locator('#controls summary');
+    await page.waitForFunction(()=>!document.querySelector('#orderAction').disabled);
+    await controls.click();
+    await page.getByRole('button',{name:'一時停止',exact:true}).click();
+    await controls.click();
+    const initial=await read(page),expected=structuredClone(initial.state);
+    assert.equal(M.accept(expected,'first'),null);
+    // Fail only writes in this tab. A second tab can still make a legitimate commit.
+    await page.evaluate(({key,persistent})=>{
+      const original=Storage.prototype.setItem;
+      window.failedFactoryWrites=0;
+      window.restoreFactoryWrites=()=>{Storage.prototype.setItem=original;};
+      Storage.prototype.setItem=function(name,value){
+        if(name===key&&(persistent||!window.failedFactoryWrites)){
+          window.failedFactoryWrites++;
+          throw new DOMException('simulated storage failure','QuotaExceededError');
+        }
+        return original.call(this,name,value);
+      };
+    },{key,persistent});
+    await page.getByRole('button',{name:'材料費 ¥600 で受注する',exact:true}).click();
+    assert.ok(await page.evaluate(()=>window.failedFactoryWrites>0));
+    assert.deepEqual(await read(page),initial);
+    await life(page,'pagehide');
+    if(!persistent){
+      await life(page,'pageshow');
+      await page.waitForFunction(key=>JSON.parse(localStorage.getItem(key)).state.orders.length===1,key);
+      const recovered=(await read(page)).state;
+      assert.equal(M.frontOrder(recovered).offerId,'first');
+      assert.equal(recovered.cash,expected.cash);
+      assert.equal(recovered.delivered,0);
+      return;
+    }
+
+    // A matching revision must keep the unsaved order available for export.
+    await life(page,'pageshow');
+    assert.deepEqual(await exportFactory(page),expected);
+    assert.deepEqual(await read(page),initial);
+    await page.getByRole('button',{name:'工場へ戻る',exact:true}).click();
+    await life(page,'pagehide');
+    const other=await context.newPage();
+    await other.goto(url);
+    await other.waitForFunction(()=>!document.querySelector('#orderAction').disabled);
+    await other.locator('#controls summary').click();
+    await other.getByRole('button',{name:'おまかせ運転',exact:true}).click();
+    const committed=await read(other);
+    assert.notEqual(committed.revision,initial.revision);
+    assert.equal(committed.state.autoWork,true);
+    assert.equal(committed.state.orders.length,0);
+    await other.close();
+    await page.evaluate(()=>window.restoreFactoryWrites());
+    await page.bringToFront();
+    await life(page,'pageshow');
+    assert.deepEqual(await exportFactory(page),expected,'preserve the unsaved order after a conflicting commit');
+    await life(page,'pagehide');
+    assert.deepEqual(await read(page),committed,'export must not overwrite the newer factory');
+  }finally{await context.close();}
+}
+
 async function checkResume(browser,url){
   const M=await import('../docs/forge-preview/model.mjs');
   const {frameWorkshop,project}=await import('../docs/forge-preview/view.mjs');
@@ -81,5 +158,8 @@ async function checkResume(browser,url){
     assert.ok(await a.getByRole('button',{name:'置き場所を試す',exact:true}).isEnabled());
     console.log(engine+' returned tab obtained the latest paid factory without manual reload or duplicate revenue.');
   }finally{await handoff.close();}
+  await checkFailedWrite(browser,url,options,M,false);
+  await checkFailedWrite(browser,url,options,M,true);
+  console.log(engine+' preserved unsaved orders after write failures and a competing save.');
 }
 module.exports={checkResume};

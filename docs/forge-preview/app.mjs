@@ -26,6 +26,12 @@ const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 function readFactory(refresh=false){
   const raw=localStorage.getItem(KEY),env=raw===null?null:JSON.parse(raw);
   if(raw!==null&&(!env||!M.validate(env.state)))throw Error('invalid save');
+  if(refresh&&(saveBlocked==='write'||saveBlocked==='conflict')){
+    // This tab holds the only copy of a failed write. Keep it available for export.
+    if((env?.revision??null)!==revision){saveBlocked='conflict';return;}
+    writeFactory(env);
+    return;
+  }
   if(refresh&&!saveBlocked&&(env?.revision??null)===revision)return;
   if(refresh){
     if(tab)close();
@@ -37,7 +43,7 @@ function readFactory(refresh=false){
   s=env?env.state:M.fresh();saveBlocked=false;restoreSpecialties(s);restoreWorkMode();revision=env?.revision??null;
   if(s.orders.some(o=>!o.shipped&&o.done===o.qty))speed=0;
 }
-try{readFactory();}catch{saveBlocked=true;speed=0;}
+try{readFactory();}catch{saveBlocked='read';speed=0;}
 function restoreWorkMode(){
   // Previously accepted jobs retain their original manual shipping agreement.
   if(s.autoWork===undefined&&!M.frontOrder(s))s.autoWork=true;
@@ -45,7 +51,7 @@ function restoreWorkMode(){
 function toast(t){if(tab){$('#sheetNotice').textContent=t;$('#sheetNotice').hidden=false;}$('#toast').textContent=t;$('#toast').style.display='block';toastUntil=performance.now()+4200;}
 let pageActive=true,waitingForWriter=false,pausedPanel=null;
 const seat=writerSession(navigator.locks,KEY,()=>{
-  try{readFactory(true);}catch{saveBlocked=true;speed=0;}
+  try{readFactory(true);}catch{saveBlocked||='read';}
   writer=true;waitingForWriter=false;last=0;tickRemainder=0;
   update();
   if(tab){
@@ -65,16 +71,22 @@ function loseWriter(){
   toast('別の画面で進行が更新されました。工場に戻ると最新の記録を読み込みます');
   update();
 }
+function writeFactory(previous){
+  // Merely visiting an idle factory in a second tab must not invalidate a draft.
+  if(!previous||JSON.stringify(previous.state)!==JSON.stringify(s)){
+    const next=crypto.randomUUID?.()||String(Date.now()+Math.random());
+    localStorage.setItem(KEY,JSON.stringify({revision:next,state:s}));
+    revision=next;
+  }
+  saveBlocked=false;
+}
 function save(){
   if(!writer||saveBlocked)return;
   try{
     const previous=JSON.parse(localStorage.getItem(KEY)||'null');
     if((previous?.revision??null)!==revision){loseWriter();return;}
-    // Merely visiting an idle factory in a second tab must not invalidate a draft.
-    if(previous&&JSON.stringify(previous.state)===JSON.stringify(s))return;
-    const next=crypto.randomUUID?.()||String(Date.now()+Math.random());
-    localStorage.setItem(KEY,JSON.stringify({revision:next,state:s}));revision=next;
-  }catch{saveBlocked=true;toast('保存できません。設定から進行を書き出せます');}
+    writeFactory(previous);
+  }catch{saveBlocked='write';toast('保存できません。設定から進行を書き出せます');}
 }
 function syncSession(){
   last=0;tickRemainder=0;
@@ -471,7 +483,7 @@ if(tab==='workers'){
 }
 if(tab==='result'){const r=s.results?.[0];html=r?receipt(r,true):'<p>まだ出荷記録がありません。</p>';}
 if(tab==='finance'){html=workshopRecord()+card('工場の状況','<div class="row"><span>出荷実績</span><b>'+s.delivered+'件</b></div><div class="row"><span>工場時間</span><b>'+Math.floor(s.clock/60)+'分'+Math.floor(s.clock%60)+'秒</b></div>')+card('収支',`<div class="row"><span>累計売上</span><b>${money(s.revenue)}</b></div><div class="row"><span>材料・投資・人件費</span><b>${money(s.expense)}</b></div><p>加工する部品がある間、人件費は毎秒¥0.7。画面を閉じている間の生産・請求はありません。</p>`)+'<h3>出荷の振り返り</h3><p>直近12件を保存。利益は設備・研修・増築費を引く前の金額です。</p>'+(s.results?.length?'<button class="wide" data-next="result">直近の出荷結果を開く</button>'+s.results.map(r=>`<details class="result-history"><summary>${escape(r.label)} × ${r.qty}<b>${M.resultProfit(r)===null?'記録なし':signedMoney(M.resultProfit(r))}</b></summary>${receipt(r,false)}</details>`).join(''):'<p>出荷すると結果をここで見返せます。</p>')+card('工場を広げる',`<p>床面積を8×6から10×8へ。追加設備と動線のための余白を作ります。</p><button class="primary wide" id="expand" ${s.width===10?'disabled':''}>${s.width===10?'拡張済み':'増築する · ¥3,500'}</button>`)+card('生産の記録',`<p>完了工程 ${s.stats.processed}回<br>品質調整 ${s.stats.rework}回<br>運搬・移動距離 ${Math.floor(s.stats.walk)}マス</p>`)+card('工場日誌',s.log.map(t=>`<p>${escape(t)}</p>`).join(''));}
-if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked?'保存エラー：元データは上書きしていません。書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'ほかのタブからの引き継ぎを待っています。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② おまかせで運搬・製作・出荷まで進行。小口の相談では止まります<br>③ 操作から手動の等速・3倍速や早送りも選べます<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.26</small>');}
+if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked==='conflict'?'別のタブに新しい記録があります。この画面の進行を残すには、書き出してから再読み込みしてください。':saveBlocked?'保存エラー：この画面の進行を書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'ほかのタブからの引き継ぎを待っています。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② おまかせで運搬・製作・出荷まで進行。小口の相談では止まります<br>③ 操作から手動の等速・3倍速や早送りも選べます<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.26</small>');}
 body.innerHTML=html;
 setupPanelEstimate();
 if($('#allGrowth'))$('#allGrowth').onclick=()=>open('growth');
@@ -486,7 +498,7 @@ if(tab==='improve'){
     };
   }
 }
-body.querySelectorAll('[data-result-action]').forEach(b=>b.onclick=()=>runResultAction(b.dataset.resultAction));body.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{if(act(()=>M.setGoal(s,b.dataset.goal))){growthFocus=null;renderPanel();$('#sheet').scrollTop=0;}});body.querySelectorAll('[data-plan-action]').forEach(b=>b.onclick=()=>runPlan(b.dataset.planAction));body.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>open(b.dataset.next));body.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>{if(!tab||!b.isConnected)return;if(act(()=>M.accept(s,b.dataset.order))){close();speed=speed||1;update();}});body.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>ship(+b.dataset.ship));body.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>place({kind:b.dataset.buy}));body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>place({id:b.dataset.move,kind:s.machines.find(m=>m.id===b.dataset.move).kind}));body.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>act(()=>M.upgrade(s,b.dataset.upgrade)));body.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>act(()=>M.sell(s,b.dataset.sell)));body.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>act(()=>M.train(s,+b.dataset.train)));body.querySelectorAll('[data-role]').forEach(b=>b.onchange=()=>act(()=>{s.workers.find(w=>w.id===+b.dataset.role).role=b.value;M.note(s,'担当の優先順位を変更');}));body.querySelectorAll('[data-mentor]').forEach(b=>b.onclick=()=>act(()=>{const w=s.workers.find(w=>w.id===+b.dataset.mentor);w.mentor=!w.mentor;M.note(s,`${w.name}の指導役を変更`);}));if($('#expand'))$('#expand').onclick=()=>act(()=>M.expand(s));if($('#export'))$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({revision,state:s})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='machikoba-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};if($('#reload'))$('#reload').onclick=()=>location.reload();if($('#import'))$('#import').onchange=async e=>{try{const f=e.target.files[0];if(!f||f.size>200000)throw Error();const data=JSON.parse(await f.text());if(!M.validate(data.state))throw Error();if(!writer){toast('工場を使用中のタブを離れてください');return;}if(!confirm('現在の進行を、選んだセーブに置き換えますか？'))return;s=data.state;restoreSpecialties(s);restoreWorkMode();recentShipment=null;departure=null;saveBlocked=false;revision=JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null;save();update();renderPanel();toast('セーブを読み込みました');}catch{toast('対応する正常なセーブではありません。進行は変更していません');}};}
+body.querySelectorAll('[data-result-action]').forEach(b=>b.onclick=()=>runResultAction(b.dataset.resultAction));body.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{if(act(()=>M.setGoal(s,b.dataset.goal))){growthFocus=null;renderPanel();$('#sheet').scrollTop=0;}});body.querySelectorAll('[data-plan-action]').forEach(b=>b.onclick=()=>runPlan(b.dataset.planAction));body.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>open(b.dataset.next));body.querySelectorAll('[data-order]').forEach(b=>b.onclick=()=>{if(!tab||!b.isConnected)return;if(act(()=>M.accept(s,b.dataset.order))){close();speed=speed||1;update();}});body.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>ship(+b.dataset.ship));body.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>place({kind:b.dataset.buy}));body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>place({id:b.dataset.move,kind:s.machines.find(m=>m.id===b.dataset.move).kind}));body.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>act(()=>M.upgrade(s,b.dataset.upgrade)));body.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>act(()=>M.sell(s,b.dataset.sell)));body.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>act(()=>M.train(s,+b.dataset.train)));body.querySelectorAll('[data-role]').forEach(b=>b.onchange=()=>act(()=>{s.workers.find(w=>w.id===+b.dataset.role).role=b.value;M.note(s,'担当の優先順位を変更');}));body.querySelectorAll('[data-mentor]').forEach(b=>b.onclick=()=>act(()=>{const w=s.workers.find(w=>w.id===+b.dataset.mentor);w.mentor=!w.mentor;M.note(s,`${w.name}の指導役を変更`);}));if($('#expand'))$('#expand').onclick=()=>act(()=>M.expand(s));if($('#export'))$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({revision,state:s})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='machikoba-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};if($('#reload'))$('#reload').onclick=()=>{if((saveBlocked==='write'||saveBlocked==='conflict')&&!confirm('この画面の未保存の進行を破棄して、保存済みの工場を開きますか？'))return;location.reload();};if($('#import'))$('#import').onchange=async e=>{try{const f=e.target.files[0];if(!f||f.size>200000)throw Error();const data=JSON.parse(await f.text());if(!M.validate(data.state))throw Error();if(!writer){toast('工場を使用中のタブを離れてください');return;}if(!confirm('現在の進行を、選んだセーブに置き換えますか？'))return;const currentRevision=JSON.parse(localStorage.getItem(KEY)||'null')?.revision??null;s=data.state;restoreSpecialties(s);restoreWorkMode();recentShipment=null;departure=null;saveBlocked=false;revision=currentRevision;save();update();renderPanel();if(writer&&!saveBlocked)toast('セーブを読み込みました');}catch{toast('対応する正常なセーブではありません。進行は変更していません');}};}
 
 
 function runPlan(id){
