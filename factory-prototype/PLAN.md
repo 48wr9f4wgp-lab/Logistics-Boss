@@ -3,7 +3,9 @@
 Confirmed public title: マチコバ！ / tagline: 小さな工場、大きな夢。 User decision: 2026-10-31. Previous working title: FORGE / 町工場. See `NAMING_DECISION_2026-10-31.md`.
 Title-local, 2026-10-29. User-approved new concept; old FLOTRA development is superseded for this task, preserved unchanged.
 
-Goal: touch-first factory placement, orders, actual worker routing/production, dispatch, reinvestment and worker training, with two investment directions. iPhone remains intended production target. This dependency-free Canvas/DOM build is a bounded engineering/gameplay prototype, not a production engine decision or a native iOS build. Production decision UNDECIDED; release approval NOT_REQUESTED. Existing repository and development Pages only.
+Current player goal (v0.29): grow a small workshop and become wealthy. The first shipment makes an adjacent warehouse or a personal coupe attainable. Owner savings of ¥100,000 is a prototype tuning target. Specialty milestones remain side goals.
+
+Core gameplay: touch-first factory placement, orders, actual worker routing/production, dispatch, reinvestment and worker training, with two investment directions. iPhone remains intended production target. This dependency-free Canvas/DOM build is a bounded engineering/gameplay prototype, not a production engine decision or a native iOS build. Production decision UNDECIDED; release approval NOT_REQUESTED. Existing repository and development Pages only.
 
 Scope: docs/forge-preview; factory-prototype; scoped CI. No legacy save, economics, branch or source changes. Revert added files to roll back. Independent save namespace, validation and export/import; no offline billing. Saved state never overwritten on invalid data. Web Locks exclusive writer where supported, storage revision conflict guard otherwise.
 

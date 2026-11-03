@@ -63,6 +63,19 @@ export function purchase(s,kind,x,y){if(!canPlace(s,kind,x,y))return '作業中�
 export function move(s,id,x,y){const m=s.machines.find(m=>m.id===id);if(!m||!canPlace(s,m.kind,x,y,id))return '作業中は移動できません。空いた床を選んでください';m.x=x;m.y=y;note(s,'設備を移動しました');return null;}
 export function upgrade(s,id){const m=s.machines.find(m=>m.id===id);if(!m||m.level>=3)return '改良済みです';const cost=1500*m.level;if(s.cash<cost)return '資金が足りません';s.cash-=cost;s.expense+=cost;m.level++;note(s,`${MACHINES[m.kind].name}を改良 Lv.${m.level}`);return null;}
 export function train(s,id){const w=s.workers.find(w=>w.id===id);if(!w||w.skill>=4)return '最高技能です';const cost=800*w.skill;if(s.cash<cost)return '資金が足りません';s.cash-=cost;s.expense+=cost;w.skill++;note(s,`${w.name}の技能が ${w.skill} に向上`);return null;}
+export function ownerPurchase(s,kind){
+  if(!s.delivered)return '初出荷で解放';
+  if(kind==='warehouse')return expand(s);
+  if(kind!=='car'&&kind!=='savings')return '購入先が不明です';
+  if(kind==='car'&&s.ownerCar)return '納車済みです';
+  const cost=kind==='car'?6000:5000;
+  if(s.cash<cost)return '手元資金が足りません';
+  s.cash-=cost;
+  if(kind==='car')s.ownerCar=true;
+  else s.ownerSavings=(s.ownerSavings||0)+cost;
+  note(s,kind==='car'?'赤いクーペが納車されました':'社長の貯金に ¥5,000');
+  return null;
+}
 export function expand(s){if(s.width===10)return '敷地は拡張済みです';if(s.cash<3500)return '拡張には¥3,500必要です';s.cash-=3500;s.expense+=3500;s.width=10;s.height=8;note(s,'工場を拡張しました');return null;}
 export function sell(s,id){if(s.workers.some(w=>w.job))return '作業終了後に売却できます';const m=s.machines.find(m=>m.id===id);if(!m)return '設備が見つかりません';if(['cut','drill','inspect'].includes(m.kind)&&s.machines.filter(x=>x.kind===m.kind).length===1)return '立て直しに必要な最後の基本設備は残します';if(m.kind==='lathe'&&s.orders.some(o=>!o.shipped&&o.product==='shaft'))return 'シャフトを出荷してから売却できます';const refund=Math.floor(MACHINES[m.kind].cost*.65);s.cash+=refund;s.machines=s.machines.filter(x=>x!==m);note(s,`設備売却 +¥${refund}`);return null;}
 function assign(s,w,onAssign){
@@ -84,7 +97,7 @@ for(const o of producing)if(o.accounting)o.accounting.wages+=wage/producing.leng
 }for(const w of s.workers){if(!w.job&&assignNew)assign(s,w,onAssign);const j=w.job;if(!j)continue;const p=s.parts.find(p=>p.id===j.part);if(!p){w.job=null;continue;}if(j.path.length){const target=j.path[0],dist=Math.hypot(target.x-w.x,target.y-w.y),d=dt*2.2;if(dist<=d){w.x=target.x;w.y=target.y;j.path.shift();}else{w.x+=(target.x-w.x)*d/dist;w.y+=(target.y-w.y)*d/dist;}const distance=Math.min(dist,d);s.stats.walk+=distance;if(onWalk)onWalk(p,distance);const a=s.orders.find(o=>o.id===p.order).accounting;if(a)a.walk+=distance;j.phase='walk';}else{j.phase='work';j.remaining-=dt;if(j.remaining<=0){const m=s.machines.find(m=>m.id===j.machine);p.x=m.x;p.y=m.y+1;p.stage++;p.busy=false;p.done=p.stage===route(p.product).length;const order=s.orders.find(o=>o.id===p.order);if(p.done){order.done++;if(order.accounting&&order.done===order.qty)order.accounting.completedAt=s.clock;}if(j.rework){s.stats.rework++;if(order.accounting)order.accounting.rework++;}s.stats.processed++;w.xp+=1+(s.workers.some(v=>v.id!==w.id&&v.mentor)?0.4:0);if(w.xp>=30&&w.skill<4){w.skill++;w.xp-=30;order.accounting?.growth?.push({worker:w.id,skill:w.skill});note(s,`${w.name}が実務で成長しました`);}w.job=null;}}}}
 function validState(s){if(!s||s.version!==VERSION||![s.cash,s.clock,s.revenue,s.expense].every(n=>Number.isFinite(n)&&n>=0)||![[8,6],[10,8]].some(([w,h])=>s.width===w&&s.height===h)||!Number.isInteger(s.next)||s.next<1||!Number.isInteger(s.delivered)||!s.stats||!Object.values(s.stats).every(Number.isFinite))return false;if(!Array.isArray(s.machines)||s.machines.length>70||!Array.isArray(s.workers)||s.workers.length!==3||!Array.isArray(s.orders)||s.orders.length>3||!Array.isArray(s.parts)||s.parts.length>60||!Array.isArray(s.log))return false;const ids=new Set(),cells=new Set();for(const m of s.machines){if(!MACHINES[m.kind]||!Number.isInteger(m.level)||m.level<1||m.level>3||!Number.isInteger(m.x)||!Number.isInteger(m.y)||m.x<1||m.y<0||m.x>=s.width||m.y>=s.height-1||ids.has(m.id)||cells.has(`${m.x},${m.y}`))return false;ids.add(m.id);cells.add(`${m.x},${m.y}`);}if(!['cut','drill','inspect'].every(k=>s.machines.some(m=>m.kind===k)))return false;if(!s.machines.every(m=>path(s,{x:0,y:0},{x:m.x,y:m.y+1})!==null))return false;for(const o of s.orders){if(!['plate','shaft'].includes(o.product)||![o.qty,o.cost,o.pay,o.start,o.done,o.due,o.quality].every(n=>Number.isFinite(n)&&n>=0)||o.qty>28||o.done>o.qty||!Number.isInteger(o.id))return false;}const partIds=new Set();for(const p of s.parts){if(partIds.has(p.id)||!s.orders.some(o=>o.id===p.order)||!['plate','shaft'].includes(p.product)||!Number.isInteger(p.stage)||p.stage<0||p.stage>3||![p.x,p.y].every(Number.isFinite))return false;partIds.add(p.id);}for(const w of s.workers){if(!Number.isInteger(w.id)||typeof w.name!=='string'||![w.x,w.y,w.skill,w.xp].every(Number.isFinite)||w.skill<1||w.skill>4||!['auto','machine','inspect'].includes(w.role))return false;if(w.job&&(!partIds.has(w.job.part)||!ids.has(w.job.machine)||!Number.isFinite(w.job.remaining)||!Array.isArray(w.job.path)||!w.job.path.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y))))return false;}return true;}
 
-export function validate(s){try {if(!validState(s)||(s.autoWork!==undefined&&typeof s.autoWork!=='boolean')||!validAccounting(s)||!validSpecialties(s,OFFERS)||!validBriefCredits(s)||!validPairLinks(s))return false;
+export function validate(s){try {if(!validState(s)||(s.ownerCar!==undefined&&typeof s.ownerCar!=='boolean')||(s.ownerSavings!==undefined&&(!Number.isSafeInteger(s.ownerSavings)||s.ownerSavings<0))||(s.autoWork!==undefined&&typeof s.autoWork!=='boolean')||!validAccounting(s)||!validSpecialties(s,OFFERS)||!validBriefCredits(s)||!validPairLinks(s))return false;
  if(s.goalOffer!==undefined&&s.goalOffer!==null&&!OFFERS.some(o=>o.id===s.goalOffer&&o.growth))return false;
  const orders=new Map(s.orders.map(o=>[o.id,o]));if(orders.size!==s.orders.length)return false;
  if(new Set(s.workers.map(w=>w.id)).size!==3||!s.workers.every(w=>w.id>=0&&w.id<3&&w.x>=0&&w.y>=0&&w.x<s.width&&w.y<s.height&&w.xp>=0&&typeof w.mentor==='boolean'))return false;
@@ -245,3 +258,4 @@ export function growthPlan(s,id){
   else{phase='ready';next={type:'accept',id,label:'受注して生産開始'};}
   return {offer,status,preparations,investment,required,shortage,order,phase,next};
 }
+
