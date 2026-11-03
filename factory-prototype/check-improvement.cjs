@@ -32,6 +32,8 @@ async function checkImprovement(browser,url,choice){
     await screen('choices');
     await button('置き場所を試す').click();
     assert.equal(await page.locator('#confirmPlace').isEnabled(),false);
+    assert.equal(await page.locator('#layoutHelp').isVisible(),false);
+    await button('配置のヒント').click();
     const suggested=page.locator('#layoutSuggestions button').filter({hasText:/速さ・歩数とも最良[\s\S]*4列2段/});
     await suggested.click();
     await page.locator('#layoutEstimate').filter({hasText:/117.4秒.*98.6秒/}).waitFor();
@@ -40,6 +42,7 @@ async function checkImprovement(browser,url,choice){
     assert.deepEqual((await saved()).machines,s.machines);
     if(choice==='move'){
       await button('置き場所を試す').click();
+      assert.equal(await page.locator('#layoutHelp').isVisible(),false);
       const world=page.locator('#world'),rect=await world.boundingBox();
       const v=frameWorkshop(rect.width,rect.height,s.width);
       await world.tap({position:project(v,.5,1.5)});

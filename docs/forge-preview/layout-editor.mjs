@@ -14,6 +14,13 @@ const steps=q=>Math.round(q.walk)+'マス';
 export function layoutEditor(s,p,offer,canWrite,onCells){
   const ranking=createEstimator(),preview=createEstimator(),history=[];
   const tools=el('layoutTools'),picker=el('layoutMachine'),suggestions=el('layoutSuggestions');
+  const hint=el('layoutHint'),help=el('layoutHelp');
+  help.hidden=true;hint.setAttribute('aria-expanded','false');
+  hint.onclick=()=>{
+    help.hidden=!help.hidden;
+    hint.setAttribute('aria-expanded',String(!help.hidden));
+    rank();
+  };
   let anchor=[],moves=[],selected=p.id,invalid=false,picked=false,rankingResult=null;
   const original=s.machines.find(m=>m.id===selected);
   const brief=el('layoutBrief'),briefField=el('layoutBriefField'),forecast=el('layoutBriefForecast');
@@ -99,7 +106,9 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
   }
   function rank(){
     ranking.cancel();rankingResult=null;p.marks=[];
-    suggestions.replaceChildren();el('layoutCoverage').textContent='置ける床を同じ条件で試算中…';
+    suggestions.replaceChildren();
+    if(help.hidden)return;
+    el('layoutCoverage').textContent='置ける床を同じ条件で試算中…';
     ranking.request(s,[{rankLayout:{id:selected,offer,anchor}}],rows=>{
       const r=rows?.[0];if(!r||r.error){el('layoutCoverage').textContent='候補の比較は利用できません。光る床を直接選べます。';return;}
       rankingResult=r;
@@ -142,7 +151,7 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
   picker.onchange=()=>switchTool(s.machines[Number(picker.value)].id);undo.onclick=back;
   switchTool(original.id);
   return {choose,canConfirm,suspend(){preview.cancel();ranking.cancel();},resume(){rank();measure();},get moves(){return moves;},close(){
-    preview.cancel();ranking.cancel();tools.hidden=true;picker.onchange=null;undo.onclick=null;
+    preview.cancel();ranking.cancel();tools.hidden=true;hint.onclick=null;picker.onchange=null;undo.onclick=null;
     briefField.hidden=forecast.hidden=true;brief.onchange=null;forecast.textContent='';
     suggestions.replaceChildren();p.marks=[];p.legs=[];
   }};

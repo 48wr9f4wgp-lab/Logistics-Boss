@@ -45,8 +45,8 @@
       <div><div class="placement-heading"><strong id="placeTitle"></strong><label id="layoutBriefField" hidden>
         <select id="layoutBrief" aria-label="再注文の追加条件" aria-describedby="layoutBriefForecast"></select>
       </label></div><div id="layoutTools" hidden>
-        <div class="layout-picker"><label>動かす設備 <select id="layoutMachine"></select></label><button type="button" id="layoutUndo">1手戻す</button></div>
-        <small id="layoutCoverage" aria-live="polite"></small><div id="layoutSuggestions" aria-label="配置候補"></div>
+        <div class="layout-picker"><label>動かす設備 <select id="layoutMachine"></select></label><button type="button" id="layoutHint" aria-expanded="false" aria-controls="layoutHelp">配置のヒント</button><button type="button" id="layoutUndo">1手戻す</button></div>
+        <div id="layoutHelp" hidden><small id="layoutCoverage" aria-live="polite"></small><div id="layoutSuggestions" aria-label="配置候補"></div></div>
       </div><small id="placeStatus" role="status"></small><small id="layoutEstimate" aria-live="polite" hidden></small><small id="layoutBriefForecast" aria-live="polite" hidden></small></div>
       <div class="placement-actions"><button id="cancelPlace">取消</button><button id="confirmPlace" disabled>場所を選んでください</button></div>
     </section>
@@ -58,7 +58,7 @@
     <div id="toast" role="status" aria-live="polite"></div>
   </main>
   <dialog id="sheet" aria-labelledby="sheetTitle"><div class="sheet-head"><button id="sheetBack" aria-label="前の画面へ戻る" hidden>‹ 戻る</button><h2 id="sheetTitle" tabindex="-1"></h2><button id="close" aria-label="工場へ戻る">工場へ戻る</button></div><div id="sheetNotice" role="status" hidden></div><div id="sheetBody"></div></dialog>
-  <script type="module" src="app.mjs?v=0.26"></script>
+  <script type="module" src="app.mjs?v=0.27"></script>
 </body>
 </html>
 

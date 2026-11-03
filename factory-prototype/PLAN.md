@@ -67,3 +67,5 @@ v0.24: Record the first on-time dispatch of each specialty and show the first as
 v0.25: Address the reported tap-through loop. In delegated mode an accepted order plays through production and dispatch, stopping for a real inquiry or a new contract. No automatic purchasing, ordering or changes to production rules. Physical iPhone and first-time human tests remain open.
 
 v0.26: Repair cached-page resume and transfer the writer lock when leaving or returning. Verify navigation/back during actual production, review and unconfirmed layout, another tab shipping while away, and a fresh automatic first-ending run. Physical iPhone and first-time human testing remain pending.
+
+v0.27: Start each layout draft with a free floor choice and its time and travel estimate. Calculate and show suggested locations and floor marks only when the player opens 配置のヒント.

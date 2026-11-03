@@ -50,6 +50,7 @@ async function checkBrief(browser,url){
         return [...select.options].every(option=>context.measureText(option.text+(option.value?' 済':'')).width<=select.clientWidth-26);
       });
       assert.ok(optionFits,'the native picker must show the entire reward even when a condition is marked as earned');
+      if(met)await button('配置のヒント').click();
       const originalHeight=(await world.boundingBox()).height;
       if(met){
         await page.locator('#layoutMachine').selectOption({label:'検品台'});
@@ -116,6 +117,7 @@ async function checkBrief(browser,url){
         const best=nextId==='speed'?rank.fastest:rank.shortest;
         // Workers have moved and gained skills. Use this fresh quote and its
         // matching floor button rather than repeating the first order's plan.
+        await button('配置のヒント').click();
         await page.locator('#layoutSuggestions button[data-x="'+best.x+'"][data-y="'+best.y+'"]').click();
         const nextValue=nextId==='walk'?Math.round(best.quote.walk)+'マス':best.quote.seconds.toFixed(1)+'秒';
         await forecast.filter({hasText:nextValue}).waitFor();
