@@ -362,3 +362,8 @@ dialog[data-panel="inquiry"] .sheet-head{padding-block:5px}
 
 #autoMode{font-size:11px;min-width:0;padding-inline:6px}
 #skipDelegated{width:100%;min-height:44px}
+
+#layoutBreakdown summary{display:flex;align-items:center;justify-content:space-between;gap:.5em;cursor:pointer;min-height:44px}
+#layoutBreakdown summary span:last-child{font-size:12px;color:var(--muted)}
+#layoutBreakdown summary span:last-child::after{content:' ▸'}
+#layoutBreakdown[open] summary span:last-child::after{content:' ▾'}

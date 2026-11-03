@@ -26,7 +26,10 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
   const brief=el('layoutBrief'),briefField=el('layoutBriefField'),forecast=el('layoutBriefForecast');
   // Undefined is a pending estimate; null indicates the worker was unavailable.
   let measured,explicitBrief=false;
-  briefField.hidden=forecast.hidden=!p.trial;
+  const breakdown=el('layoutBreakdown');
+  briefField.hidden=breakdown.hidden=!p.trial;
+  breakdown.open=false;
+  if(p.trial)breakdown.append(el('layoutEstimate'));
   if(p.trial){
     brief.replaceChildren(new Option('追加条件なし（通常報酬）',''));
     const earned=earnedBriefs(s);
@@ -49,8 +52,8 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
   const canConfirm=()=>(moves.length>0||(!!p.trial&&(picked||explicitBrief)))&&!invalid&&canWrite();
   function showForecast(){
     if(!p.trial)return;
-    if(!p.briefId){forecast.textContent='条件達成で＋¥'+BRIEFS.speed.bonus+'。未達でも通常報酬。';return;}
-    forecast.textContent=measured===undefined?'この配置で追加条件を達成できるか見積中…':
+    if(!p.briefId){forecast.textContent=measured?'完成 '+time(measured)+' · '+steps(measured):measured===null?'見積なし':'見積中…';return;}
+    forecast.textContent=measured===undefined?'見積中…':
       measured===null?'見積なし · 追加条件は出荷時に判定します。':
       briefOutcomeText(p.briefId,measured,true);
   }
@@ -123,8 +126,8 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
     selected=id;anchor=moves;invalid=false;picked=false;
     const cells=legalLayoutCells(s,anchor,id);
     onCells(cells);drawPlan();
-    status.textContent=p.trial&&p.briefId?'今の配置でも受注できます。ほかの床や追加条件も試せます。':
-      '光る床に仮置き。設備のある床では2台を入替。線は先頭の1個の運搬経路。';
+    status.textContent=p.trial&&p.briefId?'床をタップして仮置き':
+      '光る床に仮置き · 設備をタップで入替';
     measure();rank();
   }
   function choose(cell){
@@ -136,7 +139,7 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
     const differs=JSON.stringify(next.moves)!==JSON.stringify(moves);
     if(differs)history.push(moves);
     moves=next.moves;drawPlan();
-    status.textContent=cellName(cell)+(next.swap?' · '+M.MACHINES[next.swap].name+'と入替':'に仮置き')+' ／ 変更'+moves.length+'台';
+    status.textContent=cellName(cell)+(next.swap?' · '+M.MACHINES[next.swap].name+'と入替':'に仮置き');
     measure();
   }
   function back(){
@@ -152,7 +155,8 @@ export function layoutEditor(s,p,offer,canWrite,onCells){
   switchTool(original.id);
   return {choose,canConfirm,suspend(){preview.cancel();ranking.cancel();},resume(){rank();measure();},get moves(){return moves;},close(){
     preview.cancel();ranking.cancel();tools.hidden=true;hint.onclick=null;picker.onchange=null;undo.onclick=null;
-    briefField.hidden=forecast.hidden=true;brief.onchange=null;forecast.textContent='';
+    if(p.trial)breakdown.before(estimate);
+    breakdown.hidden=briefField.hidden=true;brief.onchange=null;forecast.textContent='';
     suggestions.replaceChildren();p.marks=[];p.legs=[];
   }};
 }

@@ -23,7 +23,7 @@ async function checkLayout(browser,url){
       const box=await floor.boundingBox();
       await floor.tap({position:project(frameWorkshop(box.width,box.height,s.width),x+.5,y+.5)});
     };
-    const open=async()=>{await btn('置き場所を試す').click();await picker.selectOption({label:'検品台'});await btn('配置のヒント').tap();};
+    const open=async()=>{await btn('置き場所を試す').click();await picker.selectOption({label:'検品台'});await btn('配置のヒント').tap();await page.locator('#layoutBreakdown summary').tap();};
     await page.goto(url);await page.locator('#world[data-artwork="ready"]').waitFor();await btn('工場の改善を選ぶ').click();await open();
     const fast=page.locator('#layoutSuggestions button').filter({hasText:'完成が最短'});
     const walk=page.locator('#layoutSuggestions button').filter({hasText:'歩数が最少'});
@@ -47,7 +47,7 @@ async function checkLayout(browser,url){
     await btn('取消').tap();
     const discarded=await saved();assert.deepEqual(discarded.machines,s.machines);assert.equal(discarded.cash,s.cash);
     await open();await fast.tap();await picker.selectOption({label:'切断機'});await tap(5,1);
-    assert.match(await status.innerText(),/ボール盤と入替.*変更3台/);
+    assert.match(await status.innerText(),/ボール盤と入替/);
     const draft=[{id:'m1',x:5,y:1},{id:'m2',x:2,y:1},{id:'m3',x:4,y:1}];
     const expected=estimateOrder(s,{layout:draft,offer:'first',trace:true});
     await quote.filter({hasText:expected.seconds.toFixed(1)+'秒'}).waitFor();await confirm.tap();
