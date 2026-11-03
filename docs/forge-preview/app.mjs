@@ -118,7 +118,7 @@ function update(){
   const button=$('#orderAction');
   $('.order-strip').hidden=!!placing;
   $('#controls').hidden=!!placing;
-  $('#estate').hidden=!!placing;
+  $('#estate').hidden=!!placing||!s.delivered;
   $('#estateStage').textContent=(s.width===10?'第二工場':'町工場')+(s.ownerCar?' 🚗':'');
   $('#placementBar').hidden=!placing;
   if(placing)$('#confirmPlace').disabled=placing.editor?!placing.editor.canConfirm():!placing.candidate||!writer||saveBlocked;
@@ -182,7 +182,7 @@ function update(){
       if(!active.briefId)floorHint=waiting?M.MACHINES[waiting].name+'の前で'+queues[waiting].waiting+(active.product==='shaft'?'本':'個')+'が順番待ち。':'職人が残りの運搬・加工を進めています。';
     }
   }else if(active&&s.autoWork===undefined&&!skipping)floorHint='この注文は手動出荷。「操作 → おまかせ」で今から任せられます。';
-  else if(s.autoWork&&action.type==='accept')floorHint='受注すると職人が製作し、完成時に出荷します。';
+  else if(s.autoWork&&action.type==='accept')floorHint=s.delivered?'完成したら自動で出荷します。':'初出荷で、隣の倉庫か憧れのクーペを買おう。';
   button.hidden=delegated&&!decision;
   $('#skipDelegated').hidden=!delegated||!!decision;
   $('#autoMode').classList.toggle('active',s.autoWork===true);
@@ -458,7 +458,7 @@ if(tab==='improve')html=improvementSheet();
 if(tab==='inquiry')html=inquirySheet(s,writer&&!saveBlocked);
 if(tab==='precision')html=precisionDesk(s,shaftChoice,writer&&!saveBlocked,escape);
 if(tab==='manage'){
-  const links=[['orders','注文一覧'],['growth','成長目標'],['machines','設備と配置'],['workers','職人と研修'],['finance','経営と出荷記録'],['save','保存と設定']];
+  const links=[['estate','社長の夢'],['orders','注文一覧'],['growth','成長目標'],['machines','設備と配置'],['workers','職人と研修'],['finance','経営と出荷記録'],['save','保存と設定']];
   html='<div class="manage-links">'+links.map(([panel,label])=>'<button data-next="'+panel+'">'+label+' <span aria-hidden="true">›</span></button>').join('')+'</div>';
 }
 if(tab==='orders'){
