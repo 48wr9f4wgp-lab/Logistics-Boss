@@ -371,3 +371,9 @@ dialog[data-panel="inquiry"] .sheet-head{padding-block:5px}
 @media(max-width:699px) and (max-height:650px){
   #placementBar:has(#layoutBreakdown[open])>div:first-child{max-height:calc(100svh - 290px);overflow-y:auto;overscroll-behavior:contain}
 }
+
+
+#estate{position:absolute;top:12px;left:12px;display:grid;min-height:44px;padding:4px 11px;text-align:left;border:1px solid #aaba9966;border-radius:8px;background:#23382e;color:#fff}
+#estate small{font-size:10px;color:#eed293}
+#estate[hidden],#scene:has(#controls[open]) #estate{display:none}
+.estate-view{width:100%;height:auto;max-height:146px;border-radius:9px;background:#c7d9bf}
