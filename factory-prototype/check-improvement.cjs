@@ -36,6 +36,8 @@ async function checkImprovement(browser,url,choice){
     await button('配置のヒント').click();
     const suggested=page.locator('#layoutSuggestions button').filter({hasText:/速さ・歩数とも最良[\s\S]*4列2段/});
     await suggested.click();
+    assert.equal(await page.locator('#layoutEstimate').isVisible(),false);
+    await page.locator('#layoutBreakdown summary').filter({hasText:'98.6秒'}).click();
     await page.locator('#layoutEstimate').filter({hasText:/117.4秒.*98.6秒/}).waitFor();
     await button('取消').click();
     assert.equal((await saved()).cash,s.cash);
@@ -49,6 +51,7 @@ async function checkImprovement(browser,url,choice){
       assert.equal(await page.locator('#confirmPlace').isEnabled(),false);
       assert.equal((await world.boundingBox()).height,rect.height,'invalid tiles must not shift the floor');
       await world.tap({position:project(v,3.5,1.5)});
+      await page.locator('#layoutBreakdown summary').click();
       await page.locator('#layoutEstimate').filter({hasText:/98.6秒[\s\S]*穴あけ担当/}).waitFor();
       await screen('route');
       await button('この配置で受注 · ¥600').click();

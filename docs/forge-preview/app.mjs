@@ -1,7 +1,7 @@
 import {writerSession} from './writer-session.mjs?v=0.26';
 import {SPECIALTIES,restoreSpecialties} from './specialties.mjs?v=0.25';
 import {BRIEFS,briefTarget,briefOutcomeText,earnedBriefs} from './brief.mjs?v=0.25';
-import {layoutEditor} from './layout-editor.mjs?v=0.27';
+import {layoutEditor} from './layout-editor.mjs?v=0.28';
 import {applyLayout} from './layout.mjs?v=0.25';
 import {floorGesture,changeCamera} from './floor-input.mjs?v=0.16';
 import {departureDuration} from './shipping.mjs?v=0.16';
@@ -483,7 +483,7 @@ if(tab==='workers'){
 }
 if(tab==='result'){const r=s.results?.[0];html=r?receipt(r,true):'<p>まだ出荷記録がありません。</p>';}
 if(tab==='finance'){html=workshopRecord()+card('工場の状況','<div class="row"><span>出荷実績</span><b>'+s.delivered+'件</b></div><div class="row"><span>工場時間</span><b>'+Math.floor(s.clock/60)+'分'+Math.floor(s.clock%60)+'秒</b></div>')+card('収支',`<div class="row"><span>累計売上</span><b>${money(s.revenue)}</b></div><div class="row"><span>材料・投資・人件費</span><b>${money(s.expense)}</b></div><p>加工する部品がある間、人件費は毎秒¥0.7。画面を閉じている間の生産・請求はありません。</p>`)+'<h3>出荷の振り返り</h3><p>直近12件を保存。利益は設備・研修・増築費を引く前の金額です。</p>'+(s.results?.length?'<button class="wide" data-next="result">直近の出荷結果を開く</button>'+s.results.map(r=>`<details class="result-history"><summary>${escape(r.label)} × ${r.qty}<b>${M.resultProfit(r)===null?'記録なし':signedMoney(M.resultProfit(r))}</b></summary>${receipt(r,false)}</details>`).join(''):'<p>出荷すると結果をここで見返せます。</p>')+card('工場を広げる',`<p>床面積を8×6から10×8へ。追加設備と動線のための余白を作ります。</p><button class="primary wide" id="expand" ${s.width===10?'disabled':''}>${s.width===10?'拡張済み':'増築する · ¥3,500'}</button>`)+card('生産の記録',`<p>完了工程 ${s.stats.processed}回<br>品質調整 ${s.stats.rework}回<br>運搬・移動距離 ${Math.floor(s.stats.walk)}マス</p>`)+card('工場日誌',s.log.map(t=>`<p>${escape(t)}</p>`).join(''));}
-if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked==='conflict'?'別のタブに新しい記録があります。この画面の進行を残すには、書き出してから再読み込みしてください。':saveBlocked?'保存エラー：この画面の進行を書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'ほかのタブからの引き継ぎを待っています。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② おまかせで運搬・製作・出荷まで進行。小口の相談では止まります<br>③ 操作から手動の等速・3倍速や早送りも選べます<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.27</small>');}
+if(tab==='save'){html=card('進行は自動保存',`<p>${saveBlocked==='conflict'?'別のタブに新しい記録があります。この画面の進行を残すには、書き出してから再読み込みしてください。':saveBlocked?'保存エラー：この画面の進行を書き出して保管できます。':writer?'このブラウザに5秒ごとに保存しています。':'ほかのタブからの引き継ぎを待っています。'}<br>旧フロトラの保存データとは独立しています。</p><button id="export" class="wide">セーブを書き出す</button><label><p>書き出したセーブを読み込む（現在の進行と置き換え）</p><input id="import" type="file" accept="application/json,.json"></label><button id="reload" class="wide">再読み込み</button>`)+card('遊び方','<p>① 受注で材料を購入<br>② おまかせで運搬・製作・出荷まで進行。小口の相談では止まります<br>③ 操作から手動の等速・3倍速や早送りも選べます<br>④ 設備の追加・改良、研修に再投資<br><br>工場はドラッグで移動。二本指で拡大縮小できます。「操作」でも速度、拡大縮小、全景表示、設備名を切り替えられます。機械や工程待ちをタップすると、担当者・運搬経路を確認して移動・改良できます。同じ工程をもう一度押すと次の同種設備を選びます。配置では光る床を押して仮置きし、画面下で確定します。矢印キーでも候補を選べます。</p><small>開発版 v0.28</small>');}
 body.innerHTML=html;
 setupPanelEstimate();
 if($('#allGrowth'))$('#allGrowth').onclick=()=>open('growth');
