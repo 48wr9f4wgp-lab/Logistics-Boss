@@ -23,7 +23,7 @@ async function checkLayout(browser,url){
       const box=await floor.boundingBox();
       await floor.tap({position:project(frameWorkshop(box.width,box.height,s.width),x+.5,y+.5)});
     };
-    const open=async()=>{await btn('置き場所を試す').click();await picker.selectOption({label:'検品台'});};
+    const open=async()=>{await btn('置き場所を試す').click();await picker.selectOption({label:'検品台'});await btn('配置のヒント').tap();};
     await page.goto(url);await page.locator('#world[data-artwork="ready"]').waitFor();await btn('工場の改善を選ぶ').click();await open();
     const fast=page.locator('#layoutSuggestions button').filter({hasText:'完成が最短'});
     const walk=page.locator('#layoutSuggestions button').filter({hasText:'歩数が最少'});
